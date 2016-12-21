@@ -103,15 +103,29 @@ Best model saved to: model.A=sigmoid.B=64.D=None.E=20.L1=1024.L2=512.L3=256.P=1e
 Evaluation on test data: {'accuracy': 0.5500}
 ```
 
-### Running the XGBoost classifier
+### Preliminary performance
+
+The XGBoost classifier below achieves ~55% average accuracy on
+validation data in the five-fold cross validation experiment. This
+suggests there may be a low ceiling for the MLP results; there may not
+be enough information in this set of SNP data to classify cancer types
+accurately.
 
 ```
 cd P1B2
 python p1b2_xgboost.py
+```
+
+David Anthony Brewster, Jr, Yashasvi Sharma, and Sergei Maslov have
+achived 60.2% accuracy in their experiment. See the following links for details:
+
+* [DOE-NCI Confluence P1B2 scatch pad](https://doe-nci.atlassian.net/wiki/display/PROJECT/P1B2+Networks)
+* [David Brewster's github repo](https://github.com/ljeabmreosn/NeuralNetwork/tree/master/benchmarks/P1B2)
+
+Try the following commands to run a replicate of their network (modified for the P1B2 data loader).
 
 ```
-The XGBoost classifier achieves ~55% average accuracy on validation
-data in the five-fold cross validation experiment. This suggests there
-may be a low ceiling for the MLP results; there may not be enough
-information in this set of SNP data to classify cancer types
-accurately.
+cd P1B2
+python contrib/David_Brewster/p1b2_ljeabmreosn_mlp.py
+```
+
