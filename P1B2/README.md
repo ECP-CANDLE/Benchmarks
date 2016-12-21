@@ -1,4 +1,41 @@
+## P1B2: Sparse Classifier Disease Type Prediction from Somatic SNPs
 
+**Overview**: Given patient somatic SNPs, build a deep learning network that can classify the cancer type.
+
+**Relationship to core problem**: Exercise two core capabilities we need to build: (1) classification based on very sparse input data; (2) evaluation of the information content and predictive value in a molecular assay with auxiliary learning tasks.
+
+**Expected outcome**: Build a DNN that can classify sparse data.
+
+### Benchmark Specs Requirements 
+
+#### Description of the Data
+* Data source: SNP data from GDC MAF files
+* Input dimensions: 28,205 (aggregated variation impact by gene from 2.7 million unique SNPs)
+* Output dimensions: 10 class probabilities (9 most abundant cancer types in GDC + 1 “others”)
+* Sample size: 4,000 (3000 training + 1000 test)
+* Notes on data balance and other issues: data balance achieved via undersampling; “others” category drawn from all remaining lower-abundance cancer types in GDC
+
+#### Expected Outcomes
+* Classification
+* Output range or number of classes: 10
+
+#### Evaluation Metrics
+* Accuracy or loss function: Standard approaches such as F1-score, accuracy, ROC-AUC, cross entropy, etc. 
+* Expected performance of a naïve method: linear regression or ensemble methods without feature selection
+
+#### Description of the Network
+* Proposed network architecture: MLP with regularization
+* Number of layers: ~5 layers
+
+### Running the baseline implementation
+
+```
+cd P1B2
+python p1b2_baseline.py
+```
+The training and test data files will be downloaded the first time this is run and will be cached for future runs.
+
+#### Example output
 
 ```
 Using Theano backend.
@@ -64,5 +101,13 @@ best_val_loss=1.31111 best_val_acc=0.59500
 
 Best model saved to: model.A=sigmoid.B=64.D=None.E=20.L1=1024.L2=512.L3=256.P=1e-05.h5
 
-Evaluation on test data: {'accuracy': 0.55000000000000004}
+Evaluation on test data: {'accuracy': 0.5500}
+```
+
+### Running the XGBoost classifier
+
+```
+cd P1B2
+python p1b2_xgboost.py
+
 ```

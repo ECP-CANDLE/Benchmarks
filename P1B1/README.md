@@ -1,10 +1,10 @@
 ## P1B1: Autoencoder Compressed Representation for Gene Expression
 
-**Overview**: Given a sample of gene expression data, build a sparse autoencoder that can compress the expression profile into a low-dimensional vector
+**Overview**: Given a sample of gene expression data, build a sparse autoencoder that can compress the expression profile into a low-dimensional vector.
 
-**Relationship to core problem**: Many molecular assays generate large numbers of features that can lead to time-consuming processing and over-fitting in learning tasks; hence, a core capability we intend to build is feature reduction
+**Relationship to core problem**: Many molecular assays generate large numbers of features that can lead to time-consuming processing and over-fitting in learning tasks; hence, a core capability we intend to build is feature reduction.
 
-**Expected outcome**: An autoencoder that collapse high dimensional expression profiles into low dimensional vectors without much loss of information 
+**Expected outcome**: Build an autoencoder that collapse high dimensional expression profiles into low dimensional vectors without much loss of information.
 
 ### Benchmark Specs Requirements 
 
@@ -13,7 +13,7 @@
 * Input dimensions: 60,484 floats; log(1+x) transformed FPKM-UQ values
 * Output dimensions: Same as input
 * Latent representation dimension: 1000
-* Sample size: 5,000
+* Sample size: 4,000 (3000 training + 1000 test)
 * Notes on data balance and other issues: unlabeled data draw from a diverse set of cancer types
 
 #### Expected Outcomes

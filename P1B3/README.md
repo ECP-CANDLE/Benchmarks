@@ -1,11 +1,40 @@
-## Running the baseline implementation of the P1B3 benchmark
+## P1B3: MLP Regression Drug Response Prediction
+
+**Overview**: Given drug screening results on NCI60 cell lines, build a deep learning network that can predict the growth percentage from cell line expression and drug descriptors.
+
+**Relationship to core problem**: This benchmark is a simplified form of the core drug response prediction problem in which we need to combine multiple molecular assays and a diverse array of drug descriptors to make a prediction.
+
+**Expected outcome**: Build a DNN that can predict growth percentage of a cell line treated with a new drug.
+
+### Benchmark Specs Requirements 
+
+#### Description of the Data
+* Data source: Dose response screening results from NCI; 5-platform normalized expression data from NCI; Dragon7 generated drug descriptors based on 2D chemical structures from NCI
+* Input dimensions: ~30K; 26K normalized expression levels by gene + 4K drug descriptors [+ drug concentration]
+Output dimensions: 1 (growth percentage)
+* Sample size: ~2.5 M screening results (combinations of cell line and drug)
+* Notes on data balance: original data imbalanced with many drugs that have little inhibition effect.
+
+#### Expected Outcomes
+* Regression. Predict percent growth per NCI-60 cell lines and per drug
+* Dimension: 1 scalar value corresponding to the percent growth for a given drug concentration. Output range: [-100, 100]
+
+#### Evaluation Metrics
+* Accuracy or loss function: mean squared error or rank order.
+* Expected performance of a naïve method: mean response, linear regression or random forest regression.
+
+#### Description of the Network
+* Proposed network architecture: MLP
+* Number of layers: ~5 layers
+
+### Running the baseline implementation
 
 ```
 $ cd P1B3
 $ python p1b3_baseline.py
 ```
 
-### Example output
+#### Example output
 ```
 Using Theano backend.
 Using gpu device 0: Tesla K80 (CNMeM is enabled with initial size: 95.0% of memory, cuDNN 5004)
@@ -73,5 +102,4 @@ Cristina's results: Using the 5 layer MLP with standard normalization and sizes 
 ![Histogram of errors after 141 epochs](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B3/images/histo_It140.png)
 
 ![Measure vs Predicted percent growth after 141 epochs](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B3/images/meas_vs_pred_It140.png)
-
 
