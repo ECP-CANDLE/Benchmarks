@@ -62,3 +62,12 @@ Epoch 1/2
 Epoch 2/2
 2400/2400 [==============================] - 8s - loss: 0.0376 - val_loss: 0.0377
 ```
+
+### Preliminary performance
+
+Jonathan has done some network topology sweeps in LBANN. See the `contrib/`
+directory for details. Here's his plot on reconstruction error vs
+different network architectures.
+
+![Autoencoder reconstruction error vs different network architectures](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B1/images/network_sweep_ex3.png)
+

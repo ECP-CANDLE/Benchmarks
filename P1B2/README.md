@@ -87,7 +87,6 @@ Epoch 15/20
 2400/2400 [==============================] - 4s - loss: 0.1836 - acc: 0.9900 - val_loss: 1.6587 - val_acc: 0.5567
 Epoch 16/20
 2400/2400 [==============================] - 4s - loss: 0.1757 - acc: 0.9950 - val_loss: 1.5838 - val_acc: 0.5683
-
 Epoch 17/20
 2400/2400 [==============================] - 4s - loss: 0.1752 - acc: 0.9917 - val_loss: 1.6328 - val_acc: 0.5700
 Epoch 18/20
@@ -111,3 +110,8 @@ cd P1B2
 python p1b2_xgboost.py
 
 ```
+The XGBoost classifier achieves ~55% average accuracy on validation
+data in the five-fold cross validation experiment. This suggests there
+may be a low ceiling for the MLP results; there may not be enough
+information in this set of SNP data to classify cancer types
+accurately.
