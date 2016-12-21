@@ -1,4 +1,4 @@
-## Run the baseline implementation of the P1B3 benchmark
+## Running the baseline implementation of the P1B3 benchmark
 
 ```
 $ cd P1B3
@@ -68,10 +68,10 @@ Epoch 10/20
 ### Preliminary performance
 Cristina's results: Using the 5 layer MLP with standard normalization and sizes : L1 = 1000, L2 = 500, L3 = 100, L4 = 50. MSE obtained is 0.0482 in training and  0.0421 in validation (~80% -20% split. Data: 2642218 unique (D, CL) response sets). This is at iteration 140, in a GPU Geforce GTX Titan X, taking around 15 hours.
 
-![Histogram of errors: Random vs Epoch 1](/images/histo_It0.png)
+![Histogram of errors: Random vs Epoch 1](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B3/images/histo_It0.png)
 
-![Histogram of errors after 141 epochs](/images/histo_It140.png)
+![Histogram of errors after 141 epochs](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B3/images/histo_It140.png)
 
-![Measure vs Predicted percent growth after 141 epochs](/images/meas_vs_pred_It140.png)
+![Measure vs Predicted percent growth after 141 epochs](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B3/images/meas_vs_pred_It140.png)
 
 
