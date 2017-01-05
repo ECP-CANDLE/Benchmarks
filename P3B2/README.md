@@ -8,23 +8,23 @@
 ### Benchmark Specs
 
 #### Description of the Data
-*Data source: Annotated pathology reports
-*Input dimensions: 250,000-500,000 [characters], or 5,000-20,000 [bag of words], or 200-500 [bag of concepts]
-*Output dimensions: Same as input
-*Sample size: O(1,000)
-*Notes on data balance and other issues: standard NLP pre-processing is required, including (but not limited to) stemming words, keywords, cleaning text, stop words, etc. Data balance is an issue since the number of positive examples vs. control is skewed
+* Data source: Annotated pathology reports
+* Input dimensions: 250,000-500,000 [characters], or 5,000-20,000 [bag of words], or 200-500 [bag of concepts]
+* Output dimensions: Same as input
+* Sample size: O(1,000)
+* Notes on data balance and other issues: standard NLP pre-processing is required, including (but not limited to) stemming words, keywords, cleaning text, stop words, etc. Data balance is an issue since the number of positive examples vs. control is skewed
 
 #### Expected Outcomes
-*A generative model for pathology reports
-*Output range: N/A, since the outputs are actual text documents with known case descriptions/ concepts
+* A generative model for pathology reports
+* Output range: N/A, since the outputs are actual text documents with known case descriptions/ concepts
 
 #### Evaluation Metrics
-*Accuracy or loss function: Standard information theoretic metrics such as log-likelihood score, minimum description length score, AIC/BIC to measure how similar actual documents are compared to generated ones
-*Expected performance of a naïve method: Latent Dirichlet allocation (LDA) models 
+* Accuracy or loss function: Standard information theoretic metrics such as log-likelihood score, minimum description length score, AIC/BIC to measure how similar actual documents are compared to generated ones
+* Expected performance of a naïve method: Latent Dirichlet allocation (LDA) models 
 
 #### Description of the Network
-*Proposed network architecture: LSTM with at least 4 layers and [128, 256, 512] character windows
-*Number of layers: At least two hidden layers with one input and one output sequence
+* Proposed network architecture: LSTM with at least 4 layers and [128, 256, 512] character windows
+* Number of layers: At least two hidden layers with one input and one output sequence
 
 #### Annotated Keras Code
 Data loader, preprocessing, basic training and cross validation, prediction and evaluation on test data  
@@ -32,6 +32,7 @@ Data loader, preprocessing, basic training and cross validation, prediction and 
 ### Running the baseline implementation
 The data file provided here is a compressed pickle file (.tgz extension). Before running the code, use:
 ```
+cd P3B2
 tar -xzf data.pkl.tgz 
 ```
 to unpack the archive. Note that the training data is provided as a single pickle file. The code is documented to provide enough information about how to reproduce the files. 
