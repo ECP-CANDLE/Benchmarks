@@ -17,8 +17,8 @@ seed = 2016
 
 
 def load_data(shuffle=True, n_cols=None):
-    train_path = get_file('P1B1.train.csv', origin='http://bioseed.mcs.anl.gov/~fangfang/benchmarks/data/P1B1.train.csv')
-    test_path = get_file('P1B1.test.csv', origin='http://bioseed.mcs.anl.gov/~fangfang/benchmarks/data/P1B1.test.csv')
+    train_path = get_file('P1B1.train.csv', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.train.csv')
+    test_path = get_file('P1B1.test.csv', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.test.csv')
 
     usecols = list(range(n_cols)) if n_cols else None
 

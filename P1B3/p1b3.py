@@ -274,11 +274,11 @@ class RegressionDataGenerator(object):
         """
 
         cell_expr_path = get_file('RNA_5_Platform_Gene_Transcript_Averaged_intensities.transposed.txt',
-                                  origin='http://bioseed.mcs.anl.gov/~fangfang/p1b3/RNA_5_Platform_Gene_Transcript_Averaged_intensities.transposed.txt')
+                                  origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/RNA_5_Platform_Gene_Transcript_Averaged_intensities.transposed.txt')
         drug_desc_path = get_file('descriptors.2D-NSC.5dose.filtered.txt',
-                                  origin='http://bioseed.mcs.anl.gov/~fangfang/p1b3/descriptors.2D-NSC.5dose.filtered.txt')
+                                  origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/descriptors.2D-NSC.5dose.filtered.txt')
         drug_resp_path = get_file('NCI60_dose_response_with_missing_z5_avg.csv',
-                                  origin='http://bioseed.mcs.anl.gov/~fangfang/p1b3/NCI60_dose_response_with_missing_z5_avg.csv')
+                                  origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/NCI60_dose_response_with_missing_z5_avg.csv')
 
         self.df_cellline = load_cellline_expressions(cell_expr_path, ncols=feature_subsample, scaling=scaling)
         self.df_drug = load_drug_descriptors(drug_desc_path, ncols=feature_subsample, scaling=scaling)
