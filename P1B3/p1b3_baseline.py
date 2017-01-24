@@ -303,14 +303,6 @@ def main():
                 model.add(Dropout(args.drop))
     model.add(Dense(out_dim))
 
-    def my_acc(y_true, y_pred):
-        # print(y_true)
-        # print(y_pred)
-        y_true_class = np.digitize(y_true, args.category_cutoffs)
-        y_pred_class = np.digitize(y_pred, args.category_cutoffs)
-        acc = metrics.categorical_accuracy(y_true_class, y_pred_class)
-        return {'acc': acc}
-
     model.summary()
     model.compile(loss=args.loss, optimizer=args.optimizer)
 
