@@ -49,7 +49,12 @@ min   -1.000000e+02
 50%    0.000000e+00
 75%    4.600000e+01
 max    2.580000e+02
-Rows in train = 800068, val = 200017, test = 4785
+Category cutoffs: [0.0]
+Dose response bin counts:
+  Class 0:  497382 (0.4950) - between -1.00 and +0.00
+  Class 1:  507488 (0.5050) - between +0.00 and +2.58
+  Total:   1004870
+Rows in train: 800068, val: 200017, test: 4785
 Input dim = 1001
 ____________________________________________________________________________________________________
 Layer (type)                     Output Shape          Param #     Connected to
