@@ -79,12 +79,14 @@ def get_file(fname, origin, untar=False,
         download = True
 
     if download:
-        print('Downloading data from', origin)
+        print('\nDownloading data from', origin)
         global progbar
         progbar = None
 
         def dl_progress(count, block_size, total_size):
             global progbar
+            if total_size < 1000000:
+                return
             if progbar is None:
                 progbar = Progbar(total_size)
             else:
