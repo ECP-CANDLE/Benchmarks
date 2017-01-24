@@ -242,7 +242,7 @@ class MyLossHistory(Callback):
         if float(logs.get('val_loss', 0)) < self.best_val_loss:
             self.best_model = self.model
             val_loss, val_acc, y_true, y_pred, y_true_class, y_pred_class = evaluate_model(self.best_model, self.val_gen, self.val_samples, self.metric, self.category_cutoffs)
-            test_loss, test_acc, *_ = evaluate_model(self.best_model, self.test_gen, self.test_samples, self.metric, self.category_cutoffs)
+            test_loss, test_acc, _, _, _, _ = evaluate_model(self.best_model, self.test_gen, self.test_samples, self.metric, self.category_cutoffs)
             self.progbar.append_extra_log_values([('val_acc', val_acc), ('test_loss', test_loss), ('test_acc', test_acc)])
             plot_error(y_true, y_pred, batch, self.ext, self.pre)
         self.best_val_loss = min(float(logs.get('val_loss', 0)), self.best_val_loss)
