@@ -55,7 +55,6 @@ def scale(df, scaling=None):
 
     mat = df.as_matrix()
     mat = scaler.fit_transform(mat)
-    # print(mat.shape)
     df = pd.DataFrame(mat, columns=df.columns)
 
     return df
@@ -81,13 +80,10 @@ def impute_and_scale(df, scaling='std'):
         return pd.DataFrame(mat, columns=df.columns)
 
     if scaling == 'maxabs':
-        # Normalizing -1 to 1
         scaler = MaxAbsScaler()
     elif scaling == 'minmax':
-        # Scaling to [0,1]
         scaler = MinMaxScaler()
     else:
-        # Standard normalization
         scaler = StandardScaler()
 
     mat = scaler.fit_transform(mat)
@@ -291,8 +287,10 @@ class RegressionDataGenerator(object):
 
         self.df_cellline = load_cellline_expressions(cell_expr_path, ncols=feature_subsample, scaling=scaling)
 
-        df = load_dose_response(dose_resp_path, min_logconc=min_logconc, max_logconc=max_logconc, subsample='naive_balancing')
+        df = load_dose_response(dose_resp_path, min_logconc=min_logconc, max_logconc=max_logconc, subsample=subsample)
         logger.info('Loaded {} unique (D, CL) response sets.'.format(df.shape[0]))
+        # df[['GROWTH', 'LOG_CONCENTRATION']].to_csv('all.response.csv')
+
         df = df.reset_index()
         df = df.merge(self.df_cellline[['CELLNAME']], on='CELLNAME')
 
@@ -310,6 +308,7 @@ class RegressionDataGenerator(object):
             self.df_drug_rand = df_rand.reset_index()
 
         logger.debug('Filltered down to {} rows with matching information.'.format(df.shape[0]))
+        # df[['GROWTH', 'LOG_CONCENTRATION']].to_csv('filtered.response.csv')
 
         df_test_cell = pd.read_csv(test_cell_path)
         df_test_drug = pd.read_csv(test_drug_path, dtype={'NSC':object})
@@ -361,16 +360,21 @@ class RegressionDataGenerator(object):
         logger.info('Rows in train: {}, val: {}, test: {}'.format(self.n_train, self.n_val, self.n_test))
 
         self.input_dim = self.df_cellline.shape[1] - 1 + 1  # remove CELLNAME; add concentration
+        logger.info('Features:')
+        logger.info('  concentration: 1')
+        logger.info('  cell line expression: {}'.format(self.input_dim-1))
         if self.drug_features in ['descriptors', 'both']:
             self.input_dim += self.df_drug_desc.shape[1] - 1  # remove NSC
+            logger.info('  drug descriptors: {}'.format(self.df_drug_desc.shape[1] - 1))
         if self.drug_features in ['latent', 'both']:
             self.input_dim += self.df_drug_auen.shape[1] - 1  # remove NSC
+            logger.info('  drug latent representations: {}'.format(self.df_drug_auen.shape[1] - 1))
         if self.drug_features == 'noise':
             self.input_dim += self.df_drug_rand.shape[1] - 1  # remove NSC
+            logger.info('  drug random vectors: {}'.format(self.df_drug_rand.shape[1] - 1))
+        logger.info('Total input dimensions: {}'.format(self.input_dim))
 
-        logger.info('Input dim = {}'.format(self.input_dim))
-
-    def flow(self, batch_size=32, data='train', reshape=False):
+    def flow(self, batch_size=32, data='train', topology=None):
         if data == 'val':
             cyc = self.cycle_val
         elif data == 'test':
@@ -398,7 +402,8 @@ class RegressionDataGenerator(object):
             x = np.array(df.iloc[:, 1:])
             y = np.array(df.iloc[:, 0])
             y = y / 100.
-            if reshape:
+
+            if topology == 'simple_local':
                 yield x.reshape(x.shape + (1,)), y
                 # yield x.reshape(x.shape[0], 1, x.shape[1]), y
             else:

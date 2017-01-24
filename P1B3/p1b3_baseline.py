@@ -17,7 +17,7 @@ from itertools import tee, islice
 from keras import backend as K
 from keras import metrics
 from keras.models import Sequential
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, LocallyConnected1D, MaxPooling1D, Flatten
 from keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
 
 from sklearn.preprocessing import Imputer
@@ -64,6 +64,13 @@ D3 = 100
 D4 = 50
 DENSE_LAYERS = [D1, D2, D3, D4]
 
+# Number of units per locally connected layer
+LC1 = 10, 1        # nb_filter, filter_length
+LC2 = 0, 0         # disabled layer
+# LOCALLY_CONNECTED_LAYERS = list(LC1 + LC2)
+LOCALLY_CONNECTED_LAYERS = [0, 0]
+POOL = 100
+
 MIN_LOGCONC = -5.
 MAX_LOGCONC = -4.
 
@@ -90,6 +97,9 @@ def get_parser():
     parser.add_argument("-e", "--epochs", action="store",
                         default=NB_EPOCH, type=int,
                         help="number of training epochs")
+    parser.add_argument("-l", "--locally_connected", action="store", nargs='+', type=int,
+                        default=LOCALLY_CONNECTED_LAYERS,
+                        help="integer array describing locally connected layers: layer1_nb_filter, layer1_filter_len, layer2_nb_filter, layer2_filter_len, ...")
     parser.add_argument("-o", "--optimizer", action="store",
                         default=OPTIMIZER,
                         help="keras optimizer to use: sgd, rmsprop, ...")
@@ -99,6 +109,9 @@ def get_parser():
     parser.add_argument("--loss", action="store",
                         default=LOSS,
                         help="keras loss function to use: mse, ...")
+    parser.add_argument("--pool", action="store",
+                        default=POOL, type=int,
+                        help="pooling layer length")
     parser.add_argument("--scaling", action="store",
                         default=SCALING,
                         help="type of feature scaling; 'minabs': to [-1,1]; 'minmax': to [0,1], 'std': standard unit normalization; None: no normalization")
@@ -147,6 +160,16 @@ def extension_from_parameters(args):
     ext += '.E={}'.format(args.epochs)
     if args.feature_subsample:
         ext += '.F={}'.format(args.feature_subsample)
+    if args.locally_connected:
+        layer_list = list(range(0, len(args.locally_connected), 2))
+        for l, i in enumerate(layer_list):
+            nb_filter = args.locally_connected[i]
+            filter_len = args.locally_connected[i+1]
+            if nb_filter <= 0 or filter_len <= 0:
+                break
+            ext += '.LC{}={},{}'.format(l+1, nb_filter, filter_len)
+        if args.pool and layer_list[0] and layer_list[1]:
+            ext += '.P={}'.format(args.pool)
     for i, n in enumerate(args.dense):
         if n:
             ext += '.D{}={}'.format(i+1, n)
@@ -289,13 +312,23 @@ def main():
                                            subsample=args.subsample,
                                            category_cutoffs=args.category_cutoffs)
 
-    train_gen = datagen.flow(batch_size=args.batch_size)
-    val_gen = datagen.flow(data='val', batch_size=args.batch_size)
-    val_gen2 = datagen.flow(data='val', batch_size=args.batch_size)
-    test_gen = datagen.flow(data='test', batch_size=args.batch_size)
-
+    topology = 'dense'
     out_dim = 1
+
     model = Sequential()
+    if args.locally_connected and args.locally_connected[0]:
+        topology = 'simple_local'
+        layer_list = list(range(0, len(args.locally_connected), 2))
+        for l, i in enumerate(layer_list):
+            nb_filter = args.locally_connected[i]
+            filter_len = args.locally_connected[i+1]
+            if nb_filter <= 0 or filter_len <= 0:
+                break
+            model.add(LocallyConnected1D(nb_filter, filter_len, input_shape=(datagen.input_dim, 1), activation=args.activation))
+            if args.pool:
+                model.add(MaxPooling1D(pool_length=args.pool))
+        model.add(Flatten())
+
     for layer in args.dense:
         if layer:
             model.add(Dense(layer, input_dim=datagen.input_dim, activation=args.activation))
@@ -305,6 +338,11 @@ def main():
 
     model.summary()
     model.compile(loss=args.loss, optimizer=args.optimizer)
+
+    train_gen = datagen.flow(batch_size=args.batch_size, topology=topology)
+    val_gen = datagen.flow(data='val', batch_size=args.batch_size, topology=topology)
+    val_gen2 = datagen.flow(data='val', batch_size=args.batch_size, topology=topology)
+    test_gen = datagen.flow(data='test', batch_size=args.batch_size, topology=topology)
 
     train_samples = int(datagen.n_train/args.batch_size) * args.batch_size
     val_samples = int(datagen.n_val/args.batch_size) * args.batch_size
