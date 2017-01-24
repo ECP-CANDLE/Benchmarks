@@ -6,7 +6,7 @@
 
 **Expected outcome**: Build a DNN that can predict growth percentage of a cell line treated with a new drug.
 
-### Benchmark Specs Requirements 
+### Benchmark Specs Requirements
 
 #### Description of the Data
 * Data source: Dose response screening results from NCI; 5-platform normalized expression data from NCI; Dragon7 generated drug descriptors based on 2D chemical structures from NCI
@@ -36,23 +36,25 @@ $ python p1b3_baseline.py
 
 #### Example output
 ```
-Using Theano backend.
-Using gpu device 0: Tesla K80 (CNMeM is enabled with initial size: 95.0% of memory, cuDNN 5004)
-Loaded 2642218 unique (D, CL) response sets.
-count    2.642218e+06
-mean     6.906977e+01
-std      4.860752e+01
-min     -1.000000e+02
-25%      5.400000e+01
-50%      8.900000e+01
-75%      9.900000e+01
-max      2.990000e+02
-Name: GROWTH, dtype: float64
-Input dim = 998
+Using TensorFlow backend.
+Command line args = Namespace(activation='relu', batch_size=100, category_cutoffs=[0.0, 0.5], dense=[1000, 500, 100, 50], drop=0.1, drug_features='descriptors', epochs=20, feature_subsample=500, loss='mse', max_logconc=-4.0, min_logconc=-5.0, optimizer='adam', save='save', scaling='std', scramble=False, subsample='naive_balancing', train_samples=0, val_samples=0, verbose=False, workers=1)
+Loaded 2328562 unique (D, CL) response sets.
+Distribution of dose response:
+             GROWTH
+count  1.004870e+06
+mean  -1.357397e+00
+std    6.217888e+01
+min   -1.000000e+02
+25%   -5.600000e+01
+50%    0.000000e+00
+75%    4.600000e+01
+max    2.580000e+02
+Rows in train = 800068, val = 200017, test = 4785
+Input dim = 1001
 ____________________________________________________________________________________________________
 Layer (type)                     Output Shape          Param #     Connected to
 ====================================================================================================
-dense_1 (Dense)                  (None, 1000)          999000      dense_input_1[0][0]
+dense_1 (Dense)                  (None, 1000)          1002000     dense_input_1[0][0]
 ____________________________________________________________________________________________________
 dropout_1 (Dropout)              (None, 1000)          0           dense_1[0][0]
 ____________________________________________________________________________________________________
@@ -66,31 +68,27 @@ dropout_3 (Dropout)              (None, 100)           0           dense_3[0][0]
 ____________________________________________________________________________________________________
 dense_4 (Dense)                  (None, 50)            5050        dropout_3[0][0]
 ____________________________________________________________________________________________________
-dense_5 (Dense)                  (None, 1)             51          dense_4[0][0]
-====================================================================================================
-Total params: 1554701
+dropout_4 (Dropout)              (None, 50)            0           dense_4[0][0]
 ____________________________________________________________________________________________________
+dense_5 (Dense)                  (None, 1)             51          dropout_4[0][0]
+====================================================================================================
+Total params: 1,557,701
+Trainable params: 1,557,701
+Non-trainable params: 0
+
 Epoch 1/20
-2113731/2113700 [==============================] - 1794s - loss: 0.2039 - val_loss: 0.1932
+800000/800000 [==============================] - 420s - loss: 0.2554 - val_loss: 0.2037 - val_acc: 0.7519 - test_loss: 1.0826 - test_acc: 0.5651
 Epoch 2/20
-2113751/2113700 [==============================] - 1791s - loss: 0.1915 - val_loss: 0.1869
+800000/800000 [==============================] - 426s - loss: 0.1885 - val_loss: 0.1620 - val_acc: 0.7720 - test_loss: 1.1407 - test_acc: 0.5689
 Epoch 3/20
-2113744/2113700 [==============================] - 1786s - loss: 0.1886 - val_loss: 0.1887
-Epoch 4/20
-2113717/2113700 [==============================] - 1773s - loss: 0.1873 - val_loss: 0.1889
-Epoch 5/20
-2113732/2113700 [==============================] - 1776s - loss: 0.1857 - val_loss: 0.2158
-Epoch 6/20
-2113719/2113700 [==============================] - 1791s - loss: 0.1856 - val_loss: 0.1926
-Epoch 7/20
-2113742/2113700 [==============================] - 1793s - loss: 0.1849 - val_loss: 0.1779
-Epoch 8/20
-2113720/2113700 [==============================] - 1784s - loss: 0.1843 - val_loss: 0.1863
-Epoch 9/20
-2113733/2113700 [==============================] - 1783s - loss: 0.1841 - val_loss: 0.1945
-Epoch 10/20
-2113764/2113700 [==============================] - 1792s - loss: 0.1843 - val_loss: 0.1889
-...
+800000/800000 [==============================] - 427s - loss: 0.1600 - val_loss: 0.1403 - val_acc: 0.7853 - test_loss: 1.1443 - test_acc: 0.5689
+... ...
+Epoch 18/20
+800000/800000 [==============================] - 349s - loss: 0.0912 - val_loss: 0.0881 - val_acc: 0.8339 - test_loss: 1.0033 - test_acc: 0.5653
+Epoch 19/20
+800000/800000 [==============================] - 418s - loss: 0.0898 - val_loss: 0.0844 - val_acc: 0.8354 - test_loss: 1.0039 - test_acc: 0.5652
+Epoch 20/20
+800000/800000 [==============================] - 343s - loss: 0.0894 - val_loss: 0.0849 - val_acc: 0.8354 - test_loss: 1.0039 - test_acc: 0.5652
 
 ```
 
@@ -102,4 +100,3 @@ Cristina's results: Using the 5 layer MLP with standard normalization and sizes 
 ![Histogram of errors after 141 epochs](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B3/images/histo_It140.png)
 
 ![Measure vs Predicted percent growth after 141 epochs](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B3/images/meas_vs_pred_It140.png)
-
