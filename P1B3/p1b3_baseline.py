@@ -17,7 +17,7 @@ from itertools import tee, islice
 from keras import backend as K
 from keras import metrics
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, LocallyConnected1D, MaxPooling1D, Flatten
+from keras.layers import Dense, Dropout, LocallyConnected1D, Convolution1D, MaxPooling1D, Flatten
 from keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
 
 from sklearn.preprocessing import Imputer
@@ -65,7 +65,7 @@ D4 = 50
 DENSE_LAYERS = [D1, D2, D3, D4]
 
 # Number of units per locally connected layer
-LC1 = 10, 1        # nb_filter, filter_length
+LC1 = 10, 10        # nb_filter, filter_length
 LC2 = 0, 0         # disabled layer
 # LOCALLY_CONNECTED_LAYERS = list(LC1 + LC2)
 LOCALLY_CONNECTED_LAYERS = [0, 0]
@@ -91,6 +91,9 @@ def get_parser():
     parser.add_argument("-b", "--batch_size", action="store",
                         default=BATCH_SIZE, type=int,
                         help="batch size")
+    parser.add_argument("-c", "--convolution", action="store_true",
+                        default=False,
+                        help="use convolution layers instead of locally connected layers")
     parser.add_argument("-d", "--dense", action="store", nargs='+', type=int,
                         default=DENSE_LAYERS,
                         help="number of units in fully connected layers in an integer array")
@@ -161,13 +164,14 @@ def extension_from_parameters(args):
     if args.feature_subsample:
         ext += '.F={}'.format(args.feature_subsample)
     if args.locally_connected:
+        name = 'C' if args.convolution else 'LC'
         layer_list = list(range(0, len(args.locally_connected), 2))
         for l, i in enumerate(layer_list):
             nb_filter = args.locally_connected[i]
             filter_len = args.locally_connected[i+1]
             if nb_filter <= 0 or filter_len <= 0:
                 break
-            ext += '.LC{}={},{}'.format(l+1, nb_filter, filter_len)
+            ext += '.{}{}={},{}'.format(name, l+1, nb_filter, filter_len)
         if args.pool and layer_list[0] and layer_list[1]:
             ext += '.P={}'.format(args.pool)
     for i, n in enumerate(args.dense):
@@ -296,7 +300,7 @@ class MyProgbarLogger(ProgbarLogger):
 def main():
     parser = get_parser()
     args = parser.parse_args()
-    print('Command line args =', args)
+    print('Args:', args)
 
     loggingLevel = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=loggingLevel, format='')
@@ -324,7 +328,10 @@ def main():
             filter_len = args.locally_connected[i+1]
             if nb_filter <= 0 or filter_len <= 0:
                 break
-            model.add(LocallyConnected1D(nb_filter, filter_len, input_shape=(datagen.input_dim, 1), activation=args.activation))
+            if args.convolution:
+                model.add(Convolution1D(nb_filter, filter_len, input_shape=(datagen.input_dim, 1), activation=args.activation))
+            else:
+                model.add(LocallyConnected1D(nb_filter, filter_len, input_shape=(datagen.input_dim, 1), activation=args.activation))
             if args.pool:
                 model.add(MaxPooling1D(pool_length=args.pool))
         model.add(Flatten())
