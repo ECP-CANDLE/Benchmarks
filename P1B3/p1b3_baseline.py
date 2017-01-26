@@ -378,4 +378,7 @@ def main():
 
 if __name__ == '__main__':
     main()
-    K.clear_session()
+    try:
+        K.clear_session()
+    except AttributeError:      # theano does not have this function
+        pass
