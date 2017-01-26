@@ -199,12 +199,13 @@ def evaluate_model(model, generator, samples, metric, category_cutoffs=[0.]):
         y_pred = np.concatenate((y_pred, y_batch_pred)) if y_pred is not None else y_batch_pred
         count += len(y_batch)
 
-    loss = evaluate_keras_metric(y_true, y_pred, metric)
+    loss = evaluate_keras_metric(y_true.astype(np.float32), y_pred.astype(np.float32), metric)
 
     y_true_class = np.digitize(y_true, category_cutoffs)
     y_pred_class = np.digitize(y_pred, category_cutoffs)
 
-    acc = evaluate_keras_metric(y_true_class, y_pred_class, 'binary_accuracy')  # works for multiclass labels as well
+    # theano does not like integer input
+    acc = evaluate_keras_metric(y_true_class.astype(np.float32), y_pred_class.astype(np.float32), 'binary_accuracy')  # works for multiclass labels as well
 
     return loss, acc, y_true, y_pred, y_true_class, y_pred_class
 
