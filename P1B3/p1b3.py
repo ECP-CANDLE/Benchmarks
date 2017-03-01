@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from data_utils import get_file
 # from six.moves import cPickle
 
+import collections
 import gzip
 import logging
 import os
@@ -20,7 +21,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 logger = logging.getLogger(__name__)
 
-SEED = 2016
+SEED = 2017
 
 np.set_printoptions(threshold=np.nan)
 np.random.seed(SEED)
@@ -238,8 +239,8 @@ def load_dose_response(path, min_logconc=-5., max_logconc=-5., subsample=None):
     return df
 
 
-class RegressionDataGenerator(object):
-    """Generate merged drug response, drug descriptors and cell line essay data
+class DataLoader(object):
+    """Load merged drug response, drug descriptors and cell line essay data
     """
 
     def __init__(self, val_split=0.2, shuffle=True, drug_features='descriptors',
@@ -273,7 +274,6 @@ class RegressionDataGenerator(object):
             growth thresholds seperating non-response and response categories
         """
 
-        self.lock = threading.Lock()
         self.drug_features = drug_features
 
         server = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/'
@@ -349,62 +349,110 @@ class RegressionDataGenerator(object):
                             format(i, count, count/len(growth), lower, upper))
             logger.info('  Total: {:9d}'.format(len(growth)))
 
-        nrows = df_train_val.shape[0]
+        self.total = df_train_val.shape[0]
         self.n_test = df_test.shape[0]
-        self.n_val = int(nrows * val_split)
-        self.n_train = nrows - self.n_val
-
-        self.cycle_train = cycle(range(nrows - self.n_val))
-        self.cycle_val = cycle(range(nrows)[-self.n_val:])
-        self.cycle_test = cycle(range(nrows, nrows + self.n_test))
+        self.n_val = int(self.total * val_split)
+        self.n_train = self.total - self.n_val
         logger.info('Rows in train: {}, val: {}, test: {}'.format(self.n_train, self.n_val, self.n_test))
 
-        self.input_dim = self.df_cellline.shape[1] - 1 + 1  # remove CELLNAME; add concentration
-        logger.info('Features:')
-        logger.info('  concentration: 1')
-        logger.info('  cell line expression: {}'.format(self.input_dim-1))
+        self.input_shapes = collections.OrderedDict()
+        self.input_shapes['drug_concentration'] = (1,)
+        self.input_shapes['cellline_expression'] = (self.df_cellline.shape[1] - 1,)
         if self.drug_features in ['descriptors', 'both']:
-            self.input_dim += self.df_drug_desc.shape[1] - 1  # remove NSC
-            logger.info('  drug descriptors: {}'.format(self.df_drug_desc.shape[1] - 1))
+            self.input_shapes['drug_descriptors'] =  (self.df_drug_desc.shape[1] - 1,)  # remove NSC
         if self.drug_features in ['latent', 'both']:
-            self.input_dim += self.df_drug_auen.shape[1] - 1  # remove NSC
-            logger.info('  drug latent representations: {}'.format(self.df_drug_auen.shape[1] - 1))
+            self.input_shapes['drug_SMILES_latent'] = (self.df_drug_auen.shape[1] - 1,)  # remove NSC
         if self.drug_features == 'noise':
-            self.input_dim += self.df_drug_rand.shape[1] - 1  # remove NSC
-            logger.info('  drug random vectors: {}'.format(self.df_drug_rand.shape[1] - 1))
+            self.input_shapes['drug_random_vector'] = (self.df_drug_rand.shape[1] - 1,)  # remove NSC
+
+        logger.info('Input features shapes:')
+        for k, v in self.input_shapes.items():
+            logger.info('  {}: {}'.format(k, v))
+
+        self.input_dim = sum([np.prod(x) for x in self.input_shapes.values()])
         logger.info('Total input dimensions: {}'.format(self.input_dim))
 
-    def flow(self, batch_size=32, data='train', topology=None):
-        if data == 'val':
-            cyc = self.cycle_val
-        elif data == 'test':
-            cyc = self.cycle_test
-        else:
-            cyc = self.cycle_train
 
+class DataGenerator(object):
+    """Generate training, validation or testing batches from loaded data
+    """
+
+    def __init__(self, data, partition='train', batch_size=32, shape=None, concat=True):
+        """Initialize data
+
+        Parameters
+        ----------
+        data: DataLoader object
+            loaded data object containing original data frames for molecular, drug and response data
+        partition: 'train', 'val', or 'test'
+            partition of data to generate for
+        batch_size: integer (default 32)
+            batch size of generated data
+        shape: None, '1d' or 'add_1d' (default None)
+            keep original feature shapes, make them flat or add one extra dimension (for convolution or locally connected layers in some frameworks)
+        concat: True or False (default True)
+            concatenate all features if set to True
+        """
+        self.lock = threading.Lock()
+        self.data = data
+        self.partition = partition
+        self.batch_size = batch_size
+        self.shape = shape
+        self.concat = concat
+
+        if partition == 'train':
+            self.cycle = cycle(range(data.n_train))
+            self.num_data = data.n_train
+        elif partition == 'val':
+            self.cycle = cycle(range(data.total)[-data.n_val:])
+            self.num_data = data.n_val
+        elif partition == 'test':
+            self.cycle = cycle(range(data.total, data.total + data.n_test))
+            self.num_data = data.n_test
+        else:
+            raise Exception('Data partition "{}" not recognized.'.format(partition))
+
+    def flow(self):
+        """Keep generating data batches
+        """
         while 1:
             self.lock.acquire()
-            indices = list(islice(cyc, batch_size))
+            indices = list(islice(self.cycle, self.batch_size))
             # print("\nProcess: {}, Batch indices start: {}".format(multiprocessing.current_process().name, indices[0]))
             self.lock.release()
 
-            df = self.df_response.iloc[indices, :]
-            df = pd.merge(df, self.df_cellline, on='CELLNAME')
+            df = self.data.df_response.iloc[indices, :]
+            df = pd.merge(df, self.data.df_cellline, on='CELLNAME')
 
-            if self.drug_features in ['descriptors', 'both']:
-                df = df.merge(self.df_drug_desc, on='NSC')
-            if self.drug_features in ['latent', 'both']:
-                df = df.merge(self.df_drug_auen, on='NSC')
-            if self.drug_features == 'noise':
-                df = df.merge(self.df_drug_rand, on='NSC')
+            if self.data.drug_features in ['descriptors', 'both']:
+                df = df.merge(self.data.df_drug_desc, on='NSC')
+            if self.data.drug_features in ['latent', 'both']:
+                df = df.merge(self.data.df_drug_auen, on='NSC')
+            if self.data.drug_features == 'noise':
+                df = df.merge(self.data.df_drug_rand, on='NSC')
 
             df = df.drop(['CELLNAME', 'NSC'], 1)
             x = np.array(df.iloc[:, 1:])
             y = np.array(df.iloc[:, 0])
             y = y / 100.
 
-            if topology == 'simple_local':
-                yield x.reshape(x.shape + (1,)), y
-                # yield x.reshape(x.shape[0], 1, x.shape[1]), y
+            if self.concat:
+                if self.shape == 'add_1d':
+                    yield x.reshape(x.shape + (1,)), y
+                else:
+                    yield x, y
             else:
-                yield x, y
+                x_list = []
+                index = 0
+                for v in self.data.input_shapes.values():
+                    length = np.prod(v)
+                    subset = x[:, index:index+length]
+                    if self.shape == '1d':
+                        reshape = (x.shape[0], length)
+                    elif self.shape == 'add_1d':
+                        reshape = (x.shape[0],) + v + (1,)
+                    else:
+                        reshape = (x.shape[0],) + v
+                    x_list.append(subset.reshape(reshape))
+                    index += length
+                yield x_list, y

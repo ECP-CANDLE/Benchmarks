@@ -1,32 +1,17 @@
-#! /usr/bin/env python
-
-"""Multilayer Perceptron for drug response problem"""
-
 from __future__ import division, print_function
 
 import argparse
-import csv
 import logging
-import sys
 
 import numpy as np
-import pandas as pd
 
-from itertools import tee, islice
+import mxnet as mx
+from mxnet.io import DataBatch, DataIter
 
-from keras import backend as K
-from keras import metrics
-from keras.models import Sequential
-from keras.layers import Dense, Dropout, LocallyConnected1D, Convolution1D, MaxPooling1D, Flatten
-from keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
-
-from sklearn.preprocessing import Imputer
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-
-# For non-interactive plotting
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
+# # For non-interactive plotting
+# import matplotlib as mpl
+# mpl.use('Agg')
+# import matplotlib.pyplot as plt
 
 import p1b3
 
@@ -48,7 +33,6 @@ DROP = 0.1
 ACTIVATION = 'relu'
 LOSS = 'mse'
 OPTIMIZER = 'sgd'
-# OPTIMIZER = 'adam'
 
 # Type of feature scaling (options: 'maxabs': to [-1,1]
 #                                   'minmax': to [0,1]
@@ -102,7 +86,7 @@ def get_parser():
                         default=NB_EPOCH, type=int,
                         help="number of training epochs")
     parser.add_argument("-l", "--locally_connected", action="store_true",
-                        default=False,
+                        default=False,  # TODO: not currently supported
                         help="use locally connected layers instead of convolution layers")
     parser.add_argument("-o", "--optimizer", action="store",
                         default=OPTIMIZER,
@@ -151,13 +135,16 @@ def get_parser():
     parser.add_argument("--workers", action="store",
                         default=NB_WORKER, type=int,
                         help="number of data generator workers")
+    parser.add_argument("--gpus", action="store", nargs='*',
+                        default=[], type=int,
+                        help="set IDs of GPUs to use")
 
     return parser
 
 
 def extension_from_parameters(args):
     """Construct string for saving model with annotation of parameters"""
-    ext = ''
+    ext = '.mx'
     ext += '.A={}'.format(args.activation)
     ext += '.B={}'.format(args.batch_size)
     ext += '.D={}'.format(args.drop)
@@ -184,120 +171,59 @@ def extension_from_parameters(args):
     return ext
 
 
-def evaluate_keras_metric(y_true, y_pred, metric):
-    objective_function = metrics.get(metric)
-    objective = objective_function(y_true, y_pred)
-    return K.eval(objective)
+class ConcatDataIter(DataIter):
+    """Data iterator for concatenated features
+    """
+
+    def __init__(self, data_loader,
+                 partition='train',
+                 batch_size=32,
+                 num_data=None,
+                 shape=None):
+        super(ConcatDataIter, self).__init__()
+        self.data = data_loader
+        self.batch_size = batch_size
+        self.gen = p1b3.DataGenerator(data_loader, partition=partition, batch_size=batch_size, shape=shape, concat=True)
+        self.num_data = num_data or self.gen.num_data
+        self.cursor = 0
+        self.gen = self.gen.flow()
+
+    @property
+    def provide_data(self):
+        return [('concat_features', (self.batch_size, self.data.input_dim))]
+
+    @property
+    def provide_label(self):
+        return [('growth', (self.batch_size,))]
+
+    def reset(self):
+        self.cursor = 0
+
+    def iter_next(self):
+        self.cursor += self.batch_size
+        if self.cursor <= self.num_data:
+            return True
+        else:
+            return False
+
+    def next(self):
+        if self.iter_next():
+            x, y = next(self.gen)
+            return DataBatch(data=[mx.nd.array(x)], label=[mx.nd.array(y)])
+        else:
+            raise StopIteration
 
 
-def evaluate_model(model, generator, samples, metric, category_cutoffs=[0.]):
-    y_true, y_pred = None, None
-    count = 0
-    while count < samples:
-        x_batch, y_batch = next(generator)
-        y_batch_pred = model.predict_on_batch(x_batch)
-        y_batch_pred = y_batch_pred.ravel()
-        y_true = np.concatenate((y_true, y_batch)) if y_true is not None else y_batch
-        y_pred = np.concatenate((y_pred, y_batch_pred)) if y_pred is not None else y_batch_pred
-        count += len(y_batch)
-
-    loss = evaluate_keras_metric(y_true.astype(np.float32), y_pred.astype(np.float32), metric)
-
-    y_true_class = np.digitize(y_true, category_cutoffs)
-    y_pred_class = np.digitize(y_pred, category_cutoffs)
-
-    # theano does not like integer input
-    acc = evaluate_keras_metric(y_true_class.astype(np.float32), y_pred_class.astype(np.float32), 'binary_accuracy')  # works for multiclass labels as well
-
-    return loss, acc, y_true, y_pred, y_true_class, y_pred_class
-
-
-def plot_error(y_true, y_pred, batch, file_ext, file_pre='save', subsample=1000):
-    if batch % 10:
+def plot_network(net, filename):
+    try:
+        dot = mx.viz.plot_network(net)
+    except ImportError:
         return
-
-    total = len(y_true)
-    if subsample and subsample < total:
-        usecols = np.random.choice(total, size=subsample, replace=False)
-        y_true = y_true[usecols]
-        y_pred = y_pred[usecols]
-
-    y_true = y_true * 100
-    y_pred = y_pred * 100
-    diffs = y_pred - y_true
-
-    bins = np.linspace(-200, 200, 100)
-    if batch == 0:
-        y_shuf = np.random.permutation(y_true)
-        plt.hist(y_shuf - y_true, bins, alpha=0.5, label='Random')
-
-    #plt.hist(diffs, bins, alpha=0.35-batch/100., label='Epoch {}'.format(batch+1))
-    plt.hist(diffs, bins, alpha=0.3, label='Epoch {}'.format(batch+1))
-    plt.title("Histogram of errors in percentage growth")
-    plt.legend(loc='upper right')
-    plt.savefig(file_pre+'.histogram'+file_ext+'.b'+str(batch)+'.png')
-    plt.close()
-
-    # Plot measured vs. predicted values
-    fig, ax = plt.subplots()
-    plt.grid('on')
-    ax.scatter(y_true, y_pred, color='red', s=10)
-    ax.plot([y_true.min(), y_true.max()],
-            [y_true.min(), y_true.max()], 'k--', lw=4)
-    ax.set_xlabel('Measured')
-    ax.set_ylabel('Predicted')
-    plt.savefig(file_pre+'.diff'+file_ext+'.b'+str(batch)+'.png')
-    plt.close()
-
-
-class MyLossHistory(Callback):
-    def __init__(self, progbar, val_gen, test_gen, val_samples, test_samples, metric, category_cutoffs=[0.], ext='', pre='save'):
-        super(MyLossHistory, self).__init__()
-        self.progbar = progbar
-        self.val_gen = val_gen
-        self.test_gen = test_gen
-        self.val_samples = val_samples
-        self.test_samples = test_samples
-        self.metric = metric
-        self.category_cutoffs = category_cutoffs
-        self.pre = pre
-        self.ext = ext
-
-    def on_train_begin(self, logs={}):
-        self.best_val_loss = np.Inf
-        self.best_val_acc = -np.Inf
-        self.best_model = None
-
-    def on_epoch_end(self, batch, logs={}):
-        if float(logs.get('val_loss', 0)) < self.best_val_loss:
-            self.best_model = self.model
-            val_loss, val_acc, y_true, y_pred, y_true_class, y_pred_class = evaluate_model(self.best_model, self.val_gen, self.val_samples, self.metric, self.category_cutoffs)
-            test_loss, test_acc, _, _, _, _ = evaluate_model(self.best_model, self.test_gen, self.test_samples, self.metric, self.category_cutoffs)
-            self.progbar.append_extra_log_values([('val_acc', val_acc), ('test_loss', test_loss), ('test_acc', test_acc)])
-            plot_error(y_true, y_pred, batch, self.ext, self.pre)
-        self.best_val_loss = min(float(logs.get('val_loss', 0)), self.best_val_loss)
-        self.best_val_acc = max(float(logs.get('val_acc', 0)), self.best_val_acc)
-
-
-class MyProgbarLogger(ProgbarLogger):
-    def on_train_begin(self, logs=None):
-        super(MyProgbarLogger, self).on_train_begin(logs)
-        self.verbose = 1
-        self.extra_log_values = []
-
-    def append_extra_log_values(self, tuples):
-        for k, v in tuples:
-            self.extra_log_values.append((k, v))
-
-    def on_epoch_end(self, epoch, logs=None):
-        logs = logs or {}
-        for k in self.params['metrics']:
-            if k in logs:
-                self.log_values.append((k, logs[k]))
-        for k, v in self.extra_log_values:
-            self.log_values.append((k, v))
-        if self.verbose:
-            self.progbar.update(self.seen, self.log_values, force=True)
+    try:
+        dot.render(filename, view=False)
+        print('Plotted network architecture in {}'.format(filename+'.pdf'))
+    except Exception:
+        return
 
 
 def main():
@@ -319,12 +245,11 @@ def main():
                              subsample=args.subsample,
                              category_cutoffs=args.category_cutoffs)
 
-    gen_shape = None
-    out_dim = 1
+    net = mx.sym.Variable('concat_features')
+    out = mx.sym.Variable('growth')
 
-    model = Sequential()
     if args.convolution and args.convolution[0]:
-        gen_shape = 'add_1d'
+        net = mx.sym.Reshape(data=net, shape=(args.batch_size, 1, loader.input_dim, 1))
         layer_list = list(range(0, len(args.convolution), 3))
         for l, i in enumerate(layer_list):
             nb_filter = args.convolution[i]
@@ -332,56 +257,43 @@ def main():
             stride = args.convolution[i+2]
             if nb_filter <= 0 or filter_len <= 0 or stride <= 0:
                 break
-            if args.locally_connected:
-                model.add(LocallyConnected1D(nb_filter, filter_len, subsample_length=stride, input_shape=(loader.input_dim, 1), activation=args.activation))
-            else:
-                model.add(Convolution1D(nb_filter, filter_len, subsample_length=stride, input_shape=(loader.input_dim, 1), activation=args.activation))
+            net = mx.sym.Convolution(data=net, num_filter=nb_filter, kernel=(filter_len, 1), stride=(stride, 1))
+            net = mx.sym.Activation(data=net, act_type=args.activation)
             if args.pool:
-                model.add(MaxPooling1D(pool_length=args.pool))
-        model.add(Flatten())
+                net = mx.sym.Pooling(data=net, pool_type="max", kernel=(args.pool, 1), stride=(1, 1))
+        net = mx.sym.Flatten(data=net)
 
     for layer in args.dense:
         if layer:
-            model.add(Dense(layer, input_dim=loader.input_dim, activation=args.activation))
-            if args.drop:
-                model.add(Dropout(args.drop))
-    model.add(Dense(out_dim))
+            net = mx.sym.FullyConnected(data=net, num_hidden=layer)
+            net = mx.sym.Activation(data=net, act_type=args.activation)
+        if args.drop:
+            net = mx.sym.Dropout(data=net, p=args.drop)
+    net = mx.sym.FullyConnected(data=net, num_hidden=1)
+    net = mx.symbol.LinearRegressionOutput(data=net, label=out)
 
-    model.summary()
-    model.compile(loss=args.loss, optimizer=args.optimizer)
+    plot_network(net, 'net'+ext)
 
-    train_gen = p1b3.DataGenerator(loader, batch_size=args.batch_size, shape=gen_shape).flow()
-    val_gen = p1b3.DataGenerator(loader, partition='val', batch_size=args.batch_size, shape=gen_shape).flow()
-    val_gen2 = p1b3.DataGenerator(loader, partition='val', batch_size=args.batch_size, shape=gen_shape).flow()
-    test_gen = p1b3.DataGenerator(loader, partition='test', batch_size=args.batch_size, shape=gen_shape).flow()
+    train_iter = ConcatDataIter(loader, batch_size=args.batch_size, num_data=args.train_samples)
+    val_iter = ConcatDataIter(loader, partition='val', batch_size=args.batch_size, num_data=args.val_samples)
 
-    train_samples = int(loader.n_train/args.batch_size) * args.batch_size
-    val_samples = int(loader.n_val/args.batch_size) * args.batch_size
-    test_samples = int(loader.n_test/args.batch_size) * args.batch_size
+    devices = mx.cpu()
+    if args.gpus:
+        devices = [mx.gpu(i) for i in args.gpus]
 
-    train_samples = args.train_samples if args.train_samples else train_samples
-    val_samples = args.val_samples if args.val_samples else val_samples
+    mod = mx.mod.Module(net,
+                        data_names=('concat_features',),
+                        label_names=('growth',),
+                        context=devices)
 
-    checkpointer = ModelCheckpoint(filepath=args.save+'.model'+ext+'.h5', save_best_only=True)
-    progbar = MyProgbarLogger()
-    history = MyLossHistory(progbar=progbar, val_gen=val_gen2, test_gen=test_gen,
-                            val_samples=val_samples, test_samples=test_samples,
-                            metric=args.loss, category_cutoffs=args.category_cutoffs,
-                            ext=ext, pre=args.save)
-
-    model.fit_generator(train_gen, train_samples,
-                        nb_epoch=args.epochs,
-                        validation_data=val_gen,
-                        nb_val_samples=val_samples,
-                        verbose=0,
-                        callbacks=[checkpointer, history, progbar],
-                        pickle_safe=True,
-                        nb_worker=args.workers)
+    initializer = mx.init.Xavier(factor_type="in", magnitude=2.34)
+    mod.fit(train_iter, eval_data=val_iter,
+            eval_metric=args.loss,
+            optimizer=args.optimizer,
+            num_epoch=args.epochs,
+            initializer=initializer,
+            batch_end_callback = mx.callback.Speedometer(args.batch_size, 20))
 
 
 if __name__ == '__main__':
     main()
-    try:
-        K.clear_session()
-    except AttributeError:      # theano does not have this function
-        pass
