@@ -4,15 +4,14 @@ import argparse
 import logging
 
 import numpy as np
-import pandas as pd
 
 import mxnet as mx
 from mxnet.io import DataBatch, DataIter
 
-# For non-interactive plotting
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
+# # For non-interactive plotting
+# import matplotlib as mpl
+# mpl.use('Agg')
+# import matplotlib.pyplot as plt
 
 import p1b3
 
@@ -232,8 +231,6 @@ def main():
     args = parser.parse_args()
     print('Args:', args)
 
-    # it = RegressionDataIter()
-
     loggingLevel = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=loggingLevel, format='')
 
@@ -264,6 +261,7 @@ def main():
             net = mx.sym.Activation(data=net, act_type=args.activation)
             if args.pool:
                 net = mx.sym.Pooling(data=net, pool_type="max", kernel=(args.pool, 1), stride=(1, 1))
+        net = mx.sym.Flatten(data=net)
 
     for layer in args.dense:
         if layer:
@@ -288,10 +286,12 @@ def main():
                         label_names=('growth',),
                         context=devices)
 
+    initializer = mx.init.Xavier(factor_type="in", magnitude=2.34)
     mod.fit(train_iter, eval_data=val_iter,
             eval_metric=args.loss,
             optimizer=args.optimizer,
             num_epoch=args.epochs,
+            initializer=initializer,
             batch_end_callback = mx.callback.Speedometer(args.batch_size, 20))
 
 
