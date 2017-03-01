@@ -54,11 +54,13 @@ if __name__=="__main__":
 	from keras import callbacks
 	from keras.layers.advanced_activations import ELU
 	from keras.preprocessing.image import ImageDataGenerator
+        from keras.utils.data_utils import get_file
 
 	batch_size = opts.batch_size
 ##### Read Data ########
 	print ('Reading Data...')
-	data_file='%s/Research/DeepLearning/ECP CANDLE/Benchmarks/Benchmarks.git/P2B2/sim-numpy.npy'%HOME ### can code to read at the terminal
+        data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B2/p2_small_baseline.npy')
+#	data_file='%s/Research/DeepLearning/ECP CANDLE/Benchmarks/Benchmarks.git/P2B2/sim-numpy.npy'%HOME ### can code to read at the terminal
 	print 'Data File: %s' %data_file
 	print 'Data Format: [Num Samples, Num Molecules, Num Atoms, Position]'
 	
