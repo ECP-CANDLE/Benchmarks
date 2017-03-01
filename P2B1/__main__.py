@@ -5,6 +5,7 @@ import pickle
 import sys,os
 import glob
 import optparse
+from keras.utils.data_utils import get_file
 HOME=os.environ['HOME']
 def parse_list(option, opt, value, parser):
   setattr(parser.values, option.dest, value.split(','))
@@ -31,7 +32,7 @@ if __name__=="__main__":
 		sys.exit(0)
 	sys.path.append('home_dir')
 	
-	import candle.candle_helper_functions as hf
+	import candle_helper_functions as hf
 	reload(hf)
 	maps=hf.autoencoder_preprocess()
 	#from keras.Helpermodules.mnist_autoencoder_helper_functions import mnist_conv_deconv_simple, mnist_conv_deconv_complex,mnist_autoencoder_preprocess,generate_figure
@@ -47,7 +48,7 @@ if __name__=="__main__":
 	batch_size = 16
 ##### Read Data ########
 	print ('Reading Data...')
-	data_file='%s/Work/DataSets/CANDLE/sim-numpy.npy'%HOME ### can code to read at the terminal
+        data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B1/p2_small_baseline.npy')
 	print 'Data File: %s' %data_file
 	print 'Data Format: [Num Samples, Num Molecules, Num Atoms, Position]'
 	
