@@ -16,7 +16,8 @@ from keras.layers import Input
 from keras.models import Sequential,Model
 from keras.layers.core import Flatten, Dense, Dropout, Activation, Reshape
 from keras.layers.convolutional import Convolution2D, MaxPooling2D,Convolution1D
-from keras.layers.convolutional import ZeroPadding2D,UpSampling2D,Unpooling2D,perforated_Unpooling2D,DePool2D
+from keras.layers.convolutional import ZeroPadding2D,UpSampling2D
+#from keras.layers.convolutional import ZeroPadding2D,UpSampling2D,Unpooling2D,perforated_Unpooling2D,DePool2D
 from keras.initializations import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
 from keras.layers.normalization import BatchNormalization
 import threading
