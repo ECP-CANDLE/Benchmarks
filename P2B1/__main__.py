@@ -14,18 +14,14 @@ if __name__=="__main__":
 ### Hyperparameters and model save path
 	parser=optparse.OptionParser()
 	parser.add_option("--train", action="store_true",dest="train_bool",default=False,help="Invoke training")
-	parser.add_option("--learning-rate",help="learning rate",dest="learning_rate",type=float,default=0.1)
-	parser.add_option("--noise-factor",help="noise",dest="noise_factor",type=float,default=0.0)
-	parser.add_option("--cool",action="store_true",dest="cool",default=False,help="Cool Learning Rate")
-	parser.add_option("--epochs",help="epochs",dest="epochs",type=int,default=1)
-	parser.add_option("--home-dir",help="Home Directory",dest="home_dir",type=str,default='/Users/talathi1/Work/Python/Git_Folder/caffe-tools/keras')
+	parser.add_option("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
 	parser.add_option("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
+	parser.add_option("--config-file",help="Config File",dest="config_file",type=str,default='./config.ini')
 	parser.add_option("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
 	parser.add_option("--memo",help="Memo",dest="base_memo",type=str,default=None)
+	parser.add_option("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='CenterZ')
 	(opts,args)=parser.parse_args()
 
-## Example of training command:
-#python mnist_conv_autoencoder.py -C --save-dir /Users/talathi1/Work/Python/Models/Test_Models --memo test --epochs 1 --data-path /Users/talathi1/Work/DataSets/mnist.pkl.gz --learning-rate 0.01 --train --classify --unpool_type 3
 
 	if not os.path.isdir(opts.home_dir):
 		print ('Keras home directory not set')
@@ -34,10 +30,12 @@ if __name__=="__main__":
 	
 	import candle_helper_functions as hf
 	reload(hf)
+	import keras_model_utils as KEU
+	reload(KEU)
 	maps=hf.autoencoder_preprocess()
 	#from keras.Helpermodules.mnist_autoencoder_helper_functions import mnist_conv_deconv_simple, mnist_conv_deconv_complex,mnist_autoencoder_preprocess,generate_figure
 	
-	from keras.optimizers import SGD,RMSprop
+	from keras.optimizers import SGD,RMSprop,Adam
 	from keras.datasets import mnist
 	from keras.callbacks import LearningRateScheduler,ModelCheckpoint
 	from keras.regularizers import l2,WeightRegularizer
@@ -45,24 +43,33 @@ if __name__=="__main__":
 	from keras.layers.advanced_activations import ELU
 	from keras.preprocessing.image import ImageDataGenerator
 
-	batch_size = 16
+	GP=hf.ReadConfig(opts.config_file)
+	batch_size = GP['batch_size']
+
 ##### Read Data ########
 	print ('Reading Data...')
         data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B1/p2_small_baseline.npy')
+#	data_file='%s/Work/DataSets/CANDLE/sim-numpy.npy'%HOME ### can code to read at the terminal
 	print 'Data File: %s' %data_file
 	print 'Data Format: [Num Samples, Num Molecules, Num Atoms, Position]'
 	
 	X=np.load(data_file) ### Data is: Samples, Molecules, Atoms, x-pos,y-pos,z-pos
-	## Take center of mass for atoms:
-	X_A=X.mean(axis=2) ## Data is: Samples, Molecules, x-pos,y-pos,z-pos
-	#X_train=X_A.reshape(X_A.shape[0],X_A.shape[1]*X_A.shape[2])
-	X_train=X_A[:,:,2] ## only consider z-dimension
+	if opts.case.upper()=='FULL':
+		print 'Design autoencoder for data frame with coordinates for all beads'
+		X_train=X.copy().reshape(X.shape[0],np.prod(X.shape[1:]))
+	if opts.case.upper()=='CENTER':
+		print 'design autoencoder for data frame with coordinates of the center-of-mass'
+		X_train=X.mean(axis=2).reshape(X.shape[0],np.prod(X.mean(axis=2).shape[1:]))
+	if opts.case.upper()=='CENTERZ':
+		print 'design autoencoder for data frame with z-coordiate of the center-of-mass'
+		X_train=X.mean(axis=2)[:,:,2].reshape(X.shape[0],np.prod(X.mean(axis=2)[:,:,2].shape[1:]))
+
 	y_train=X_train.copy()
 	input_dim=X_train.shape[1]
 	mu, sigma = np.mean(X_train), np.std(X_train)
 	mu=0.0;sigma=1.0
 	X_train=maps.renormalize(X_train,mu,sigma)
-	datagen=hf.ImageNoiseDataGenerator(corruption_level=opts.noise_factor)  ## Add some corruption to input data ## idead for denoising auto encoder 
+	datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])  ## Add some corruption to input data ## idead for denoising auto encoder 
 		
 	print('X_train type and shape:', X_train.dtype, X_train.shape)
 	print('X_train.min():', X_train.min())
@@ -70,28 +77,25 @@ if __name__=="__main__":
 
 ### Define Model, Solver and Compile ##########
 	print ('Define the model and compile')
-	opt = SGD(lr=opts.learning_rate, decay=0.0, momentum=0.975, nesterov=True)
+	opt = Adam(lr=GP['learning_rate'])
 	
 	print ('using mlp network')
 	model_type='mlp'
-	hidden_layers=[512,256,128,64,32,16]
-	model=hf.dense_auto(weights_path=opts.weight_path,input_shape=(input_dim,),nonlinearity='elu',hidden_layers=hidden_layers)
-		
-	memo='%s_%s_%0.5f'%(opts.base_memo,model_type,opts.learning_rate)
+	hidden_layers=GP['num_hidden']
+	model=hf.dense_auto(weights_path=opts.weight_path,input_shape=(input_dim,),nonlinearity='elu',\
+		hidden_layers=hidden_layers,l2_reg=GP['weight_decay'])
+	memo='%s_%s'%(opts.base_memo,model_type)
 
 	print 'Autoencoder Regression problem'
-	model.compile(optimizer='adadelta', loss='mean_squared_error')
+	model.compile(optimizer=opt, loss='mean_squared_error')
 
-#### Print Model Configuration ###########
-	num_layers=len(model.layers)
-	print '*'*10,'Model Configuration','*'*10
-	for i  in range(len(model.layers)):	
-		print i,': ',model.layers[i].name, ':', model.layers[i].output_shape[:]
-
+#### Print Model Stats ###########
+	KEU.Model_Info(model)
+	
 ### Set up for Training and Validation
-	total_epochs = opts.epochs
-	initial_lrate=opts.learning_rate
-	if opts.cool:
+	total_epochs = GP['epochs']
+	initial_lrate=GP['learning_rate']
+	if GP['cool']:
 		drop=0.5
 	else:
 		drop=1.0

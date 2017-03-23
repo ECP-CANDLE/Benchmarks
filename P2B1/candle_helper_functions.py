@@ -16,11 +16,27 @@ from keras.layers import Input
 from keras.models import Sequential,Model
 from keras.layers.core import Flatten, Dense, Dropout, Activation, Reshape
 from keras.layers.convolutional import Convolution2D, MaxPooling2D,Convolution1D
-from keras.layers.convolutional import ZeroPadding2D,UpSampling2D
 #from keras.layers.convolutional import ZeroPadding2D,UpSampling2D,Unpooling2D,perforated_Unpooling2D,DePool2D
 from keras.initializations import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
 from keras.layers.normalization import BatchNormalization
+from keras.regularizers import l2, activity_l2
 import threading
+import ConfigParser
+
+#### Read Config File
+def ReadConfig(File):
+    config=ConfigParser.ConfigParser()
+    config.read(File)
+    section=config.sections()
+    Global_Params={}
+    Global_Params['num_hidden']=eval(config.get(section[0],'num_hidden'))
+    Global_Params['batch_size']=eval(config.get(section[0],'batch_size'))
+    Global_Params['learning_rate']=eval(config.get(section[0],'learning_rate'))
+    Global_Params['epochs']=eval(config.get(section[0],'epochs'))
+    Global_Params['cool']=config.get(section[0],'cool')
+    Global_Params['weight_decay']=eval(config.get(section[0],'weight_decay'))
+    Global_Params['noise_factor']=eval(config.get(section[0],'noise_factor'))
+    return Global_Params
 
 ############# Define Data Generators ################
 class ImageNoiseDataGenerator(object):
@@ -93,7 +109,7 @@ class ImageNoiseDataGenerator(object):
         return np.random.binomial(1,1-corruption_level,x.shape)*x
 
 ##### Define Neural Network Models ###################
-def dense_auto(weights_path=None,input_shape=(784,),hidden_layers=None,nonlinearity='relu'):
+def dense_auto(weights_path=None,input_shape=(784,),hidden_layers=None,nonlinearity='relu',l2_reg=0.0):
     input_img = Input(shape=input_shape)
     
     if hidden_layers!=None:
@@ -101,19 +117,19 @@ def dense_auto(weights_path=None,input_shape=(784,),hidden_layers=None,nonlinear
             hidden_layers=list(hidden_layers)
         for i,l in enumerate(hidden_layers):
             if i==0: 
-                encoded=Dense(l,activation=nonlinearity)(input_img)
+                encoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(input_img)
             else:
-                encoded=Dense(l,activation=nonlinearity)(encoded)
+                encoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(encoded)
 
         for i,l in reversed(list(enumerate(hidden_layers))):
             if i <len(hidden_layers)-1:
                 if i==len(hidden_layers)-2:
-                    decoded=Dense(l,activation=nonlinearity)(encoded)
+                    decoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(encoded)
                 else:
-                    decoded=Dense(l,activation=nonlinearity)(decoded)
-        decoded=Dense(input_shape[0])(decoded)
+                    decoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(decoded)
+        decoded=Dense(input_shape[0],W_regularizer=l2(l2_reg))(decoded)
     else:
-        decoded=Dense(input_shape[0])(input_img)
+        decoded=Dense(input_shape[0],W_regularizer=l2(l2_reg))(input_img)
 
     model=Model(input=input_img,output=decoded)
     
