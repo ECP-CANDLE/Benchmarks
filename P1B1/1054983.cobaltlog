@@ -1,0 +1,25 @@
+Jobid: 1054983
+qsub --mode script -A Candle_ECP -n 1 -t 01:00:00 -M brettin@anl.gov --jobname Candle-ECP qsub_p1b1_baseline.sh
+Thu Mar 23 04:23:19 2017 +0000 (UTC) submitted with cwd set to: /gpfs/mira-fs1/projects/Candle_ECP/brettin/benchmarks/P1B1
+jobid 1054983 submitted from terminal /dev/pts/16
+Thu Mar 23 04:23:41 2017 +0000 (UTC) 
+Thu Mar 23 04:23:41 2017 +0000 (UTC) Command: '/usr/bin/ssh' 'cc045.cooley' '/usr/bin/cobalt-launcher.py' '--nf' '/var/tmp/cobalt.1054983' '--jobid' '1054983' '--cwd' '/gpfs/mira-fs1/projects/Candle_ECP/brettin/benchmarks/P1B1' '--env' 'COBALT_JOBID=1054983' '/gpfs/mira-fs1/projects/Candle_ECP/brettin/benchmarks/P1B1/qsub_p1b1_baseline.sh'
+Thu Mar 23 04:23:41 2017 +0000 (UTC) 
+Thu Mar 23 04:23:41 2017 +0000 (UTC) Environment:
+Thu Mar 23 04:23:41 2017 +0000 (UTC) SHELL=/bin/bash
+Thu Mar 23 04:23:41 2017 +0000 (UTC) COBALT_NODEFILE=/tmp/tmpZuSBCX
+Thu Mar 23 04:23:41 2017 +0000 (UTC) COBALT_PARTNAME=cc045.cooley
+Thu Mar 23 04:23:41 2017 +0000 (UTC) COBALT_JOBID=1054983
+Thu Mar 23 04:23:41 2017 +0000 (UTC) COBALT_STARTTIME=1490243004
+Thu Mar 23 04:23:41 2017 +0000 (UTC) LOGNAME=brettin
+Thu Mar 23 04:23:41 2017 +0000 (UTC) USER=brettin
+Thu Mar 23 04:23:41 2017 +0000 (UTC) COBALT_ENDTIME=1490246604
+Thu Mar 23 04:23:41 2017 +0000 (UTC) COBALT_PARTSIZE=1
+Thu Mar 23 04:23:41 2017 +0000 (UTC) HOME=/home/brettin
+Thu Mar 23 04:23:41 2017 +0000 (UTC) COBALT_JOBSIZE=1
+Thu Mar 23 04:23:41 2017 +0000 (UTC) 
+Thu Mar 23 04:23:41 2017 +0000 (UTC) Info: stdin received from /dev/null
+Thu Mar 23 04:23:41 2017 +0000 (UTC) Info: stdout sent to /gpfs/mira-fs1/projects/Candle_ECP/brettin/benchmarks/P1B1/1054983.output
+Thu Mar 23 04:23:41 2017 +0000 (UTC) Info: stderr sent to /gpfs/mira-fs1/projects/Candle_ECP/brettin/benchmarks/P1B1/1054983.error
+Thu Mar 23 04:23:41 2017 +0000 (UTC) 
+Thu Mar 23 04:32:28 2017 +0000 (UTC) Info: task completed normally with an exit code of 0; initiating job cleanup and removal
