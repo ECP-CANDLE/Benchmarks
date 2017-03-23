@@ -54,7 +54,7 @@ ae.compile(optimizer='rmsprop', loss='mean_squared_error')
 
 ae.fit(X_train, X_train,
        batch_size=BATCH,
-       nb_epoch=EPOCH,
+       epochs=EPOCH,
        validation_split=0.2)
 
 encoded_image = encoder.predict(X_test)

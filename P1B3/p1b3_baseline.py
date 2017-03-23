@@ -137,12 +137,12 @@ def get_parser():
     parser.add_argument("--category_cutoffs", action="store", nargs='+', type=float,
                         default=CATEGORY_CUTOFFS,
                         help="list of growth cutoffs (between -1 and +1) seperating non-response and response categories")
-    parser.add_argument("--train_samples", action="store",
+    parser.add_argument("--train_steps", action="store",
                         default=0, type=int,
-                        help="overrides the number of training samples if set to nonzero")
-    parser.add_argument("--val_samples", action="store",
+                        help="overrides the number of training batches per epoch if set to nonzero")
+    parser.add_argument("--val_steps", action="store",
                         default=0, type=int,
-                        help="overrides the number of validation samples if set to nonzero")
+                        help="overrides the number of validation batches per epoch if set to nonzero")
     parser.add_argument("--save", action="store",
                         default='save',
                         help="prefix of output files")
@@ -190,16 +190,16 @@ def evaluate_keras_metric(y_true, y_pred, metric):
     return K.eval(objective)
 
 
-def evaluate_model(model, generator, samples, metric, category_cutoffs=[0.]):
+def evaluate_model(model, generator, steps, metric, category_cutoffs=[0.]):
     y_true, y_pred = None, None
     count = 0
-    while count < samples:
+    while count < steps:
         x_batch, y_batch = next(generator)
         y_batch_pred = model.predict_on_batch(x_batch)
         y_batch_pred = y_batch_pred.ravel()
         y_true = np.concatenate((y_true, y_batch)) if y_true is not None else y_batch
         y_pred = np.concatenate((y_pred, y_batch_pred)) if y_pred is not None else y_batch_pred
-        count += len(y_batch)
+        count += 1
 
     loss = evaluate_keras_metric(y_true.astype(np.float32), y_pred.astype(np.float32), metric)
 
@@ -251,13 +251,13 @@ def plot_error(y_true, y_pred, batch, file_ext, file_pre='save', subsample=1000)
 
 
 class MyLossHistory(Callback):
-    def __init__(self, progbar, val_gen, test_gen, val_samples, test_samples, metric, category_cutoffs=[0.], ext='', pre='save'):
+    def __init__(self, progbar, val_gen, test_gen, val_steps, test_steps, metric, category_cutoffs=[0.], ext='', pre='save'):
         super(MyLossHistory, self).__init__()
         self.progbar = progbar
         self.val_gen = val_gen
         self.test_gen = test_gen
-        self.val_samples = val_samples
-        self.test_samples = test_samples
+        self.val_steps = val_steps
+        self.test_steps = test_steps
         self.metric = metric
         self.category_cutoffs = category_cutoffs
         self.pre = pre
@@ -271,8 +271,8 @@ class MyLossHistory(Callback):
     def on_epoch_end(self, batch, logs={}):
         if float(logs.get('val_loss', 0)) < self.best_val_loss:
             self.best_model = self.model
-            val_loss, val_acc, y_true, y_pred, y_true_class, y_pred_class = evaluate_model(self.best_model, self.val_gen, self.val_samples, self.metric, self.category_cutoffs)
-            test_loss, test_acc, _, _, _, _ = evaluate_model(self.best_model, self.test_gen, self.test_samples, self.metric, self.category_cutoffs)
+            val_loss, val_acc, y_true, y_pred, y_true_class, y_pred_class = evaluate_model(self.best_model, self.val_gen, self.val_steps, self.metric, self.category_cutoffs)
+            test_loss, test_acc, _, _, _, _ = evaluate_model(self.best_model, self.test_gen, self.test_steps, self.metric, self.category_cutoffs)
             self.progbar.append_extra_log_values([('val_acc', val_acc), ('test_loss', test_loss), ('test_acc', test_acc)])
             plot_error(y_true, y_pred, batch, self.ext, self.pre)
         self.best_val_loss = min(float(logs.get('val_loss', 0)), self.best_val_loss)
@@ -280,17 +280,21 @@ class MyLossHistory(Callback):
 
 
 class MyProgbarLogger(ProgbarLogger):
-    def on_train_begin(self, logs=None):
+    def __init__(self, samples):
+        super(MyProgbarLogger, self).__init__()
+        self.samples = samples
+
+    def on_train_begin(self, logs={}):
         super(MyProgbarLogger, self).on_train_begin(logs)
         self.verbose = 1
         self.extra_log_values = []
+        self.params['samples'] = self.samples
 
     def append_extra_log_values(self, tuples):
         for k, v in tuples:
             self.extra_log_values.append((k, v))
 
-    def on_epoch_end(self, epoch, logs=None):
-        logs = logs or {}
+    def on_epoch_end(self, epoch, logs={}):
         for k in self.params['metrics']:
             if k in logs:
                 self.log_values.append((k, logs[k]))
@@ -355,28 +359,28 @@ def main():
     val_gen2 = p1b3.DataGenerator(loader, partition='val', batch_size=args.batch_size, shape=gen_shape).flow()
     test_gen = p1b3.DataGenerator(loader, partition='test', batch_size=args.batch_size, shape=gen_shape).flow()
 
-    train_samples = int(loader.n_train/args.batch_size) * args.batch_size
-    val_samples = int(loader.n_val/args.batch_size) * args.batch_size
-    test_samples = int(loader.n_test/args.batch_size) * args.batch_size
+    train_steps = int(loader.n_train/args.batch_size)
+    val_steps = int(loader.n_val/args.batch_size)
+    test_steps = int(loader.n_test/args.batch_size)
 
-    train_samples = args.train_samples if args.train_samples else train_samples
-    val_samples = args.val_samples if args.val_samples else val_samples
+    train_steps = args.train_steps if args.train_steps else train_steps
+    val_steps = args.val_steps if args.val_steps else val_steps
 
     checkpointer = ModelCheckpoint(filepath=args.save+'.model'+ext+'.h5', save_best_only=True)
-    progbar = MyProgbarLogger()
+    progbar = MyProgbarLogger(train_steps * args.batch_size)
     history = MyLossHistory(progbar=progbar, val_gen=val_gen2, test_gen=test_gen,
-                            val_samples=val_samples, test_samples=test_samples,
+                            val_steps=val_steps, test_steps=test_steps,
                             metric=args.loss, category_cutoffs=args.category_cutoffs,
                             ext=ext, pre=args.save)
 
-    model.fit_generator(train_gen, train_samples,
-                        nb_epoch=args.epochs,
+    model.fit_generator(train_gen, train_steps,
+                        epochs=args.epochs,
                         validation_data=val_gen,
-                        nb_val_samples=val_samples,
+                        validation_steps=val_steps,
                         verbose=0,
                         callbacks=[checkpointer, history, progbar],
                         pickle_safe=True,
-                        nb_worker=args.workers)
+                        workers=args.workers)
 
 
 if __name__ == '__main__':

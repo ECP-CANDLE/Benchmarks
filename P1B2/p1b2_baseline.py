@@ -5,7 +5,7 @@ import numpy as np
 from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, Input
 from keras.callbacks import Callback, ModelCheckpoint
-from keras.regularizers import l2, activity_l2
+from keras.regularizers import l2
 
 import p1b2
 
@@ -63,16 +63,16 @@ def main():
 
     model.add(Dense(LAYERS[0], input_dim=input_dim,
                     activation=ACTIVATION,
-                    W_regularizer=l2(PENALTY),
-                    activity_regularizer=activity_l2(PENALTY)))
+                    kernel_regularizer=l2(PENALTY),
+                    activity_regularizer=l2(PENALTY)))
 
     for layer in LAYERS[1:]:
         if layer:
             if DROP:
                 model.add(Dropout(DROP))
             model.add(Dense(layer, activation=ACTIVATION,
-                            W_regularizer=l2(PENALTY),
-                            activity_regularizer=activity_l2(PENALTY)))
+                            kernel_regularizer=l2(PENALTY),
+                            activity_regularizer=l2(PENALTY)))
 
     model.add(Dense(output_dim, activation=ACTIVATION))
 
@@ -85,7 +85,7 @@ def main():
 
     model.fit(X_train, y_train,
               batch_size=BATCH_SIZE,
-              nb_epoch=NB_EPOCH,
+              epochs=NB_EPOCH,
               validation_split=0.2,
               callbacks=[history, checkpointer])
 
