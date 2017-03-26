@@ -27,20 +27,20 @@ def do_10_fold():
 
     for fold in range( 1 ):
 
-        feature_train_0 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task0_' + str( fold ) + '_train_feature.csv', delimiter= ',' )
-        truth_train_0 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task0_' + str( fold ) + '_train_label.csv', delimiter= ',' )
-        feature_test_0 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task0_' + str( fold ) + '_test_feature.csv', delimiter= ',' )
-        truth_test_0 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task0_' + str( fold ) + '_test_label.csv', delimiter= ',' )
+        feature_train_0 = np.genfromtxt( 'data/task0_' + str( fold ) + '_train_feature.csv', delimiter= ',' )
+        truth_train_0 = np.genfromtxt( 'data/task0_' + str( fold ) + '_train_label.csv', delimiter= ',' )
+        feature_test_0 = np.genfromtxt( 'data/task0_' + str( fold ) + '_test_feature.csv', delimiter= ',' )
+        truth_test_0 = np.genfromtxt( 'data/task0_' + str( fold ) + '_test_label.csv', delimiter= ',' )
 
-        feature_train_1 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task1_' + str( fold ) + '_train_feature.csv', delimiter= ',' )
-        truth_train_1 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task1_' + str( fold ) + '_train_label.csv', delimiter= ',' )
-        feature_test_1 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task1_' + str( fold ) + '_test_feature.csv', delimiter= ',' )
-        truth_test_1 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task1_' + str( fold ) + '_test_label.csv', delimiter= ',' )
+        feature_train_1 = np.genfromtxt( 'data/task1_' + str( fold ) + '_train_feature.csv', delimiter= ',' )
+        truth_train_1 = np.genfromtxt( 'data/task1_' + str( fold ) + '_train_label.csv', delimiter= ',' )
+        feature_test_1 = np.genfromtxt( 'data/task1_' + str( fold ) + '_test_feature.csv', delimiter= ',' )
+        truth_test_1 = np.genfromtxt( 'data/task1_' + str( fold ) + '_test_label.csv', delimiter= ',' )
 
-        feature_train_2 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task2_' + str( fold ) + '_train_feature.csv', delimiter= ',' )
-        truth_train_2 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task2_' + str( fold ) + '_train_label.csv', delimiter= ',' )
-        feature_test_2 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task2_' + str( fold ) + '_test_feature.csv', delimiter= ',' )
-        truth_test_2 = np.genfromtxt( '/Volumes/Storage/Works/mtl400/task2_' + str( fold ) + '_test_label.csv', delimiter= ',' )
+        feature_train_2 = np.genfromtxt( 'data/task2_' + str( fold ) + '_train_feature.csv', delimiter= ',' )
+        truth_train_2 = np.genfromtxt( 'data/task2_' + str( fold ) + '_train_label.csv', delimiter= ',' )
+        feature_test_2 = np.genfromtxt( 'data/task2_' + str( fold ) + '_test_feature.csv', delimiter= ',' )
+        truth_test_2 = np.genfromtxt( 'data/task2_' + str( fold ) + '_test_label.csv', delimiter= ',' )
 
         features_train = [ feature_train_0, feature_train_1, feature_train_2 ]
         truths_train = [ truth_train_0, truth_train_1, truth_train_2 ]
