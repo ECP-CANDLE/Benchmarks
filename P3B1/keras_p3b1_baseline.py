@@ -1,7 +1,7 @@
 import numpy as np
 from MTL_run import run_mtl
 
-
+from sklearn.metrics import f1_score
 
 def do_10_fold():
     shared_nnet_spec= [ 1200 ]
