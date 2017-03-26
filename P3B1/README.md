@@ -28,6 +28,9 @@
 * Proposed network architecture: Deep neural net across individual tasks
 * Number of layers: 5-6 layers
 
+A graphical representation of the MTL-DNN is shown below:
+![MTL-DNN Architecture](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P3B1/images/MTL1.png)
+
 ### Running the baseline implementation
 There are two broad options for running our MTL implementation. The first baseline option includes the basic training of an MTL-based deep neural net. The second implementation includes a standard 10-fold cross-validation loop and depends on the first baseline for building and training the MTL-based deep neural net.
 
