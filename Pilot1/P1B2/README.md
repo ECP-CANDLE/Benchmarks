@@ -112,7 +112,7 @@ be enough information in this set of SNP data to classify cancer types
 accurately.
 
 ```
-cd P1B2
+cd Pilot1/P1B2
 python p1b2_xgboost.py
 ```
 
@@ -125,7 +125,7 @@ achived 60.2% accuracy in their experiment. See the following links for details:
 Try the following commands to run a replicate of their network (modified for the P1B2 data loader).
 
 ```
-cd P1B2
+cd Pilot1/P1B2
 python contrib/David_Brewster/p1b2_ljeabmreosn_mlp.py
 ```
 

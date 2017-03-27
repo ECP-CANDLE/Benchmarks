@@ -70,5 +70,5 @@ directory for details. Here's his plot on reconstruction error vs
 different network architectures. The keras code that roughly corresponds to the best 4-layer 
 network in the plot is `contrib/Fangfang/p1b1_4layer.py`.
 
-![Autoencoder reconstruction error vs different network architectures](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B1/images/network_sweep_ex3.png)
+![Autoencoder reconstruction error vs different network architectures](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/Pilot1/P1B1/images/network_sweep_ex3.png)
 
