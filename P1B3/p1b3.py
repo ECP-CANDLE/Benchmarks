@@ -38,7 +38,7 @@ def scale(df, scaling=None):
         type of scaling to apply
     """
 
-    if scaling is None or scaling == 'None':
+    if scaling is None or scaling.lower() == 'none':
         return df
 
     df = df.dropna(axis=1, how='any')
@@ -77,7 +77,7 @@ def impute_and_scale(df, scaling='std'):
     imputer = Imputer(strategy='mean', axis=0)
     mat = imputer.fit_transform(df)
 
-    if scaling is None:
+    if scaling is None or scaling.lower() == 'none':
         return pd.DataFrame(mat, columns=df.columns)
 
     if scaling == 'maxabs':
@@ -126,6 +126,87 @@ def load_cellline_expressions(path, ncols=None, scaling='std'):
     df2 = impute_and_scale(df2, scaling)
     df2 = df2.astype(np.float32)
     df = pd.concat([df1, df2], axis=1)
+
+    return df
+
+
+def load_cellline_mirna(path, ncols=None, scaling='std'):
+    """Load cell line microRNA data, sub-select columns randomly if
+        specificed, scale the selected data and return a pandas
+        dataframe.
+
+    Parameters
+    ----------
+    path: string
+        path to 'RNA__microRNA_OSU_V3_chip_log2.transposed.txt'
+    ncols : int or None
+        number of columns to randomly subselect (default None : use all data)
+    scaling : 'maxabs' [-1,1], 'minmax' [0,1], 'std', or None, optional (default 'std')
+        type of scaling to apply
+
+    """
+
+    df = pd.read_csv(path, sep='\t', engine='c',
+                     na_values=['na','-',''])
+
+    df1 = df['CellLine']
+    df1 = df1.map(lambda x: x.replace('.', ':'))
+    df1.name = 'CELLNAME'
+
+    df2 = df.drop('CellLine', 1)
+
+    total = df2.shape[1]
+    if ncols and ncols < total:
+        usecols = np.random.choice(total, size=ncols, replace=False)
+        df2 = df2.iloc[:, usecols]
+
+    df2 = impute_and_scale(df2, scaling)
+    df2 = df2.astype(np.float32)
+    df = pd.concat([df1, df2], axis=1)
+
+    return df
+
+
+def load_cellline_proteome(path, kinome_path=None, ncols=None, scaling='std'):
+    """Load cell line microRNA data, sub-select columns randomly if
+        specificed, scale the selected data and return a pandas
+        dataframe.
+
+    Parameters
+    ----------
+    path: string
+        path to 'nci60_proteome_log2.transposed.tsv'
+    kinome_path: string or None (default None)
+        path to 'nci60_kinome_log2.transposed.tsv'
+    ncols : int or None
+        number of columns to randomly subselect (default None : use all data)
+    scaling : 'maxabs' [-1,1], 'minmax' [0,1], 'std', or None, optional (default 'std')
+        type of scaling to apply
+
+    """
+
+    df = pd.read_csv(path, sep='\t', engine='c')
+    df = df.set_index('CellLine')
+
+    if kinome_path:
+        df_k = pd.read_csv(kinome_path, sep='\t', engine='c')
+        df_k = df_k.set_index('CellLine')
+        df_k = df_k.add_suffix('.K')
+        df = df.merge(df_k, left_index=True, right_index=True)
+
+    index = df.index.map(lambda x: x.replace('.', ':'))
+
+    total = df.shape[1]
+    if ncols and ncols < total:
+        usecols = np.random.choice(total, size=ncols, replace=False)
+        df = df.iloc[:, usecols]
+
+    df = impute_and_scale(df, scaling)
+    df = df.astype(np.float32)
+
+    df.index = index
+    df.index.names = ['CELLNAME']
+    df = df.reset_index()
 
     return df
 
@@ -243,7 +324,8 @@ class DataLoader(object):
     """Load merged drug response, drug descriptors and cell line essay data
     """
 
-    def __init__(self, val_split=0.2, shuffle=True, drug_features='descriptors',
+    def __init__(self, val_split=0.2, test_cell_split=None, shuffle=True,
+                 cell_features=['expression'], drug_features=['descriptors'],
                  feature_subsample=None, scaling='std', scramble=False,
                  min_logconc=-5., max_logconc=-4., subsample='naive_balancing',
                  category_cutoffs=[0.]):
@@ -253,10 +335,14 @@ class DataLoader(object):
         Parameters
         ----------
         val_split : float, optional (default 0.2)
-            percentage of data to use in validation
+            fraction of data to use in validation
+        test_cell_split : float or None, optional (default None)
+            fraction of cell lines to use in test; if None use predefined unseen cell lines instead of sampling cell lines used in training
         shuffle : True or False, optional (default True)
             if True shuffles the merged data before splitting training and validation sets
-        drug_features: 'descriptors', 'latent', 'both', 'noise' (default 'descriptors')
+        cell_features: list of strings from 'expression', 'mirna', 'proteome', 'all', 'categorical' (default ['expression'])
+            use one or more cell line feature sets: gene expression, microRNA, proteomics; or, use 'categorical' for one-hot encoded cell lines
+        drug_features: list of strings from 'descriptors', 'latent', 'all', 'noise' (default ['descriptors'])
             use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder trained on NSC drugs, or both; use random features if set to noise
         feature_subsample: None or integer (default None)
             number of feature columns to use from cellline expressions and drug descriptors
@@ -274,50 +360,91 @@ class DataLoader(object):
             growth thresholds seperating non-response and response categories
         """
 
-        self.drug_features = drug_features
-
         server = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/'
 
         cell_expr_path = get_file('P1B3_cellline_expressions.tsv', origin=server+'P1B3_cellline_expressions.tsv')
+        cell_mrna_path = get_file('P1B3_cellline_mirna.tsv', origin=server+'P1B3_cellline_mirna.tsv')
+        cell_prot_path = get_file('P1B3_cellline_proteome.tsv', origin=server+'P1B3_cellline_proteome.tsv')
+        cell_kino_path = get_file('P1B3_cellline_kinome.tsv', origin=server+'P1B3_cellline_kinome.tsv')
         drug_desc_path = get_file('P1B3_drug_descriptors.tsv', origin=server+'P1B3_drug_descriptors.tsv')
         drug_auen_path = get_file('P1B3_drug_latent.csv', origin=server+'P1B3_drug_latent.csv')
         dose_resp_path = get_file('P1B3_dose_response.csv', origin=server+'P1B3_dose_response.csv')
         test_cell_path = get_file('P1B3_test_celllines.txt', origin=server+'P1B3_test_celllines.txt')
         test_drug_path = get_file('P1B3_test_drugs.txt', origin=server+'P1B3_test_drugs.txt')
 
-        self.df_cellline = load_cellline_expressions(cell_expr_path, ncols=feature_subsample, scaling=scaling)
-
         df = load_dose_response(dose_resp_path, min_logconc=min_logconc, max_logconc=max_logconc, subsample=subsample)
         logger.info('Loaded {} unique (D, CL) response sets.'.format(df.shape[0]))
         # df[['GROWTH', 'LOG_CONCENTRATION']].to_csv('all.response.csv')
-
         df = df.reset_index()
-        df = df.merge(self.df_cellline[['CELLNAME']], on='CELLNAME')
 
-        if drug_features in ['descriptors', 'both']:
-            self.df_drug_desc = load_drug_descriptors(drug_desc_path, ncols=feature_subsample, scaling=scaling)
-            df = df.merge(self.df_drug_desc[['NSC']], on='NSC')
-        if drug_features in ['latent', 'both']:
-            self.df_drug_auen = load_drug_autoencoded(drug_auen_path, ncols=feature_subsample, scaling=scaling)
-            df = df.merge(self.df_drug_auen[['NSC']], on='NSC')
-        if drug_features == 'noise':
-            df_drug_ids = df[['NSC']].drop_duplicates()
-            noise = np.random.normal(size=(df_drug_ids.shape[0], 500))
-            df_rand = pd.DataFrame(noise, index=df_drug_ids['NSC'],
-                                   columns=['RAND-{:03d}'.format(x) for x in range(500)])
-            self.df_drug_rand = df_rand.reset_index()
+        if 'all' in cell_features:
+            self.cell_features = ['expression', 'mirna', 'proteome']
+        else:
+            self.cell_features = cell_features
 
-        logger.debug('Filltered down to {} rows with matching information.'.format(df.shape[0]))
+        if 'all' in drug_features:
+            self.drug_features = ['descriptors', 'latent']
+        else:
+            self.drug_features = drug_features
+
+        self.input_shapes = collections.OrderedDict()
+        self.input_shapes['drug_concentration'] = (1,)
+
+        for fea in self.cell_features:
+            if fea == 'expression':
+                self.df_cell_expr = load_cellline_expressions(cell_expr_path, ncols=feature_subsample, scaling=scaling)
+                self.input_shapes['cell_expression'] = (self.df_cell_expr.shape[1] - 1,)
+                df = df.merge(self.df_cell_expr[['CELLNAME']], on='CELLNAME')
+            elif fea == 'mirna':
+                self.df_cell_mirna = load_cellline_mirna(cell_mrna_path, ncols=feature_subsample, scaling=scaling)
+                self.input_shapes['cell_microRNA'] = (self.df_cell_mirna.shape[1] - 1,)
+                df = df.merge(self.df_cell_mirna[['CELLNAME']], on='CELLNAME')
+            elif fea == 'proteome':
+                self.df_cell_prot = load_cellline_proteome(cell_prot_path, cell_kino_path, ncols=feature_subsample, scaling=scaling)
+                self.input_shapes['cell_proteome'] = (self.df_cell_prot.shape[1] - 1,)
+                df = df.merge(self.df_cell_prot[['CELLNAME']], on='CELLNAME')
+            elif fea == 'categorical':
+                df_cell_ids = df[['CELLNAME']].drop_duplicates()
+                cell_ids = df_cell_ids['CELLNAME'].map(lambda x: x.replace(':', '.'))
+                df_cell_cat = pd.get_dummies(cell_ids)
+                df_cell_cat.index = df_cell_ids['CELLNAME']
+                self.df_cell_cat = df_cell_cat.reset_index()
+                self.input_shapes['cell_categorical'] = (self.df_cell_cat.shape[1] - 1,)
+
+        for fea in self.drug_features:
+            if fea == 'descriptors':
+                self.df_drug_desc = load_drug_descriptors(drug_desc_path, ncols=feature_subsample, scaling=scaling)
+                self.input_shapes['drug_descriptors'] = (self.df_drug_desc.shape[1] - 1,)
+                df = df.merge(self.df_drug_desc[['NSC']], on='NSC')
+            elif fea == 'latent':
+                self.df_drug_auen = load_drug_autoencoded(drug_auen_path, ncols=feature_subsample, scaling=scaling)
+                self.input_shapes['drug_SMILES_latent'] = (self.df_drug_auen.shape[1] - 1,)
+                df = df.merge(self.df_drug_auen[['NSC']], on='NSC')
+            elif fea == 'noise':
+                df_drug_ids = df[['NSC']].drop_duplicates()
+                noise = np.random.normal(size=(df_drug_ids.shape[0], 500))
+                df_rand = pd.DataFrame(noise, index=df_drug_ids['NSC'],
+                                       columns=['RAND-{:03d}'.format(x) for x in range(500)])
+                self.df_drug_rand = df_rand.reset_index()
+                self.input_shapes['drug_random_vector'] = (self.df_drug_rand.shape[1] - 1,)
+
+        logger.debug('Filtered down to {} rows with matching information.'.format(df.shape[0]))
         # df[['GROWTH', 'LOG_CONCENTRATION']].to_csv('filtered.response.csv')
 
         df_test_cell = pd.read_csv(test_cell_path)
         df_test_drug = pd.read_csv(test_drug_path, dtype={'NSC':object})
 
-        df_test = df.merge(df_test_cell, on='CELLNAME').merge(df_test_drug, on='NSC')
-        logger.debug('Set aside {} rows as test data'.format(df_test.shape[0]))
-
         df_train_val = df[(~df['NSC'].isin(df_test_drug['NSC'])) & (~df['CELLNAME'].isin(df_test_cell['CELLNAME']))]
-        logger.debug('Combined train and test set has {} rows'.format(df_train_val.shape[0]))
+        logger.debug('Combined train and validation set has {} rows'.format(df_train_val.shape[0]))
+
+        if test_cell_split and test_cell_split > 0:
+            df_test_cell = df_train_val[['CELLNAME']].drop_duplicates().sample(frac=test_cell_split, random_state=SEED)
+            logger.debug('Use unseen drugs and a fraction of seen cell lines for testing: ' + ', '.join(sorted(list(df_test_cell['CELLNAME']))))
+        else:
+            logger.debug('Use unseen drugs and predefined unseen cell lines for testing: ' + ', '.join(sorted(list(df_test_cell['CELLNAME']))))
+
+        df_test = df.merge(df_test_cell, on='CELLNAME').merge(df_test_drug, on='NSC')
+        logger.debug('Test set has {} rows'.format(df_test.shape[0]))
 
         if shuffle:
             df_train_val = df_train_val.sample(frac=1.0, random_state=SEED)
@@ -355,16 +482,6 @@ class DataLoader(object):
         self.n_train = self.total - self.n_val
         logger.info('Rows in train: {}, val: {}, test: {}'.format(self.n_train, self.n_val, self.n_test))
 
-        self.input_shapes = collections.OrderedDict()
-        self.input_shapes['drug_concentration'] = (1,)
-        self.input_shapes['cellline_expression'] = (self.df_cellline.shape[1] - 1,)
-        if self.drug_features in ['descriptors', 'both']:
-            self.input_shapes['drug_descriptors'] =  (self.df_drug_desc.shape[1] - 1,)  # remove NSC
-        if self.drug_features in ['latent', 'both']:
-            self.input_shapes['drug_SMILES_latent'] = (self.df_drug_auen.shape[1] - 1,)  # remove NSC
-        if self.drug_features == 'noise':
-            self.input_shapes['drug_random_vector'] = (self.df_drug_rand.shape[1] - 1,)  # remove NSC
-
         logger.info('Input features shapes:')
         for k, v in self.input_shapes.items():
             logger.info('  {}: {}'.format(k, v))
@@ -377,7 +494,7 @@ class DataGenerator(object):
     """Generate training, validation or testing batches from loaded data
     """
 
-    def __init__(self, data, partition='train', batch_size=32, shape=None, concat=True):
+    def __init__(self, data, partition='train', batch_size=32, shape=None, concat=True, name=''):
         """Initialize data
 
         Parameters
@@ -399,6 +516,7 @@ class DataGenerator(object):
         self.batch_size = batch_size
         self.shape = shape
         self.concat = concat
+        self.name = name
 
         if partition == 'train':
             self.cycle = cycle(range(data.n_train))
@@ -419,17 +537,28 @@ class DataGenerator(object):
             self.lock.acquire()
             indices = list(islice(self.cycle, self.batch_size))
             # print("\nProcess: {}, Batch indices start: {}".format(multiprocessing.current_process().name, indices[0]))
+            # logger.debug('Gen {} at index: {}'.format(self.name, indices[0]))
             self.lock.release()
 
             df = self.data.df_response.iloc[indices, :]
-            df = pd.merge(df, self.data.df_cellline, on='CELLNAME')
 
-            if self.data.drug_features in ['descriptors', 'both']:
-                df = df.merge(self.data.df_drug_desc, on='NSC')
-            if self.data.drug_features in ['latent', 'both']:
-                df = df.merge(self.data.df_drug_auen, on='NSC')
-            if self.data.drug_features == 'noise':
-                df = df.merge(self.data.df_drug_rand, on='NSC')
+            for fea in self.data.cell_features:
+                if fea == 'expression':
+                    df = pd.merge(df, self.data.df_cell_expr, on='CELLNAME')
+                elif fea == 'mirna':
+                    df = pd.merge(df, self.data.df_cell_mirna, on='CELLNAME')
+                elif fea == 'proteome':
+                    df = pd.merge(df, self.data.df_cell_prot, on='CELLNAME')
+                elif fea == 'categorical':
+                    df = pd.merge(df, self.data.df_cell_cat, on='CELLNAME')
+
+            for fea in self.data.drug_features:
+                if fea == 'descriptors':
+                    df = df.merge(self.data.df_drug_desc, on='NSC')
+                elif fea == 'latent':
+                    df = df.merge(self.data.df_drug_auen, on='NSC')
+                elif fea == 'noise':
+                    df = df.merge(self.data.df_drug_rand, on='NSC')
 
             df = df.drop(['CELLNAME', 'NSC'], 1)
             x = np.array(df.iloc[:, 1:])
