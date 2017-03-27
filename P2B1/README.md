@@ -72,3 +72,52 @@ ipython
 * ```--case=FULL``` Design autoencoder for data frame with coordinates for all beads
 * ```--case=CENTER``` Design autoencoder for data frame with coordinates of the center-of-mass
 * ```--case=CENTERZ``` Design autoencoder for data frame with z-coordiate of the center-of-mass
+
+### Expected Results
+
+```
+In [1]: run __main__.py --train --home-dir=/g/g19/vanessen/spack.git/opt/spack/linux-rhel7-ppc64le/gcc-4.9
+   ...: .3/py-ipython-5.1.0-3y6j6uookmr2spiokorkiskor5uhvig3/bin
+Using Theano backend.
+Reading Data...
+Data File: /g/g19/vanessen/.keras/datasets/p2_small_baseline.npy
+Data Format: [Num Samples, Num Molecules, Num Atoms, Position]
+design autoencoder for data frame with z-coordiate of the center-of-mass
+('X_train type and shape:', dtype('float32'), (115, 3040))
+('X_train.min():', 38.490833)
+('X_train.max():', 109.13441)
+Define the model and compile
+using mlp network
+Autoencoder Regression problem
+--------------------------------------------------------------------------------------------------------------------
+|           type | feature size | #Filters  | FilterSize |                        #params |                  #MACs |
+--------------------------------------------------------------------------------------------------------------------
+|          dense |  0x0         |     512   | 01x01     |  1.56 Mill,  5.94 MB (  45.0%) |    1.56 Mill (  45.0%) |
+|          dense |  0x0         |     256   | 01x01     |  0.13 Mill,  0.50 MB (   3.8%) |    0.13 Mill (   3.8%) |
+|          dense |  0x0         |     128   | 01x01     |  0.03 Mill,  0.12 MB (   0.9%) |    0.03 Mill (   0.9%) |
+|          dense |  0x0         |      64   | 01x01     |  0.01 Mill,  0.03 MB (   0.2%) |    0.01 Mill (   0.2%) |
+|          dense |  0x0         |      32   | 01x01     |  0.00 Mill,  0.01 MB (   0.1%) |    0.00 Mill (   0.1%) |
+|          dense |  0x0         |      16   | 01x01     |  0.00 Mill,  0.00 MB (   0.0%) |    0.00 Mill (   0.0%) |
+|          dense |  0x0         |      32   | 01x01     |  0.00 Mill,  0.00 MB (   0.0%) |    0.00 Mill (   0.0%) |
+|          dense |  0x0         |      64   | 01x01     |  0.00 Mill,  0.01 MB (   0.1%) |    0.00 Mill (   0.1%) |
+|          dense |  0x0         |     128   | 01x01     |  0.01 Mill,  0.03 MB (   0.2%) |    0.01 Mill (   0.2%) |
+|          dense |  0x0         |     256   | 01x01     |  0.03 Mill,  0.12 MB (   0.9%) |    0.03 Mill (   0.9%) |
+|          dense |  0x0         |     512   | 01x01     |  0.13 Mill,  0.50 MB (   3.8%) |    0.13 Mill (   3.8%) |
+|          dense |  0x0         |    3040   | 01x01     |  1.56 Mill,  5.94 MB (  45.0%) |    1.56 Mill (  45.0%) |
+--------------------------------------------------------------------------------------------------------------------
+|++++++++++++++++++++++++++++++++++++++++++++++++|   3.46 Mill, 13.21 MB ( 100.0%)|    3.46 Mill ( 100.0%) |           |
+--------------------------------------------------------------------------------------------------------------------
+Epoch 1/100
+115/115 [==============================] - 0s - loss: 32522.4981     
+Epoch 2/100
+115/115 [==============================] - 0s - loss: 35438.7657     
+Epoch 3/100
+115/115 [==============================] - 0s - loss: 4137.7738     
+...
+Epoch 98/100
+115/115 [==============================] - 0s - loss: 16.9187     
+Epoch 99/100
+115/115 [==============================] - 0s - loss: 16.9195     
+Epoch 100/100
+115/115 [==============================] - 0s - loss: 16.9123     
+```
