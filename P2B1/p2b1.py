@@ -30,6 +30,8 @@ if __name__=="__main__":
 	
 	import candle_helper_functions as hf
 	reload(hf)
+        lib_path = os.path.abspath(os.path.join('..', 'common'))
+        sys.path.append(lib_path)
 	import keras_model_utils as KEU
 	reload(KEU)
 	maps=hf.autoencoder_preprocess()
@@ -48,7 +50,7 @@ if __name__=="__main__":
 
 ##### Read Data ########
 	print ('Reading Data...')
-        data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B1/p2_small_baseline.npy')
+        data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B1/p2_small_baseline.npy', md5_hash="a7769c9521f758c858a549965d04349d")
 #	data_file='%s/Work/DataSets/CANDLE/sim-numpy.npy'%HOME ### can code to read at the terminal
 	print 'Data File: %s' %data_file
 	print 'Data Format: [Num Samples, Num Molecules, Num Atoms, Position]'

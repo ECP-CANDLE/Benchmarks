@@ -35,7 +35,7 @@ Using virtualenv
 ```
 cd P2B1
 workon keras
-python __main__.py --train --home-dir=${HOME}/.virtualenvs/keras/lib/python2.7/site-packages
+python p2b1.py --train --home-dir=${HOME}/.virtualenvs/keras/lib/python2.7/site-packages
 ```
 
 Using spack
