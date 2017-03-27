@@ -65,9 +65,10 @@ Epoch 2/2
 
 ### Preliminary performance
 
-Jonathan has done some network topology sweeps in LBANN. See the `contrib/`
+Jonathan has done some network topology sweeps in LBANN. See the `contrib/Jonathan_Allen`
 directory for details. Here's his plot on reconstruction error vs
-different network architectures.
+different network architectures. The keras code that roughly corresponds to the best 4-layer 
+network in the plot is `contrib/Fangfang/p1b1_4layer.py`.
 
 ![Autoencoder reconstruction error vs different network architectures](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/P1B1/images/network_sweep_ex3.png)
 
