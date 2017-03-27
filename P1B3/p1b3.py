@@ -1,8 +1,4 @@
 from __future__ import absolute_import
-lib_path = os.path.abspath(os.path.join('..', 'common'))
-sys.path.append(lib_path)
-from data_utils import get_file
-# from six.moves import cPickle
 
 import collections
 import gzip
@@ -14,6 +10,11 @@ import threading
 
 import numpy as np
 import pandas as pd
+
+lib_path = os.path.abspath(os.path.join('..', 'common'))
+sys.path.append(lib_path)
+
+from data_utils import get_file
 
 from itertools import cycle, islice
 

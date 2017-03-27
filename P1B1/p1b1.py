@@ -1,15 +1,16 @@
 from __future__ import absolute_import
-lib_path = os.path.abspath(os.path.join('..', 'common'))
-sys.path.append(lib_path)
-from data_utils import get_file
+
 import numpy as np
-import os
 import pandas as pd
 
-import gzip
-# from ..utils.data_utils import get_file
-# from six.moves import cPickle
+import os
 import sys
+import gzip
+
+lib_path = os.path.abspath(os.path.join('..', 'common'))
+sys.path.append(lib_path)
+
+from data_utils import get_file
 
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
