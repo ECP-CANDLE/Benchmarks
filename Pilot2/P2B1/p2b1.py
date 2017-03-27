@@ -5,7 +5,10 @@ import pickle
 import sys,os
 import glob
 import optparse
-from keras.utils.data_utils import get_file
+lib_path = os.path.abspath(os.path.join('..', '..', 'common'))
+sys.path.append(lib_path)
+from data_utils import get_file
+#from keras.utils.data_utils import get_file
 HOME=os.environ['HOME']
 def parse_list(option, opt, value, parser):
   setattr(parser.values, option.dest, value.split(','))

@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+lib_path = os.path.abspath(os.path.join('..', 'common'))
+sys.path.append(lib_path)
 from data_utils import get_file
 import numpy as np
 import os
