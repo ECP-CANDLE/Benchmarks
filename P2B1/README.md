@@ -67,3 +67,8 @@ module load py-ipython-5.1.0-gcc-4.9.3-3y6j6uo
 ipython
 [1]: run __main__.py --train --home-dir=/g/g19/vanessen/spack.git/opt/spack/linux-rhel7-ppc64le/gcc-4.9.3/py-ipython-5.1.0-3y6j6uookmr2spiokorkiskor5uhvig3/bin
 ```
+
+### Scaling Options
+* ```--case=FULL``` Design autoencoder for data frame with coordinates for all beads
+* ```--case=CENTER``` Design autoencoder for data frame with coordinates of the center-of-mass
+* ```--case=CENTERZ``` Design autoencoder for data frame with z-coordiate of the center-of-mass
