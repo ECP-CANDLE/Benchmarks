@@ -30,7 +30,7 @@ Output dimensions: 1 (growth percentage)
 ### Running the baseline implementation
 
 ```
-$ cd P1B3
+$ cd Pilot1/P1B3
 $ python p1b3_baseline.py
 ```
 

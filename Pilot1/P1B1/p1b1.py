@@ -7,21 +7,27 @@ import os
 import sys
 import gzip
 
-lib_path = os.path.abspath(os.path.join('..', 'common'))
+from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+
+file_path = os.path.dirname(os.path.realpath(__file__))
+lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
 from data_utils import get_file
-
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 
 seed = 2016
 
 
+def get_p1_file(link):
+    fname = os.path.basename(link)
+    return get_file(fname, origin=link, cache_subdir='Pilot1')
+
+
 def load_data(shuffle=True, n_cols=None):
-    train_path = get_file('P1B1.train.csv', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.train.csv')
-    test_path = get_file('P1B1.test.csv', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.test.csv')
+    train_path = get_p1_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.train.csv')
+    test_path = get_p1_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.test.csv')
 
     usecols = list(range(n_cols)) if n_cols else None
 

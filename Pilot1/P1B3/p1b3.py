@@ -11,15 +11,16 @@ import threading
 import numpy as np
 import pandas as pd
 
-lib_path = os.path.abspath(os.path.join('..', 'common'))
-sys.path.append(lib_path)
-
-from data_utils import get_file
-
 from itertools import cycle, islice
 
 from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+
+file_path = os.path.dirname(os.path.realpath(__file__))
+lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+sys.path.append(lib_path)
+
+from data_utils import get_file
 
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,11 @@ SEED = 2017
 
 np.set_printoptions(threshold=np.nan)
 np.random.seed(SEED)
+
+
+def get_p1_file(link):
+    fname = os.path.basename(link)
+    return get_file(fname, origin=link, cache_subdir='Pilot1')
 
 
 def scale(df, scaling=None):
@@ -365,15 +371,15 @@ class DataLoader(object):
 
         server = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/'
 
-        cell_expr_path = get_file('P1B3_cellline_expressions.tsv', origin=server+'P1B3_cellline_expressions.tsv')
-        cell_mrna_path = get_file('P1B3_cellline_mirna.tsv', origin=server+'P1B3_cellline_mirna.tsv')
-        cell_prot_path = get_file('P1B3_cellline_proteome.tsv', origin=server+'P1B3_cellline_proteome.tsv')
-        cell_kino_path = get_file('P1B3_cellline_kinome.tsv', origin=server+'P1B3_cellline_kinome.tsv')
-        drug_desc_path = get_file('P1B3_drug_descriptors.tsv', origin=server+'P1B3_drug_descriptors.tsv')
-        drug_auen_path = get_file('P1B3_drug_latent.csv', origin=server+'P1B3_drug_latent.csv')
-        dose_resp_path = get_file('P1B3_dose_response.csv', origin=server+'P1B3_dose_response.csv')
-        test_cell_path = get_file('P1B3_test_celllines.txt', origin=server+'P1B3_test_celllines.txt')
-        test_drug_path = get_file('P1B3_test_drugs.txt', origin=server+'P1B3_test_drugs.txt')
+        cell_expr_path = get_p1_file(server+'P1B3_cellline_expressions.tsv')
+        cell_mrna_path = get_p1_file(server+'P1B3_cellline_mirna.tsv')
+        cell_prot_path = get_p1_file(server+'P1B3_cellline_proteome.tsv')
+        cell_kino_path = get_p1_file(server+'P1B3_cellline_kinome.tsv')
+        drug_desc_path = get_p1_file(server+'P1B3_drug_descriptors.tsv')
+        drug_auen_path = get_p1_file(server+'P1B3_drug_latent.csv')
+        dose_resp_path = get_p1_file(server+'P1B3_dose_response.csv')
+        test_cell_path = get_p1_file(server+'P1B3_test_celllines.txt')
+        test_drug_path = get_p1_file(server+'P1B3_test_drugs.txt')
 
         df = load_dose_response(dose_resp_path, min_logconc=min_logconc, max_logconc=max_logconc, subsample=subsample)
         logger.info('Loaded {} unique (D, CL) response sets.'.format(df.shape[0]))

@@ -31,7 +31,7 @@
 ### Running the baseline implementation
 
 ```
-cd P1B1
+cd Pilot1/P1B1
 python p1b1_baseline.py
 ```
 The training and test data files will be downloaded the first time this is run and will be cached for future runs.
