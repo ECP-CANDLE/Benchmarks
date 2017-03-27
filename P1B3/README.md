@@ -127,13 +127,20 @@ Input features shapes:
   drug_SMILES_latent: (292,)
 Total input dimensions: 40037
 ```
-The `--conv 10 10 1 5 5 1` parameter adds 2 convolution layers to the default 4-layer (1000-500-100-50) dense network. The first convolution layer has 10 filters with kernel length of 10 and stride of 1. The second convolution layer has 5 filters with length 5 and stride 1. 
+The `--conv 10 10 1 5 5 1` parameter adds 2 convolution layers to the default 4-layer (1000-500-100-50) dense network. The first 3-tuple (10, 10, 1) denotes a convolution layer with 10 filters of kernel length 10 and stride 1; the second convolution layer has 5 filters with length 5 and stride 1. 
 
 #### Run a toy version of the benchmark
 ```
 python p1b3_baseline.py --feature_subsample 500 -e 5 --train_steps 100 --val_steps 10 --test_steps 10
 ```
 This will take only minutes to run and can be used to test the environment setup. The `--feature_subsample 500` parameter instructs the benchmark to sample 500 random columns from each feature set. The steps parameters reduce the number of batches to use for each epoch.
+
+#### Use locally-connected layers with batch normalization
+```
+python p1b3_baseline.py --conv 10 10 1 --pool 100 --locally_connected --optimizer adam --batch_normalization --batch_size 64
+```
+This example adds a locally-connected layer to the MLP and changes the optimizer and batch size. The locally connected layer is a convolution layer with unshared weights, so it tends to increase the number of parameters dramatically. Here we use a pooling size of 100 to reduce the parameters. This example also adds a batch normalization layer between any core layer and its activation. Batch normalization is known to speed up training in some settings. 
+
 
 ### Preliminary performance
 Some of the best validation loss values we have seen are in the 0.04-0.06 range, which roughly corresponds to about 20-25% percent growth error per data point. We are running hyperparameter searches. 
