@@ -26,7 +26,7 @@
 
 #### Description of the Network
 * Proposed network architecture: MLP with encoding layers, dropout layers, bottleneck layer, and decoding layers
-* Number of layers: At least two hidden layers in encoding and decoding
+* Number of layers: At least three hidden layers including one encoding layer, one bottleneck layer, and one decoding layer
 
 ### Running the baseline implementation
 
