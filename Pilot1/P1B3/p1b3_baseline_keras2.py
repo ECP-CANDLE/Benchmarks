@@ -330,7 +330,7 @@ class MyProgbarLogger(ProgbarLogger):
                 epoch_log += ' - {}: {:.4f}'.format(k, logs[k])
         for k, v in self.extra_log_values:
             self.log_values.append((k, v))
-            epoch_log += ' - {}: {:.4f}'.format(k, v)
+            epoch_log += ' - {}: {:.4f}'.format(k, float(v))
         if self.verbose:
             self.progbar.update(self.seen, self.log_values, force=True)
         logger.debug(epoch_log)
