@@ -25,9 +25,11 @@ def get_p1_file(link):
     return get_file(fname, origin=link, cache_subdir='Pilot1')
 
 
-def load_data(shuffle=True, n_cols=None):
-    train_path = get_p1_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.train.csv')
-    test_path = get_p1_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.test.csv')
+def load_data(shuffle=True, n_cols=None, train_path=None, test_path=None):
+    if not train_path:
+        train_path = get_p1_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.train.csv')
+    if not test_path:
+        test_path = get_p1_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.test.csv')
 
     usecols = list(range(n_cols)) if n_cols else None
 
