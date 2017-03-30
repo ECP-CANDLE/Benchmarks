@@ -128,7 +128,7 @@ if __name__=="__main__":
 			loss_file='%s/%s.pkl'%(opts.save_path,memo)
 			model_file='%s/%s.hdf5'%(opts.save_path,memo)
 			o=open(loss_file,'wb')
-			pickle.dump(loss_data,o)
+			pickle.dump(loss,o)
 			o.close()
 			model.save_weights(model_file)
 			

@@ -214,10 +214,9 @@ def get_data(X,case='Full'):
     return X_train
 
 class Candle_Train():
-    def __init__(self, datagen, model, numpylist,nb_epochs,case='Full',batch_size=32,cool=False,print_data=True):
+    def __init__(self, datagen, model, numpylist,nb_epochs,case='Full',batch_size=32,print_data=True):
         self.numpylist=numpylist
         self.epochs=nb_epochs
-        self.cool=cool
         self.case=case
         self.batch_size=batch_size
         self.model=model
