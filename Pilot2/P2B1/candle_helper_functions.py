@@ -30,7 +30,6 @@ def ReadConfig(File):
     config.read(File)
     section=config.sections()
     Global_Params={}
-    Global_Params['data_folder']=config.get(section[0],'data_folder')
     Global_Params['num_hidden']=eval(config.get(section[0],'num_hidden'))
     Global_Params['batch_size']=eval(config.get(section[0],'batch_size'))
     Global_Params['learning_rate']=eval(config.get(section[0],'learning_rate'))
@@ -245,6 +244,6 @@ class Candle_Train():
                     loss_data=self.model.train_on_batch(x,y)
                     iter_loss.append(loss_data)
                 file_loss.append(np.array(iter_loss).mean(axis=0))
-            print 'Loss on epoch %d:'%e, file_loss[-1]
+            print '\nLoss on epoch %d:'%e, file_loss[-1]
             epoch_loss.append(np.array(file_loss).mean(axis=0))
         return epoch_loss
