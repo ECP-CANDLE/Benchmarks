@@ -14,6 +14,15 @@ def parse_list(option, opt, value, parser):
 def str2bool(v):
   return v.lower() in ("yes", "true", "t", "1")
 
+data_sets = {
+  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir', '357567db15ba8615c96b16c63655028c'),
+  '3k_Ordered' : ('3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir', '604ef65a1e33f475129ec66e2d18ff51'),
+  '3k_Ordered_and_gel' : ('3k_run43_10us.35fs-DPPC.70-DOPC.10-CHOL.20.dir', 'b96483103a2ce40fd63ef6317dbe5f0c'),
+  '6k_Disordered' : ('6k_run10_25us.35fs-DPPC.10-DOPC.70-CHOL.20.dir', '3'),
+  '6k_Ordered' : ('6k_run32_25us.35fs-DPPC.50-DOPC.10-CHOL.40.dir', '4'),
+  '6k_Ordered and gel' : ('6k_run43_25us.35fs-DPPC.70-DOPC.10-CHOL.20.dir', '5')
+  }
+
 if __name__=="__main__":
 ### Hyperparameters and model save path
 	parser=optparse.OptionParser()
@@ -25,6 +34,10 @@ if __name__=="__main__":
 	parser.add_option("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
 	parser.add_option("--memo",help="Memo",dest="base_memo",type=str,default=None)
 	parser.add_option("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='CenterZ')
+        parser.add_option("--data-set",
+                          help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",
+                          dest="set_sel",
+                          type=str,default="3k_Disordered")
 	(opts,args)=parser.parse_args()
 
 
@@ -53,22 +66,29 @@ if __name__=="__main__":
 	batch_size = GP['batch_size']
 	
 ##### Read Data ########
-	print ('Reading Data Files...')
-        data_set='3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir'
+        data_set=data_sets[opts.set_sel][0]
+        data_hash=data_sets[opts.set_sel][1]
+	print ('Reading Data Files... %s->%s' % (opts.set_sel, data_set))
 #        data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B1/p2_small_baseline.npy', md5_hash="a7769c9521f758c858a549965d04349d")
-        data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash="357567db15ba8615c96b16c63655028c")
+        data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash=data_hash)
         data_dir = os.path.join(os.path.dirname(data_file), data_set)
 	data_files=glob.glob('%s/*.npy'%data_dir) 
-	print 'Data Format: [Num Samples, Num Molecules, Num Atoms, Position + Molecule Tag (One-hot encoded)]'
 	
 	## Define datagenerator
 	datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])  
 
 	## get data dimension ##
+        num_samples = 0
+        for f in data_files:
+          X=np.load(f)
+          num_samples += X.shape[0]
+
 	X=np.load(data_files[0])
+	print 'Data Format: [Num Sample (%s), Num Molecules (%s), Num Atoms (%s), Position + Molecule Tag (One-hot encoded) (%s)]' % (
+          num_samples, X.shape[1], X.shape[2], X.shape[3])
+
 	X_train=hf.get_data(X,case=opts.case)
 	input_dim=X_train.shape[1]
-
 	
 ### Define Model, Solver and Compile ##########
 	print ('Define the model and compile')
