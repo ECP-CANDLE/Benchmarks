@@ -302,4 +302,3 @@ if __name__  == "__main__":
         ret_array = np.array( ret_array, dtype= 'int32' )
 
         np.savetxt( out_files[ i ], np.transpose( ret_array ), fmt= '%d', delimiter= ',' )
-
