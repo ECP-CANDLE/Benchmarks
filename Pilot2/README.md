@@ -1,10 +1,6 @@
 ## Pilot 2 Benchmarks for Molecular Dynamics Simulation Data
 
-**Overview**: Generate automatically extracted features representing molecular simulation data
-
-**Relationship to core problem**: Establish framework for building future tools using learned features
-
-**Expected outcome**: Improvement in the understanding of protein formation and easing of the handling large-scale molecular dynamics output
+**Overview**: KRAS MD Simulation Data
 
 ### Benchmark Specs Requirements
 
@@ -33,6 +29,11 @@
 * Disordered - 6k_run10_25us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
 * Ordered - 6k_run32_25us.35fs-DPPC.50-DOPC.10-CHOL.40.dir
 * Ordered and gel - 6k_run43_25us.35fs-DPPC.70-DOPC.10-CHOL.20.dir
+
+#### Runtime Options
+* ```--data-set=3k_Disordered```
+* ```--data-set=3k_Ordered```
+* ```--data-set=3k_Ordered_and_gel```
 
 ### Data Set Release Notice
 

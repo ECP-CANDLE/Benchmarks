@@ -9,12 +9,7 @@
 ### Benchmark Specs Requirements
 
 #### Description of the Data
-* Data source: MD Simulation output as PDB files (coarse-grained bead simulation)
-* Input dimensions: ~1.26e6 per time step (6000 lipids x 30 beads per lipid x (position + velocity + type))
-* Output dimensions: 500
-* Latent representation dimension:
-* Sample size: O(10^6) for simulation requiring O(10^8) time steps
-* Notes on data balance and other issues: unlabeled data with rare events
+* See Pilot2 Readme for description
 
 #### Expected Outcomes
 * Reconstructed MD simulation state
@@ -30,29 +25,15 @@
 
 ### Running the baseline implementation
 
-Using virtualenv
-
+#### Using virtualenv
 ```
 cd P2B1
 workon keras
-python p2b1.py --train --home-dir=${HOME}/.virtualenvs/keras/lib/python2.7/site-packages
+python p2b1.py
 ```
 
-Using spack
-
+#### Using Spack
 ```
-# Install the keras python tools
-spack install py-keras ^py-theano +gpu
-
-# Also include opencv with python support
-spack install opencv@3.2.0 +python
-
-# Install iPython so that you can play interactively
-spack install py-ipython
-
-# Add matplotlib with image support
-spack install py-matplotlib +image
-
 # Activate all of these tools in the spack python environment
 spack activate ipython
 spack activate py-ipython
@@ -65,7 +46,7 @@ module load py-ipython-5.1.0-gcc-4.9.3-3y6j6uo
 
 # Lauch ipython and then run the example
 ipython
-[1]: run __main__.py --train --home-dir=/g/g19/vanessen/spack.git/opt/spack/linux-rhel7-ppc64le/gcc-4.9.3/py-ipython-5.1.0-3y6j6uookmr2spiokorkiskor5uhvig3/bin
+[1]: run p2b1.py
 ```
 
 ### Scaling Options
@@ -76,48 +57,52 @@ ipython
 ### Expected Results
 
 ```
-In [1]: run __main__.py --train --home-dir=/g/g19/vanessen/spack.git/opt/spack/linux-rhel7-ppc64le/gcc-4.9
-   ...: .3/py-ipython-5.1.0-3y6j6uookmr2spiokorkiskor5uhvig3/bin
+$ python p2b1.py
 Using Theano backend.
-Reading Data...
-Data File: /g/g19/vanessen/.keras/datasets/p2_small_baseline.npy
-Data Format: [Num Samples, Num Molecules, Num Atoms, Position]
-design autoencoder for data frame with z-coordiate of the center-of-mass
-('X_train type and shape:', dtype('float32'), (115, 3040))
-('X_train.min():', 38.490833)
-('X_train.max():', 109.13441)
+Reading Data Files... 3k_Disordered->3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
+Data Format: [Num Sample (2861), Num Molecules (4864), Num Atoms (12), Position + Molecule Tag (One-hot encoded) (6)]
 Define the model and compile
 using mlp network
 Autoencoder Regression problem
 --------------------------------------------------------------------------------------------------------------------
 |           type | feature size | #Filters  | FilterSize |                        #params |                  #MACs |
 --------------------------------------------------------------------------------------------------------------------
-|          dense |  0x0         |     512   | 01x01     |  1.56 Mill,  5.94 MB (  45.0%) |    1.56 Mill (  45.0%) |
-|          dense |  0x0         |     256   | 01x01     |  0.13 Mill,  0.50 MB (   3.8%) |    0.13 Mill (   3.8%) |
-|          dense |  0x0         |     128   | 01x01     |  0.03 Mill,  0.12 MB (   0.9%) |    0.03 Mill (   0.9%) |
+|          dense |  0x0         |     512   | 01x01     |  2.49 Mill,  9.50 MB (  46.7%) |    2.49 Mill (  46.7%) |
+|          dense |  0x0         |     256   | 01x01     |  0.13 Mill,  0.50 MB (   2.5%) |    0.13 Mill (   2.5%) |
+|          dense |  0x0         |     128   | 01x01     |  0.03 Mill,  0.12 MB (   0.6%) |    0.03 Mill (   0.6%) |
 |          dense |  0x0         |      64   | 01x01     |  0.01 Mill,  0.03 MB (   0.2%) |    0.01 Mill (   0.2%) |
-|          dense |  0x0         |      32   | 01x01     |  0.00 Mill,  0.01 MB (   0.1%) |    0.00 Mill (   0.1%) |
+|          dense |  0x0         |      32   | 01x01     |  0.00 Mill,  0.01 MB (   0.0%) |    0.00 Mill (   0.0%) |
 |          dense |  0x0         |      16   | 01x01     |  0.00 Mill,  0.00 MB (   0.0%) |    0.00 Mill (   0.0%) |
 |          dense |  0x0         |      32   | 01x01     |  0.00 Mill,  0.00 MB (   0.0%) |    0.00 Mill (   0.0%) |
-|          dense |  0x0         |      64   | 01x01     |  0.00 Mill,  0.01 MB (   0.1%) |    0.00 Mill (   0.1%) |
+|          dense |  0x0         |      64   | 01x01     |  0.00 Mill,  0.01 MB (   0.0%) |    0.00 Mill (   0.0%) |
 |          dense |  0x0         |     128   | 01x01     |  0.01 Mill,  0.03 MB (   0.2%) |    0.01 Mill (   0.2%) |
-|          dense |  0x0         |     256   | 01x01     |  0.03 Mill,  0.12 MB (   0.9%) |    0.03 Mill (   0.9%) |
-|          dense |  0x0         |     512   | 01x01     |  0.13 Mill,  0.50 MB (   3.8%) |    0.13 Mill (   3.8%) |
-|          dense |  0x0         |    3040   | 01x01     |  1.56 Mill,  5.94 MB (  45.0%) |    1.56 Mill (  45.0%) |
+|          dense |  0x0         |     256   | 01x01     |  0.03 Mill,  0.12 MB (   0.6%) |    0.03 Mill (   0.6%) |
+|          dense |  0x0         |     512   | 01x01     |  0.13 Mill,  0.50 MB (   2.5%) |    0.13 Mill (   2.5%) |
+|          dense |  0x0         |    4864   | 01x01     |  2.49 Mill,  9.50 MB (  46.7%) |    2.49 Mill (  46.7%) |
 --------------------------------------------------------------------------------------------------------------------
-|++++++++++++++++++++++++++++++++++++++++++++++++|   3.46 Mill, 13.21 MB ( 100.0%)|    3.46 Mill ( 100.0%) |           |
+|++++++++++++++++++++++++++++++++++++++++++++++++|   5.33 Mill, 20.33 MB ( 100.0%)|    5.33 Mill ( 100.0%) |           |
 --------------------------------------------------------------------------------------------------------------------
-Epoch 1/100
-115/115 [==============================] - 0s - loss: 32522.4981     
-Epoch 2/100
-115/115 [==============================] - 0s - loss: 35438.7657     
-Epoch 3/100
-115/115 [==============================] - 0s - loss: 4137.7738     
 ...
-Epoch 98/100
-115/115 [==============================] - 0s - loss: 16.9187     
-Epoch 99/100
-115/115 [==============================] - 0s - loss: 16.9195     
-Epoch 100/100
-115/115 [==============================] - 0s - loss: 16.9123     
+Loss on epoch 0: 12.2727
+ 33%|------------------------------------------------------|                                                                                                               | 1/3 [00:28<00:57, 28.79s/it]
+Loss on epoch 1: 11.5519
+ 67%|--------------------------------------------------------------------------------------------------------------|                                                       | 2/3 [00:53<00:27, 27.44s/it]
+Loss on epoch 2: 11.3828
+100%|----------------------------------------------------------------------------------------------------------------------------------------------------------------------| 3/3 [01:17<00:00, 26.53s/it]
+Cooling Learning Rate by factor of 10...
+  0%|                                                                                                                                                                      | 0/3 [00:00<?, ?it/s]
+Loss on epoch 0: 10.2965
+ 33%|------------------------------------------------------|                                                                                                               | 1/3 [00:24<00:48, 24.49s/it]
+Loss on epoch 1: 10.3103
+ 67%|--------------------------------------------------------------------------------------------------------------|                                                       | 2/3 [00:49<00:24, 24.71s/it]
+Loss on epoch 2: 10.3181
+100%|----------------------------------------------------------------------------------------------------------------------------------------------------------------------| 3/3 [01:13<00:00, 24.58s/it]
+Cooling Learning Rate by factor of 10...
+  0%|                                                                                                                                                                      | 0/3 [00:00<?, ?it/s]
+Loss on epoch 0: 9.9807
+ 33%|------------------------------------------------------|                                                                                                               | 1/3 [00:24<00:48, 24.45s/it]
+Loss on epoch 1: 10.0237
+ 67%|--------------------------------------------------------------------------------------------------------------|                                                       | 2/3 [00:48<00:24, 24.47s/it]
+Loss on epoch 2: 10.0357
+100%|----------------------------------------------------------------------------------------------------------------------------------------------------------------------| 3/3 [01:14<00:00, 24.73s/it]
 ```
