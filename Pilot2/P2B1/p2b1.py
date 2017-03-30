@@ -8,15 +8,17 @@ import optparse
 lib_path = os.path.abspath(os.path.join('..', '..', 'common'))
 sys.path.append(lib_path)
 from data_utils import get_file
-#from keras.utils.data_utils import get_file
 HOME=os.environ['HOME']
 def parse_list(option, opt, value, parser):
   setattr(parser.values, option.dest, value.split(','))
+def str2bool(v):
+  return v.lower() in ("yes", "true", "t", "1")
 
 if __name__=="__main__":
 ### Hyperparameters and model save path
 	parser=optparse.OptionParser()
-	parser.add_option("--train", action="store_true",dest="train_bool",default=False,help="Invoke training")
+	parser.add_option("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
+	parser.add_option("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
 	parser.add_option("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
 	parser.add_option("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
 	parser.add_option("--config-file",help="Config File",dest="config_file",type=str,default='./config.ini')
@@ -38,7 +40,6 @@ if __name__=="__main__":
 	import keras_model_utils as KEU
 	reload(KEU)
 	maps=hf.autoencoder_preprocess()
-	#from keras.Helpermodules.mnist_autoencoder_helper_functions import mnist_conv_deconv_simple, mnist_conv_deconv_complex,mnist_autoencoder_preprocess,generate_figure
 	
 	from keras.optimizers import SGD,RMSprop,Adam
 	from keras.datasets import mnist
@@ -50,36 +51,25 @@ if __name__=="__main__":
 
 	GP=hf.ReadConfig(opts.config_file)
 	batch_size = GP['batch_size']
-
-##### Read Data ########
-	print ('Reading Data...')
-        data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B1/p2_small_baseline.npy', md5_hash="a7769c9521f758c858a549965d04349d")
-#	data_file='%s/Work/DataSets/CANDLE/sim-numpy.npy'%HOME ### can code to read at the terminal
-	print 'Data File: %s' %data_file
-	print 'Data Format: [Num Samples, Num Molecules, Num Atoms, Position]'
 	
-	X=np.load(data_file) ### Data is: Samples, Molecules, Atoms, x-pos,y-pos,z-pos
-	if opts.case.upper()=='FULL':
-		print 'Design autoencoder for data frame with coordinates for all beads'
-		X_train=X.copy().reshape(X.shape[0],np.prod(X.shape[1:]))
-	if opts.case.upper()=='CENTER':
-		print 'design autoencoder for data frame with coordinates of the center-of-mass'
-		X_train=X.mean(axis=2).reshape(X.shape[0],np.prod(X.mean(axis=2).shape[1:]))
-	if opts.case.upper()=='CENTERZ':
-		print 'design autoencoder for data frame with z-coordiate of the center-of-mass'
-		X_train=X.mean(axis=2)[:,:,2].reshape(X.shape[0],np.prod(X.mean(axis=2)[:,:,2].shape[1:]))
+##### Read Data ########
+	print ('Reading Data Files...')
+        data_set='3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir'
+#        data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B1/p2_small_baseline.npy', md5_hash="a7769c9521f758c858a549965d04349d")
+        data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash="357567db15ba8615c96b16c63655028c")
+        data_dir = os.path.join(os.path.dirname(data_file), data_set)
+	data_files=glob.glob('%s/*.npy'%data_dir) 
+	print 'Data Format: [Num Samples, Num Molecules, Num Atoms, Position + Molecule Tag (One-hot encoded)]'
+	
+	## Define datagenerator
+	datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])  
 
-	y_train=X_train.copy()
+	## get data dimension ##
+	X=np.load(data_files[0])
+	X_train=hf.get_data(X,case=opts.case)
 	input_dim=X_train.shape[1]
-	mu, sigma = np.mean(X_train), np.std(X_train)
-	mu=0.0;sigma=1.0
-	X_train=maps.renormalize(X_train,mu,sigma)
-	datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])  ## Add some corruption to input data ## idead for denoising auto encoder 
-		
-	print('X_train type and shape:', X_train.dtype, X_train.shape)
-	print('X_train.min():', X_train.min())
-	print('X_train.max():', X_train.max())
 
+	
 ### Define Model, Solver and Compile ##########
 	print ('Define the model and compile')
 	opt = Adam(lr=GP['learning_rate'])
@@ -97,38 +87,30 @@ if __name__=="__main__":
 #### Print Model Stats ###########
 	KEU.Model_Info(model)
 	
-### Set up for Training and Validation
-	total_epochs = GP['epochs']
-	initial_lrate=GP['learning_rate']
-	if GP['cool']:
-		drop=0.5
-	else:
-		drop=1.0
-	
-	epochs_drop=1+int(np.floor(total_epochs/3))
-		
-	def step_decay(epoch):
-		global initial_lrate,epochs_drop,drop
-		lrate = initial_lrate * np.power(drop, np.floor((1+epoch)/epochs_drop))
-		return lrate
-	lr_scheduler = LearningRateScheduler(step_decay)
-
 #### Train the Model
 	if opts.train_bool:
-		history = callbacks.History()
-		if opts.save_path !=None:
-			model_file='%s/%s.hdf5'%(opts.save_path,memo)
-			checkpointer=ModelCheckpoint(filepath=model_file, verbose=1)
-			callbacks=[history,lr_scheduler,checkpointer]
+		if not str2bool(GP['cool']):
+			effec_epochs=GP['epochs']
+			ct=hf.Candle_Train(datagen,model,data_files,effec_epochs,case=opts.case)
+			loss=ct.train_ac()
 		else:
-			callbacks=[history,lr_scheduler]
-		model.fit_generator(datagen.flow(X_train, y_train, batch_size=batch_size),\
-			samples_per_epoch=X_train.shape[0],nb_epoch=total_epochs,callbacks=callbacks,verbose=1)
-		loss_data={'train': history.history['loss']}
+			effec_epochs=GP['epochs']//3
+			ct=hf.Candle_Train(datagen,model,data_files,effec_epochs,case=opts.case)
+			loss=[]
+			for i in range(3):
+				lr=GP['learning_rate']/10**i
+				ct.model.optimizer.lr.set_value(lr)
+				if i>0:
+					ct.print_data=False
+					print 'Cooling Learning Rate by factor of 10...'
+				loss.extend(ct.train_ac())
+				
 		if opts.save_path!=None:
 			loss_file='%s/%s.pkl'%(opts.save_path,memo)
+			model_file='%s/%s.hdf5'%(opts.save_path,memo)
 			o=open(loss_file,'wb')
 			pickle.dump(loss_data,o)
 			o.close()
-	
+			model.save_weights(model_file)
+			
 	

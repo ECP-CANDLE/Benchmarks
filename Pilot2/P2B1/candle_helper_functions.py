@@ -22,6 +22,7 @@ from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2, activity_l2
 import threading
 import ConfigParser
+from tqdm import *
 
 #### Read Config File
 def ReadConfig(File):
@@ -29,6 +30,7 @@ def ReadConfig(File):
     config.read(File)
     section=config.sections()
     Global_Params={}
+    Global_Params['data_folder']=config.get(section[0],'data_folder')
     Global_Params['num_hidden']=eval(config.get(section[0],'num_hidden'))
     Global_Params['batch_size']=eval(config.get(section[0],'batch_size'))
     Global_Params['learning_rate']=eval(config.get(section[0],'learning_rate'))
@@ -71,9 +73,15 @@ class ImageNoiseDataGenerator(object):
             if current_batch_size == batch_size:
                 b += 1
             else:
-                b = 0
+                b=0
+                #b=None
+            
+            #if current_index + current_batch_size==N:
+            #   b=None
             total_b += 1
             yield index_array[current_index: current_index + current_batch_size], current_index, current_batch_size
+            #if b==None:
+            #    return
 
     def flow(self, X, y, batch_size=32, shuffle=False, seed=None):
         assert len(X) == len(y)
@@ -196,3 +204,47 @@ def get_activations(model, layer, X_batch):
     return activations
 
 
+def get_data(X,case='Full'):
+    if case.upper()=='FULL':
+        X_train=X.copy().reshape(X.shape[0],np.prod(X.shape[1:]))
+    if case.upper()=='CENTER':
+        X_train=X.mean(axis=2).reshape(X.shape[0],np.prod(X.mean(axis=2).shape[1:]))
+    if case.upper()=='CENTERZ':
+        X_train=X.mean(axis=2)[:,:,2].reshape(X.shape[0],np.prod(X.mean(axis=2)[:,:,2].shape[1:]))
+
+    return X_train
+
+class Candle_Train():
+    def __init__(self, datagen, model, numpylist,nb_epochs,case='Full',batch_size=32,cool=False,print_data=True):
+        self.numpylist=numpylist
+        self.epochs=nb_epochs
+        self.cool=cool
+        self.case=case
+        self.batch_size=batch_size
+        self.model=model
+        self.datagen=datagen
+        self.print_data=print_data
+
+    def train_ac(self):
+        epoch_loss=[]
+        for e in tqdm(range(self.epochs)):
+            file_loss=[]
+            for f in self.numpylist:
+                if self.print_data:
+                    if e==0:
+                        print f
+                X=np.load(f)
+                X_train=get_data(X,self.case)
+                y_train=X_train.copy()
+                imggen=self.datagen.flow(X_train, y_train, batch_size=self.batch_size)
+                N_iter=X.shape[0]//self.batch_size
+                
+                iter_loss=[]
+                for _ in range(N_iter+1):
+                    x,y=next(imggen)
+                    loss_data=self.model.train_on_batch(x,y)
+                    iter_loss.append(loss_data)
+                file_loss.append(np.array(iter_loss).mean(axis=0))
+            print 'Loss on epoch %d:'%e, file_loss[-1]
+            epoch_loss.append(np.array(file_loss).mean(axis=0))
+        return epoch_loss
