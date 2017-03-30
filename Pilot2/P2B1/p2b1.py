@@ -69,7 +69,6 @@ if __name__=="__main__":
         data_set=data_sets[opts.set_sel][0]
         data_hash=data_sets[opts.set_sel][1]
 	print ('Reading Data Files... %s->%s' % (opts.set_sel, data_set))
-#        data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B1/p2_small_baseline.npy', md5_hash="a7769c9521f758c858a549965d04349d")
         data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash=data_hash)
         data_dir = os.path.join(os.path.dirname(data_file), data_set)
 	data_files=glob.glob('%s/*.npy'%data_dir) 
