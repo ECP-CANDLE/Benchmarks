@@ -70,7 +70,7 @@ def run_p1b1(X_train, X_test, epochs=2, batch_size=50):
     return encoder, decoder, history
 
 if __name__ == '__main__':
-    X_train, X_test = p1b1.load_data()
+    X_train, X_test = p1b1.load_data(test_path=test_path, train_path=train_path)
     encoder, decoder, history = run_p1b1(X_train, X_test, EPOCH, BATCH)
 
     encoded_image = encoder.predict(X_test)
