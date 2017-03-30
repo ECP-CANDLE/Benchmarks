@@ -32,7 +32,7 @@
 
 ```
 cd Pilot1/P1B1
-python p1b1_baseline.py
+python p1b1_baseline_keras2.py
 ```
 The training and test data files will be downloaded the first time this is run and will be cached for future runs.
 

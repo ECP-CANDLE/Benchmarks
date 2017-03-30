@@ -31,7 +31,7 @@ Output dimensions: 1 (growth percentage)
 
 ```
 $ cd Pilot1/P1B3
-$ python p1b3_baseline.py
+$ python p1b3_baseline_keras2.py
 ```
 
 #### Example output
@@ -115,7 +115,7 @@ This benchmark can be run with additional or alternative molecular and drug feat
 
 #### Use multiple cell line and drug feature sets
 ```
-python p1b3_baseline.py --cell_features all --drug_features all --conv 10 10 1 5 5 1 -epochs 200
+python p1b3_baseline_keras2.py --cell_features all --drug_features all --conv 10 10 1 5 5 1 -epochs 200
 ```
 This will train a convolution network for 200 epochs, using three sets of cell line features (gene expression, microRNA, proteome) and two sets of drug features (Dragon7 descriptors, encoded latent representation from Aspuru-Guzik's SMILES autoencoder), and will bring the total input feature dimension to 40K.
 ```
@@ -132,13 +132,13 @@ The `--conv 10 10 1 5 5 1` parameter adds 2 convolution layers to the default 4-
 
 #### Run a toy version of the benchmark
 ```
-python p1b3_baseline.py --feature_subsample 500 -e 5 --train_steps 100 --val_steps 10 --test_steps 10
+python p1b3_baseline_keras2.py --feature_subsample 500 -e 5 --train_steps 100 --val_steps 10 --test_steps 10
 ```
 This will take only minutes to run and can be used to test the environment setup. The `--feature_subsample 500` parameter instructs the benchmark to sample 500 random columns from each feature set. The steps parameters reduce the number of batches to use for each epoch.
 
 #### Use locally-connected layers with batch normalization
 ```
-python p1b3_baseline.py --conv 10 10 1 --pool 100 --locally_connected --optimizer adam --batch_normalization --batch_size 64
+python p1b3_baseline_keras2.py --conv 10 10 1 --pool 100 --locally_connected --optimizer adam --batch_normalization --batch_size 64
 ```
 This example adds a locally-connected layer to the MLP and changes the optimizer and batch size. The locally connected layer is a convolution layer with unshared weights, so it tends to increase the number of parameters dramatically. Here we use a pooling size of 100 to reduce the parameters. This example also adds a batch normalization layer between any core layer and its activation. Batch normalization is known to speed up training in some settings. 
 
