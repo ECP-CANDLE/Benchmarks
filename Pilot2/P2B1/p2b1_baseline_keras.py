@@ -37,7 +37,7 @@ if __name__=="__main__":
 		sys.exit(0)
 	sys.path.append('home_dir')
 	
-	import candle_helper_functions as hf
+	import p2b1 as hf
 	reload(hf)
         lib_path = os.path.abspath(os.path.join('..', 'common'))
         sys.path.append(lib_path)
