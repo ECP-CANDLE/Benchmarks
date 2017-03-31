@@ -1,0 +1,12 @@
+[Global_Params]
+data_folder=/Users/talathi1/Work/DataSets/CANDLE/3k_run10
+num_hidden=[512,256,128,64,32,16] 
+num_recurrent=[16,16,16] 
+look_back=10
+look_forward=1
+batch_size=32
+learning_rate=0.01
+epochs=1
+cool=True
+weight_decay=0.0005
+noise_factor=0

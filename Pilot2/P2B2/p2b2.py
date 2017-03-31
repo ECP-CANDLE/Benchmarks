@@ -28,7 +28,6 @@ def ReadConfig(File):
     config.read(File)
     section=config.sections()
     Global_Params={}
-    Global_Params['data_folder']=config.get(section[0],'data_folder')
     Global_Params['num_hidden']=eval(config.get(section[0],'num_hidden'))
     Global_Params['num_recurrent']=eval(config.get(section[0],'num_recurrent'))
     Global_Params['look_back']=eval(config.get(section[0],'look_back'))
