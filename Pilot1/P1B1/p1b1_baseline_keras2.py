@@ -70,20 +70,20 @@ def run_p1b1(X_train, X_test, epochs=2, batch_size=50):
     return encoder, decoder, history
 
 if __name__ == '__main__':
-    X_train, X_test = p1b1.load_data(test_path=test_path, train_path=train_path)
-    encoder, decoder, history = run_p1b1(X_train, X_test, EPOCH, BATCH)
-
-    encoded_image = encoder.predict(X_test)
-    decoded_image = decoder.predict(encoded_image)
-    diff = decoded_image - X_test
+    X_train, X_test = p1b1.load_data()
+    for i in range(3):
+        encoder, decoder, history = run_p1b1(X_train, X_test, EPOCH, BATCH)
+        encoded_image = encoder.predict(X_test)
+        decoded_image = decoder.predict(encoded_image)
+        diff = decoded_image - X_test
 
     # diff = ae.predict(X_test) - X_test
     diffs = diff.ravel()
 
-    import matplotlib as mpl
-    mpl.use('Agg')
-    import matplotlib.pyplot as plt
+    #import matplotlib as mpl
+    #mpl.use('Agg')
+    #import matplotlib.pyplot as plt
 
-    plt.hist(diffs, bins='auto')
-    plt.title("Histogram of Errors with 'auto' bins")
-    plt.savefig('histogram.png')
+    #plt.hist(diffs, bins='auto')
+    #plt.title("Histogram of Errors with 'auto' bins")
+    #plt.savefig('histogram.png')
