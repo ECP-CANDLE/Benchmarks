@@ -271,6 +271,20 @@ if __name__  == "__main__":
     else:
         verbose = 0
 
+    ## Read files
+    file_path = os.path.dirname(os.path.realpath(__file__))
+    print file_path
+    lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+    sys.path.append(lib_path)
+
+    from data_utils import get_file
+    origin = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P3B2/P3B2_data.tgz'
+    data_loc = get_file('P3B2_data.tgz', origin, untar=True, md5_hash=None, cache_subdir='P3B2')
+
+    print 'Data downloaded and stored at: ' + data_loc
+    data_path = os.path.dirname(data_loc)
+    print data_path
+
     char_rnn(
         rnn_size= args.rnn_size,
         n_layers= args.n_layers,
@@ -278,7 +292,7 @@ if __name__  == "__main__":
         dropout= args.dropout,
         recurrent_dropout= args.recurrent_dropout,
         n_epochs= args.n_epochs,
-        data_train= args.train_data,
+        data_train= data_path+'/data.pkl',
         verbose= args.verbose,
         savedir= args.output_dir,
         do_sample= args.do_sample,
