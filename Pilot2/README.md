@@ -7,8 +7,8 @@
 #### Description of the Data
 * Data source: MD Simulation output as PDB files (coarse-grained bead simulation)
 * Input dimensions:
-** Long term target: ~1.26e6 per time step (6000 lipids x 30 beads per lipid x (position + velocity + type))
-** Current: ~288e3 per time step (6000 lipids x 12 beads per lipid x (position + type))
+ * Long term target: ~1.26e6 per time step (6000 lipids x 30 beads per lipid x (position + velocity + type))
+ * Current: ~288e3 per time step (6000 lipids x 12 beads per lipid x (position + type))
 * Output dimensions: 500
 * Latent representation dimension:
 * Sample size: O(10^6) for simulation requiring O(10^8) time steps
