@@ -1,5 +1,8 @@
 ## Installing Keras framework
 
+Here is an alternate set of directions for using the Spack tool
+(spack.io) to install Keras and associated tools.
+
 ### Using spack
 
 ```
