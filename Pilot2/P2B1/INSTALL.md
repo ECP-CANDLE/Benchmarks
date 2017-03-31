@@ -23,7 +23,6 @@ spack install py-matplotlib +image
 
 ```
 # Activate all of these tools in the spack python environment
-spack activate ipython
 spack activate py-ipython
 spack activate py-keras
 spack activate py-matplotlib
