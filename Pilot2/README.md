@@ -17,8 +17,6 @@
 * 3-component-system (DPPC-DOPC-CHOL)
 * af-restraints-290k
 
-#### p2_small_baseline.npy
-
 #### 3K lipids, 10 microseconds simulation, ~3000 frames:
 * Disordered - 3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
 * Ordered - 3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir
