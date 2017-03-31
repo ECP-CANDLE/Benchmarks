@@ -1,4 +1,4 @@
-## P2B2: Predictive, recurrent, Autoencoder Compressed Representation for Molecular Dynamics Simulation Data
+## P2B2: Predictive network using Recurrent Neural Network, with Autoencoder Compressed Representation input, for Molecular Dynamics Simulation Data
 
 **Overview**: Cut down on manual inspection time for molecular simulation data
 
@@ -25,23 +25,23 @@
 
 ### Running the baseline implementation
 
-Using virtualenv
-
 ```
-cd P2B2
-workon keras
+cd Pilot2/P2B2
 python p2b2_baseline_keras1.py
 ```
+
+The training and test data files will be downloaded the first time this is run and will be cached for future runs.
+
 ### Scaling Options
 * ```--case=FULL``` Design autoencoder for data frame with coordinates for all beads
 * ```--case=CENTER``` Design autoencoder for data frame with coordinates of the center-of-mass
 * ```--case=CENTERZ``` Design autoencoder for data frame with z-coordiate of the center-of-mass
 
-### Expected Results
-
-(keras) vanessen1@vandamme: ~/Research/DeepLearning/ECP CANDLE/Benchmarks/Benchmarks.git/Pilot2/P2B2$ python p2b2_baseline_keras1.py
+### Expected Output
+```
+python p2b2_baseline_keras1.py
 Using Theano backend.
-{'num_hidden': [], 'num_recurrent': [16, 16, 16], 'noise_factor': 0, 'learning_rate': 0.01, 'batch_size': 32, 'look_forward': 1, 'epochs': 1, 'weight_decay': 0.0005, 'look_back': 10, 'cool': 'True'}
+{'num_hidden': [], 'num_recurrent': [16, 16, 16, 16], 'noise_factor': 0, 'learning_rate': 0.01, 'batch_size': 32, 'look_forward': 1, 'epochs': 1, 'weight_decay': 0.0005, 'look_back': 10, 'cool': 'True'}
 Reading Data...
 Reading Data Files... 3k_Disordered->3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
 ('X_train type and shape:', dtype('float64'), (89, 10, 3040))
@@ -62,14 +62,43 @@ Trainable params: 9,244,640
 Non-trainable params: 0
 ____________________________________________________________________________________________________
   0%|                                                                                                          | 0/1 [00:00<?, ?it/s]
-Loss on epoch 0: 47.9408
-100%|------------------------------------|                                                                     | 1/1 [00:35<00:00, 35.68s/it]
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_01_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_02_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_03_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_04_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_05_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_06_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_07_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_08_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_09_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_10_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_11_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_12_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_13_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_14_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_15_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_16_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_17_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_18_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_19_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_20_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_21_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_22_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_23_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_24_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_25_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_26_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_27_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_28_outof_29.npy
+../Data/common/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_29_outof_29.npy
+Loss on epoch 0: 47.957
+100%|----------------------------------------------------------------------------------------------------------| 1/1 [00:42<00:00, 42.32s/it]
 Cooling Learning Rate by factor of 10...
   0%|                                                                                                          | 0/1 [00:00<?, ?it/s]
-Loss on epoch 0: 30.2241
-100%|---------------------------------------------------------------|                                          | 1/1 [00:35<00:00, 35.29s/it]
+Loss on epoch 0: 30.5609
+100%|----------------------------------------------------------------------------------------------------------| 1/1 [00:49<00:00, 49.95s/it]
 Cooling Learning Rate by factor of 10...
   0%|                                                                                                          | 0/1 [00:00<?, ?it/s]
-Loss on epoch 0: 23.4605
-100%|----------------------------------------------------------------------------------------------------------| 1/1 [00:35<00:00, 35.72s/it]
-(keras)
+Loss on epoch 0: 23.2651
+100%|----------------------------------------------------------------------------------------------------------| 1/1 [00:41<00:00, 41.74s/it]
+```

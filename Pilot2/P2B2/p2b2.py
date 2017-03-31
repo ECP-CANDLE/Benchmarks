@@ -274,7 +274,7 @@ class Candle_Train():
                     loss_data=self.model.train_on_batch(x,y,sample_weight=sample_weight)
                     iter_loss.append(loss_data)
                 file_loss.append(np.array(iter_loss).mean(axis=0))
-            print 'Loss on epoch %d:'%e, file_loss[-1]
+            print '\nLoss on epoch %d:'%e, file_loss[-1]
             epoch_loss.append(np.array(file_loss).mean(axis=0))
         return epoch_loss
 

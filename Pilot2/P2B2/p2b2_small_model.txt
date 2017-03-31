@@ -1,6 +1,6 @@
 [Global_Params]
 num_hidden=[] 
-num_recurrent=[16,16,16] 
+num_recurrent=[16,16,16,16] 
 look_back=10
 look_forward=1
 batch_size=32
