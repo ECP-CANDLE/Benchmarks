@@ -1,6 +1,5 @@
 [Global_Params]
-data_folder=/Users/talathi1/Work/DataSets/CANDLE/3k_run10
-num_hidden=[512,256,128,64,32,16] 
+num_hidden=[] 
 num_recurrent=[16,16,16] 
 look_back=10
 look_forward=1

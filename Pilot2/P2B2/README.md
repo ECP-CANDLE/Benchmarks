@@ -1,4 +1,4 @@
-## P2B2: Autoencoder Compressed Representation for Molecular Dynamics Simulation Data
+## P2B2: Predictive, recurrent, Autoencoder Compressed Representation for Molecular Dynamics Simulation Data
 
 **Overview**: Cut down on manual inspection time for molecular simulation data
 
@@ -9,12 +9,7 @@
 ### Benchmark Specs Requirements
 
 #### Description of the Data
-* Data source: MD Simulation output as PDB files (coarse-grained bead simulation)
-* Input dimensions: ~1.26e6 per time step (6000 lipids x 30 beads per lipid x (position + velocity + type))
-* Output dimensions: 1xN_Frame (N=100 hidden units)
-* Latent representation dimension:
-* Sample size: O(10^6) for simulation requiring O(10^8) time steps
-* Notes on data balance and other issues: unlabeled data with rare events
+* See Pilot2 Readme for description
 
 #### Expected Outcomes
 * 'Telescope' into data: Find regions of interest based on higher level of structure than rest of regions
@@ -35,5 +30,46 @@ Using virtualenv
 ```
 cd P2B2
 workon keras
-python __main__.py  --home-dir=${HOME}/.virtualenvs/keras/lib/python2.7/site-packages --look-back 15 --train --epochs 20 --learning-rate 0.01 --cool --seed --batch-size 10 --seed
+python p2b2_baseline_keras1.py
 ```
+### Scaling Options
+* ```--case=FULL``` Design autoencoder for data frame with coordinates for all beads
+* ```--case=CENTER``` Design autoencoder for data frame with coordinates of the center-of-mass
+* ```--case=CENTERZ``` Design autoencoder for data frame with z-coordiate of the center-of-mass
+
+### Expected Results
+
+(keras) vanessen1@vandamme: ~/Research/DeepLearning/ECP CANDLE/Benchmarks/Benchmarks.git/Pilot2/P2B2$ python p2b2_baseline_keras1.py
+Using Theano backend.
+{'num_hidden': [], 'num_recurrent': [16, 16, 16], 'noise_factor': 0, 'learning_rate': 0.01, 'batch_size': 32, 'look_forward': 1, 'epochs': 1, 'weight_decay': 0.0005, 'look_back': 10, 'cool': 'True'}
+Reading Data...
+Reading Data Files... 3k_Disordered->3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
+('X_train type and shape:', dtype('float64'), (89, 10, 3040))
+('X_train.min():', 38.831248919169106)
+('X_train.max():', 100.46649742126465)
+Define the model and compile
+using mlp network
+Autoencoder Regression problem
+____________________________________________________________________________________________________
+Layer (type)                     Output Shape          Param #     Connected to                     
+====================================================================================================
+input_1 (InputLayer)             (None, 10, 3040)      0                                            
+____________________________________________________________________________________________________
+timedistributed_1 (TimeDistribut (None, 10, 3040)      9244640     input_1[0][0]                    
+====================================================================================================
+Total params: 9,244,640
+Trainable params: 9,244,640
+Non-trainable params: 0
+____________________________________________________________________________________________________
+  0%|                                                                                                          | 0/1 [00:00<?, ?it/s]
+Loss on epoch 0: 47.9408
+100%|------------------------------------|                                                                     | 1/1 [00:35<00:00, 35.68s/it]
+Cooling Learning Rate by factor of 10...
+  0%|                                                                                                          | 0/1 [00:00<?, ?it/s]
+Loss on epoch 0: 30.2241
+100%|---------------------------------------------------------------|                                          | 1/1 [00:35<00:00, 35.29s/it]
+Cooling Learning Rate by factor of 10...
+  0%|                                                                                                          | 0/1 [00:00<?, ?it/s]
+Loss on epoch 0: 23.4605
+100%|----------------------------------------------------------------------------------------------------------| 1/1 [00:35<00:00, 35.72s/it]
+(keras)
