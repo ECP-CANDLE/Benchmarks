@@ -34,6 +34,9 @@
 * ```--data-set=3k_Disordered```
 * ```--data-set=3k_Ordered```
 * ```--data-set=3k_Ordered_and_gel```
+* ```--data-set=6k_Disordered```
+* ```--data-set=6k_Ordered```
+* ```--data-set=6k_Ordered_and_gel```
 
 ### Data Set Release Notice
 
