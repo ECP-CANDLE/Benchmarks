@@ -30,6 +30,9 @@ conda install -c conda-forge tensorflow
 conda install matplotlib
 conda install PIL
 conda install tqdm
+conda install scikit-learn
+conda install mkl-service
+
 source deactivate keras1
 
 # Download the source files for the tutorial
