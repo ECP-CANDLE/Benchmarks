@@ -19,15 +19,6 @@ def parse_list(option, opt, value, parser):
 def str2bool(v):
   return v.lower() in ("yes", "true", "t", "1")
 
-data_sets = {
-  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir', '357567db15ba8615c96b16c63655028c'),
-  '3k_Ordered' : ('3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir', '604ef65a1e33f475129ec66e2d18ff51'),
-  '3k_Ordered_and_gel' : ('3k_run43_10us.35fs-DPPC.70-DOPC.10-CHOL.20.dir', 'b96483103a2ce40fd63ef6317dbe5f0c'),
-  '6k_Disordered' : ('6k_run10_25us.35fs-DPPC.10-DOPC.70-CHOL.20.dir', '3'),
-  '6k_Ordered' : ('6k_run32_25us.35fs-DPPC.50-DOPC.10-CHOL.40.dir', '4'),
-  '6k_Ordered and gel' : ('6k_run43_25us.35fs-DPPC.70-DOPC.10-CHOL.20.dir', '5')
-  }
-
 if __name__=="__main__":
 ### Hyperparameters and model save path
 	parser=optparse.OptionParser()
@@ -63,6 +54,8 @@ if __name__=="__main__":
 	reload(hf)
         lib_path = os.path.abspath(os.path.join('..', 'common'))
         sys.path.append(lib_path)
+        import pilot2_datasets as p2
+        reload(p2)
 	maps=hf.autoencoder_preprocess()
 	
 	GP=hf.ReadConfig(opts.config_file)
@@ -81,8 +74,8 @@ if __name__=="__main__":
 ##### Read Data ########
 	print ('Reading Data...')
 	datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])
-        data_set=data_sets[opts.set_sel][0]
-        data_hash=data_sets[opts.set_sel][1]
+        data_set=p2.data_sets[opts.set_sel][0]
+        data_hash=p2.data_sets[opts.set_sel][1]
 	print ('Reading Data Files... %s->%s' % (opts.set_sel, data_set))
         data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash=data_hash)
         data_dir = os.path.join(os.path.dirname(data_file), data_set)
