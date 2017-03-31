@@ -18,6 +18,28 @@ from keras.layers.core import Flatten, Dense, Dropout, Activation, Reshape
 from keras.initializations import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
 from keras.layers.normalization import BatchNormalization
 import threading
+import ConfigParser
+from tqdm import *
+import re,copy
+
+
+def ReadConfig(File):
+    config=ConfigParser.ConfigParser()
+    config.read(File)
+    section=config.sections()
+    Global_Params={}
+    Global_Params['data_folder']=config.get(section[0],'data_folder')
+    Global_Params['num_hidden']=eval(config.get(section[0],'num_hidden'))
+    Global_Params['num_recurrent']=eval(config.get(section[0],'num_recurrent'))
+    Global_Params['look_back']=eval(config.get(section[0],'look_back'))
+    Global_Params['look_forward']=eval(config.get(section[0],'look_forward'))
+    Global_Params['batch_size']=eval(config.get(section[0],'batch_size'))
+    Global_Params['learning_rate']=eval(config.get(section[0],'learning_rate'))
+    Global_Params['epochs']=eval(config.get(section[0],'epochs'))
+    Global_Params['cool']=config.get(section[0],'cool')
+    Global_Params['weight_decay']=eval(config.get(section[0],'weight_decay'))
+    Global_Params['noise_factor']=eval(config.get(section[0],'noise_factor'))
+    return Global_Params
 
 
 ############# Define Data Generators ################
@@ -182,13 +204,14 @@ def rnn_dense_auto(weights_path=None,T=1,D=1,nonlinearity='relu',hidden_layers=N
                 encoded=TimeDistributed(Dense(l,activation=nonlinearity))(input_img)
             else:
                 encoded=TimeDistributed(Dense(l,activation=nonlinearity))(encoded)
-
+            encoded=TimeDistributed(Dropout(0.2))(encoded)
         for i,l in enumerate(recurrent_layers):
             if i==0:
-                rnn=LSTM(l,return_sequences=True, stateful=False)(encoded)
+                rnn=GRU(l,return_sequences=True, stateful=False)(encoded)
             else:
-                rnn=LSTM(l,return_sequences=True, stateful=False)(rnn)
-
+               rnn=GRU(l,return_sequences=True, stateful=False)(rnn)
+            encoded=TimeDistributed(Dropout(0.2))(encoded)
+            
         for i,l in reversed(list(enumerate(hidden_layers))):
             if i <len(hidden_layers)-1:
                 if i==len(hidden_layers)-2:
@@ -205,6 +228,56 @@ def rnn_dense_auto(weights_path=None,T=1,D=1,nonlinearity='relu',hidden_layers=N
         print('Loading Model')
         model.load_weights(weights_path)
     return model
+
+
+def get_data(X,case='Full'):
+    if case.upper()=='FULL':
+        X_train=X.copy().reshape(X.shape[0],np.prod(X.shape[1:]))
+    if case.upper()=='CENTER':
+        X_train=X.mean(axis=2).reshape(X.shape[0],np.prod(X.mean(axis=2).shape[1:]))
+    if case.upper()=='CENTERZ':
+        X_train=X.mean(axis=2)[:,:,2].reshape(X.shape[0],np.prod(X.mean(axis=2)[:,:,2].shape[1:]))
+    return X_train
+
+class Candle_Train():
+    def __init__(self, datagen,model, numpylist,nb_epochs,case='CenterZ',batch_size=32,print_data=True,look_back=10,look_forward=1):
+        self.datagen=datagen
+        self.numpylist=numpylist
+        self.epochs=nb_epochs
+        self.case=case
+        self.batch_size=batch_size
+        self.model=model
+        self.look_back=look_back
+        self.look_forward=look_forward
+        self.print_data=print_data
+        
+    def train_ac(self):
+        bool_sample=False
+        epoch_loss=[]
+        for e in tqdm(range(self.epochs)):
+            file_loss=[]
+            for f in self.numpylist:
+                if self.print_data:
+                    if e==0:
+                        print f
+                X=np.load(f)
+                data=get_data(X,self.case)
+                X_train,y_train=create_dataset(data,look_back=self.look_back,look_forward=self.look_forward)
+                imggen=self.datagen.flow(X_train, y_train, batch_size=self.batch_size)
+                N_iter=X.shape[0]//self.batch_size
+                
+                iter_loss=[]
+                for _ in range(N_iter+1):
+                    x,y=next(imggen)
+                    subset_sample_weight=np.ones((x.shape[0],1))
+                    sample_weight=np.zeros((x.shape[0],self.look_back))
+                    sample_weight[:,0:1]=subset_sample_weight    
+                    loss_data=self.model.train_on_batch(x,y,sample_weight=sample_weight)
+                    iter_loss.append(loss_data)
+                file_loss.append(np.array(iter_loss).mean(axis=0))
+            print 'Loss on epoch %d:'%e, file_loss[-1]
+            epoch_loss.append(np.array(file_loss).mean(axis=0))
+        return epoch_loss
 
 
 class autoencoder_preprocess():

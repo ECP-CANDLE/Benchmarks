@@ -6,28 +6,45 @@ import sys,os
 import glob
 import optparse
 import matplotlib
+from sklearn.preprocessing import MinMaxScaler
 matplotlib.use('TKAgg')
 import pylab as py
 py.ion()
+lib_path = os.path.abspath(os.path.join('..', '..', 'common'))
+sys.path.append(lib_path)
+from data_utils import get_file
 HOME=os.environ['HOME']
 def parse_list(option, opt, value, parser):
   setattr(parser.values, option.dest, value.split(','))
+def str2bool(v):
+  return v.lower() in ("yes", "true", "t", "1")
+
+data_sets = {
+  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir', '357567db15ba8615c96b16c63655028c'),
+  '3k_Ordered' : ('3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir', '604ef65a1e33f475129ec66e2d18ff51'),
+  '3k_Ordered_and_gel' : ('3k_run43_10us.35fs-DPPC.70-DOPC.10-CHOL.20.dir', 'b96483103a2ce40fd63ef6317dbe5f0c'),
+  '6k_Disordered' : ('6k_run10_25us.35fs-DPPC.10-DOPC.70-CHOL.20.dir', '3'),
+  '6k_Ordered' : ('6k_run32_25us.35fs-DPPC.50-DOPC.10-CHOL.40.dir', '4'),
+  '6k_Ordered and gel' : ('6k_run43_25us.35fs-DPPC.70-DOPC.10-CHOL.20.dir', '5')
+  }
 
 if __name__=="__main__":
 ### Hyperparameters and model save path
 	parser=optparse.OptionParser()
-	parser.add_option("--train", action="store_true",dest="train_bool",default=False,help="Invoke training")
-	parser.add_option("--learning-rate",help="learning rate",dest="learning_rate",type=float,default=0.1)
-	parser.add_option("--noise-factor",help="noise",dest="noise_factor",type=float,default=0.0)
-	parser.add_option("--cool",action="store_true",dest="cool",default=False,help="Cool Learning Rate")
-	parser.add_option("--epochs",help="epochs",dest="epochs",type=int,default=1)
-	parser.add_option("--batch-size",help="batch size",dest="batch_size",type=int,default=1)
-	parser.add_option("--look-back",help="look back time window",dest="look_back",type=int,default=1)
-	parser.add_option("--home-dir",help="Home Directory",dest="home_dir",type=str,default='/Users/talathi1/Work/Python/Git_Folder/caffe-tools/keras')
+	parser.add_option("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
+	parser.add_option("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
+	parser.add_option("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
 	parser.add_option("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
+	parser.add_option("--config-file",help="Config File",dest="config_file",type=str,default='./config.ini')
 	parser.add_option("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
 	parser.add_option("--memo",help="Memo",dest="base_memo",type=str,default=None)
 	parser.add_option("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
+	parser.add_option("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='CenterZ')
+	parser.add_option("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
+        parser.add_option("--data-set",
+                          help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",
+                          dest="set_sel",
+                          type=str,default="3k_Disordered")
 	(opts,args)=parser.parse_args()
 
 	## set the seed
@@ -44,8 +61,13 @@ if __name__=="__main__":
 	
 	import candle_helper_functions as hf
 	reload(hf)
+        lib_path = os.path.abspath(os.path.join('..', 'common'))
+        sys.path.append(lib_path)
 	maps=hf.autoencoder_preprocess()
 	
+	GP=hf.ReadConfig(opts.config_file)
+	print GP
+
 	## Import keras modules
 	from keras.optimizers import SGD,RMSprop,Adam
 	from keras.datasets import mnist
@@ -54,97 +76,83 @@ if __name__=="__main__":
 	from keras import callbacks
 	from keras.layers.advanced_activations import ELU
 	from keras.preprocessing.image import ImageDataGenerator
-        from keras.utils.data_utils import get_file
 
-	batch_size = opts.batch_size
+	batch_size = GP['batch_size']
 ##### Read Data ########
 	print ('Reading Data...')
-        data_file = get_file('p2_small_baseline.npy', origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P2B2/p2_small_baseline.npy')
-#	data_file='%s/Research/DeepLearning/ECP CANDLE/Benchmarks/Benchmarks.git/P2B2/sim-numpy.npy'%HOME ### can code to read at the terminal
-	print 'Data File: %s' %data_file
-	print 'Data Format: [Num Samples, Num Molecules, Num Atoms, Position]'
-	
-	X=np.load(data_file) ### Data is: Samples, Molecules, Atoms, x-pos,y-pos,z-pos
-	## Take center of mass for atoms:
-	X_A=X.mean(axis=2) ## Data is: Samples, Molecules, x-pos,y-pos,z-pos
-	data=X_A[0:-1,:,2] ## only consider z-dimension
-	X_train,y_train=hf.create_dataset(data,opts.look_back,look_forward=1) ## convert data to a sequence 
+	datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])
+        data_set=data_sets[opts.set_sel][0]
+        data_hash=data_sets[opts.set_sel][1]
+	print ('Reading Data Files... %s->%s' % (opts.set_sel, data_set))
+        data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash=data_hash)
+        data_dir = os.path.join(os.path.dirname(data_file), data_set)
+	data_files=glob.glob('%s/*.npy'%data_dir) 
+
+	X=np.load(data_files[0])
+	data=hf.get_data(X,case=opts.case)
+	X_train,y_train=hf.create_dataset(data,GP['look_back'],look_forward=GP['look_forward']) ## convert data to a sequence 
 	temporal_dim=X_train.shape[1]
 	input_dim=X_train.shape[2]
-	subset_sample_weight=np.ones((X_train.shape[0],1))
-	sample_weight=np.zeros((X_train.shape[0],opts.look_back))
-	sample_weight[:,0:1]=subset_sample_weight
-
+	
 	print('X_train type and shape:', X_train.dtype, X_train.shape)
 	print('X_train.min():', X_train.min())
 	print('X_train.max():', X_train.max())
-
+	
 ### Define Model, Solver and Compile ##########
 	print ('Define the model and compile')
-	opt=Adam(lr=opts.learning_rate)
+	opt=Adam(lr=GP['learning_rate'])
 
 	print ('using mlp network')
 	model_type='mlp'
-	hidden_layers=[512,256,128,64,32,16]
-	recurrent_layers=[16,16,16]
+	hidden_layers=GP['num_hidden']
+	if len(hidden_layers)==0:
+		hidden_layers=None
+	recurrent_layers=GP['num_recurrent']
+	
 	## Model is a Autoencoder-RNN network
 	model=hf.rnn_dense_auto(weights_path=None,T=temporal_dim,D=input_dim,nonlinearity='relu',hidden_layers=hidden_layers,recurrent_layers=recurrent_layers)
 		
-	memo='%s_%s_%0.5f'%(opts.base_memo,model_type,opts.learning_rate)
+	memo='%s_%s'%(opts.base_memo,model_type)
 
 	print 'Autoencoder Regression problem'
 	model.compile(optimizer=opt, loss='mean_squared_error',sample_weight_mode="temporal")
 	model.summary()	## print model summary in details
-	#sys.exit(0)
-
-#### Print Compact Model Configuration ###########
-	# num_layers=len(model.layers)
-	# print '*'*10,'Model Configuration','*'*10
-	# for i  in range(len(model.layers)):	
-	# 	print i,': ',model.layers[i].name, ':', model.layers[i].output_shape[:]
-
-### Set up for Training and Validation
-	total_epochs = opts.epochs
-	initial_lrate=opts.learning_rate
-	if opts.cool:
-		drop=0.5
-	else:
-		drop=1.0
-	
-	epochs_drop=1+int(np.floor(total_epochs/3))
-		
-	def step_decay(epoch):
-		global initial_lrate,epochs_drop,drop
-		lrate = initial_lrate * np.power(drop, np.floor((1+epoch)/epochs_drop))
-		return lrate
-	lr_scheduler = LearningRateScheduler(step_decay)
 
 #### Train the Model
 	if opts.train_bool:
-		history = callbacks.History()
-		if opts.save_path !=None:
-			model_file='%s/%s.hdf5'%(opts.save_path,memo)
-			checkpointer=ModelCheckpoint(filepath=model_file, verbose=1)
-			callbacks=[history,lr_scheduler,checkpointer]
+		if not str2bool(GP['cool']):
+			effec_epochs=GP['epochs']
+			ct=hf.Candle_Train(datagen,model,data_files,effec_epochs,case=opts.case,look_back=GP['look_back'],look_forward=GP['look_forward'])
+			loss=ct.train_ac()
 		else:
-			callbacks=[history,lr_scheduler]
-		model.fit(X_train, y_train, batch_size=batch_size,shuffle=False,nb_epoch=total_epochs,callbacks=callbacks,verbose=1,sample_weight=sample_weight)
-		
-		loss_data={'train': history.history['loss']}
+			effec_epochs=GP['epochs']//3
+			if effec_epochs==0:
+				effec_epochs=1
+			ct=hf.Candle_Train(datagen,model,data_files,effec_epochs,case=opts.case,look_back=GP['look_back'],look_forward=GP['look_forward'])
+			loss=[]
+			for i in range(3):
+				lr=GP['learning_rate']/10**i
+				ct.model.optimizer.lr.set_value(lr)
+				if i>0:
+					ct.print_data=False
+					print 'Cooling Learning Rate by factor of 10...'
+				loss.extend(ct.train_ac())
+
 		if opts.save_path!=None:
 			loss_file='%s/%s.pkl'%(opts.save_path,memo)
 			o=open(loss_file,'wb')
-			pickle.dump(loss_data,o)
+			pickle.dump(loss,o)
 			o.close()
 
 		## Generate model forecast figure  
-		x=X_train[0:1]
-		xmod=x.reshape(x.shape[1],x.shape[2])
-		yf=hf.generate_timedistributed_forecast(model,x,X_train.shape[0]+opts.look_back)
-		yt=yt=y_train[:,0,:]
-		ytn=np.vstack([xmod,yt])
-		py.figure();py.plot(ytn.mean(axis=1))
-		py.hold('on');py.plot(yf.mean(axis=1))
+		if opts.fig_bool:
+			x=X_train[0:1]
+			xmod=x.reshape(x.shape[1],x.shape[2])
+			yf=hf.generate_timedistributed_forecast(model,x,X_train.shape[0])
+			yt=yt=y_train[:,0,:]
+			ytn=np.vstack([xmod,yt])
+			py.figure();py.plot(ytn.mean(axis=1))
+			py.hold('on');py.plot(yf.mean(axis=1))
 
 
 
