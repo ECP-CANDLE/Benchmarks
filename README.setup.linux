@@ -1,0 +1,75 @@
+# Set up your python environment
+# ------------------------------
+
+# Download the Anaconda installer
+curl -o Anaconda2-4.3.1-Linux-x86_64.sh https://repo.continuum.io/archive/Anaconda2-4.3.1-Linux-x86_64.sh
+
+# Make the installer executable
+chmod u+x ./Anaconda2-4.3.1-Linux-x86_64.sh
+
+# Run the installer, accepting the defaults.
+./Anaconda2-4.3.1-Linux-x86_64.sh
+
+# Add anaconda2/bin to your path (assumes default install location)
+export PATH=$HOME/anaconda2/bin:$PATH
+
+# Install additonal modules not shipped with Anaconda
+conda install -c conda-forge tensorflow
+conda install -c anaconda hdf5=1.8.17
+pip install git+git://github.com/Theano/Theano.git
+pip install git+git://github.com/fchollet/keras.git
+
+
+# Set up special environment for Pilot2 benchmars using keras version 1
+# This will go away when Pilot2 benchmarks are upgraded to keras version 2
+conda create --name keras1
+source activate
+conda install opencv
+conda install -c conda-forge keras=1
+conda install -c conda-forge tensorflow
+conda install matplotlib
+conda install PIL
+conda install tqdm
+conda install scikit-learn
+conda install mkl-service
+
+source deactivate keras1
+
+# Download the source files for the tutorial
+git clone https://github.com/ECP-Candle/benchmarks
+
+# Run the Pilot1  benchmark
+pushd benchmarks/Pilot1/P1B1/
+python p1b1_baseline_keras2.py 
+popd
+
+pushd benchmarks/Pilot1/P1B2/
+python p1b2_baseline_keras2.py
+popd
+
+pushd benchmarks/Pilot1/P1B3/
+python p1b3_baseline_keras2.py
+popd
+
+# Run the Pilot2 benchmarks
+source activate keras1
+
+pushd benchmarks/Pilot2/P2B1/
+python p2b1_baseline_keras1.py
+popd
+
+pushd benchmarks/Pilot2/P2B2/
+python p2b2_baseline_keras1.py
+popd
+
+source deactivate keras1
+
+# Run the Pilot3 benchmarks
+pushd benchmarks/Pilot3/P3B1/
+python p3b1_baseline_keras2.py
+popd
+
+pushd benchmarks/Pilot3/P3B2/
+python p3b2_baseline_keras2.py
+popd 
+
