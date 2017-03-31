@@ -212,8 +212,8 @@ def rnn_dense_auto(weights_path=None,T=1,D=1,nonlinearity='relu',hidden_layers=N
             encoded=TimeDistributed(Dropout(0.2))(encoded)
             
         for i,l in reversed(list(enumerate(hidden_layers))):
-            if i <len(hidden_layers)-1:
-                if i==len(hidden_layers)-2:
+            if i <len(hidden_layers):
+                if i==len(hidden_layers)-1:
                     decoded=TimeDistributed(Dense(l,activation=nonlinearity))(rnn)
                 else:
                     decoded=TimeDistributed(Dense(l,activation=nonlinearity))(decoded)
@@ -253,7 +253,7 @@ class Candle_Train():
     def train_ac(self):
         bool_sample=False
         epoch_loss=[]
-        for e in tqdm(range(self.epochs)):
+        for e in range(self.epochs):
             file_loss=[]
             for f in self.numpylist:
                 if self.print_data:

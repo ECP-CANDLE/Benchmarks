@@ -48,7 +48,7 @@ if __name__=="__main__":
 	if not os.path.isdir(opts.home_dir):
 		print ('Keras home directory not set')
 		sys.exit(0)
-	sys.path.append('home_dir')
+	sys.path.append(opts.home_dir)
 	
 	import p2b2 as hf
 	reload(hf)

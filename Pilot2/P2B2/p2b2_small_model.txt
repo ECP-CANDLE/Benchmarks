@@ -1,5 +1,5 @@
 [Global_Params]
-num_hidden=[] 
+num_hidden=[512,256,128] 
 num_recurrent=[16,16,16,16] 
 look_back=10
 look_forward=1
