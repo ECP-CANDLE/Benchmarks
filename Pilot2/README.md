@@ -6,7 +6,9 @@
 
 #### Description of the Data
 * Data source: MD Simulation output as PDB files (coarse-grained bead simulation)
-* Input dimensions: ~1.26e6 per time step (6000 lipids x 30 beads per lipid x (position + velocity + type))
+* Input dimensions:
+  * Long term target: ~1.26e6 per time step (6000 lipids x 30 beads per lipid x (position + velocity + type))
+  * Current: ~288e3 per time step (6000 lipids x 12 beads per lipid x (position + type))
 * Output dimensions: 500
 * Latent representation dimension:
 * Sample size: O(10^6) for simulation requiring O(10^8) time steps
@@ -16,8 +18,6 @@
 * RAS
 * 3-component-system (DPPC-DOPC-CHOL)
 * af-restraints-290k
-
-#### p2_small_baseline.npy
 
 #### 3K lipids, 10 microseconds simulation, ~3000 frames:
 * Disordered - 3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
@@ -34,6 +34,9 @@
 * ```--data-set=3k_Disordered```
 * ```--data-set=3k_Ordered```
 * ```--data-set=3k_Ordered_and_gel```
+* ```--data-set=6k_Disordered```
+* ```--data-set=6k_Ordered```
+* ```--data-set=6k_Ordered_and_gel```
 
 ### Data Set Release Notice
 

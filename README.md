@@ -15,7 +15,7 @@ Pilot3 (P3) benchmarks are formed out of problems and data at the population lev
 Each of the problems (P1,P2,P3) informed the implementation of specific benchmarks, so P1B3 would be benchmark three of problem 1.
 At this point, we will refer to a benchmark by it's problem area and benchmark number. So it's natural to talk of the P1B1 benchmark. Inside each benchmark directory, there exists a readme file that contains an overview of the benchmark, a description of the data and expected outcomes along with instructions for running the benchmark code.
 
-Over time, we will be adding implementations that make use of different tensor frameworks. The primary (baseline) benchmarks are implemented using tensorflow, and are named with '_baseline' in the name, for example p2b1_baseline.py. 
+Over time, we will be adding implementations that make use of different tensor frameworks. The primary (baseline) benchmarks are implemented using keras, and are named with '_baseline' in the name, for example p3b1_baseline_keras2.py. 
 
 Implementations that use alternative tensor frameworks, such as mxnet or neon, will have the name of the framework in the name. Examples can be seen in the P1B3 benchmark contribs/ directory, for example:
         p1b3_mxnet.py
