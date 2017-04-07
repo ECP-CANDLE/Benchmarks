@@ -134,6 +134,8 @@ def get_parser():
                         default=['descriptors'],
                         choices=['descriptors', 'latent', 'all', 'noise'],
                         help="use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or random features; 'descriptors','latent', 'all', 'noise'")
+    parser.add_argument("--cell_noise_sigma", type=float,
+                        help="standard deviation of guassian noise to add to cell line features during training")
     parser.add_argument("--feature_subsample", type=int,
                         default=FEATURE_SUBSAMPLE,
                         help="number of features to randomly sample from each category (cellline expression, drug descriptors, etc), 0 means using all features")
@@ -186,6 +188,8 @@ def extension_from_parameters(args):
     ext += '.E={}'.format(args.epochs)
     if args.feature_subsample:
         ext += '.F={}'.format(args.feature_subsample)
+    if args.cell_noise_sigma:
+        ext += '.N={}'.format(args.cell_noise_sigma)
     if args.conv:
         name = 'LC' if args.locally_connected else 'C'
         layer_list = list(range(0, len(args.conv), 3))
@@ -409,7 +413,7 @@ def main():
 
     model.compile(loss=args.loss, optimizer=args.optimizer)
 
-    train_gen = p1b3.DataGenerator(loader, batch_size=args.batch_size, shape=gen_shape, name='train_gen').flow()
+    train_gen = p1b3.DataGenerator(loader, batch_size=args.batch_size, shape=gen_shape, name='train_gen', cell_noise_sigma=args.cell_noise_sigma).flow()
     val_gen = p1b3.DataGenerator(loader, partition='val', batch_size=args.batch_size, shape=gen_shape, name='val_gen').flow()
     val_gen2 = p1b3.DataGenerator(loader, partition='val', batch_size=args.batch_size, shape=gen_shape, name='val_gen2').flow()
     test_gen = p1b3.DataGenerator(loader, partition='test', batch_size=args.batch_size, shape=gen_shape, name='test_gen').flow()

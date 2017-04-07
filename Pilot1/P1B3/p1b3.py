@@ -16,7 +16,7 @@ from itertools import cycle, islice
 from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
-file_path = os.path.dirname(os.path.realpath(__file__))
+file_path = os.path.dirname(os.path.realpath("__file__"))
 lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
@@ -65,6 +65,7 @@ def scale(df, scaling=None):
 
     mat = df.as_matrix()
     mat = scaler.fit_transform(mat)
+
     df = pd.DataFrame(mat, columns=df.columns)
 
     return df
@@ -503,7 +504,7 @@ class DataGenerator(object):
     """Generate training, validation or testing batches from loaded data
     """
 
-    def __init__(self, data, partition='train', batch_size=32, shape=None, concat=True, name=''):
+    def __init__(self, data, partition='train', batch_size=32, shape=None, concat=True, name='', cell_noise_sigma=None):
         """Initialize data
 
         Parameters
@@ -526,6 +527,7 @@ class DataGenerator(object):
         self.shape = shape
         self.concat = concat
         self.name = name
+        self.cell_noise_sigma = cell_noise_sigma
 
         if partition == 'train':
             self.cycle = cycle(range(data.n_train))
@@ -550,6 +552,7 @@ class DataGenerator(object):
             self.lock.release()
 
             df = self.data.df_response.iloc[indices, :]
+            cell_column_beg = df.shape[1]
 
             for fea in self.data.cell_features:
                 if fea == 'expression':
@@ -561,6 +564,8 @@ class DataGenerator(object):
                 elif fea == 'categorical':
                     df = pd.merge(df, self.data.df_cell_cat, on='CELLNAME')
 
+            cell_column_end = df.shape[1]
+
             for fea in self.data.drug_features:
                 if fea == 'descriptors':
                     df = df.merge(self.data.df_drug_desc, on='NSC')
@@ -571,6 +576,12 @@ class DataGenerator(object):
 
             df = df.drop(['CELLNAME', 'NSC'], 1)
             x = np.array(df.iloc[:, 1:])
+
+            if self.cell_noise_sigma:
+                c1 = cell_column_beg - 3
+                c2 = cell_column_end - 3
+                x[:, c1:c2] += np.random.randn(df.shape[0], c2-c1) * self.cell_noise_sigma
+
             y = np.array(df.iloc[:, 0])
             y = y / 100.
 
