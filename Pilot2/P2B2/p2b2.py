@@ -15,7 +15,7 @@ K.set_image_dim_ordering('th')
 from keras.layers import Input, merge, TimeDistributed,LSTM,GRU,RepeatVector
 from keras.models import Sequential,Model
 from keras.layers.core import Flatten, Dense, Dropout, Activation, Reshape
-from keras.initializations import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
+from keras.initializers import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
 from keras.layers.normalization import BatchNormalization
 import threading
 import ConfigParser

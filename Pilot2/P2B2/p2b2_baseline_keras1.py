@@ -24,7 +24,7 @@ if __name__=="__main__":
 	parser=optparse.OptionParser()
 	parser.add_option("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
 	parser.add_option("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
-	parser.add_option("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
+	parser.add_option("--home-dir",help="Home Directory",dest="home_dir",type=str,default='')
 	parser.add_option("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
 	parser.add_option("--config-file",help="Config File",dest="config_file",type=str,default='./p2b2_small_model.txt')
 	parser.add_option("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
@@ -32,10 +32,8 @@ if __name__=="__main__":
 	parser.add_option("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
 	parser.add_option("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='CenterZ')
 	parser.add_option("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
-        parser.add_option("--data-set",
-                          help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",
-                          dest="set_sel",
-                          type=str,default="3k_Disordered")
+	parser.add_option("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
+		type=str,default="3k_Disordered")
 	(opts,args)=parser.parse_args()
 
 	## set the seed
@@ -65,7 +63,6 @@ if __name__=="__main__":
 	from keras.optimizers import SGD,RMSprop,Adam
 	from keras.datasets import mnist
 	from keras.callbacks import LearningRateScheduler,ModelCheckpoint
-	from keras.regularizers import l2,WeightRegularizer
 	from keras import callbacks
 	from keras.layers.advanced_activations import ELU
 	from keras.preprocessing.image import ImageDataGenerator

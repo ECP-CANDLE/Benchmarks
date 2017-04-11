@@ -17,9 +17,9 @@ from keras.models import Sequential,Model
 from keras.layers.core import Flatten, Dense, Dropout, Activation, Reshape
 from keras.layers.convolutional import Convolution2D, MaxPooling2D,Convolution1D
 #from keras.layers.convolutional import ZeroPadding2D,UpSampling2D,Unpooling2D,perforated_Unpooling2D,DePool2D
-from keras.initializations import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
+from keras.initializers import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
 from keras.layers.normalization import BatchNormalization
-from keras.regularizers import l2, activity_l2
+from keras.regularizers import l2
 import threading
 import ConfigParser
 from tqdm import *
@@ -124,19 +124,19 @@ def dense_auto(weights_path=None,input_shape=(784,),hidden_layers=None,nonlinear
             hidden_layers=list(hidden_layers)
         for i,l in enumerate(hidden_layers):
             if i==0: 
-                encoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(input_img)
+                encoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(input_img)
             else:
-                encoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(encoded)
+                encoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
 
         for i,l in reversed(list(enumerate(hidden_layers))):
             if i <len(hidden_layers)-1:
                 if i==len(hidden_layers)-2:
-                    decoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(encoded)
+                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
                 else:
-                    decoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(decoded)
-        decoded=Dense(input_shape[0],W_regularizer=l2(l2_reg))(decoded)
+                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(decoded)
+        decoded=Dense(input_shape[0],kernel_regularizer=l2(l2_reg))(decoded)
     else:
-        decoded=Dense(input_shape[0],W_regularizer=l2(l2_reg))(input_img)
+        decoded=Dense(input_shape[0],kernel_regularizer=l2(l2_reg))(input_img)
 
     model=Model(input=input_img,output=decoded)
     
