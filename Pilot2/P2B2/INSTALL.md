@@ -1,5 +1,8 @@
 ## Installing Keras framework
 
+Here is an alternate set of directions for using the Spack tool
+(spack.io) to install Keras and associated tools.
+
 ### Using spack
 
 ```
@@ -20,7 +23,6 @@ spack install py-matplotlib +image
 
 ```
 # Activate all of these tools in the spack python environment
-spack activate ipython
 spack activate py-ipython
 spack activate py-keras
 spack activate py-matplotlib
@@ -31,5 +33,5 @@ module load py-ipython-5.1.0-gcc-4.9.3
 
 # Lauch ipython and then run the example
 ipython
-[1]: run p2b1_baseline_keras1.py
+[1]: run p2b2_baseline_keras1.py
 ```
