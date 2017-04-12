@@ -50,10 +50,13 @@ if __name__=="__main__":
 	
 	import p2b2 as hf
 	reload(hf)
-        lib_path = os.path.abspath(os.path.join('..', 'common'))
-        sys.path.append(lib_path)
-        import pilot2_datasets as p2
-        reload(p2)
+	
+	file_path = os.path.dirname(os.path.realpath(__file__))
+	lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
+	sys.path.append(lib_path)
+	
+	import pilot2_datasets as p2
+	reload(p2)
 	maps=hf.autoencoder_preprocess()
 	
 	GP=hf.ReadConfig(opts.config_file)

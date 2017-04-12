@@ -36,12 +36,15 @@ if __name__=="__main__":
 	
 	import p2b1 as hf
 	reload(hf)
-        lib_path = os.path.abspath(os.path.join('..', 'common'))
-        sys.path.append(lib_path)
+	
+	file_path = os.path.dirname(os.path.realpath(__file__))
+	lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
+	sys.path.append(lib_path)
+
 	import keras_model_utils as KEU
 	reload(KEU)
-        import pilot2_datasets as p2
-        reload(p2)
+	import pilot2_datasets as p2
+	reload(p2)
 	maps=hf.autoencoder_preprocess()
 	
 	from keras.optimizers import SGD,RMSprop,Adam
@@ -55,8 +58,8 @@ if __name__=="__main__":
 	batch_size = GP['batch_size']
 	
 ##### Read Data ########
-        data_set=p2.data_sets[opts.set_sel][0]
-        data_hash=p2.data_sets[opts.set_sel][1]
+	data_set=p2.data_sets[opts.set_sel][0]
+	data_hash=p2.data_sets[opts.set_sel][1]
 	print ('Reading Data Files... %s->%s' % (opts.set_sel, data_set))
         data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash=data_hash)
         data_dir = os.path.join(os.path.dirname(data_file), data_set)
@@ -66,10 +69,10 @@ if __name__=="__main__":
 	datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])  
 
 	## get data dimension ##
-        num_samples = 0
-        for f in data_files:
-          X=np.load(f)
-          num_samples += X.shape[0]
+	num_samples = 0
+	for f in data_files:
+		X=np.load(f)
+		num_samples += X.shape[0]
 
 	X=np.load(data_files[0])
 	print 'Data Format: [Num Sample (%s), Num Molecules (%s), Num Atoms (%s), Position + Molecule Tag (One-hot encoded) (%s)]' % (
