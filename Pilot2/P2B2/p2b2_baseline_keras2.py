@@ -27,7 +27,7 @@ if __name__=="__main__":
 	parser.add_option("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
 	parser.add_option("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
 	parser.add_option("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
-	parser.add_option("--config-file",help="Config File",dest="config_file",type=str,default='./p2b2_small_model.txt')
+	parser.add_option("--config-file",help="Config File",dest="config_file",type=str,default=os.path.join(file_path, 'p2b2_small_model.txt'))
 	parser.add_option("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
 	parser.add_option("--memo",help="Memo",dest="base_memo",type=str,default=None)
 	parser.add_option("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
