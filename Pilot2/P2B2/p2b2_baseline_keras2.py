@@ -10,7 +10,8 @@ from sklearn.preprocessing import MinMaxScaler
 matplotlib.use('TKAgg')
 import pylab as py
 py.ion()
-lib_path = os.path.abspath(os.path.join('..', '..', 'common'))
+file_path = os.path.dirname(os.path.realpath(__file__))
+lib_path = os.path.abspath(os.path.join(file_path, '..','..', 'common'))
 sys.path.append(lib_path)
 from data_utils import get_file
 HOME=os.environ['HOME']
@@ -51,10 +52,9 @@ if __name__=="__main__":
 	import p2b2 as hf
 	reload(hf)
 	
-	file_path = os.path.dirname(os.path.realpath(__file__))
 	lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
 	sys.path.append(lib_path)
-	
+
 	import pilot2_datasets as p2
 	reload(p2)
 	maps=hf.autoencoder_preprocess()
