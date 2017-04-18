@@ -16,29 +16,18 @@ export PATH=$HOME/anaconda2/bin:$PATH
 # Install additonal modules not shipped with Anaconda
 conda install -c conda-forge tensorflow
 conda install -c anaconda hdf5=1.8.17
-pip install git+git://github.com/Theano/Theano.git
-pip install git+git://github.com/fchollet/keras.git
+conda install -c anaconda theano
+conda install -c conda-forge keras=2
 
+# Install additional modules for Pilot2 benchmarks
+conda install -c conda-forge opencv
+conda install -c conda-forge tqdm
+conda update -c conda-forge numpy
 
-# Set up special environment for Pilot2 benchmars using keras version 1
-# This will go away when Pilot2 benchmarks are upgraded to keras version 2
-conda create --name keras1
-source activate
-conda install opencv
-conda install -c conda-forge keras=1
-conda install -c conda-forge tensorflow
-conda install matplotlib
-conda install PIL
-conda install tqdm
-conda install scikit-learn
-conda install mkl-service
-
-source deactivate keras1
-
-# Download the source files for the tutorial
+# Download the source files for the benchmarks
 git clone https://github.com/ECP-Candle/benchmarks
 
-# Run the Pilot1  benchmark
+# Run the Pilot1 benchmark
 pushd benchmarks/Pilot1/P1B1/
 python p1b1_baseline_keras2.py 
 popd
@@ -52,8 +41,6 @@ python p1b3_baseline_keras2.py
 popd
 
 # Run the Pilot2 benchmarks
-source activate keras1
-
 pushd benchmarks/Pilot2/P2B1/
 python p2b1_baseline_keras1.py
 popd
@@ -61,8 +48,6 @@ popd
 pushd benchmarks/Pilot2/P2B2/
 python p2b2_baseline_keras1.py
 popd
-
-source deactivate keras1
 
 # Run the Pilot3 benchmarks
 pushd benchmarks/Pilot3/P3B1/
