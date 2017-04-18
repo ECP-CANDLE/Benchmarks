@@ -158,7 +158,7 @@ def simple_test_rnn(T=1,D=1):
     encoder=TimeDistributed(Dense(20,activation='relu'))(input_img)
     rnn=LSTM(10,activation='elu',return_sequences=True, stateful=False)(encoder)
     decoder=TimeDistributed(Dense(20,activation='relu'))(rnn)
-    model=Model(input=input_img,output=decoder)
+    model=Model(outputs=decoder,inputs=input_img)
     return model
 
 
@@ -184,7 +184,7 @@ def dense_auto(weights_path=None,input_shape=(784,),hidden_layers=None,nonlinear
     else:
         decoded=Dense(input_shape[0])(input_img)
 
-    model=Model(input=input_img,output=decoded)
+    model=Model(outputs=decoded,inputs=input_img)
     
     if weights_path:
         print('Loading Model')
@@ -221,7 +221,7 @@ def rnn_dense_auto(weights_path=None,T=1,D=1,nonlinearity='relu',hidden_layers=N
     else:
         decoded=TimeDistributed(Dense(D))(input_img)
     
-    model=Model(input=input_img,output=decoded)
+    model=Model(outputs=decoded,inputs=input_img)
 
     if weights_path:
         print('Loading Model')

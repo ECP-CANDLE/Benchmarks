@@ -138,7 +138,7 @@ def dense_auto(weights_path=None,input_shape=(784,),hidden_layers=None,nonlinear
     else:
         decoded=Dense(input_shape[0],kernel_regularizer=l2(l2_reg))(input_img)
 
-    model=Model(input=input_img,output=decoded)
+    model=Model(outputs=decoded,inputs=input_img)
     
     if weights_path:
         print('Loading Model')
