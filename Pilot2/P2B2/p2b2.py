@@ -270,7 +270,7 @@ class Candle_Train():
                     x,y=next(imggen)
                     subset_sample_weight=np.ones((x.shape[0],1))
                     sample_weight=np.zeros((x.shape[0],self.look_back))
-                    sample_weight[:,0:1]=subset_sample_weight    
+                    sample_weight[:,0:look_forward]=subset_sample_weight    
                     loss_data=self.model.train_on_batch(x,y,sample_weight=sample_weight)
                     iter_loss.append(loss_data)
                 file_loss.append(np.array(iter_loss).mean(axis=0))
