@@ -10,9 +10,6 @@ import logging
 import sys
 
 import numpy as np
-import pandas as pd
-
-from itertools import tee, islice
 
 from keras import backend as K
 from keras import metrics
@@ -20,192 +17,25 @@ from keras.models import Sequential
 from keras.layers import Activation, BatchNormalization, Dense, Dropout, LocallyConnected1D, Conv1D, MaxPooling1D, Flatten
 from keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
 
-from sklearn.preprocessing import Imputer
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-
 # For non-interactive plotting
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 import p1b3
-from p1b3 import logger
-
-# Model and Training parameters
-
-# Seed for random generation
-SEED = 2016
-# Size of batch for training
-BATCH_SIZE = 100
-# Number of training epochs
-EPOCHS = 20
-# Number of data generator workers
-WORKERS = 1
-
-# Percentage of dropout used in training
-DROP = 0.1
-# Activation function (options: 'relu', 'tanh', 'sigmoid', 'hard_sigmoid', 'linear')
-ACTIVATION = 'relu'
-LOSS = 'mse'
-OPTIMIZER = 'sgd'
-# OPTIMIZER = 'adam'
-
-# Type of feature scaling (options: 'maxabs': to [-1,1]
-#                                   'minmax': to [0,1]
-#                                   None    : standard normalization
-SCALING = 'std'
-# Features to (randomly) sample from cell lines or drug descriptors
-# FEATURE_SUBSAMPLE = 500
-FEATURE_SUBSAMPLE = 0
-
-# Number of units in fully connected (dense) layers
-D1 = 1000
-D2 = 500
-D3 = 100
-D4 = 50
-DENSE_LAYERS = [D1, D2, D3, D4]
-
-# Number of units per convolution layer or locally connected layer
-CONV_LAYERS = [0, 0, 0] # filters, filter_len, stride
-POOL = 10
-
-MIN_LOGCONC = -5.
-MAX_LOGCONC = -4.
-
-CATEGORY_CUTOFFS = [0.]
-
-VAL_SPLIT = 0.2
-TEST_CELL_SPLIT = 0.15
-
+import p1_common
+import p1_common_keras
 
 np.set_printoptions(threshold=np.nan)
-np.random.seed(SEED)
 
 
-def get_parser():
-    parser = argparse.ArgumentParser(prog='p1b3_baseline',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-v", "--verbose", action="store_true",
-                        help="increase output verbosity")
-    parser.add_argument("-a", "--activation",
-                        default=ACTIVATION,
-                        help="keras activation function to use in inner layers: relu, tanh, sigmoid...")
-    parser.add_argument("-e", "--epochs", type=int,
-                        default=EPOCHS,
-                        help="number of training epochs")
-    parser.add_argument('-l', '--log', dest='logfile',
-                        default=None,
-                        help="log file")
-    parser.add_argument("-z", "--batch_size", type=int,
-                        default=BATCH_SIZE,
-                        help="batch size")
-    parser.add_argument("--batch_normalization", action="store_true",
-                        help="use batch normalization")
-    parser.add_argument("--conv", nargs='+', type=int,
-                        default=CONV_LAYERS,
-                        help="integer array describing convolution layers: conv1_filters, conv1_filter_len, conv1_stride, conv2_filters, conv2_filter_len, conv2_stride ...")
-    parser.add_argument("--dense", nargs='+', type=int,
-                        default=DENSE_LAYERS,
-                        help="number of units in fully connected layers in an integer array")
-    parser.add_argument("--drop", type=float,
-                        default=DROP,
-                        help="ratio of dropout used in fully connected layers")
-    parser.add_argument("--locally_connected", action="store_true",
-                        default=False,
-                        help="use locally connected layers instead of convolution layers")
-    parser.add_argument("--optimizer",
-                        default=OPTIMIZER,
-                        help="keras optimizer to use: sgd, rmsprop, ...")
-    parser.add_argument("--loss",
-                        default=LOSS,
-                        help="keras loss function to use: mse, ...")
-    parser.add_argument("--pool", type=int,
-                        default=POOL,
-                        help="pooling layer length")
-    parser.add_argument("--scaling",
-                        default=SCALING,
-                        choices=['minabs', 'minmax', 'std', 'none'],
-                        help="type of feature scaling; 'minabs': to [-1,1]; 'minmax': to [0,1], 'std': standard unit normalization; 'none': no normalization")
-    parser.add_argument("--cell_features", nargs='+',
-                        default=['expression'],
-                        choices=['expression', 'mirna', 'proteome', 'all', 'categorical'],
-                        help="use one or more cell line feature sets: 'expression', 'mirna', 'proteome', 'all'; or use 'categorical' for one-hot encoding of cell lines")
-    parser.add_argument("--drug_features", nargs='+',
-                        default=['descriptors'],
-                        choices=['descriptors', 'latent', 'all', 'noise'],
-                        help="use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or random features; 'descriptors','latent', 'all', 'noise'")
-    parser.add_argument("--feature_subsample", type=int,
-                        default=FEATURE_SUBSAMPLE,
-                        help="number of features to randomly sample from each category (cellline expression, drug descriptors, etc), 0 means using all features")
-    parser.add_argument("--min_logconc", type=float,
-                        default=MIN_LOGCONC,
-                        help="min log concentration of dose response data to use: -3.0 to -7.0")
-    parser.add_argument("--max_logconc",  type=float,
-                        default=MAX_LOGCONC,
-                        help="max log concentration of dose response data to use: -3.0 to -7.0")
-    parser.add_argument("--subsample",
-                        default='naive_balancing',
-                        choices=['naive_balancing', 'none'],
-                        help="dose response subsample strategy; 'none' or 'naive_balancing'")
-    parser.add_argument("--category_cutoffs", nargs='+', type=float,
-                        default=CATEGORY_CUTOFFS,
-                        help="list of growth cutoffs (between -1 and +1) seperating non-response and response categories")
-    parser.add_argument("--val_split", type=float,
-                        default=VAL_SPLIT,
-                        help="fraction of data to use in validation")
-    parser.add_argument("--test_cell_split", type=float,
-                        default=TEST_CELL_SPLIT,
-                        help="cell lines to use in test; if None use predefined unseen cell lines instead of sampling cell lines used in training")
-    parser.add_argument("--train_steps", type=int,
-                        default=0,
-                        help="overrides the number of training batches per epoch if set to nonzero")
-    parser.add_argument("--val_steps", type=int,
-                        default=0,
-                        help="overrides the number of validation batches per epoch if set to nonzero")
-    parser.add_argument("--test_steps", type=int,
-                        default=0,
-                        help="overrides the number of test batches per epoch if set to nonzero")
-    parser.add_argument("--save",
-                        default='save',
-                        help="prefix of output files")
-    parser.add_argument("--scramble", action="store_true",
-                        help="randomly shuffle dose response data")
-    parser.add_argument("--workers", type=int,
-                        default=WORKERS,
-                        help="number of data generator workers")
+def get_p1b3_parser():
 
-    return parser
+	parser = argparse.ArgumentParser(prog='p1b3_baseline',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='Train Drug Response Regressor - Pilot 1 Benchmark 3')
 
-
-def extension_from_parameters(args):
-    """Construct string for saving model with annotation of parameters"""
-    ext = ''
-    ext += '.A={}'.format(args.activation)
-    ext += '.B={}'.format(args.batch_size)
-    ext += '.D={}'.format(args.drop)
-    ext += '.E={}'.format(args.epochs)
-    if args.feature_subsample:
-        ext += '.F={}'.format(args.feature_subsample)
-    if args.conv:
-        name = 'LC' if args.locally_connected else 'C'
-        layer_list = list(range(0, len(args.conv), 3))
-        for l, i in enumerate(layer_list):
-            filters = args.conv[i]
-            filter_len = args.conv[i+1]
-            stride = args.conv[i+2]
-            if filters <= 0 or filter_len <= 0 or stride <= 0:
-                break
-            ext += '.{}{}={},{},{}'.format(name, l+1, filters, filter_len, stride)
-        if args.pool and args.conv[0] and args.conv[1]:
-            ext += '.P={}'.format(args.pool)
-    for i, n in enumerate(args.dense):
-        if n:
-            ext += '.D{}={}'.format(i+1, n)
-    if args.batch_normalization:
-        ext += '.BN'
-    ext += '.S={}'.format(args.scaling)
-
-    return ext
+	return p1b3.common_parser(parser)
 
 
 def evaluate_keras_metric(y_true, y_pred, metric):
@@ -337,12 +167,23 @@ class MyProgbarLogger(ProgbarLogger):
 
 
 def main():
-    parser = get_parser()
+
+    # Get command-line parameters
+    parser = get_p1b3_parser()
     args = parser.parse_args()
+    #print('Args:', args)
+    # Get parameters from configuration file
+    fileParameters = p1b3.read_config_file(args.config_file)
+    #print ('Params:', fileParameters)
+    # Consolidate parameter set. Command-line parameters overwrite file configuration
+    gParameters = p1_common.args_overwrite_config(args, fileParameters)
+    print ('Params:', gParameters)
 
-    ext = extension_from_parameters(args)
-
+    # Construct extension to save model
+    ext = p1b3.extension_from_parameters(gParameters, '.keras')
     logfile = args.logfile if args.logfile else args.save+ext+'.log'
+    p1b3.logger.info('Params: {}'.format(gParameters))
+
 
     fh = logging.FileHandler(logfile)
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
@@ -352,91 +193,119 @@ def main():
     sh.setFormatter(logging.Formatter(''))
     sh.setLevel(logging.DEBUG if args.verbose else logging.INFO)
 
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(fh)
-    logger.addHandler(sh)
+    p1b3.logger.setLevel(logging.DEBUG)
+    p1b3.logger.addHandler(fh)
+    p1b3.logger.addHandler(sh)
 
-    logger.info('Args: {}'.format(args))
 
-    loader = p1b3.DataLoader(val_split=args.val_split,
-                             test_cell_split=args.test_cell_split,
-                             cell_features=args.cell_features,
-                             drug_features=args.drug_features,
-                             feature_subsample=args.feature_subsample,
-                             scaling=args.scaling,
-                             scramble=args.scramble,
-                             min_logconc=args.min_logconc,
-                             max_logconc=args.max_logconc,
-                             subsample=args.subsample,
-                             category_cutoffs=args.category_cutoffs)
+    # Get default parameters for initialization and optimizer functions
+    kerasDefaults = p1_common.keras_default_config()
+    seed = gParameters['rng_seed']
 
+    # Build dataset loader object
+    loader = p1b3.DataLoader(seed=seed, dtype=gParameters['datatype'],
+                             val_split=gParameters['validation_split'],
+                             test_cell_split=gParameters['test_cell_split'],
+                             cell_features=gParameters['cell_features'],
+                             drug_features=gParameters['drug_features'],
+                             feature_subsample=gParameters['feature_subsample'],
+                             scaling=gParameters['scaling'],
+                             scramble=gParameters['scramble'],
+                             min_logconc=gParameters['min_logconc'],
+                             max_logconc=gParameters['max_logconc'],
+                             subsample=gParameters['subsample'],
+                             category_cutoffs=gParameters['category_cutoffs'])
+
+
+    # Initialize weights and learning rule
+    initializer_weights = p1_common_keras.build_initializer(gParameters['initialization'], kerasDefaults, seed)
+    initializer_bias = p1_common_keras.build_initializer('constant', kerasDefaults, 0.)
+    
+    activation = gParameters['activation']
+
+    # Define model architecture
     gen_shape = None
     out_dim = 1
 
     model = Sequential()
-    if args.conv and args.conv[0]:
+    if 'dense' in gParameters: # Build dense layers
+        for layer in gParameters['dense']:
+            if layer:
+                model.add(Dense(layer, input_dim=loader.input_dim,
+                            kernel_initializer=initializer_weights,
+                            bias_initializer=initializer_bias))
+                if gParameters['batch_normalization']:
+                    model.add(BatchNormalization())
+                model.add(Activation(gParameters['activation']))
+                if gParameters['drop']:
+                    model.add(Dropout(gParameters['drop']))
+    else: # Build convolutional layers
         gen_shape = 'add_1d'
-        layer_list = list(range(0, len(args.conv), 3))
+        layer_list = list(range(0, len(gParameters['conv']), 3))
         for l, i in enumerate(layer_list):
-            filters = args.conv[i]
-            filter_len = args.conv[i+1]
-            stride = args.conv[i+2]
+            filters = gParameters['conv'][i]
+            filter_len = gParameters['conv'][i+1]
+            stride = gParameters['conv'][i+2]
             if filters <= 0 or filter_len <= 0 or stride <= 0:
                 break
-            if args.locally_connected:
+            if 'locally_connected' in gParameters:
                 model.add(LocallyConnected1D(filters, filter_len, strides=stride, input_shape=(loader.input_dim, 1)))
             else:
                 model.add(Conv1D(filters, filter_len, strides=stride, input_shape=(loader.input_dim, 1)))
-            if args.batch_normalization:
+            if gParameters['batch_normalization']:
                 model.add(BatchNormalization())
-            model.add(Activation(args.activation))
-            if args.pool:
-                model.add(MaxPooling1D(pool_size=args.pool))
+            model.add(Activation(gParameters['activation']))
+            if gParameters['pool']:
+                model.add(MaxPooling1D(pool_size=gParameters['pool']))
         model.add(Flatten())
 
-    for layer in args.dense:
-        if layer:
-            model.add(Dense(layer, input_dim=loader.input_dim))
-            if args.batch_normalization:
-                model.add(BatchNormalization())
-            model.add(Activation(args.activation))
-            if args.drop:
-                model.add(Dropout(args.drop))
     model.add(Dense(out_dim))
 
+    # Define optimizer
+    optimizer = p1_common_keras.build_optimizer(gParameters['optimizer'],
+                                                gParameters['learning_rate'],
+                                                kerasDefaults)
+
+    # Compile and display model
+    model.compile(loss=gParameters['loss'], optimizer=optimizer)
     model.summary()
-    logger.debug('Model: {}'.format(model.to_json()))
+    p1b3.logger.debug('Model: {}'.format(model.to_json()))
 
-    model.compile(loss=args.loss, optimizer=args.optimizer)
 
-    train_gen = p1b3.DataGenerator(loader, batch_size=args.batch_size, shape=gen_shape, name='train_gen').flow()
-    val_gen = p1b3.DataGenerator(loader, partition='val', batch_size=args.batch_size, shape=gen_shape, name='val_gen').flow()
-    val_gen2 = p1b3.DataGenerator(loader, partition='val', batch_size=args.batch_size, shape=gen_shape, name='val_gen2').flow()
-    test_gen = p1b3.DataGenerator(loader, partition='test', batch_size=args.batch_size, shape=gen_shape, name='test_gen').flow()
+    train_gen = p1b3.DataGenerator(loader, batch_size=gParameters['batch_size'], shape=gen_shape, name='train_gen').flow()
+    val_gen = p1b3.DataGenerator(loader, partition='val', batch_size=gParameters['batch_size'], shape=gen_shape, name='val_gen').flow()
+    val_gen2 = p1b3.DataGenerator(loader, partition='val', batch_size=gParameters['batch_size'], shape=gen_shape, name='val_gen2').flow()
+    test_gen = p1b3.DataGenerator(loader, partition='test', batch_size=gParameters['batch_size'], shape=gen_shape, name='test_gen').flow()
 
-    train_steps = int(loader.n_train/args.batch_size)
-    val_steps = int(loader.n_val/args.batch_size)
-    test_steps = int(loader.n_test/args.batch_size)
+    train_steps = int(loader.n_train/gParameters['batch_size'])
+    val_steps = int(loader.n_val/gParameters['batch_size'])
+    test_steps = int(loader.n_test/gParameters['batch_size'])
 
-    train_steps = args.train_steps if args.train_steps else train_steps
-    val_steps = args.val_steps if args.val_steps else val_steps
-    test_steps = args.test_steps if args.test_steps else test_steps
+    if 'train_steps' in gParameters:
+        train_steps = gParameters['train_steps']
+    if 'val_steps' in gParameters:
+        val_steps = gParameters['val_steps']
+    if 'test_steps' in gParameters:
+        test_steps = gParameters['test_steps']
 
     checkpointer = ModelCheckpoint(filepath=args.save+'.model'+ext+'.h5', save_best_only=True)
-    progbar = MyProgbarLogger(train_steps * args.batch_size)
+    progbar = MyProgbarLogger(train_steps * gParameters['batch_size'])
     history = MyLossHistory(progbar=progbar, val_gen=val_gen2, test_gen=test_gen,
                             val_steps=val_steps, test_steps=test_steps,
-                            metric=args.loss, category_cutoffs=args.category_cutoffs,
-                            ext=ext, pre=args.save)
+                            metric=gParameters['loss'], category_cutoffs=gParameters['category_cutoffs'],
+                            ext=ext, pre=gParameters['save'])
+
+    # Seed random generator for training
+    np.random.seed(seed)
 
     model.fit_generator(train_gen, train_steps,
-                        epochs=args.epochs,
+                        epochs=gParameters['epochs'],
                         validation_data=val_gen,
                         validation_steps=val_steps,
                         verbose=0,
                         callbacks=[checkpointer, history, progbar],
                         pickle_safe=True,
-                        workers=args.workers)
+                        workers=gParameters['workers'])
 
 
 if __name__ == '__main__':
