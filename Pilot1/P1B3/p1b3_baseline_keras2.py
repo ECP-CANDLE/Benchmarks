@@ -81,7 +81,6 @@ TEST_CELL_SPLIT = 0.15
 np.set_printoptions(threshold=np.nan)
 np.random.seed(SEED)
 
-
 def get_parser():
     parser = argparse.ArgumentParser(prog='p1b3_baseline',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -336,9 +335,7 @@ class MyProgbarLogger(ProgbarLogger):
         logger.debug(epoch_log)
 
 
-def main():
-    parser = get_parser()
-    args = parser.parse_args()
+def run(args):
 
     ext = extension_from_parameters(args)
 
@@ -429,7 +426,7 @@ def main():
                             metric=args.loss, category_cutoffs=args.category_cutoffs,
                             ext=ext, pre=args.save)
 
-    model.fit_generator(train_gen, train_steps,
+    history = model.fit_generator(train_gen, train_steps,
                         epochs=args.epochs,
                         validation_data=val_gen,
                         validation_steps=val_steps,
@@ -438,6 +435,18 @@ def main():
                         pickle_safe=True,
                         workers=args.workers)
 
+    # logger is a global object that will persist between
+    # runs. So we need to remove the handlers otherwise we
+    # have multiple handlers and much duplicate logged output
+    logger.removeHandler(fh)
+    logger.removeHandler(sh)
+
+    return history
+
+def main():
+    parser = get_parser()
+    args = parser.parse_args()
+    run(args)
 
 if __name__ == '__main__':
     main()
