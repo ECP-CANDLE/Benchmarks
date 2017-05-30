@@ -186,11 +186,10 @@ def run(gParameters):
        gParameters: a python dictionary containing the parameters (e.g. epoch)
        to run the model with.
     """
-    print ('Params:', gParameters)
+    # print ('Params:', gParameters)
     # Construct extension to save model
     ext = p1b3.extension_from_parameters(gParameters, '.keras')
     logfile =  gParameters['logfile'] if gParameters['logfile'] else gParameters['save']+ext+'.log'
-    p1b3.logger.info('Params: {}'.format(gParameters))
 
     fh = logging.FileHandler(logfile)
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
@@ -203,6 +202,7 @@ def run(gParameters):
     p1b3.logger.setLevel(logging.DEBUG)
     p1b3.logger.addHandler(fh)
     p1b3.logger.addHandler(sh)
+    p1b3.logger.info('Params: {}'.format(gParameters))
 
 
     # Get default parameters for initialization and optimizer functions
