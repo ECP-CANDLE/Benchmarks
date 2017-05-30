@@ -31,11 +31,11 @@ np.set_printoptions(threshold=np.nan)
 
 def get_p1b3_parser():
 
-	parser = argparse.ArgumentParser(prog='p1b3_baseline',
+    parser = argparse.ArgumentParser(prog='p1b3_baseline',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Train Drug Response Regressor - Pilot 1 Benchmark 3')
 
-	return p1b3.common_parser(parser)
+    return p1b3.common_parser(parser)
 
 
 def evaluate_keras_metric(y_true, y_pred, metric):
@@ -163,11 +163,10 @@ class MyProgbarLogger(ProgbarLogger):
             epoch_log += ' - {}: {:.4f}'.format(k, float(v))
         if self.verbose:
             self.progbar.update(self.seen, self.log_values, force=True)
-        logger.debug(epoch_log)
+        p1b3.logger.debug(epoch_log)
 
 
-def main():
-
+def initialize_parameters():
     # Get command-line parameters
     parser = get_p1b3_parser()
     args = parser.parse_args()
@@ -177,13 +176,21 @@ def main():
     #print ('Params:', fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
-    print ('Params:', gParameters)
+    return gParameters
 
+def run(gParameters):
+    """
+    Runs the model using the specified set of parameters
+
+    Args:
+       gParameters: a python dictionary containing the parameters (e.g. epoch)
+       to run the model with.
+    """
+    print ('Params:', gParameters)
     # Construct extension to save model
     ext = p1b3.extension_from_parameters(gParameters, '.keras')
-    logfile = args.logfile if args.logfile else args.save+ext+'.log'
+    logfile =  gParameters['logfile'] if gParameters['logfile'] else gParameters['save']+ext+'.log'
     p1b3.logger.info('Params: {}'.format(gParameters))
-
 
     fh = logging.FileHandler(logfile)
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
@@ -191,7 +198,7 @@ def main():
 
     sh = logging.StreamHandler()
     sh.setFormatter(logging.Formatter(''))
-    sh.setLevel(logging.DEBUG if args.verbose else logging.INFO)
+    sh.setLevel(logging.DEBUG if gParameters['verbose'] else logging.INFO)
 
     p1b3.logger.setLevel(logging.DEBUG)
     p1b3.logger.addHandler(fh)
@@ -220,7 +227,7 @@ def main():
     # Initialize weights and learning rule
     initializer_weights = p1_common_keras.build_initializer(gParameters['initialization'], kerasDefaults, seed)
     initializer_bias = p1_common_keras.build_initializer('constant', kerasDefaults, 0.)
-    
+
     activation = gParameters['activation']
 
     # Define model architecture
@@ -288,7 +295,7 @@ def main():
     if 'test_steps' in gParameters:
         test_steps = gParameters['test_steps']
 
-    checkpointer = ModelCheckpoint(filepath=args.save+'.model'+ext+'.h5', save_best_only=True)
+    checkpointer = ModelCheckpoint(filepath=gParameters['save']+'.model'+ext+'.h5', save_best_only=True)
     progbar = MyProgbarLogger(train_steps * gParameters['batch_size'])
     history = MyLossHistory(progbar=progbar, val_gen=val_gen2, test_gen=test_gen,
                             val_steps=val_steps, test_steps=test_steps,
@@ -298,7 +305,7 @@ def main():
     # Seed random generator for training
     np.random.seed(seed)
 
-    model.fit_generator(train_gen, train_steps,
+    history = model.fit_generator(train_gen, train_steps,
                         epochs=gParameters['epochs'],
                         validation_data=val_gen,
                         validation_steps=val_steps,
@@ -307,6 +314,15 @@ def main():
                         pickle_safe=True,
                         workers=gParameters['workers'])
 
+    p1b3.logger.removeHandler(fh)
+    p1b3.logger.removeHandler(sh)
+
+    return history
+
+def main():
+
+    gParameters = initialize_parameters()
+    run(gParameters)
 
 if __name__ == '__main__':
     main()

@@ -45,7 +45,7 @@ def common_parser(parser):
     # and all the other options
     parser = p1_common.get_default_neon_parse(parser)
     parser = p1_common.get_p1_common_parser(parser)
-    
+
     # Arguments that are applicable just to p1b3
     parser = p1b3_parser(parser)
 
@@ -97,7 +97,7 @@ def read_config_file(file):
     config.read(file)
     section=config.sections()
     fileParams={}
-    
+
     fileParams['activation']=eval(config.get(section[0],'activation'))
     fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
     fileParams['batch_normalization']=eval(config.get(section[0],'batch_normalization'))
@@ -107,7 +107,7 @@ def read_config_file(file):
     fileParams['drug_features']=eval(config.get(section[0],'drug_features'))
     fileParams['epochs']=eval(config.get(section[0],'epochs'))
     fileParams['feature_subsample']=eval(config.get(section[0],'feature_subsample'))
-    fileParams['initialization']=eval(config.get(section[0],'initialization'))    
+    fileParams['initialization']=eval(config.get(section[0],'initialization'))
     fileParams['learning_rate']=eval(config.get(section[0], 'learning_rate'))
     fileParams['loss']=eval(config.get(section[0],'loss'))
     fileParams['min_logconc']=eval(config.get(section[0],'min_logconc'))
@@ -136,7 +136,7 @@ def read_config_file(file):
             except ConfigParser.NoOptionError:
                 fileParams['pool'] = None
                 print("Warning ! No pooling specified after conv layer.")
-    
+
     return fileParams
 
 
@@ -535,10 +535,10 @@ class DataLoader(object):
         dose_resp_path = p1_common.get_p1_file(server+'P1B3_dose_response.csv')
         test_cell_path = p1_common.get_p1_file(server+'P1B3_test_celllines.txt')
         test_drug_path = p1_common.get_p1_file(server+'P1B3_test_drugs.txt')
-        
+
         # Seed random generator for loading data
         np.random.seed(seed)
-        
+
         df = load_dose_response(dose_resp_path, seed, dtype,
                                 min_logconc=min_logconc, max_logconc=max_logconc, subsample=subsample)
         logger.info('Loaded {} unique (D, CL) response sets.'.format(df.shape[0]))
