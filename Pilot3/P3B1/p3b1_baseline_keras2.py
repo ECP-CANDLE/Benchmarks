@@ -44,7 +44,8 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
              verbose= 1,
              activation= 'relu',
              out_act = 'softmax',
-             loss='categorical_crossentropy'
+             loss='categorical_crossentropy',
+             optimizer='sgd'
              ):
 
     labels_train = []
@@ -116,6 +117,8 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
         models.append( model )
 
+    kerasDefaults = p3c.keras_default_config()
+    optimizer = p3ck.build_optimizer(optimizer, learning_rate, kerasDefaults)
 
     # DEBUG - verify
     if verbose == 1:
@@ -126,7 +129,7 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
     for k in range( len( models ) ):
         model = models[ k ]
-        model.compile( loss= loss, optimizer= SGD( lr= learning_rate ), metrics= [ 'accuracy' ] )
+        model.compile( loss= loss, optimizer= optimizer, metrics= [ 'accuracy' ] )
 
 
     # train
@@ -185,6 +188,7 @@ def do_n_fold(GP):
     out_act = GP['out_act']
     loss = GP['loss']
     n_fold = GP['n_fold']
+    optimizer = GP['optimizer']
 
     features = []
     feat = GP['feature_names'].split(';')
@@ -249,7 +253,8 @@ def do_n_fold(GP):
             dropout= dropout,
             activation = activation,
             out_act = out_act,
-            loss = loss
+            loss = loss,
+            optimizer = optimizer
         )
 
         for i in range(n_feat):
