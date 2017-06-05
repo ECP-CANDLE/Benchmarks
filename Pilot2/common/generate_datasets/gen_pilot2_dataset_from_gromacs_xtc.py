@@ -166,11 +166,8 @@ for curframe in range(totframes):
 
 	# Flush the frames to disk
 	if (i == fchunksize - 1):
-		# Add a 'zero' prefix to the filename when needed
-		if (chunkcount < 10):
-			addzero = "0"
-		myfilename = mdsys.opts.outfile + addzero + \
-			str(chunkcount) + "_outof_" + str(totalchunks) + ".npy"
+		myfilename = mdsys.opts.outfile + str(chunkcount).zfill(2) + \
+			"_outof_" + str(totalchunks) + ".npy"
 		print "Flushing chunk (%d records) %d out of %d to file %s" % (i + 1, chunkcount, totalchunks, myfilename)
 		#~ np.save(myfilename, convert_to_helgi_format(outA))
 		np.save(myfilename, outA)
@@ -179,12 +176,11 @@ for curframe in range(totframes):
 		chunkcount = chunkcount + 1
 		addzero = ""
 	i = i + 1
+
 # Saves to disk the eventually remaining frames after
 # the last full chunk of data has been written
-if (chunkcount < 10):
-	addzero = "0"
-	myfilename = mdsys.opts.outfile + addzero + \
-	str(chunkcount) + "_outof_" + str(totalchunks) + ".npy"
-	print "Flushing last chunk (%d records) %d out of %d to file %s" % (i + 1, chunkcount, totalchunks, myfilename)
+myfilename = mdsys.opts.outfile + str(chunkcount).zfill(2) + \
+             "_outof_" + str(totalchunks) + ".npy"
+print "Flushing last chunk (%d records) %d out of %d to file %s" % (i + 1, chunkcount, totalchunks, myfilename)
 
 np.save(myfilename, outA)
