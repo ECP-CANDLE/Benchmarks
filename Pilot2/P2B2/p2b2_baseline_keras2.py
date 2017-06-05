@@ -3,7 +3,6 @@ import numpy as np
 import scipy as sp
 import pickle
 import sys,os
-import glob
 import argparse
 import matplotlib
 from sklearn.preprocessing import MinMaxScaler
@@ -20,7 +19,7 @@ from keras import backend as K
 
 from data_utils import get_file
 
-import p2b2_keras as p2b2 # BVE go back and look at this
+import p2b2 as p2b2
 import p2_common as p2c
 import p2_common_keras as p2ck
 
@@ -64,11 +63,9 @@ def run(GP):
     	sys.exit(0)
     sys.path.append(GP['home_dir'])
 	
-    import p2b2_keras as hf
+    import p2b2 as hf
     reload(hf)
     
-    import pilot2_datasets as p2
-    reload(p2)
     reload(p2ck)
 
     maps=hf.autoencoder_preprocess()
@@ -86,14 +83,10 @@ def run(GP):
     kerasDefaults = p2c.keras_default_config()
 
 ##### Read Data ########
-    print ('Reading Data...')
+    data_files=p2c.get_list_of_data_files(GP)
+
+    ## Define datagenerator
     datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])
-    data_set=p2.data_sets[GP['set_sel']][0]
-    data_hash=p2.data_sets[GP['set_sel']][1]
-    print ('Reading Data Files... %s->%s' % (GP['set_sel'], data_set))
-    data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash=data_hash)
-    data_dir = os.path.join(os.path.dirname(data_file), data_set)
-    data_files=glob.glob('%s/*.npy'%data_dir) 
 
     X=np.load(data_files[0])
     data=hf.get_data(X,case=GP['case'])

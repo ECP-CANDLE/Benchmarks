@@ -76,7 +76,7 @@ def read_config_file(File):
     config.read(File)
     section=config.sections()
     Global_Params={}
-    print(Global_Params)
+
     Global_Params['num_hidden']    =eval(config.get(section[0],'num_hidden'))
     Global_Params['batch_size']    =eval(config.get(section[0],'batch_size'))
     Global_Params['learning_rate'] =eval(config.get(section[0],'learning_rate'))

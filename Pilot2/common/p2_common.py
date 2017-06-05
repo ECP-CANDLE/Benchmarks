@@ -8,6 +8,7 @@ import sys
 import gzip
 import argparse
 import ConfigParser
+import glob
 
 from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
@@ -508,3 +509,20 @@ def convert_to_class(y_one_hot, dtype=int):
     return np.array([maxi(a) for a in y_one_hot])
 
 
+def get_list_of_data_files(GP):
+
+    import pilot2_datasets as p2
+    reload(p2)
+    print ('Reading Data...')
+    ## Identify the data set selected
+    data_set=p2.data_sets[GP['set_sel']][0]
+    ## Get the MD5 hash for the proper data set
+    data_hash=p2.data_sets[GP['set_sel']][1]
+    print ('Reading Data Files... %s->%s' % (GP['set_sel'], data_set))
+    ## Check if the data files are in the data director, otherwise fetch from FTP
+    data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash=data_hash)
+    data_dir = os.path.join(os.path.dirname(data_file), data_set)
+    ## Make a list of all of the data files in the data set
+    data_files=glob.glob('%s/*.npy'%data_dir) 
+
+    return data_files
