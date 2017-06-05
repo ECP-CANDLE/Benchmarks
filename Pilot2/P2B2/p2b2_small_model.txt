@@ -9,3 +9,6 @@ epochs=1
 cool=True
 weight_decay=0.0005
 noise_factor=0
+optimizer='adam'
+loss='mse'
+activation='relu'

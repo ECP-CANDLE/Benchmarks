@@ -21,23 +21,72 @@ import threading
 import ConfigParser
 from tqdm import *
 import re,copy
+import os
+import sys
+
+file_path = os.path.dirname(os.path.realpath(__file__))
+lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
+sys.path.append(lib_path)
+lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+sys.path.append(lib_path2)
+
+import p2_common
+
+def common_parser(parser):
+
+    parser.add_argument("--config_file", dest='config_file', type=str,
+                        default=os.path.join(file_path, 'p2b2_default_model.txt'),
+                        help="specify model configuration file")
+
+    # Parse has been split between arguments that are common with the default neon parser
+    # and all the other options
+    parser = p2_common.get_default_neon_parse(parser)
+    parser = p2_common.get_p2_common_parser(parser)
+
+    # Arguments that are applicable just to p2b2
+    parser = p2b2_parser(parser)
+
+    return parser
+
+def p2b2_parser(parser):
+    ### Hyperparameters and model save path
+
+#    parser.add_argument("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
+#    parser.add_argument("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
+#    parser.add_argument("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
+    parser.add_argument("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
+    parser.add_argument("--config-file",help="Config File",dest="config_file",type=str,default=os.path.join(file_path, 'p2b2_small_model.txt'))
+    parser.add_argument("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
+    parser.add_argument("--memo",help="Memo",dest="base_memo",type=str,default=None)
+    parser.add_argument("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
+    parser.add_argument("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='CenterZ')
+    parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
+    parser.add_argument("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
+		type=str,default="3k_Disordered")
+    #(opts,args)=parser.parse_args()
+    return parser
 
 
-def ReadConfig(File):
+def read_config_file(File):
     config=ConfigParser.ConfigParser()
     config.read(File)
     section=config.sections()
     Global_Params={}
-    Global_Params['num_hidden']=eval(config.get(section[0],'num_hidden'))
-    Global_Params['num_recurrent']=eval(config.get(section[0],'num_recurrent'))
-    Global_Params['look_back']=eval(config.get(section[0],'look_back'))
-    Global_Params['look_forward']=eval(config.get(section[0],'look_forward'))
-    Global_Params['batch_size']=eval(config.get(section[0],'batch_size'))
-    Global_Params['learning_rate']=eval(config.get(section[0],'learning_rate'))
-    Global_Params['epochs']=eval(config.get(section[0],'epochs'))
-    Global_Params['cool']=config.get(section[0],'cool')
-    Global_Params['weight_decay']=eval(config.get(section[0],'weight_decay'))
-    Global_Params['noise_factor']=eval(config.get(section[0],'noise_factor'))
+
+    Global_Params['num_hidden']    =eval(config.get(section[0],'num_hidden'))
+    Global_Params['num_recurrent'] =eval(config.get(section[0],'num_recurrent'))
+    Global_Params['look_back']     =eval(config.get(section[0],'look_back'))
+    Global_Params['look_forward']  =eval(config.get(section[0],'look_forward'))
+    Global_Params['batch_size']    =eval(config.get(section[0],'batch_size'))
+    Global_Params['learning_rate'] =eval(config.get(section[0],'learning_rate'))
+    Global_Params['epochs']        =eval(config.get(section[0],'epochs'))
+    Global_Params['weight_decay']  =eval(config.get(section[0],'weight_decay'))
+    Global_Params['noise_factor']  =eval(config.get(section[0],'noise_factor'))
+    Global_Params['optimizer']     =eval(config.get(section[0],'optimizer'))
+    Global_Params['loss']          =eval(config.get(section[0],'loss'))
+    Global_Params['activation']    =eval(config.get(section[0],'activation'))
+    # note 'cool' is a boolean
+    Global_Params['cool']          =config.get(section[0],'cool')
     return Global_Params
 
 
@@ -239,7 +288,15 @@ def get_data(X,case='Full'):
     return X_train
 
 class Candle_Train():
-    def __init__(self, datagen,model, numpylist,nb_epochs,case='CenterZ',batch_size=32,print_data=True,look_back=10,look_forward=1):
+    def __init__(self, 
+            datagen,model, 
+            numpylist,
+            nb_epochs,
+            case='CenterZ',
+            batch_size=32,
+            print_data=True,
+            look_back=10,
+            look_forward=1):
         self.datagen=datagen
         self.numpylist=numpylist
         self.epochs=nb_epochs
@@ -270,7 +327,7 @@ class Candle_Train():
                     x,y=next(imggen)
                     subset_sample_weight=np.ones((x.shape[0],1))
                     sample_weight=np.zeros((x.shape[0],self.look_back))
-                    sample_weight[:,0:look_forward]=subset_sample_weight    
+                    sample_weight[:,0:self.look_forward]=subset_sample_weight    
                     loss_data=self.model.train_on_batch(x,y,sample_weight=sample_weight)
                     iter_loss.append(loss_data)
                 file_loss.append(np.array(iter_loss).mean(axis=0))

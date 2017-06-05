@@ -28,6 +28,9 @@ import p1_common_keras
 
 np.set_printoptions(threshold=np.nan)
 
+def str2lst(string_val):
+    result = [int(x) for x in string_val.split(' ')]
+    return result
 
 def get_p1b3_parser():
 
@@ -186,11 +189,24 @@ def run(gParameters):
        gParameters: a python dictionary containing the parameters (e.g. epoch)
        to run the model with.
     """
+    #
+    if 'dense' in gParameters:
+        dval = gParameters['dense']
+        if isinstance(dval, basestring):
+            res = str2lst(dval)
+            gParameters['dense'] = res
+        print(gParameters['dense'])
+
+    if 'conv' in gParameters:
+        cval = gParameters['conv']
+        if isinstance(dval, basestring):
+            res = str2lst(cval)
+            gParameters['conv'] = res
+        print(gParameters['conv'])
     print ('Params:', gParameters)
     # Construct extension to save model
     ext = p1b3.extension_from_parameters(gParameters, '.keras')
     logfile =  gParameters['logfile'] if gParameters['logfile'] else gParameters['save']+ext+'.log'
-    p1b3.logger.info('Params: {}'.format(gParameters))
 
     fh = logging.FileHandler(logfile)
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
@@ -203,11 +219,14 @@ def run(gParameters):
     p1b3.logger.setLevel(logging.DEBUG)
     p1b3.logger.addHandler(fh)
     p1b3.logger.addHandler(sh)
+    p1b3.logger.info('Params: {}'.format(gParameters))
 
 
     # Get default parameters for initialization and optimizer functions
     kerasDefaults = p1_common.keras_default_config()
     seed = gParameters['rng_seed']
+
+
 
     # Build dataset loader object
     loader = p1b3.DataLoader(seed=seed, dtype=gParameters['datatype'],
@@ -310,7 +329,7 @@ def run(gParameters):
                         validation_data=val_gen,
                         validation_steps=val_steps,
                         verbose=0,
-                        callbacks=[checkpointer, history, progbar],
+                        # callbacks=[checkpointer, history, progbar],
                         pickle_safe=True,
                         workers=gParameters['workers'])
 

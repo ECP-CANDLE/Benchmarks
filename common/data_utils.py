@@ -102,10 +102,11 @@ def get_file(fname, origin, untar=False,
                 os.remove(fpath)
             raise
         progbar = None
+        print()
 
     if untar:
         if not os.path.exists(untar_fpath):
-            print('Untaring file...')
+            print('Untarring file...')
             tfile = tarfile.open(fpath, 'r:gz')
             try:
                 tfile.extractall(path=datadir)
@@ -118,6 +119,7 @@ def get_file(fname, origin, untar=False,
                 raise
             tfile.close()
         return untar_fpath
+        print()
 
     return fpath
 
