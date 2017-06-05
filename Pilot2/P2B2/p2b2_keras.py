@@ -51,9 +51,9 @@ def common_parser(parser):
 def p2b2_parser(parser):
     ### Hyperparameters and model save path
 
-    parser.add_argument("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
-    parser.add_argument("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
-    parser.add_argument("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
+#    parser.add_argument("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
+#    parser.add_argument("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
+#    parser.add_argument("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
     parser.add_argument("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
     parser.add_argument("--config-file",help="Config File",dest="config_file",type=str,default=os.path.join(file_path, 'p2b2_small_model.txt'))
     parser.add_argument("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)

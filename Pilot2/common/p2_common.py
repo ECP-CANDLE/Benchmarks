@@ -92,18 +92,17 @@ def get_p2_common_parser(parser):
     """
     
     # General behavior
-    # some of these conflict with P2B2 version, comment out for now
-    #parser.add_argument("--train", dest='train_bool', action="store_true",
-                        #default=True, #type=bool,
-                        #help="train model")
-    #parser.add_argument("--evaluate", dest='eval_bool', action="store_true",
-                        #default=argparse.SUPPRESS, #type=bool,
-                        #help="evaluate model (use it for inference)")
+    parser.add_argument("--train", dest='train_bool', action="store_true",
+                        default=True, #type=bool,
+                        help="train model")
+    parser.add_argument("--evaluate", dest='eval_bool', action="store_true",
+                        default=argparse.SUPPRESS, #type=bool,
+                        help="evaluate model (use it for inference)")
         
     # Logging utilities
-    #parser.add_argument("--home_dir", dest='home_dir',
-                        #default=argparse.SUPPRESS, type=str,
-                        #help="set home directory")
+    parser.add_argument("--home_dir", dest='home_dir',
+                        default='.', type=str,
+                        help="set home directory")
     parser.add_argument("--save",
                         default='save',
                         help="prefix of output files")

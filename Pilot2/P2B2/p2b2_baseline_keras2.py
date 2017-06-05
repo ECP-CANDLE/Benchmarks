@@ -20,7 +20,7 @@ from keras import backend as K
 
 from data_utils import get_file
 
-import p2b2_keras as p2b2
+import p2b2_keras as p2b2 # BVE go back and look at this
 import p2_common as p2c
 import p2_common_keras as p2ck
 
@@ -34,7 +34,7 @@ def str2bool(v):
 def get_p2b2_parser():
         parser = argparse.ArgumentParser(prog='p2b2_baseline',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            description='Train Drug Response Regressor - Pilot 2 Benchmark 2')   
+            description='Train Molecular Sequence Predictor - Pilot 2 Benchmark 2')   
 
         return p2b2.common_parser(parser)
 
