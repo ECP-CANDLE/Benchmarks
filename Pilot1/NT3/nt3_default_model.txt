@@ -1,0 +1,13 @@
+[Global_Params]
+conv=[128, 20, 1, 128, 10, 1]
+dense=[200,20]
+activation='relu'
+out_act='softmax'
+loss='categorical_crossentropy'
+optimizer='sgd'
+metrics='accuracy'
+epochs=400
+batch_size=20
+drop=0.1
+classes=2
+pool=[1, 10]
