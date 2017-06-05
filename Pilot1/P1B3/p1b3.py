@@ -91,13 +91,13 @@ def p1b3_parser(parser):
 
     return parser
 
-
 def read_config_file(file):
     config=ConfigParser.ConfigParser()
     config.read(file)
     section=config.sections()
     fileParams={}
 
+    # default config values that we assume exists
     fileParams['activation']=eval(config.get(section[0],'activation'))
     fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
     fileParams['batch_normalization']=eval(config.get(section[0],'batch_normalization'))
@@ -119,6 +119,11 @@ def read_config_file(file):
     fileParams['subsample']=eval(config.get(section[0],'subsample'))
     fileParams['test_cell_split']=eval(config.get(section[0],'test_cell_split'))
     fileParams['validation_split']=eval(config.get(section[0],'validation_split'))
+
+    # parse the remaining values
+    for k,v in config.items(section[0]):
+        if not k in fileParams:
+            fileParams[k] = eval(v)
 
     # Allow for either dense or convolutional layer specification
     # if none found exit
