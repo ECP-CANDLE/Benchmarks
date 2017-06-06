@@ -18,7 +18,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..'))
+lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
 sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
@@ -26,9 +26,9 @@ sys.path.append(lib_path2)
 import data_utils
 import p1_common
 
-url_nt3 = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/'
-file_train = 'nt_train2.csv'
-file_test = 'nt_test2.csv'
+#url_nt3 = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/'
+#file_train = 'nt_train2.csv'
+#file_test = 'nt_test2.csv'
 
 #EPOCH = 400
 #BATCH = 20
@@ -64,6 +64,10 @@ def read_config_file(file):
     section=config.sections()
     fileParams={}
 
+    fileParams['data_url']=eval(config.get(section[0],'data_url'))
+    fileParams['train_data']=eval(config.get(section[0],'train_data'))
+    fileParams['test_data']=eval(config.get(section[0],'test_data'))
+    fileParams['model_name']=eval(config.get(section[0],'model_name'))
     fileParams['conv']=eval(config.get(section[0],'conv'))
     fileParams['dense']=eval(config.get(section[0],'dense'))
     fileParams['activation']=eval(config.get(section[0],'activation'))
@@ -133,8 +137,12 @@ def run(gParameters):
 
     print ('Params:', gParameters)
     
-    train_file = data_utils.get_file(file_train, url_nt3+file_train, cache_subdir='Pilot1')
-    test_file = data_utils.get_file(file_test, url_nt3+file_test, cache_subdir='Pilot1')
+    file_train = gParameters['train_data']
+    file_test = gParameters['test_data']
+    url = gParameters['data_url']
+
+    train_file = data_utils.get_file(file_train, url+file_train, cache_subdir='Pilot1')
+    test_file = data_utils.get_file(file_test, url+file_test, cache_subdir='Pilot1')
 
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
@@ -218,7 +226,8 @@ def run(gParameters):
 
 # set up a bunch of callbacks to do work during model training..
 
-    checkpointer = ModelCheckpoint(filepath='nt3.autosave.model.h5', verbose=1, save_weights_only=False, save_best_only=True)
+    model_name = gParameters['model_name']
+    checkpointer = ModelCheckpoint(filepath=model_name+'.autosave.model.h5', verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('training.log')
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 
@@ -250,14 +259,14 @@ def run(gParameters):
     print("Saved model to disk")
 
     # load json and create model
-    json_file = open('nt3.model.json', 'r')
+    json_file = open(model_name+'.model.json', 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model_json = model_from_json(loaded_model_json)
 
 
     # load yaml and create model
-    yaml_file = open('nt3.model.yaml', 'r')
+    yaml_file = open(model_name+'.model.yaml', 'r')
     loaded_model_yaml = yaml_file.read()
     yaml_file.close()
     loaded_model_yaml = model_from_yaml(loaded_model_yaml)
