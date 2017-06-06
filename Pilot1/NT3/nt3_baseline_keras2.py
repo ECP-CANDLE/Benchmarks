@@ -1,4 +1,4 @@
-import pandas as pd 
+import pandas as pd
 import numpy as np
 import os
 import sys
@@ -12,13 +12,13 @@ from keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D
 from keras.optimizers import SGD, Adam, RMSprop
 from keras.models import Sequential, Model, model_from_json, model_from_yaml
 from keras.utils import np_utils
-from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau 
+from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
+lib_path = os.path.abspath(os.path.join(file_path, '..'))
 sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
@@ -54,7 +54,7 @@ def common_parser(parser):
 def get_nt3_parser():
 
 	parser = argparse.ArgumentParser(prog='nt3_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description='Train Autoencoder - Pilot 1 Benchmark 1')
+                                     description='Train Autoencoder - Pilot 1 Benchmark NT3')
 
 	return common_parser(parser)
 
@@ -80,6 +80,7 @@ def read_config_file(file):
     fileParams['drop']=eval(config.get(section[0],'drop'))
     fileParams['classes']=eval(config.get(section[0],'classes'))
     fileParams['pool']=eval(config.get(section[0],'pool'))
+    fileParams['save']=eval(config.get(section[0], 'save'))
 
     return fileParams
 
@@ -97,7 +98,7 @@ def initialize_parameters():
 
 
 def load_data(train_path, test_path, gParameters):
-        
+
     print('Loading data...')
     df_train = (pd.read_csv(train_path,header=None).values).astype('float32')
     df_test = (pd.read_csv(test_path,header=None).values).astype('float32')
@@ -113,30 +114,30 @@ def load_data(train_path, test_path, gParameters):
 
     Y_train = np_utils.to_categorical(df_y_train,gParameters['classes'])
     Y_test = np_utils.to_categorical(df_y_test,gParameters['classes'])
-              
+
     df_x_train = df_train[:, 1:seqlen].astype(np.float32)
     df_x_test = df_test[:, 1:seqlen].astype(np.float32)
-            
+
 #        X_train = df_x_train.as_matrix()
 #        X_test = df_x_test.as_matrix()
-            
+
     X_train = df_x_train
     X_test = df_x_test
-            
+
     scaler = MaxAbsScaler()
     mat = np.concatenate((X_train, X_test), axis=0)
     mat = scaler.fit_transform(mat)
-        
+
     X_train = mat[:X_train.shape[0], :]
     X_test = mat[X_train.shape[0]:, :]
-        
+
     return X_train, Y_train, X_test, Y_test
 
 
 def run(gParameters):
 
     print ('Params:', gParameters)
-    
+
     file_train = gParameters['train_data']
     file_test = gParameters['test_data']
     url = gParameters['data_url']
@@ -223,18 +224,23 @@ def run(gParameters):
               optimizer=gParameters['optimizer'],
               metrics=[gParameters['metrics']])
 
+    output_dir = gParameters['save']
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
 # set up a bunch of callbacks to do work during model training..
 
     model_name = gParameters['model_name']
-    checkpointer = ModelCheckpoint(filepath=model_name+'.autosave.model.h5', verbose=1, save_weights_only=False, save_best_only=True)
-    csv_logger = CSVLogger('training.log')
+    path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
+    checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
+    csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 
     history = model.fit(X_train, Y_train,
-                    batch_size=gParameters['batch_size'], 
+                    batch_size=gParameters['batch_size'],
                     epochs=gParameters['epochs'],
-                    verbose=1, 
+                    verbose=1,
                     validation_data=(X_test, Y_test),
                     callbacks = [checkpointer, csv_logger, reduce_lr])
 
@@ -245,57 +251,58 @@ def run(gParameters):
 
     # serialize model to JSON
     model_json = model.to_json()
-    with open("nt3.model.json", "w") as json_file:
+    model_name = gParameters['model_name']
+    with open("{}/{}.model.json".format(output_dir, model_name), "w") as json_file:
         json_file.write(model_json)
 
     # serialize model to YAML
     model_yaml = model.to_yaml()
-    with open("nt3.model.yaml", "w") as yaml_file:
+    with open("{}/{}.model.yaml".format(output_dir, model_name), "w") as yaml_file:
         yaml_file.write(model_yaml)
 
 
     # serialize weights to HDF5
-    model.save_weights("nt3.model.h5")
+    model.save_weights("{}/{}.model.h5".format(output_dir, model_name))
     print("Saved model to disk")
 
     # load json and create model
-    json_file = open(model_name+'.model.json', 'r')
+    json_file = open('{}/{}.model.json'.format(output_dir, model_name), 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model_json = model_from_json(loaded_model_json)
 
 
     # load yaml and create model
-    yaml_file = open(model_name+'.model.yaml', 'r')
+    yaml_file = open('{}/{}.model.yaml'.format(output_dir, model_name), 'r')
     loaded_model_yaml = yaml_file.read()
     yaml_file.close()
     loaded_model_yaml = model_from_yaml(loaded_model_yaml)
 
 
     # load weights into new model
-    loaded_model_json.load_weights("nt3.model.h5")
+    loaded_model_json.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
     print("Loaded json model from disk")
 
     # evaluate json loaded model on test data
-    loaded_model_json.compile(loss=gParameters['loss'], 
-            optimizer=gParameters['optimizer'], 
+    loaded_model_json.compile(loss=gParameters['loss'],
+            optimizer=gParameters['optimizer'],
             metrics=[gParameters['metrics']])
     score_json = loaded_model_json.evaluate(X_test, Y_test, verbose=0)
 
     print('json Test score:', score_json[0])
     print('json Test accuracy:', score_json[1])
-    
+
     print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1]*100))
 
 
 
     # load weights into new model
-    loaded_model_yaml.load_weights("nt3.model.h5")
+    loaded_model_yaml.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
     print("Loaded yaml model from disk")
 
     # evaluate loaded model on test data
-    loaded_model_yaml.compile(loss=gParameters['loss'], 
-            optimizer=gParameters['optimizer'], 
+    loaded_model_yaml.compile(loss=gParameters['loss'],
+            optimizer=gParameters['optimizer'],
             metrics=[gParameters['metrics']])
     score_yaml = loaded_model_yaml.evaluate(X_test, Y_test, verbose=0)
 
@@ -303,6 +310,8 @@ def run(gParameters):
     print('yaml Test accuracy:', score_yaml[1])
 
     print("yaml %s: %.2f%%" % (loaded_model_yaml.metrics_names[1], score_yaml[1]*100))
+
+    return history
 
 def main():
 
@@ -315,4 +324,3 @@ if __name__ == '__main__':
         K.clear_session()
     except AttributeError:      # theano does not have this function
         pass
-
