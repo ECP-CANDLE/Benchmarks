@@ -88,7 +88,7 @@ def extension_from_parameters(params, framework):
 def load_data_one_hot(params, seed):
     return p1_common.load_Xy_one_hot_data2(url_p1b2, file_train, file_test, class_col=['cancer_type'],
                                            drop_cols=['case_id', 'cancer_type'],
-                                           n_cols=params['feature_subsample']+2, # Compensate for the cols to drop
+                                           n_cols=params['feature_subsample'],
                                            shuffle=params['shuffle'],
                                            scaling=params['scaling'],
                                            validation_split=params['validation_split'],
@@ -99,7 +99,7 @@ def load_data_one_hot(params, seed):
 def load_data(params, seed):
     return p1_common.load_Xy_data2(url_p1b2, file_train, file_test, class_col=['cancer_type'],
                                   drop_cols=['case_id', 'cancer_type'],
-                                  n_cols=params['feature_subsample']+2, # Compensate for the cols to drop
+                                  n_cols=params['feature_subsample'],
                                   shuffle=params['shuffle'],
                                   scaling=params['scaling'],
                                   validation_split=params['validation_split'],

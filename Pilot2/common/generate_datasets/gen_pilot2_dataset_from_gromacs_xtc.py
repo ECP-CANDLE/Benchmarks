@@ -24,6 +24,8 @@ import sys
 from math import *
 from time import *
 
+import multiprocessing as mp
+from multiprocessing import Process, Queue
 
 def voro3D(points=np.array([0, 0, 0]), center=np.array([0, 0, 0])):
     #~ center = np.array([np.mean(points), np.mean(points), np.mean(points)])
@@ -77,110 +79,161 @@ locDict = {'GL1': 0, 'GL2': 0, 'NC3': 0, 'PO4': 0, 'ROH': 0,
 # If the previous two lines are uncommented, you'll
 # have to comment the following line:
 
-mdsys = mdreader.MDreader()
-mdsys.do_parse()
-print "Done"
-mdt = mdsys.trajectory
+def read_mddata():
+    """ Read the xtc and trajectory file using MDreader
+    """
+    mdsys = mdreader.MDreader()
+    mdsys.do_parse()
+    print "Done"
+    return mdsys
 
-# Change this selection in case you have different lipids, and update the
-# onehot encoder dictionary accordingly
-asel = mdsys.select_atoms("resname DPPC or resname DOPC or resname DOPX or resname DPPX or resname CHOL or resname DIPC or resname DIPX")
-#~ asel_tails = mdsys.select_atoms("(resname DPPC or resname DOPC or resname DOPX or resname DPPX or resname CHOL or resname DIPC or resname DIPX) and not (name GL1 or name GL2 or name NC3 or name PO4 or name ROH)")
-#~ asel_heads = mdsys.select_atoms("(resname DPPC or resname DOPC or resname DOPX or resname DPPX or resname CHOL or resname DIPC or resname DIPX) and (name GL1 or name GL2 or name NC3 or name PO4 or name ROH)")
+def select_trajectory(mdsys):
+    """ Extract the trajectory from the simulation data
+    """
+    mdt = mdsys.trajectory
+    return mdt
 
+def select_atoms(mdsys):
+    """ Return the selection of atoms that are of interest in the simulation
+    """
+    # Change this selection in case you have different lipids, and update the
+    # onehot encoder dictionary accordingly
+    asel = mdsys.select_atoms("resname DPPC or resname DOPC or resname DOPX or resname DPPX or resname CHOL or resname DIPC or resname DIPX")
+    #~ asel_tails = mdsys.select_atoms("(resname DPPC or resname DOPC or resname DOPX or resname DPPX or resname CHOL or resname DIPC or resname DIPX) and not (name GL1 or name GL2 or name NC3 or name PO4 or name ROH)")
+    #~ asel_heads = mdsys.select_atoms("(resname DPPC or resname DOPC or resname DOPX or resname DPPX or resname CHOL or resname DIPC or resname DIPX) and (name GL1 or name GL2 or name NC3 or name PO4 or name ROH)")
 
-frags = asel.residues
+    return asel
 
-# Total number of frames in the MD trajectory
-totframes = len(mdsys)
+def partition_work(mdsys):
+    # Total number of frames in the MD trajectory
+    totframes = len(mdsys)
 
-# Number of frames saved in each numpy array file
-fchunksize = 100
+    # Number of frames saved in each numpy array file
+    fchunksize = 100
 
-outA = np.zeros([fchunksize, len(frags)])
-outA.shape
+    totalchunks = 0
+    totcheck = float(totframes) / float(fchunksize)
+    totcheckint = int(totcheck)
 
-totalchunks = 0
-totcheck = float(totframes) / float(fchunksize)
-totcheckint = int(totcheck)
+    if (float(totcheck) - float(totcheckint) > 0):
+        totalchunks = totcheckint + 1
 
-if (float(totcheck) - float(totcheckint) > 0):
-	totalchunks = totcheckint + 1
-print "Total chunks: %d" % (totalchunks)
+    print "Total frames: %d, frames per chunk: %d, chunks: %d" % (totframes, fchunksize, totalchunks)
+  
+    return (totframes, fchunksize, totalchunks)
 
-i = 0
-chunkcount = 1
-lastchunksize = totframes - (totalchunks * fchunksize)
-outAL = []
-addzero = ""
-for curframe in range(totframes):
-	j = len(mdsys) - curframe
-	mdt[curframe]
-	print "Processing frame %d, %d remaining.\r" % (mdt[curframe].frame, j)
-	outL = []
-	for curfrag in range(len(frags)):
-		fr = frags[curfrag]
-		ffr = np.zeros([12, 20])
-		if (len(fr) < 12):
-			ffr[:fr.positions.shape[0], :fr.positions.shape[1]] = fr.positions
-			voro = voro3D(ffr[0:8, 0:3], fr.center_of_mass())
-		else:
-			ffr[:, 0:3] = np.array([fr.positions])
-			voro = voro3D(ffr[:, 0:3], fr.center_of_mass())
+def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, first_frame, last_frame, starting_chunk):
+    mdsys = read_mddata()
+    mdt = select_trajectory(mdsys)
+    asel = select_atoms(mdsys)
+    frags = asel.residues
 
-		ohenc = np.zeros([3])
-		ohenc = map(lambda x: x, onehot(typeDict[fr.residues.resnames[0]]))
-		ffr[:, 3:6] = ohenc
+    print "%d: Processing frames: %d - %d" % (processname, first_frame, last_frame)
 
-		lipid_beads = fr.names
+    outA = np.zeros([fchunksize, len(frags)])
+    outA.shape
 
-		for curatom in range(len(fr)):
-			bmatrix = np.zeros([12])
-			bead = fr.atoms[curatom]
-			ohenc2 = np.zeros([2])
-			ohenc2 = map(lambda x: x, onehot(locDict[bead.name], 2))
-			ffr[curatom, 6:8] = ohenc2
-			curbond = bead.bonds
-			count = 0
-			for ib in range(len(curbond)):
-				curblist = curbond.bondlist[ib]
-				curbead = curblist.atoms[0].name
-				#~ print "beads in bond: ", curblist.atoms[0].name, curblist.atoms[1].name
-				if curbead != bead.name:
-					bmatrix[lipid_beads == curbead] = curblist.length()
-				else:
-					bmatrix[lipid_beads == curblist.atoms[1].name] = curblist.length()
+    i = 0
+    chunkcount = starting_chunk + 1 # Offset the chunkcount by 1
+    lastchunksize = totframes - (totalchunks * fchunksize)
+    outAL = []
+    for curframe in range(first_frame, last_frame):
+        j = last_frame - curframe
+        mdt[curframe]
+        print "[%d] Processing frame %d, %d remaining.\r" % (processname, mdt[curframe].frame, j)
+        outL = []
+        for curfrag in range(len(frags)):
+            fr = frags[curfrag]
+            ffr = np.zeros([12, 20])
+            if (len(fr) < 12):
+                ffr[:fr.positions.shape[0], :fr.positions.shape[1]] = fr.positions
+                voro = voro3D(ffr[0:8, 0:3], fr.center_of_mass())
+            else:
+                ffr[:, 0:3] = np.array([fr.positions])
+                voro = voro3D(ffr[:, 0:3], fr.center_of_mass())
 
-			#~ ffr[curatom, 8:] = bmatrix
-			ffr[curatom, 8:] = bmatrix
-			#~ print lipid_beads
-			#~ print "Curr bead: ", bmatrix
+            ohenc = np.zeros([3])
+            ohenc = map(lambda x: x, onehot(typeDict[fr.residues.resnames[0]]))
+            ffr[:, 3:6] = ohenc
 
-		outL.append([ffr,voro.vertices])
+            lipid_beads = fr.names
 
-	outLn = np.array(outL)
-	outAL.append([outLn])
-	outA = np.array(outAL)
-	# In case of debug, uncomment the line below
-	#~ print "outA.shape = %s" % str(outA.shape)
+            for curatom in range(len(fr)):
+                bmatrix = np.zeros([12])
+                bead = fr.atoms[curatom]
+                ohenc2 = np.zeros([2])
+                ohenc2 = map(lambda x: x, onehot(locDict[bead.name], 2))
+                ffr[curatom, 6:8] = ohenc2
+                curbond = bead.bonds
+                count = 0
+                for ib in range(len(curbond)):
+                    curblist = curbond.bondlist[ib]
+                    curbead = curblist.atoms[0].name
+                    #~ print "beads in bond: ", curblist.atoms[0].name, curblist.atoms[1].name
+                    if curbead != bead.name:
+                        bmatrix[lipid_beads == curbead] = curblist.length()
+                    else:
+                        bmatrix[lipid_beads == curblist.atoms[1].name] = curblist.length()
 
-	# Flush the frames to disk
-	if (i == fchunksize - 1):
-		myfilename = mdsys.opts.outfile + str(chunkcount).zfill(2) + \
-			"_outof_" + str(totalchunks) + ".npy"
-		print "Flushing chunk (%d records) %d out of %d to file %s" % (i + 1, chunkcount, totalchunks, myfilename)
-		#~ np.save(myfilename, convert_to_helgi_format(outA))
-		np.save(myfilename, outA)
-		i = -1
-		outAL = []  
-		chunkcount = chunkcount + 1
-		addzero = ""
-	i = i + 1
+                #~ ffr[curatom, 8:] = bmatrix
+                ffr[curatom, 8:] = bmatrix
+                #~ print lipid_beads
+                #~ print "Curr bead: ", bmatrix
 
-# Saves to disk the eventually remaining frames after
-# the last full chunk of data has been written
-myfilename = mdsys.opts.outfile + str(chunkcount).zfill(2) + \
-             "_outof_" + str(totalchunks) + ".npy"
-print "Flushing last chunk (%d records) %d out of %d to file %s" % (i + 1, chunkcount, totalchunks, myfilename)
+            outL.append([ffr,voro.vertices])
 
-np.save(myfilename, outA)
+        outLn = np.array(outL)
+        outAL.append([outLn])
+        outA = np.array(outAL)
+        # In case of debug, uncomment the line below
+        #~ print "outA.shape = %s" % str(outA.shape)
+
+  	# Flush the frames to disk
+  	if (i == fchunksize - 1):
+            flush_chunk_to_file(processname, i, outA, mdsys.opts.outfile, chunkcount, totalchunks)
+            i = -1
+            outAL = []  
+            chunkcount = chunkcount + 1
+        i = i + 1
+
+    if (i != 0):
+        # Saves to disk the eventually remaining frames after
+        # the last full chunk of data has been written
+        flush_chunk_to_file(processname, i, outA, mdsys.opts.outfile, chunkcount, totalchunks)
+
+def flush_chunk_to_file(processname, i, outA, outfile, chunkcount, totalchunks):
+    myfilename = outfile + str(chunkcount).zfill(2) + \
+                 "_outof_" + str(totalchunks) + ".npy"
+    print "[%d] Flushing chunk (%d records) %d out of %d to file %s" % (processname, i + 1, chunkcount, totalchunks, myfilename)
+    #~ np.save(myfilename, convert_to_helgi_format(outA))
+    np.save(myfilename, outA)
+
+def main():
+    mdsys = read_mddata()
+    (totframes, fchunksize, totalchunks) = partition_work(mdsys)
+
+    """Create one process per cpu core and process multiple chunks in parallel
+    """
+    n = min(mp.cpu_count(), totalchunks)
+    queues = []
+    processes = []
+    chunks_per_task = int(ceil(float(totalchunks) / float(n)))
+    print "Using %d ranks and break up the work into %d chunks per task" % (n, chunks_per_task)
+    starting_frame = 0
+    for i in range(0,n):
+        queues.append(Queue())
+        ending_frame = min((i+1) * (chunks_per_task * fchunksize), totframes)
+        starting_chunk = i * chunks_per_task
+        process = Process(target=process_gromacs_xtc, args=(queues[i], i, totframes, fchunksize, totalchunks, starting_frame, ending_frame, starting_chunk))
+        processes.append(process)
+        starting_frame = ending_frame
+        print "Starting process %d" %(i)
+
+    for i in range(0,n):
+        processes[i].start()
+
+    for i in range(0,n):
+        processes[i].join()
+
+if __name__ == '__main__':
+    main()
