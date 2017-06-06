@@ -8,8 +8,10 @@ import sys
 import multiprocessing
 import threading
 import argparse
-import ConfigParser
-
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 import numpy as np
 import pandas as pd
@@ -92,7 +94,7 @@ def p1b3_parser(parser):
     return parser
 
 def read_config_file(file):
-    config=ConfigParser.ConfigParser()
+    config=configparser.ConfigParser()
     config.read(file)
     section=config.sections()
     fileParams={}
@@ -129,16 +131,16 @@ def read_config_file(file):
     # if none found exit
     try:
         fileParams['dense']=eval(config.get(section[0],'dense'))
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         try:
             fileParams['conv']=eval(config.get(section[0],'conv'))
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             print("Error ! No dense or conv layers specified. Wrong file !! ... exiting ")
             raise
         else:
             try:
                 fileParams['pool']=eval(config.get(section[0],'pool'))
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 fileParams['pool'] = None
                 print("Warning ! No pooling specified after conv layer.")
 

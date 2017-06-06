@@ -2,7 +2,10 @@ from __future__ import absolute_import
 import os
 import sys
 import argparse
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
@@ -95,7 +98,7 @@ def p3b1_parser(parser):
 
 
 def read_config_file(File):
-    config=ConfigParser.ConfigParser()
+    config=configparser.ConfigParser()
     config.read(File)
     section=config.sections()
     Global_Params={}
@@ -116,4 +119,3 @@ def read_config_file(File):
     # note 'cool' is a boolean
     #Global_Params['cool']          =config.get(section[0],'cool')
     return Global_Params
-

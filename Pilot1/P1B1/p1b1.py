@@ -9,7 +9,11 @@ import os
 import sys
 import logging
 import argparse
-import ConfigParser
+
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -39,27 +43,25 @@ def common_parser(parser):
     return parser
 
 
-
 def read_config_file(file):
-    config=ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(file)
-    section=config.sections()
-    fileParams={}
-    fileParams['activation']=eval(config.get(section[0],'activation'))
-    fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
-    fileParams['dense']=eval(config.get(section[0],'dense'))
-    fileParams['epochs']=eval(config.get(section[0],'epochs'))
-    fileParams['initialization']=eval(config.get(section[0],'initialization'))
-    fileParams['learning_rate']=eval(config.get(section[0], 'learning_rate'))
-    fileParams['loss']=eval(config.get(section[0],'loss'))
-    fileParams['noise_factor']=eval(config.get(section[0],'noise_factor'))
-    fileParams['optimizer']=eval(config.get(section[0],'optimizer'))
-    fileParams['rng_seed']=eval(config.get(section[0],'rng_seed'))
-    fileParams['scaling']=eval(config.get(section[0],'scaling'))
-    fileParams['validation_split']=eval(config.get(section[0],'validation_split'))
-    
-    return fileParams
+    section = config.sections()
+    fileParams = {}
+    fileParams['activation'] = eval(config.get(section[0],'activation'))
+    fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
+    fileParams['dense'] = eval(config.get(section[0],'dense'))
+    fileParams['epochs'] = eval(config.get(section[0],'epochs'))
+    fileParams['initialization'] = eval(config.get(section[0],'initialization'))
+    fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
+    fileParams['loss'] = eval(config.get(section[0],'loss'))
+    fileParams['noise_factor'] = eval(config.get(section[0],'noise_factor'))
+    fileParams['optimizer'] = eval(config.get(section[0],'optimizer'))
+    fileParams['rng_seed'] = eval(config.get(section[0],'rng_seed'))
+    fileParams['scaling'] = eval(config.get(section[0],'scaling'))
+    fileParams['validation_split'] = eval(config.get(section[0],'validation_split'))
 
+    return fileParams
 
 
 def extension_from_parameters(params, framework):
@@ -90,4 +92,3 @@ def evaluate_autoencoder(y_pred, y_test):
     mse = mean_squared_error(y_pred, y_test)
     # print('Mean squared error: {}%'.format(mse))
     return {'mse': mse}
-

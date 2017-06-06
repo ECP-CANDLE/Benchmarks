@@ -1,10 +1,13 @@
-import pandas as pd 
+import pandas as pd
 import numpy as np
 import os
 import sys
 import gzip
 import argparse
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 from keras import backend as K
 
@@ -12,7 +15,7 @@ from keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D
 from keras.optimizers import SGD, Adam, RMSprop
 from keras.models import Sequential, Model, model_from_json, model_from_yaml
 from keras.utils import np_utils
-from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau 
+from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
@@ -55,7 +58,7 @@ def get_tc1_parser():
 	return common_parser(parser)
 
 def read_config_file(file):
-    config=ConfigParser.ConfigParser()
+    config=configparser.ConfigParser()
     config.read(file)
     section=config.sections()
     fileParams={}
@@ -93,7 +96,7 @@ def initialize_parameters():
 
 
 def load_data(train_path, test_path, gParameters):
-        
+
     print('Loading data...')
     df_train = (pd.read_csv(train_path,header=None).values).astype('float32')
     df_test = (pd.read_csv(test_path,header=None).values).astype('float32')
@@ -109,30 +112,30 @@ def load_data(train_path, test_path, gParameters):
 
     Y_train = np_utils.to_categorical(df_y_train,gParameters['classes'])
     Y_test = np_utils.to_categorical(df_y_test,gParameters['classes'])
-              
+
     df_x_train = df_train[:, 1:seqlen].astype(np.float32)
     df_x_test = df_test[:, 1:seqlen].astype(np.float32)
-            
+
 #        X_train = df_x_train.as_matrix()
 #        X_test = df_x_test.as_matrix()
-            
+
     X_train = df_x_train
     X_test = df_x_test
-            
+
     scaler = MaxAbsScaler()
     mat = np.concatenate((X_train, X_test), axis=0)
     mat = scaler.fit_transform(mat)
-        
+
     X_train = mat[:X_train.shape[0], :]
     X_test = mat[X_train.shape[0]:, :]
-        
+
     return X_train, Y_train, X_test, Y_test
 
 
 def run(gParameters):
 
     print ('Params:', gParameters)
-    
+
     file_train = gParameters['train_data']
     file_test = gParameters['test_data']
     url = gParameters['data_url']
@@ -228,9 +231,9 @@ def run(gParameters):
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 
     history = model.fit(X_train, Y_train,
-                    batch_size=gParameters['batch_size'], 
+                    batch_size=gParameters['batch_size'],
                     epochs=gParameters['epochs'],
-                    verbose=1, 
+                    verbose=1,
                     validation_data=(X_test, Y_test),
                     callbacks = [checkpointer, csv_logger, reduce_lr])
 
@@ -273,14 +276,14 @@ def run(gParameters):
     print("Loaded json model from disk")
 
     # evaluate json loaded model on test data
-    loaded_model_json.compile(loss=gParameters['loss'], 
-            optimizer=gParameters['optimizer'], 
+    loaded_model_json.compile(loss=gParameters['loss'],
+            optimizer=gParameters['optimizer'],
             metrics=[gParameters['metrics']])
     score_json = loaded_model_json.evaluate(X_test, Y_test, verbose=0)
 
     print('json Test score:', score_json[0])
     print('json Test accuracy:', score_json[1])
-    
+
     print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1]*100))
 
 
@@ -290,8 +293,8 @@ def run(gParameters):
     print("Loaded yaml model from disk")
 
     # evaluate loaded model on test data
-    loaded_model_yaml.compile(loss=gParameters['loss'], 
-            optimizer=gParameters['optimizer'], 
+    loaded_model_yaml.compile(loss=gParameters['loss'],
+            optimizer=gParameters['optimizer'],
             metrics=[gParameters['metrics']])
     score_yaml = loaded_model_yaml.evaluate(X_test, Y_test, verbose=0)
 
@@ -311,4 +314,3 @@ if __name__ == '__main__':
         K.clear_session()
     except AttributeError:      # theano does not have this function
         pass
-
