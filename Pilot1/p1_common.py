@@ -317,9 +317,10 @@ def load_X_data(path, train_filename, test_filename,
 
     train_path = get_p1_file(path + train_filename)
     test_path = get_p1_file(path + test_filename)
-
-    usecols = list(range(n_cols)) if n_cols else None
-
+    
+    # compensates for the columns to drop if there is a feature subselection
+    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
+        
     df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
 
@@ -346,6 +347,7 @@ def load_X_data(path, train_filename, test_filename,
 
     return X_train, X_test
 
+
 def load_X_data2(path, train_filename, test_filename,
                 drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                 validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=SEED):
@@ -353,7 +355,9 @@ def load_X_data2(path, train_filename, test_filename,
     train_path = get_p1_file(path + train_filename)
     test_path = get_p1_file(path + test_filename)
 
-    usecols = list(range(n_cols)) if n_cols else None
+    # compensates for the columns to drop if there is a feature subselection
+    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
+
 
     df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
@@ -394,8 +398,9 @@ def load_Xy_one_hot_data(path, train_filename, test_filename,
     
     train_path = get_p1_file(path + train_filename)
     test_path = get_p1_file(path + test_filename)
-
-    usecols = list(range(n_cols)) if n_cols else None
+    
+    # compensates for the columns to drop if there is a feature subselection
+    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
 
     df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
@@ -442,7 +447,8 @@ def load_Xy_one_hot_data2(path, train_filename, test_filename,
     train_path = get_p1_file(path + train_filename)
     test_path = get_p1_file(path + test_filename)
     
-    usecols = list(range(n_cols)) if n_cols else None
+    # compensates for the columns to drop if there is a feature subselection
+    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
     
     df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
