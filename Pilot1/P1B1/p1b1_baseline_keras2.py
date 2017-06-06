@@ -17,12 +17,12 @@ BATCH = 50
 
 P     = 60025    # 245 x 245
 N1    = 2000
-NE    = 600      # encoded dim
+NE    = 600    # encoded dim
 F_MAX = 33.3
 DR    = 0.2
 
 
-def run_p1b1(X_train, X_test, epochs=2, batch_size=50):
+def run_p1b1(X_train, X_test, epochs=2, batch_size=50, N1=2000, NE=600):
     input_dim = X_train.shape[1]
     output_dim = input_dim
 
