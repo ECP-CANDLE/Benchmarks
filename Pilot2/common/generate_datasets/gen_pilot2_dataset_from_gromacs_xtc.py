@@ -137,7 +137,6 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
     chunkcount = starting_chunk + 1 # Offset the chunkcount by 1
     lastchunksize = totframes - (totalchunks * fchunksize)
     outAL = []
-    addzero = ""
     for curframe in range(first_frame, last_frame):
         j = last_frame - curframe
         mdt[curframe]
@@ -191,23 +190,22 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
 
   	# Flush the frames to disk
   	if (i == fchunksize - 1):
-            myfilename = mdsys.opts.outfile + str(chunkcount).zfill(2) + \
-                         "_outof_" + str(totalchunks) + ".npy"
-            print "Flushing chunk (%d records) %d out of %d to file %s" % (i + 1, chunkcount, totalchunks, myfilename)
-            #~ np.save(myfilename, convert_to_helgi_format(outA))
-            np.save(myfilename, outA)
+            flush_chunk_to_file(processname, i, outA, mdsys.opts.outfile, chunkcount, totalchunks)
             i = -1
             outAL = []  
             chunkcount = chunkcount + 1
-            addzero = ""
         i = i + 1
 
-    # Saves to disk the eventually remaining frames after
-    # the last full chunk of data has been written
-    myfilename = mdsys.opts.outfile + str(chunkcount).zfill(2) + \
-                 "_outof_" + str(totalchunks) + ".npy"
-    print "Flushing last chunk (%d records) %d out of %d to file %s" % (i + 1, chunkcount, totalchunks, myfilename)
+    if (i != 0):
+        # Saves to disk the eventually remaining frames after
+        # the last full chunk of data has been written
+        flush_chunk_to_file(processname, i, outA, mdsys.opts.outfile, chunkcount, totalchunks)
 
+def flush_chunk_to_file(processname, i, outA, outfile, chunkcount, totalchunks):
+    myfilename = outfile + str(chunkcount).zfill(2) + \
+                 "_outof_" + str(totalchunks) + ".npy"
+    print "[%d] Flushing chunk (%d records) %d out of %d to file %s" % (processname, i + 1, chunkcount, totalchunks, myfilename)
+    #~ np.save(myfilename, convert_to_helgi_format(outA))
     np.save(myfilename, outA)
 
 def main():
