@@ -31,6 +31,11 @@ def get_p1b1_parser():
 
 def main():
 
+    gParameters = initialize_parameters()
+    run(gParameters)
+
+def initialize_parameters():
+
     # Get command-line parameters
     parser = get_p1b1_parser()
     args = parser.parse_args()
@@ -40,11 +45,12 @@ def main():
     #print ('Params:', fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
-    print ('Params:', gParameters)
+    return gParameters
 
+def run(gParameters):
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(gParameters, '.keras')
-    logfile = args.logfile if args.logfile else args.save+ext+'.log'
+    logfile =  gParameters['logfile'] if gParameters['logfile'] else gParameters['save']+ext+'.log'
     p1b1.logger.info('Params: {}'.format(gParameters))
 
     # Get default parameters for initialization and optimizer functions
@@ -139,6 +145,8 @@ def main():
     plt.hist(diff.ravel(), bins='auto')
     plt.title("Histogram of Errors with 'auto' bins")
     plt.savefig('histogram_keras.png')
+
+    return 1 # should return history later
 
 
 if __name__ == '__main__':
