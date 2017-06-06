@@ -127,7 +127,7 @@ def run(gParameters):
     # Seed random generator for training
     np.random.seed(seed)
 
-    ae.fit(X_train, X_train,
+    history = ae.fit(X_train, X_train,
        batch_size=gParameters['batch_size'],
        epochs=gParameters['epochs'],
        validation_data=(X_val, X_val))
@@ -146,7 +146,7 @@ def run(gParameters):
     plt.title("Histogram of Errors with 'auto' bins")
     plt.savefig('histogram_keras.png')
 
-    return 1 # should return history later
+    return history # should return history later
 
 
 if __name__ == '__main__':
