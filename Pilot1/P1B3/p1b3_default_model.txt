@@ -1,5 +1,5 @@
 [Global_Params]
-dense=[1000, 500, 100, 50] 
+dense=[1000, 500, 100, 50]
 batch_size=100
 epochs=1
 activation='relu'
@@ -20,3 +20,4 @@ cell_features=['expression']
 drug_features=['descriptors']
 subsample='naive_balancing'
 batch_normalization=False
+cell_noise_sigma=0.

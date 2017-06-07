@@ -8,8 +8,10 @@ import sys
 import multiprocessing
 import threading
 import argparse
-import ConfigParser
-
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 import numpy as np
 import pandas as pd
@@ -63,6 +65,8 @@ def p1b3_parser(parser):
                         default=argparse.SUPPRESS,
                         choices=['descriptors', 'latent', 'all', 'noise'],
                         help="use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or random features; 'descriptors','latent', 'all', 'noise'")
+    parser.add_argument("--cell_noise_sigma", type=float,
+                        help="standard deviation of guassian noise to add to cell line features during training")
     # Output selection
     parser.add_argument("--min_logconc", type=float,
                         default=argparse.SUPPRESS,
@@ -92,10 +96,10 @@ def p1b3_parser(parser):
     return parser
 
 def read_config_file(file):
-    config=ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(file)
-    section=config.sections()
-    fileParams={}
+    section = config.sections()
+    fileParams = {}
 
     # default config values that we assume exists
     fileParams['activation']=eval(config.get(section[0],'activation'))
@@ -119,6 +123,7 @@ def read_config_file(file):
     fileParams['subsample']=eval(config.get(section[0],'subsample'))
     fileParams['test_cell_split']=eval(config.get(section[0],'test_cell_split'))
     fileParams['validation_split']=eval(config.get(section[0],'validation_split'))
+    fileParams['cell_noise_sigma']=eval(config.get(section[0],'cell_noise_sigma'))
 
     # parse the remaining values
     for k,v in config.items(section[0]):
@@ -129,16 +134,16 @@ def read_config_file(file):
     # if none found exit
     try:
         fileParams['dense']=eval(config.get(section[0],'dense'))
-    except ConfigParser.NoOptionError:
+    except configparser.NoOptionError:
         try:
             fileParams['conv']=eval(config.get(section[0],'conv'))
-        except ConfigParser.NoOptionError:
+        except configparser.NoOptionError:
             print("Error ! No dense or conv layers specified. Wrong file !! ... exiting ")
             raise
         else:
             try:
                 fileParams['pool']=eval(config.get(section[0],'pool'))
-            except ConfigParser.NoOptionError:
+            except configparser.NoOptionError:
                 fileParams['pool'] = None
                 print("Warning ! No pooling specified after conv layer.")
 
@@ -154,6 +159,8 @@ def extension_from_parameters(params, framework):
     ext += '.E={}'.format(params['epochs'])
     if params['feature_subsample']:
         ext += '.F={}'.format(params['feature_subsample'])
+    if 'cell_noise_sigma' in params:
+        ext += '.N={}'.format(params['cell_noise_sigma'])
     if 'conv' in params:
         name = 'LC' if 'locally_connected' in params else 'C'
         layer_list = list(range(0, len(params['conv']), 3))
@@ -206,6 +213,7 @@ def scale(df, scaling=None):
 
     mat = df.as_matrix()
     mat = scaler.fit_transform(mat)
+
     df = pd.DataFrame(mat, columns=df.columns)
 
     return df
@@ -667,7 +675,7 @@ class DataGenerator(object):
     """Generate training, validation or testing batches from loaded data
     """
 
-    def __init__(self, data, partition='train', batch_size=32, shape=None, concat=True, name=''):
+    def __init__(self, data, partition='train', batch_size=32, shape=None, concat=True, name='', cell_noise_sigma=None):
         """Initialize data
 
         Parameters
@@ -682,6 +690,8 @@ class DataGenerator(object):
             keep original feature shapes, make them flat or add one extra dimension (for convolution or locally connected layers in some frameworks)
         concat: True or False (default True)
             concatenate all features if set to True
+        cell_noise_sigma: float
+            standard deviation of guassian noise to add to cell line features during training
         """
         self.lock = threading.Lock()
         self.data = data
@@ -690,6 +700,7 @@ class DataGenerator(object):
         self.shape = shape
         self.concat = concat
         self.name = name
+        self.cell_noise_sigma = cell_noise_sigma
 
         if partition == 'train':
             self.cycle = cycle(range(data.n_train))
@@ -714,6 +725,7 @@ class DataGenerator(object):
             self.lock.release()
 
             df = self.data.df_response.iloc[indices, :]
+            cell_column_beg = df.shape[1]
 
             for fea in self.data.cell_features:
                 if fea == 'expression':
@@ -725,6 +737,8 @@ class DataGenerator(object):
                 elif fea == 'categorical':
                     df = pd.merge(df, self.data.df_cell_cat, on='CELLNAME')
 
+            cell_column_end = df.shape[1]
+
             for fea in self.data.drug_features:
                 if fea == 'descriptors':
                     df = df.merge(self.data.df_drug_desc, on='NSC')
@@ -735,6 +749,12 @@ class DataGenerator(object):
 
             df = df.drop(['CELLNAME', 'NSC'], 1)
             x = np.array(df.iloc[:, 1:])
+
+            if self.cell_noise_sigma:
+                c1 = cell_column_beg - 3
+                c2 = cell_column_end - 3
+                x[:, c1:c2] += np.random.randn(df.shape[0], c2-c1) * self.cell_noise_sigma
+
             y = np.array(df.iloc[:, 0])
             y = y / 100.
 

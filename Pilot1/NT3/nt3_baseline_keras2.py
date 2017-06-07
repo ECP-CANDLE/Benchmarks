@@ -4,7 +4,10 @@ import os
 import sys
 import gzip
 import argparse
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 from keras import backend as K
 
@@ -59,7 +62,7 @@ def get_nt3_parser():
 	return common_parser(parser)
 
 def read_config_file(file):
-    config=ConfigParser.ConfigParser()
+    config=configparser.ConfigParser()
     config.read(file)
     section=config.sections()
     fileParams={}

@@ -1,5 +1,5 @@
 [Global_Params]
-conv=[10, 10, 5, 10, 10, 5] 
+conv=[10, 10, 5, 10, 10, 5]
 pool=10
 batch_size=100
 epochs=1
@@ -21,3 +21,4 @@ cell_features=['expression']
 drug_features=['descriptors']
 subsample='naive_balancing'
 batch_normalization=False
+cell_noise_sigma=0.

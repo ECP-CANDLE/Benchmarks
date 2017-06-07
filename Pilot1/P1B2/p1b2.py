@@ -9,7 +9,11 @@ import os
 import sys
 import logging
 import argparse
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -41,11 +45,11 @@ def common_parser(parser):
 
 
 def read_config_file(file):
-    config=ConfigParser.ConfigParser()
+    config=configparser.ConfigParser()
     config.read(file)
     section=config.sections()
     fileParams={}
-    
+
     fileParams['activation']=eval(config.get(section[0],'activation'))
     fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
     fileParams['dense']=eval(config.get(section[0],'dense'))
@@ -60,7 +64,7 @@ def read_config_file(file):
     fileParams['rng_seed']=eval(config.get(section[0],'rng_seed'))
     fileParams['scaling']=eval(config.get(section[0],'scaling'))
     fileParams['validation_split']=eval(config.get(section[0],'validation_split'))
-    
+
     return fileParams
 
 
@@ -118,4 +122,3 @@ def evaluate_accuracy(y_pred, y_test):
     accuracy = accuracy_score(y_test, y_pred)
     # print('Accuracy: {}%'.format(100 * accuracy))
     return {'accuracy': accuracy}
-
