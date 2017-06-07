@@ -159,7 +159,7 @@ def extension_from_parameters(params, framework):
     ext += '.E={}'.format(params['epochs'])
     if params['feature_subsample']:
         ext += '.F={}'.format(params['feature_subsample'])
-    if params['cell_noise_sigma'] > 0:
+    if 'cell_noise_sigma' in params:
         ext += '.N={}'.format(params['cell_noise_sigma'])
     if 'conv' in params:
         name = 'LC' if 'locally_connected' in params else 'C'
@@ -690,6 +690,8 @@ class DataGenerator(object):
             keep original feature shapes, make them flat or add one extra dimension (for convolution or locally connected layers in some frameworks)
         concat: True or False (default True)
             concatenate all features if set to True
+        cell_noise_sigma: float
+            standard deviation of guassian noise to add to cell line features during training
         """
         self.lock = threading.Lock()
         self.data = data

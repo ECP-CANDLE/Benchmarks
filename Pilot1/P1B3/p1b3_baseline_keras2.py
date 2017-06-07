@@ -193,14 +193,22 @@ def run(gParameters):
     #
     if 'dense' in gParameters:
         dval = gParameters['dense']
-        if isinstance(dval, basestring):
+        try:
+            is_str = isinstance(dval, basestring)
+        except NameError:
+            is_str = isinstance(dval, str)
+        if is_str:
             res = str2lst(dval)
             gParameters['dense'] = res
         print(gParameters['dense'])
 
     if 'conv' in gParameters:
         cval = gParameters['conv']
-        if isinstance(dval, basestring):
+        try:
+            is_str = isinstance(cval, basestring)
+        except NameError:
+            is_str = isinstance(cval, str)
+        if is_str:
             res = str2lst(cval)
             gParameters['conv'] = res
         print(gParameters['conv'])
