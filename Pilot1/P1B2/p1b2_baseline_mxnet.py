@@ -4,19 +4,12 @@ import argparse
 
 import numpy as np
 
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model, Sequential
-from keras.layers import Activation, Dense, Dropout, Input
-from keras.initializers import RandomUniform
-from keras.callbacks import Callback, ModelCheckpoint
-from keras.regularizers import l2
-
-#import sys,os
+import mxnet as mx
+from mxnet.io import DataBatch, DataIter
 
 import p1b2
 import p1_common
-import p1_common_keras
+import p1_common_mxnet
 
 
 
@@ -43,7 +36,7 @@ def main():
     print ('Params:', gParameters)
 
     # Construct extension to save model
-    ext = p1b2.extension_from_parameters(gParameters, '.keras')
+    ext = p1b2.extension_from_parameters(gParameters, '.mx')
     logfile = args.logfile if args.logfile else args.save+ext+'.log'
     p1b2.logger.info('Params: {}'.format(gParameters))
 
@@ -52,7 +45,7 @@ def main():
     seed = gParameters['rng_seed']
     
     # Load dataset
-    #(X_train, y_train), (X_test, y_test) = p1b2.load_data(gParameters, seed)
+    #(X_train, y_train), (X_val, y_val), (X_test, y_test) = p1b2.load_data(gParameters, seed)
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = p1b2.load_data_one_hot(gParameters, seed)
 
     print ("Shape X_train: ", X_train.shape)
@@ -69,13 +62,20 @@ def main():
     print ("Range y_val --> Min: ", np.min(y_val), ", max: ", np.max(y_val))
     print ("Range y_test --> Min: ", np.min(y_test), ", max: ", np.max(y_test))
 
-    input_dim = X_train.shape[1]
-    input_vector = Input(shape=(input_dim,))
-    output_dim = y_train.shape[1]
+
+    # Set input and target to X_train
+    train_iter = mx.io.NDArrayIter(X_train, y_train, gParameters['batch_size'], shuffle=gParameters['shuffle'])
+    val_iter = mx.io.NDArrayIter(X_val, y_val, gParameters['batch_size'])
+    test_iter = mx.io.NDArrayIter(X_test, y_test, gParameters['batch_size'])
+    
+    net = mx.sym.Variable('data')#X')
+    out = mx.sym.Variable('softmax_label')#y')
+    num_classes = y_train.shape[1]
 
     # Initialize weights and learning rule
-    initializer_weights = p1_common_keras.build_initializer(gParameters['initialization'], kerasDefaults, seed)
-    initializer_bias = p1_common_keras.build_initializer('constant', kerasDefaults, 0.)
+    initializer_weights = p1_common_mxnet.build_initializer(gParameters['initialization'], kerasDefaults)
+    initializer_bias = p1_common_mxnet.build_initializer('constant', kerasDefaults, 0.)
+    init = mx.initializer.Mixed(['bias', '.*'], [initializer_bias, initializer_weights])
     
     activation = gParameters['activation']
     
@@ -86,63 +86,52 @@ def main():
         if type(layers) != list:
             layers = list(layers)
         for i,l in enumerate(layers):
-            if i==0: 
-                x = Dense(l, activation=activation,
-                          kernel_initializer=initializer_weights,
-                          bias_initializer=initializer_bias,
-                          kernel_regularizer=l2(gParameters['penalty']),
-                          activity_regularizer=l2(gParameters['penalty']))(input_vector)
-            else:
-                x = Dense(l, activation=activation,
-                          kernel_initializer=initializer_weights,
-                          bias_initializer=initializer_bias,
-                          kernel_regularizer=l2(gParameters['penalty']),
-                          activity_regularizer=l2(gParameters['penalty']))(x)
+            net = mx.sym.FullyConnected(data=net, num_hidden=l)
+            net = mx.sym.Activation(data=net, act_type=activation)
             if gParameters['drop']:
-                x = Dropout(gParameters['drop'])(x)
-        output = Dense(output_dim, activation=activation,
-                       kernel_initializer=initializer_weights,
-                       bias_initializer=initializer_bias)(x)
-    else:
-        output = Dense(output_dim, activation=activation,
-                       kernel_initializer=initializer_weights,
-                       bias_initializer=initializer_bias)(input_vector)
+                net = mx.sym.Dropout(data=net, p=gParameters['drop'])
 
+    net = mx.sym.FullyConnected(data=net, num_hidden=num_classes)# 1)
+    net = mx.symbol.SoftmaxOutput(data=net, label=out)
+
+    # Display model
+    p1_common_mxnet.plot_network(net, 'net'+ext)
+
+    devices = mx.cpu()
+    if gParameters['gpus']:
+        devices = [mx.gpu(i) for i in gParameters['gpus']]
+                          
     # Build MLP model
-    mlp = Model(outputs=output, inputs=input_vector)
-    p1b2.logger.debug('Model: {}'.format(mlp.to_json()))
+    mlp = mx.mod.Module(symbol=net,
+                        context=devices)
 
     # Define optimizer
-    optimizer = p1_common_keras.build_optimizer(gParameters['optimizer'],
+    optimizer = p1_common_mxnet.build_optimizer(gParameters['optimizer'],
                                                 gParameters['learning_rate'],
                                                 kerasDefaults)
-
-    # Compile and display model
-    mlp.compile(loss=gParameters['loss'], optimizer=optimizer, metrics=['accuracy'])
-    mlp.summary()
+                                                
+    metric = p1_common_mxnet.get_function(gParameters['loss'])()
 
     # Seed random generator for training
-    np.random.seed(seed)
+    mx.random.seed(seed)
 
-    mlp.fit(X_train, y_train,
-            batch_size=gParameters['batch_size'],
-            epochs=gParameters['epochs'],
-            validation_data=(X_val, y_val)
+    mlp.fit(train_iter, eval_data=val_iter,
+#            eval_metric=metric,
+            optimizer=optimizer,
+            num_epoch=gParameters['epochs'],
+            initializer=init
             )
 
     # model save
-    #save_filepath = "model_mlp_W_" + ext
-    #mlp.save_weights(save_filepath)
+    #save_filepath = "model_mlp_" + ext
+    #mlp.save(save_filepath)
 
     # Evalute model on test set
-    y_pred = mlp.predict(X_test)
+    y_pred = mlp.predict(test_iter).asnumpy()
+    #print ("Shape y_pred: ", y_pred.shape)
     scores = p1b2.evaluate_accuracy_one_hot(y_pred, y_test)
     print('Evaluation on test data:', scores)
 
 
 if __name__ == '__main__':
     main()
-    try:
-        K.clear_session()
-    except AttributeError:      # theano does not have this function
-        pass

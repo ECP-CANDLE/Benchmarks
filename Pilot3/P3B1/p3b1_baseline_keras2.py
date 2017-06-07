@@ -1,32 +1,205 @@
 import numpy as np
 import os, sys, gzip
 import urllib, zipfile
-from MTL_run import run_mtl
+
+from keras.layers.core import Dense, Dropout
+from keras.optimizers import SGD
+
+from keras.layers import Input
+from keras.models import Model
 
 from sklearn.metrics import f1_score
 
-def do_10_fold():
-    shared_nnet_spec= [ 1200 ]
-    individual_nnet_spec0= [ 1200, 1200 ]
-    individual_nnet_spec1= [ 1200, 1200 ]
-    individual_nnet_spec2= [ 1200, 1200 ]
-    individual_nnet_spec = [ individual_nnet_spec0, individual_nnet_spec1, individual_nnet_spec2 ]
+import argparse
 
-    learning_rate = 0.01
-    batch_size = 10
-    n_epochs = 10
-    dropout = 0.0
+import p3b1
+import p3_common as p3c
+import p3_common_keras as p3ck
+
+def get_p3b1_parser():
+        parser = argparse.ArgumentParser(prog='p3b1_baseline',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+            description='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
+
+        return p3b1.common_parser(parser)
+
+def initialize_parameters():
+    parser = get_p3b1_parser()
+    args = parser.parse_args()
+    print('Args', args)
+
+    GP=p3b1.read_config_file(args.config_file)
+    print GP
+
+    GP = p3c.args_overwrite_config(args, GP)
+    return GP
+
+def run_mtl( features_train= [], truths_train= [], features_test= [], truths_test= [],
+             shared_nnet_spec= [],
+             individual_nnet_spec= [],
+             learning_rate= 0.01,
+             batch_size= 10,
+             n_epochs= 100,
+             dropout= 0.0,
+             verbose= 1,
+             activation= 'relu',
+             out_act = 'softmax',
+             loss='categorical_crossentropy',
+             optimizer='sgd'
+             ):
+
+    labels_train = []
+    labels_test = []
+
+    n_out_nodes = []
+
+    for l in range( len( truths_train ) ):
+        truth_train_0 = truths_train[ l ]
+        truth_test_0 = truths_test[ l ]
+
+        truth_train_0 = np.array( truth_train_0, dtype= 'int32' )
+        truth_test_0 = np.array( truth_test_0, dtype= 'int32' )
+
+        mv = int( np.max( truth_train_0 ) )
+        label_train_0 = np.zeros( ( len( truth_train_0 ), mv + 1 ) )
+        for i in range( len( truth_train_0 ) ):
+            label_train_0[ i, truth_train_0[ i ] ] = 1
+        label_test_0 = np.zeros( ( len( truth_test_0 ), mv + 1 ) )
+        for i in range( len( truth_test_0 ) ):
+            label_test_0[ i, truth_test_0[ i ] ] = 1
+
+        labels_train.append( label_train_0 )
+        labels_test.append( label_test_0 )
+
+        n_out_nodes.append( mv + 1 )
 
 
-    truth0 = []
-    pred0 = []
+    shared_layers = []
 
-    truth1 = []
-    pred1 = []
 
-    truth2 = []
-    pred2 = []
+    # input layer
+    layer = Input( shape= ( len( features_train[ 0 ][ 0 ] ), ), name= 'input' )
+    shared_layers.append( layer )
 
+
+    # shared layers
+    for k in range( len( shared_nnet_spec ) ):
+        layer = Dense( shared_nnet_spec[ k ], activation= activation,
+                       name= 'shared_layer_' + str( k ) )( shared_layers[ -1 ] )
+        shared_layers.append( layer )
+        if dropout > 0:
+            layer = Dropout( dropout )( shared_layers[ -1 ] )
+            shared_layers.append( layer )
+
+
+    # individual layers
+    indiv_layers_arr= []
+    models = []
+
+    for l in range( len( individual_nnet_spec ) ):
+        indiv_layers = [ shared_layers[ -1 ] ]
+        for k in range( len( individual_nnet_spec[ l ] ) + 1 ):
+            if k < len( individual_nnet_spec[ l ] ):
+                layer = Dense( individual_nnet_spec[ l ][ k ], activation= activation,
+                               name= 'indiv_layer_' + str( l ) + '_' + str( k ) )( indiv_layers[ -1 ] )
+                indiv_layers.append( layer )
+                if dropout > 0:
+                    layer = Dropout( dropout )( indiv_layers[ -1 ] )
+                    indiv_layers.append( layer )
+            else:
+                layer = Dense( n_out_nodes[ l ], activation= out_act,
+                               name= 'out_' + str( l ) )( indiv_layers[ -1 ] )
+                indiv_layers.append( layer )
+
+        indiv_layers_arr.append( indiv_layers )
+
+        model = Model( input= [ shared_layers[ 0 ] ], output= [ indiv_layers[ -1 ] ] )
+
+        models.append( model )
+
+    kerasDefaults = p3c.keras_default_config()
+    optimizer = p3ck.build_optimizer(optimizer, learning_rate, kerasDefaults)
+
+    # DEBUG - verify
+    if verbose == 1:
+        for k in range( len( models ) ):
+            model = models[ k ]
+            print'Model:',k
+            model.summary()
+
+    for k in range( len( models ) ):
+        model = models[ k ]
+        model.compile( loss= loss, optimizer= optimizer, metrics= [ 'accuracy' ] )
+
+
+    # train
+    for epoch in range( n_epochs ):
+        for k in range( len( models ) ):
+            feature_train = features_train[ k ]
+            label_train = labels_train[ k ]
+            feature_test = features_test[ k ]
+            label_test = labels_test[ k ]
+            model = models[ k ]
+
+            model.fit( { 'input': feature_train }, { 'out_' + str( k ) : label_train }, epochs= 1, verbose= verbose,
+                batch_size= batch_size, validation_data= ( feature_test, label_test ) )
+
+
+    # retrieve truth-pred pair
+    ret = []
+
+    for k in range( len( models ) ):
+        ret_k= []
+
+        feature_test = features_test[ k ]
+        truth_test = truths_test[ k ]
+        model = models[ k ]
+
+        pred = model.predict( feature_test )
+
+        ret_k.append( truth_test )
+        ret_k.append( np.argmax( pred, axis= 1 ) )
+
+        ret.append( ret_k )
+
+
+    return ret
+
+def do_n_fold(GP):
+    shared_nnet_spec = []
+    elem = GP['shared_nnet_spec'].split( ',' )
+    for el in elem:
+        shared_nnet_spec.append( int( el ) )
+
+    individual_nnet_spec = []
+    indiv = GP['ind_nnet_spec'].split( ';' )
+    for ind in indiv:
+        indiv_nnet_spec = []
+        elem = ind.split( ',' )
+        for el in elem:
+            indiv_nnet_spec.append( int( el ) )
+        individual_nnet_spec.append( indiv_nnet_spec )
+
+    learning_rate = GP['learning_rate']
+    batch_size = GP['batch_size']
+    n_epochs = GP['epochs']
+    dropout = GP['dropout']
+    activation = GP['activation']
+    out_act = GP['out_act']
+    loss = GP['loss']
+    n_fold = GP['n_fold']
+    optimizer = GP['optimizer']
+
+    features = []
+    feat = GP['feature_names'].split(';')
+    for f in feat:
+        features.append(f)
+
+    n_feat = len(feat)
+
+    print 'Feature names:'
+    for i in range(n_feat):
+        print features[i]
 
    ## Read files
     file_path = os.path.dirname(os.path.realpath(__file__))
@@ -40,64 +213,59 @@ def do_10_fold():
 
     print 'Data downloaded and stored at: ' + data_loc
     data_path = os.path.dirname(data_loc)
-    print data_path
+    print 'Data path:' + data_path
 
-    for fold in range( 1 ):
+    # initialize arrays for all the features
+    truth_array = [[] for _ in range(n_feat)]
+    pred_array = [[] for _ in range(n_feat)]
 
-        feature_train_0 = np.genfromtxt( data_path + '/task0_' + str( fold ) + '_train_feature.csv', delimiter= ',' )
-        truth_train_0 = np.genfromtxt( data_path + '/task0_' + str( fold ) + '_train_label.csv', delimiter= ',' )
-        feature_test_0 = np.genfromtxt( data_path + '/task0_' + str( fold ) + '_test_feature.csv', delimiter= ',' )
-        truth_test_0 = np.genfromtxt( data_path + '/task0_' + str( fold ) + '_test_label.csv', delimiter= ',' )
+    for fold in range( n_fold ):
 
-        feature_train_1 = np.genfromtxt( data_path + '/task1_' + str( fold ) + '_train_feature.csv', delimiter= ',' )
-        truth_train_1 = np.genfromtxt( data_path + '/task1_' + str( fold ) + '_train_label.csv', delimiter= ',' )
-        feature_test_1 = np.genfromtxt( data_path + '/task1_' + str( fold ) + '_test_feature.csv', delimiter= ',' )
-        truth_test_1 = np.genfromtxt( data_path + '/task1_' + str( fold ) + '_test_label.csv', delimiter= ',' )
+        features_train = []
+        labels_train = []
 
-        feature_train_2 = np.genfromtxt( data_path + '/task2_' + str( fold ) + '_train_feature.csv', delimiter= ',' )
-        truth_train_2 = np.genfromtxt( data_path + '/task2_' + str( fold ) + '_train_label.csv', delimiter= ',' )
-        feature_test_2 = np.genfromtxt( data_path + '/task2_' + str( fold ) + '_test_feature.csv', delimiter= ',' )
-        truth_test_2 = np.genfromtxt( data_path + '/task2_' + str( fold ) + '_test_label.csv', delimiter= ',' )
+        features_test = []
+        labels_test = []
 
-        features_train = [ feature_train_0, feature_train_1, feature_train_2 ]
-        truths_train = [ truth_train_0, truth_train_1, truth_train_2 ]
-        features_test = [ feature_test_0, feature_test_1, feature_test_2 ]
-        truths_test = [ truth_test_0, truth_test_1, truth_test_2 ]
+        # build feature sets to match the network topology
+        for i in range( len( individual_nnet_spec) ):
+            feature_train_0 = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_train_feature.csv', delimiter= ',' )
+            label_train_0 = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_train_label.csv', delimiter= ',' )
+            features_train.append( feature_train_0 )
+            labels_train.append( label_train_0 )
+        
+            feature_test_0 = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_test_feature.csv', delimiter= ',' )
+            label_test_0 = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_test_label.csv', delimiter= ',' )
+            features_test.append( feature_test_0 )
+            labels_test.append( label_test_0 )
 
 
         ret = run_mtl(
             features_train= features_train,
-            truths_train= truths_train,
+            truths_train= labels_train,
             features_test= features_test,
-            truths_test= truths_test,
+            truths_test= labels_test,
             shared_nnet_spec= shared_nnet_spec,
             individual_nnet_spec= individual_nnet_spec,
             learning_rate= learning_rate,
             batch_size= batch_size,
             n_epochs= n_epochs,
-            dropout= dropout
+            dropout= dropout,
+            activation = activation,
+            out_act = out_act,
+            loss = loss,
+            optimizer = optimizer
         )
 
-        truth0.extend( ret[ 0 ][ 0 ] )
-        pred0.extend( ret[ 0 ][ 1 ] )
+        for i in range(n_feat):
+            truth_array[i].extend(ret[i][0])
+            pred_array[i].extend(ret[i][1])
 
-        truth1.extend( ret[ 1 ][ 0 ] )
-        pred1.extend( ret[ 1 ][ 1 ] )
-
-        truth2.extend( ret[ 2 ][ 0 ] )
-        pred2.extend( ret[ 2 ][ 1 ] )
-
-
-    print 'Task 1: Primary site - Macro F1 score', f1_score( truth0, pred0, average= 'macro' )
-    print 'Task 1: Primary site - Micro F1 score', f1_score( truth0, pred0, average= 'micro' )
-
-    print 'Task 2: Tumor laterality - Macro F1 score', f1_score( truth1, pred1, average= 'macro' )
-    print 'Task 3: Tumor laterality - Micro F1 score', f1_score( truth1, pred1, average= 'micro' )
-
-    print 'Task 3: Histological grade - Macro F1 score', f1_score( truth2, pred2, average= 'macro' )
-    print 'Task 3: Histological grade - Micro F1 score', f1_score( truth2, pred2, average= 'micro' )
-
+    for task in range(n_feat):
+        print 'Task',task+1,':',features[task],'- Macro F1 score', f1_score(truth_array[task], pred_array[task], average='macro')
+        print 'Task',task+1,':',features[task],'- Micro F1 score', f1_score(truth_array[task], pred_array[task], average='micro')
 
 
 if __name__  == "__main__":
-    do_10_fold()
+    gParameters=initialize_parameters()
+    do_n_fold(gParameters)

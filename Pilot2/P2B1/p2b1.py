@@ -17,26 +17,81 @@ from keras.models import Sequential,Model
 from keras.layers.core import Flatten, Dense, Dropout, Activation, Reshape
 from keras.layers.convolutional import Convolution2D, MaxPooling2D,Convolution1D
 #from keras.layers.convolutional import ZeroPadding2D,UpSampling2D,Unpooling2D,perforated_Unpooling2D,DePool2D
-from keras.initializations import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
+from keras.initializers import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
 from keras.layers.normalization import BatchNormalization
-from keras.regularizers import l2, activity_l2
+from keras.regularizers import l2
 import threading
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 from tqdm import *
+import re,copy
+import os
+import sys
+
+file_path = os.path.dirname(os.path.realpath(__file__))
+lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
+sys.path.append(lib_path)
+lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+sys.path.append(lib_path2)
+
+import p2_common
+
+def common_parser(parser):
+
+    parser.add_argument("--config_file", dest='config_file', type=str,
+                        default=os.path.join(file_path, 'p2b1_default_model.txt'),
+                        help="specify model configuration file")
+
+    # Parse has been split between arguments that are common with the default neon parser
+    # and all the other options
+    parser = p2_common.get_default_neon_parse(parser)
+    parser = p2_common.get_p2_common_parser(parser)
+
+    # Arguments that are applicable just to p2b1
+    parser = p2b1_parser(parser)
+
+    return parser
+
+def p2b1_parser(parser):
+    ### Hyperparameters and model save path
+
+#    parser.add_argument("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
+#    parser.add_argument("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
+#    parser.add_argument("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
+    parser.add_argument("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
+    parser.add_argument("--config-file",help="Config File",dest="config_file",type=str,default=os.path.join(file_path, 'p2b1_small_model.txt'))
+    parser.add_argument("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
+    parser.add_argument("--memo",help="Memo",dest="base_memo",type=str,default=None)
+    parser.add_argument("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
+    parser.add_argument("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='CenterZ')
+    parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
+    parser.add_argument("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
+		type=str,default="3k_Disordered")
+    #(opts,args)=parser.parse_args()
+    return parser
+
 
 #### Read Config File
-def ReadConfig(File):
-    config=ConfigParser.ConfigParser()
+def read_config_file(File):
+    config=configparser.ConfigParser()
     config.read(File)
     section=config.sections()
     Global_Params={}
-    Global_Params['num_hidden']=eval(config.get(section[0],'num_hidden'))
-    Global_Params['batch_size']=eval(config.get(section[0],'batch_size'))
-    Global_Params['learning_rate']=eval(config.get(section[0],'learning_rate'))
-    Global_Params['epochs']=eval(config.get(section[0],'epochs'))
-    Global_Params['cool']=config.get(section[0],'cool')
-    Global_Params['weight_decay']=eval(config.get(section[0],'weight_decay'))
-    Global_Params['noise_factor']=eval(config.get(section[0],'noise_factor'))
+
+    Global_Params['num_hidden']    =eval(config.get(section[0],'num_hidden'))
+    Global_Params['batch_size']    =eval(config.get(section[0],'batch_size'))
+    Global_Params['learning_rate'] =eval(config.get(section[0],'learning_rate'))
+    Global_Params['epochs']        =eval(config.get(section[0],'epochs'))
+    Global_Params['weight_decay']  =eval(config.get(section[0],'weight_decay'))
+    Global_Params['noise_factor']  =eval(config.get(section[0],'noise_factor'))
+    Global_Params['optimizer']     =eval(config.get(section[0],'optimizer'))
+    Global_Params['loss']          =eval(config.get(section[0],'loss'))
+    Global_Params['activation']    =eval(config.get(section[0],'activation'))
+    # note 'cool' is a boolean
+    Global_Params['cool']          =config.get(section[0],'cool')
+
     return Global_Params
 
 ############# Define Data Generators ################
@@ -74,7 +129,7 @@ class ImageNoiseDataGenerator(object):
             else:
                 b=0
                 #b=None
-            
+
             #if current_index + current_batch_size==N:
             #   b=None
             total_b += 1
@@ -118,28 +173,28 @@ class ImageNoiseDataGenerator(object):
 ##### Define Neural Network Models ###################
 def dense_auto(weights_path=None,input_shape=(784,),hidden_layers=None,nonlinearity='relu',l2_reg=0.0):
     input_img = Input(shape=input_shape)
-    
+
     if hidden_layers!=None:
         if type(hidden_layers)!=list:
             hidden_layers=list(hidden_layers)
         for i,l in enumerate(hidden_layers):
-            if i==0: 
-                encoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(input_img)
+            if i==0:
+                encoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(input_img)
             else:
-                encoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(encoded)
+                encoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
 
         for i,l in reversed(list(enumerate(hidden_layers))):
             if i <len(hidden_layers)-1:
                 if i==len(hidden_layers)-2:
-                    decoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(encoded)
+                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
                 else:
-                    decoded=Dense(l,activation=nonlinearity,W_regularizer=l2(l2_reg))(decoded)
-        decoded=Dense(input_shape[0],W_regularizer=l2(l2_reg))(decoded)
+                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(decoded)
+        decoded=Dense(input_shape[0],kernel_regularizer=l2(l2_reg))(decoded)
     else:
-        decoded=Dense(input_shape[0],W_regularizer=l2(l2_reg))(input_img)
+        decoded=Dense(input_shape[0],kernel_regularizer=l2(l2_reg))(input_img)
 
-    model=Model(input=input_img,output=decoded)
-    
+    model=Model(outputs=decoded,inputs=input_img)
+
     if weights_path:
         print('Loading Model')
         model.load_weights(weights_path)
@@ -171,7 +226,7 @@ def dense_simple(weights_path=None,input_shape=(784,),nonlinearity='relu'):
     BatchNormalization()
     model.add(Dense(512))
     BatchNormalization()
-    model.add(Dense(input_shape[0],activation='linear'))    
+    model.add(Dense(input_shape[0],activation='linear'))
     if weights_path:
         print('Loading Model')
         model.load_weights(weights_path)
@@ -191,7 +246,7 @@ class autoencoder_preprocess():
         rn=self.noise*np.random.rand(np.shape(ind)[1])
         X_train[ind]=rn
         return X_train
-    
+
     def renormalize(self,X_train,mu,sigma):
         X_train=(X_train-mu)/sigma
         X_train = X_train.astype("float32")
@@ -236,7 +291,7 @@ class Candle_Train():
                 y_train=X_train.copy()
                 imggen=self.datagen.flow(X_train, y_train, batch_size=self.batch_size)
                 N_iter=X.shape[0]//self.batch_size
-                
+
                 iter_loss=[]
                 for _ in range(N_iter+1):
                     x,y=next(imggen)

@@ -1,65 +1,94 @@
-from __future__ import absolute_import
+from __future__ import print_function
 
-import numpy as np
 import pandas as pd
+import numpy as np
+
+from sklearn.metrics import mean_squared_error
 
 import os
 import sys
-import gzip
+import logging
+import argparse
 
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+lib_path = os.path.abspath(os.path.join(file_path, '..'))
 sys.path.append(lib_path)
+lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+sys.path.append(lib_path2)
 
-from data_utils import get_file
+import p1_common
 
+url_p1b1 = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/'
+file_train = 'P1B1.train.csv'
+file_test = 'P1B1.test.csv'
 
-seed = 2016
+logger = logging.getLogger(__name__)
 
+def common_parser(parser):
 
-def get_p1_file(link):
-    fname = os.path.basename(link)
-    return get_file(fname, origin=link, cache_subdir='Pilot1')
+    parser.add_argument("--config-file", dest='config_file', type=str,
+                        default=os.path.join(file_path, 'p1b1_default_model.txt'),
+                        help="specify model configuration file")
 
+    # Parse has been split between arguments that are common with the default neon parser
+    # and all the other options
+    parser = p1_common.get_default_neon_parse(parser)
+    parser = p1_common.get_p1_common_parser(parser)
 
-def load_data(shuffle=True, n_cols=None):
-    train_path = get_p1_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.train.csv')
-    test_path = get_p1_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/P1B1.test.csv')
-
-    usecols = list(range(n_cols)) if n_cols else None
-
-    df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
-    df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
-
-    df_train = df_train.drop('case_id', 1).astype(np.float32)
-    df_test = df_test.drop('case_id', 1).astype(np.float32)
-
-    if shuffle:
-        df_train = df_train.sample(frac=1, random_state=seed)
-        df_test = df_test.sample(frac=1, random_state=seed)
-
-    X_train = df_train.as_matrix()
-    X_test = df_test.as_matrix()
-
-    scaler = MaxAbsScaler()
-    mat = np.concatenate((X_train, X_test), axis=0)
-    mat = scaler.fit_transform(mat)
-
-    X_train = mat[:X_train.shape[0], :]
-    X_test = mat[X_train.shape[0]:, :]
-
-    return X_train, X_test
+    return parser
 
 
-def evaluate(y_pred, y_test):
-    def map_max_indices(nparray):
-        maxi = lambda a: a.argmax()
-        iter_to_na = lambda i: np.fromiter(i, dtype=np.float)
-        return np.array([maxi(a) for a in nparray])
-    ya, ypa = tuple(map(map_max_indices, (y_test, y_pred)))
-    accuracy = accuracy_score(ya, ypa)
-    # print('Final accuracy of best model: {}%'.format(100 * accuracy))
-    return {'accuracy': accuracy}
+def read_config_file(file):
+    config = configparser.ConfigParser()
+    config.read(file)
+    section = config.sections()
+    fileParams = {}
+    fileParams['activation'] = eval(config.get(section[0],'activation'))
+    fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
+    fileParams['dense'] = eval(config.get(section[0],'dense'))
+    fileParams['epochs'] = eval(config.get(section[0],'epochs'))
+    fileParams['initialization'] = eval(config.get(section[0],'initialization'))
+    fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
+    fileParams['loss'] = eval(config.get(section[0],'loss'))
+    fileParams['noise_factor'] = eval(config.get(section[0],'noise_factor'))
+    fileParams['optimizer'] = eval(config.get(section[0],'optimizer'))
+    fileParams['rng_seed'] = eval(config.get(section[0],'rng_seed'))
+    fileParams['scaling'] = eval(config.get(section[0],'scaling'))
+    fileParams['validation_split'] = eval(config.get(section[0],'validation_split'))
+
+    return fileParams
+
+
+def extension_from_parameters(params, framework):
+    """Construct string for saving model with annotation of parameters"""
+    ext = framework
+    ext += '.A={}'.format(params['activation'])
+    ext += '.B={}'.format(params['batch_size'])
+    ext += '.E={}'.format(params['epochs'])
+    for i, n in enumerate(params['dense']):
+        if n:
+            ext += '.D{}={}'.format(i+1, n)
+    ext += '.S={}'.format(params['scaling'])
+
+    return ext
+
+
+def load_data(params, seed):
+    return p1_common.load_X_data2(url_p1b1, file_train, file_test,
+                                drop_cols=['case_id'],
+                                shuffle=params['shuffle'],
+                                scaling=params['scaling'],
+                                validation_split=params['validation_split'],
+                                dtype=params['datatype'],
+                                seed=seed)
+
+
+def evaluate_autoencoder(y_pred, y_test):
+    mse = mean_squared_error(y_pred, y_test)
+    # print('Mean squared error: {}%'.format(mse))
+    return {'mse': mse}
