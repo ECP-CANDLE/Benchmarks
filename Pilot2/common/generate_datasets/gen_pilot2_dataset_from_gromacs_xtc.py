@@ -195,7 +195,7 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
                 ffr[curatom, 8:8+len(fr)] = bmatrix
                 #~ print lipid_beads
                 #~ print "Curr bead: ", bmatrix
-                outA[frame_ind, curfrag, curatom] = ffr[curatom, :]
+                outA[i, curfrag, curatom] = ffr[curatom, :]
                 '''
                 print "frame_ind: ", frame_ind
                 print "curfrag: ", curfrag
