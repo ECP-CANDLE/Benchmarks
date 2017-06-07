@@ -62,6 +62,7 @@ def run(GP):
 	
 #	lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
 #	sys.path.append(lib_path)
+    os.environ['KERAS_BACKEND'] = opts.backend
 
     import keras_model_utils as KEU
     reload(KEU)
@@ -91,13 +92,38 @@ def run(GP):
     for f in data_files:
         X=np.load(f)
         num_samples += X.shape[0]
+        
+	X=np.load(filelist[0])
+	X = X.squeeze()
+	X = X[:,:,0]
+	X =np.array(X.tolist())
+	print X.shape
+	X_train=hf.get_data(X,case=GP['case'])
 
-    X=np.load(data_files[0])
-    print 'Data Format: [Num Sample (%s), Num Molecules (%s), Num Atoms (%s), Position + Molecule Tag (One-hot encoded) (%s)]' % (
-        num_samples, X.shape[1], X.shape[2], X.shape[3])
+	molecular_hidden_layers=GP['molecular_num_hidden']
+	## modify the inner AE design if type molecule type feature is not included in data
+	if not opts.type_bool:
+		molecular_hidden_layers=molecular_hidden_layers[1:]
+		molecular_hidden_layers.append(8)
 
-    X_train=hf.get_data(X,case=GP['case'])
-    input_dim=X_train.shape[1]
+	## computing input dimension for outer AE
+	input_dim=X.shape[1]*molecular_hidden_layers[-1]
+
+	## get data dimension for molecular autoencoder
+	if not opts.type_bool:
+		molecular_input_dim=np.prod([X.shape[2],X.shape[3]-5])## only consider molecular location coordinates
+		molecular_output_dim=np.prod([X.shape[2],X.shape[3]-5])
+	else:
+		molecular_input_dim=np.prod(X.shape[2:])
+		molecular_output_dim=np.prod(X.shape[2:])
+
+    # BVE What do we do here
+#    X=np.load(data_files[0])
+#    print 'Data Format: [Num Sample (%s), Num Molecules (%s), Num Atoms (%s), Position + Molecule Tag (One-hot encoded) (%s)]' % (
+#        num_samples, X.shape[1], X.shape[2], X.shape[3])
+
+#    X_train=hf.get_data(X,case=GP['case'])
+#    input_dim=X_train.shape[1]
 	
 ### Define Model, Solver and Compile ##########
     print ('Define the model and compile')
@@ -116,12 +142,42 @@ def run(GP):
 
 #### Print Model Stats ###########
     KEU.Model_Info(model)
+
+######## Define Molecular Model, Solver and Compile #########
+    molecular_nonlinearity=GP['molecular_nonlinearity']
 	
+
+    len_molecular_hidden_layers=len(molecular_hidden_layers)
+    conv_bool=opts.conv_bool
+    if conv_bool:
+        molecular_model=hf.conv_dense_auto(weights_path=None,input_shape=(1,molecular_input_dim),nonlinearity=molecular_nonlinearity,\
+        hidden_layers=molecular_hidden_layers,l2_reg=GP['weight_decay'])
+    else:
+        molecular_model=hf.dense_auto(weights_path=None,input_shape=(molecular_input_dim,),nonlinearity=molecular_nonlinearity,\
+        hidden_layers=molecular_hidden_layers,l2_reg=GP['weight_decay'])	
+
+    molecular_model.compile(optimizer=opt, loss='mean_squared_error',metrics=['mean_squared_error'])
+    molecular_model.summary()
+    ##### set up callbacks and cooling for the molecular_model ##########
+    drop=0.5
+    mb_epochs = GP['molecular_epochs']
+    initial_lrate=GP['learning_rate']
+    epochs_drop=1+int(np.floor(mb_epochs/3))
+    def step_decay(epoch):
+        global initial_lrate,epochs_drop,drop
+        lrate = initial_lrate * np.power(drop, np.floor((1+epoch)/epochs_drop))
+        return lrate
+    lr_scheduler = LearningRateScheduler(step_decay)
+    history = callbacks.History()
+    #callbacks=[history,lr_scheduler]
+    callbacks=[history]
+
 #### Train the Model
     if GP['train_bool']:
         if not str2bool(GP['cool']):
             effec_epochs=GP['epochs']
-            ct=hf.Candle_Train(datagen,model,data_files,effec_epochs,case=GP['case'])
+            ct=hf.Candle_Composite_Train(datagen, model, molecular_model, data_files,mb_epochs,effec_epochs,callbacks,batch_size=32, case=opts.case,scale_factor=0.5,len_molecular_hidden_layers=len_molecular_hidden_layers,conv_bool=conv_bool,type_bool=opts.type_bool)
+#            ct=hf.Candle_Train(datagen,model,data_files,effec_epochs,case=GP['case'])
             loss=ct.train_ac()
         else:
             effec_epochs=GP['epochs']//3

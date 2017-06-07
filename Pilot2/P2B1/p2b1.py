@@ -69,6 +69,9 @@ def p2b1_parser(parser):
     parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
     parser.add_argument("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
 		type=str,default="3k_Disordered")
+    parser.add_argument("--conv-AE", action="store_true",dest="conv_bool",default=False,help="Invoke training using Conv1D NN for inner AE")
+    parser.add_argument("--include-type", action="store_true",dest="type_bool",default=False,help="Include molecule type information in desining AE")
+    parser.add_argument("--backend",help="Keras Backend",dest="backend",type=str,default='theano')
     #(opts,args)=parser.parse_args()
     return parser
 
@@ -92,7 +95,26 @@ def read_config_file(File):
     # note 'cool' is a boolean
     Global_Params['cool']          =config.get(section[0],'cool')
 
+    Global_Params['molecular_epochs']       =eval(config.get(section[0],'molecular_epochs'))
+    Global_Params['molecular_num_hidden']   =eval(config.get(section[0],'molecular_num_hidden'))
+    Global_Params['molecular_nonlinearity'] =config.get(section[0],'molecular_nonlinearity')
+
     return Global_Params
+
+#### Extra Code #####
+def reorder_npfiles(files):
+    files1=copy.deepcopy(files)
+    for i in range(len(files)):
+        inx=map(int,re.findall('\d+',files[i][96:98]))[0]
+        files1[inx-1]=files[i]
+    return files1
+
+def convert_to_helgi_format(data):
+    new_data=np.zeros((data.shape[0],data.shape[1],12,6))
+    for i in range(data.shape[0]):
+        for j in range(data.shape[1]):
+            new_data[i,j,:,:]=np.hstack([data[i,j][0],np.array(12*[list(data[i,j][1])])])
+    return new_data
 
 ############# Define Data Generators ################
 class ImageNoiseDataGenerator(object):
@@ -169,6 +191,39 @@ class ImageNoiseDataGenerator(object):
 
     def insertnoise(self,x,corruption_level=0.5):
         return np.random.binomial(1,1-corruption_level,x.shape)*x
+
+def conv_dense_auto(weights_path=None,input_shape=(1,784),hidden_layers=None,nonlinearity='relu',l2_reg=0.0):
+    kernel_size=7
+    input_img = Input(shape=input_shape)
+    
+    if hidden_layers!=None:
+        if type(hidden_layers)!=list:
+            hidden_layers=list(hidden_layers)
+        for i,l in enumerate(hidden_layers):
+            if i==0: 
+                encoded=Convolution1D(l,kernel_size,padding='same',input_shape=input_shape,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(input_img)
+            else:
+                encoded=Convolution1D(l,kernel_size,padding='same',input_shape=input_shape,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
+        
+        encoded=Flatten()(encoded) ## reshape output of 1d convolution layer 
+        
+        for i,l in reversed(list(enumerate(hidden_layers))):
+            if i <len(hidden_layers)-1:
+                if i==len(hidden_layers)-2:
+                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
+                else:
+                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(decoded)
+        decoded=Dense(input_shape[1],kernel_regularizer=l2(l2_reg))(decoded)
+    
+    else:
+        decoded=Dense(input_shape[1],kernel_regularizer=l2(l2_reg))(input_img)
+
+    model=Model(inputs=input_img,outputs=decoded)
+    
+    if weights_path:
+        print('Loading Model')
+        model.load_weights(weights_path)
+    return model
 
 ##### Define Neural Network Models ###################
 def dense_auto(weights_path=None,input_shape=(784,),hidden_layers=None,nonlinearity='relu',l2_reg=0.0):
@@ -252,6 +307,7 @@ class autoencoder_preprocess():
         X_train = X_train.astype("float32")
         return X_train
 
+## get activations for hidden layers of the model
 def get_activations(model, layer, X_batch):
     get_activations = K.function([model.layers[0].input, K.learning_phase()], model.layers[layer].output)
     activations = get_activations([X_batch,0])
@@ -299,5 +355,84 @@ class Candle_Train():
                     iter_loss.append(loss_data)
                 file_loss.append(np.array(iter_loss).mean(axis=0))
             print '\nLoss on epoch %d:'%e, file_loss[-1]
+            epoch_loss.append(np.array(file_loss).mean(axis=0))
+        return epoch_loss
+
+class Candle_Composite_Train():
+    def __init__(self, datagen, model, molecular_ammodel, numpylist,mnb_epochs,nb_epochs,callbacks,batch_size=32,case='Full',print_data=True,scale_factor=1,epsilon=.064,len_molecular_hidden_layers=1,conv_bool=False,type_bool=False):
+        self.numpylist=numpylist
+        self.molecular_model=molecular_ammodel
+        self.mb_epochs=mnb_epochs
+        self.epochs=nb_epochs
+        self.callbacks=callbacks
+        self.case=case
+        self.batch_size=batch_size
+        self.model=model
+        self.datagen=datagen
+        self.print_data=print_data
+        self.scale_factor=scale_factor
+        self.epsilon=epsilon
+        self.len_molecular_hidden_layers=len_molecular_hidden_layers
+        self.conv_net=conv_bool
+        self.type_feature=type_bool
+    def train_ac(self):
+        epoch_loss=[]
+        for e in tqdm(range(self.epochs)):
+            file_loss=[]
+            filelist=[d for d in self.numpylist if 'AE' not in d]
+            for f in filelist:
+                if self.print_data:
+                    if e==0:
+                        print f
+                X=np.load(f)
+                X = X.squeeze()
+                X = X[:,:,0]
+                X =np.array(X.tolist())
+
+                if self.type_feature:
+                    Xnorm=np.concatenate([X[:,:,:,0:3]/255.,self.scale_factor*X[:,:,:,3:8],X[:,:,:,8:]/40.],axis=3)  ## normalizing the location coordinates and bond lengths and scale type encoding
+                else:
+                    Xnorm=np.concatenate([X[:,:,:,0:3]/255.,X[:,:,:,8:]/40.],axis=3) ## only consider the location coordinates per molecule
+                ### Code for sub-autoencoder for molecule feature learing
+                #having some problems
+                num_frames=X.shape[0]
+                num_molecules=X.shape[1]
+                input_feature_dim=np.prod(Xnorm.shape[2:])
+                XP=[]
+                for i in range(num_frames):
+                    if self.conv_net:
+                        xt=Xnorm[i].reshape(X.shape[1],1,input_feature_dim)
+                        yt=Xnorm[i].reshape(X.shape[1],input_feature_dim)
+                    else:
+                        xt=Xnorm[i].reshape(X.shape[1],input_feature_dim)
+                        yt=xt.copy()
+                    w=self.molecular_model.get_weights()
+                    #print self.molecular_model.evaluate(xt,yt,verbose=0)[0]
+                    while self.molecular_model.evaluate(xt,yt,verbose=0)[0]>self.epsilon:
+                        print 'Inner AE loss..',self.molecular_model.evaluate(xt,yt,verbose=0)[0]
+                        self.molecular_model.set_weights(w)
+                        self.molecular_model.fit(xt, yt,epochs=self.mb_epochs,callbacks=self.callbacks,verbose=0)
+                        w=self.molecular_model.get_weights()
+                    yp=get_activations(self.molecular_model,self.len_molecular_hidden_layers,xt)
+                    XP.append(yp)
+                XP=np.array(XP)
+                fout=f.split('.npy')[0]+'_AE'+'_Include%s'%self.type_feature+'_Conv%s'%self.conv_net+'.npy'
+                if e==0:
+                    np.save(fout,XP)
+                X_train=get_data(XP,self.case)
+                y_train=X_train.copy()
+                imggen=self.datagen.flow(X_train, y_train, batch_size=self.batch_size)
+                N_iter=XP.shape[0]//self.batch_size
+
+                iter_loss=[]
+                for _ in range(N_iter+1):
+                    x,y=next(imggen)
+                    loss_data=self.model.train_on_batch(x,y)
+                    iter_loss.append(loss_data)
+                #print iter_loss
+                file_loss.append(np.array(iter_loss).mean(axis=0))
+
+                
+            print 'Loss on epoch %d:'%e, file_loss[-1]
             epoch_loss.append(np.array(file_loss).mean(axis=0))
         return epoch_loss
