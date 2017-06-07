@@ -28,7 +28,6 @@ def get_p1b1_parser():
 	return p1b1.common_parser(parser)
 
 
-
 def main():
 
     # Get command-line parameters
@@ -40,7 +39,7 @@ def main():
     #print ('Params:', fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
-    print ('Params:', gParameters)
+    print('Params:', gParameters)
 
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(gParameters, '.keras')
@@ -53,14 +52,14 @@ def main():
 
     # Load dataset
     X_train, X_val, X_test = p1b1.load_data(gParameters, seed)
-    
-    print ("Shape X_train: ", X_train.shape)
-    print ("Shape X_val: ", X_val.shape)
-    print ("Shape X_test: ", X_test.shape)
 
-    print ("Range X_train --> Min: ", np.min(X_train), ", max: ", np.max(X_train))
-    print ("Range X_val --> Min: ", np.min(X_val), ", max: ", np.max(X_val))
-    print ("Range X_test --> Min: ", np.min(X_test), ", max: ", np.max(X_test))
+    print("Shape X_train: ", X_train.shape)
+    print("Shape X_val: ", X_val.shape)
+    print("Shape X_test: ", X_test.shape)
+
+    print("Range X_train --> Min: ", np.min(X_train), ", max: ", np.max(X_train))
+    print("Range X_val --> Min: ", np.min(X_val), ", max: ", np.max(X_val))
+    print("Range X_test --> Min: ", np.min(X_test), ", max: ", np.max(X_test))
 
     input_dim = X_train.shape[1]
     output_dim = input_dim
@@ -69,18 +68,18 @@ def main():
     # Initialize weights and learning rule
     initializer_weights = p1_common_keras.build_initializer(gParameters['initialization'], kerasDefaults, seed)
     initializer_bias = p1_common_keras.build_initializer('constant', kerasDefaults, 0.)
-    
+
     activation = gParameters['activation']
 
     # Define Autoencoder architecture
     layers = gParameters['dense']
-    
+
     if layers != None:
         if type(layers) != list:
             layers = list(layers)
         # Encoder Part
-        for i,l in enumerate(layers):
-            if i==0: 
+        for i, l in enumerate(layers):
+            if i == 0:
                 encoded = Dense(l, activation=activation,
                                 kernel_initializer=initializer_weights,
                                 bias_initializer=initializer_bias)(input_vector)
@@ -89,7 +88,7 @@ def main():
                                 kernel_initializer=initializer_weights,
                                 bias_initializer=initializer_bias)(encoded)
         # Decoder Part
-        for i,l in reversed( list(enumerate(layers)) ):
+        for i,l in reversed(list(enumerate(layers))):
             if i < len(layers)-1:
                 if i == len(layers)-2:
                     decoded = Dense(l, activation=activation,
@@ -122,9 +121,9 @@ def main():
     np.random.seed(seed)
 
     ae.fit(X_train, X_train,
-       batch_size=gParameters['batch_size'],
-       epochs=gParameters['epochs'],
-       validation_data=(X_val, X_val))
+           batch_size=gParameters['batch_size'],
+           epochs=gParameters['epochs'],
+           validation_data=(X_val, X_val))
 
     # model save
     #save_filepath = "model_ae_W_" + ext
