@@ -182,6 +182,7 @@ def initialize_parameters():
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
     return gParameters
 
+
 def run(gParameters):
     """
     Runs the model using the specified set of parameters
@@ -212,7 +213,7 @@ def run(gParameters):
             res = str2lst(cval)
             gParameters['conv'] = res
         print(gParameters['conv'])
-    print('Params:', gParameters)
+    # print('Params:', gParameters)
     # Construct extension to save model
     ext = p1b3.extension_from_parameters(gParameters, '.keras')
     logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['save']+ext+'.log'
@@ -333,7 +334,7 @@ def run(gParameters):
                         validation_data=val_gen,
                         validation_steps=val_steps,
                         verbose=0,
-                        # callbacks=[checkpointer, loss_history, progbar],
+                        callbacks=[checkpointer, loss_history, progbar],
                         pickle_safe=True,
                         workers=gParameters['workers'])
 
