@@ -19,7 +19,8 @@ DSTDIR="${DSTPATH}/${CANDLEDIR}"
 
 mkdir -p "${DSTPATH}"
 
-for i in $dir3k1 $dir3k2 $dir3k3 $dir6k1 $dir6k2 $dir6k3 
+#for i in $dir3k1 $dir3k2 $dir3k3 $dir6k1 $dir6k2 $dir6k3 
+for i in $dir6k2 $dir6k3 
 do
     if [ "$i" == $dir3k1 ] ; then hh="3k_run10"; fi
     if [ "$i" == $dir3k2 ] ; then hh="3k_run32"; fi

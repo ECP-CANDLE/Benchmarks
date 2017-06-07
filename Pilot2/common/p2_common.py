@@ -524,4 +524,6 @@ def get_list_of_data_files(GP):
     ## Make a list of all of the data files in the data set
     data_files=glob.glob('%s/*.npy'%data_dir)
 
-    return data_files
+    fields = p2.gen_data_set_dict()
+
+    return (data_files, fields)

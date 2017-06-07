@@ -17,6 +17,12 @@ spack install py-ipython
 
 # Add matplotlib with image support
 spack install py-matplotlib +image
+
+# Add tqdm package
+spack install py-tqdm
+
+# Add scikit-learn
+spack install py-scikit-learn
 ```
 
 #### Activating Spack
@@ -26,10 +32,13 @@ spack install py-matplotlib +image
 spack activate py-ipython
 spack activate py-keras
 spack activate py-matplotlib
+spack activate py-tqdm
 
 # Load the ipython environment into your path
 module avail
 module load py-ipython-5.1.0-gcc-4.9.3
+
+module load python/2.7.13-gcc-4.9.3 jpeg/9b-gcc-4.9.3
 
 # Lauch ipython and then run the example
 ipython
