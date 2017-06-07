@@ -28,12 +28,13 @@ import p1_common_keras
 
 np.set_printoptions(threshold=np.nan)
 
+
 def str2lst(string_val):
     result = [int(x) for x in string_val.split(' ')]
     return result
 
-def get_p1b3_parser():
 
+def get_p1b3_parser():
     parser = argparse.ArgumentParser(prog='p1b3_baseline',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description='Train Drug Response Regressor - Pilot 1 Benchmark 3')
@@ -181,6 +182,7 @@ def initialize_parameters():
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
     return gParameters
 
+
 def run(gParameters):
     """
     Runs the model using the specified set of parameters
@@ -192,21 +194,29 @@ def run(gParameters):
     #
     if 'dense' in gParameters:
         dval = gParameters['dense']
-        if isinstance(dval, basestring):
+        try:
+            is_str = isinstance(dval, basestring)
+        except NameError:
+            is_str = isinstance(dval, str)
+        if is_str:
             res = str2lst(dval)
             gParameters['dense'] = res
         print(gParameters['dense'])
 
     if 'conv' in gParameters:
         cval = gParameters['conv']
-        if isinstance(dval, basestring):
+        try:
+            is_str = isinstance(cval, basestring)
+        except NameError:
+            is_str = isinstance(cval, str)
+        if is_str:
             res = str2lst(cval)
             gParameters['conv'] = res
         print(gParameters['conv'])
-    print ('Params:', gParameters)
+    # print('Params:', gParameters)
     # Construct extension to save model
     ext = p1b3.extension_from_parameters(gParameters, '.keras')
-    logfile =  gParameters['logfile'] if gParameters['logfile'] else gParameters['save']+ext+'.log'
+    logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['save']+ext+'.log'
 
     fh = logging.FileHandler(logfile)
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
@@ -221,12 +231,9 @@ def run(gParameters):
     p1b3.logger.addHandler(sh)
     p1b3.logger.info('Params: {}'.format(gParameters))
 
-
     # Get default parameters for initialization and optimizer functions
     kerasDefaults = p1_common.keras_default_config()
     seed = gParameters['rng_seed']
-
-
 
     # Build dataset loader object
     loader = p1b3.DataLoader(seed=seed, dtype=gParameters['datatype'],
@@ -241,7 +248,6 @@ def run(gParameters):
                              max_logconc=gParameters['max_logconc'],
                              subsample=gParameters['subsample'],
                              category_cutoffs=gParameters['category_cutoffs'])
-
 
     # Initialize weights and learning rule
     initializer_weights = p1_common_keras.build_initializer(gParameters['initialization'], kerasDefaults, seed)
@@ -297,8 +303,7 @@ def run(gParameters):
     model.summary()
     p1b3.logger.debug('Model: {}'.format(model.to_json()))
 
-
-    train_gen = p1b3.DataGenerator(loader, batch_size=gParameters['batch_size'], shape=gen_shape, name='train_gen').flow()
+    train_gen = p1b3.DataGenerator(loader, batch_size=gParameters['batch_size'], shape=gen_shape, name='train_gen', cell_noise_sigma=gParameters['cell_noise_sigma']).flow()
     val_gen = p1b3.DataGenerator(loader, partition='val', batch_size=gParameters['batch_size'], shape=gen_shape, name='val_gen').flow()
     val_gen2 = p1b3.DataGenerator(loader, partition='val', batch_size=gParameters['batch_size'], shape=gen_shape, name='val_gen2').flow()
     test_gen = p1b3.DataGenerator(loader, partition='test', batch_size=gParameters['batch_size'], shape=gen_shape, name='test_gen').flow()
@@ -329,7 +334,7 @@ def run(gParameters):
                         validation_data=val_gen,
                         validation_steps=val_steps,
                         verbose=0,
-                        # callbacks=[checkpointer, loss_history, progbar],
+                        callbacks=[checkpointer, loss_history, progbar],
                         pickle_safe=True,
                         workers=gParameters['workers'])
 
