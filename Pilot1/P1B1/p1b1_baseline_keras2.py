@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import p1b1
 import p1_common
 import p1_common_keras
+from solr_keras import CandleRemoteMonitor
 
 
 def get_p1b1_parser():
@@ -44,6 +45,7 @@ def initialize_parameters():
     #print ('Params:', fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
+    print(gParameters)
     return gParameters
 
 def run(gParameters):
@@ -123,6 +125,8 @@ def run(gParameters):
     ae.compile(loss=gParameters['loss'], optimizer=optimizer)
     ae.summary()
 
+    candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
+
     # Seed random generator for training
     np.random.seed(seed)
 
@@ -130,6 +134,7 @@ def run(gParameters):
     history = ae.fit(X_train, X_train,
        batch_size=gParameters['batch_size'],
        epochs=gParameters['epochs'],
+       callbacks=[candleRemoteMonitor],
        validation_data=(X_val, X_val))
 
     # model save
