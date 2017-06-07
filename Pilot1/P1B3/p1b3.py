@@ -163,11 +163,11 @@ def extension_from_parameters(params, framework):
         ext += '.N={}'.format(params['cell_noise_sigma'])
     if 'conv' in params:
         name = 'LC' if 'locally_connected' in params else 'C'
-        layer_list = list(range(0, len(params['conv']), 3))
+        layer_list = list(range(0, len(params['conv'])))
         for l, i in enumerate(layer_list):
-            filters = params['conv'][i]
-            filter_len = params['conv'][i+1]
-            stride = params['conv'][i+2]
+            filters = params['conv'][i][0]
+            filter_len = params['conv'][i][1]
+            stride = params['conv'][i][2]
             if filters <= 0 or filter_len <= 0 or stride <= 0:
                 break
             ext += '.{}{}={},{},{}'.format(name, l+1, filters, filter_len, stride)
