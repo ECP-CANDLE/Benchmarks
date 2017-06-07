@@ -6,11 +6,17 @@
 	binary file format, to be used as the ECP CANDLE
 	project benchmarks.
 
-	Author: Alfredo Metere (metere1@llnl.gov)
-	Date: 05/30/2017 (MM/DD/YYYY)
+	Authors: Alfredo Metere (metere1@llnl.gov),
+             Piyush Karande (karande1@llnl.gov),
+             Brian Van Essen (vanessen1@llnl.gov)
+	Date: 06/06/2017 (MM/DD/YYYY)
 
 	Copyright 2017 Lawrence Livermore National Laboratory.
 """
+import warnings
+
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore",category=DeprecationWarning)
 
 import numpy as np
 from scipy.spatial import SphericalVoronoi
@@ -130,7 +136,15 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
 
     print "%d: Processing frames: %d - %d" % (processname, first_frame, last_frame)
 
-    outA = np.zeros([fchunksize, len(frags)])
+    # Generating names for the structured data
+    names= ['x', 'y', 'z', 'CHOL', 'DPPC', 'DIPC', 'Head', 'Tail']
+    for i in range(12):
+        temp = 'BL'+str(i+1)
+        names.append(temp)
+
+    #print "Feature names:\n", names
+
+    outA = np.zeros([fchunksize, len(frags), 12], dtype={'names':names, 'formats':['float']*len(names)})
     outA.shape
 
     i = 0
@@ -139,6 +153,8 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
     outAL = []
     for curframe in range(first_frame, last_frame):
         j = last_frame - curframe
+        frame_ind = curframe - first_frame
+
         mdt[curframe]
         print "[%d] Processing frame %d, %d remaining.\r" % (processname, mdt[curframe].frame, j)
         outL = []
@@ -147,10 +163,10 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
             ffr = np.zeros([12, 20])
             if (len(fr) < 12):
                 ffr[:fr.positions.shape[0], :fr.positions.shape[1]] = fr.positions
-                voro = voro3D(ffr[0:8, 0:3], fr.center_of_mass())
+                #voro = voro3D(ffr[0:8, 0:3], fr.center_of_mass())
             else:
                 ffr[:, 0:3] = np.array([fr.positions])
-                voro = voro3D(ffr[:, 0:3], fr.center_of_mass())
+                #voro = voro3D(ffr[:, 0:3], fr.center_of_mass())
 
             ohenc = np.zeros([3])
             ohenc = map(lambda x: x, onehot(typeDict[fr.residues.resnames[0]]))
@@ -159,7 +175,7 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
             lipid_beads = fr.names
 
             for curatom in range(len(fr)):
-                bmatrix = np.zeros([12])
+                bmatrix = np.zeros([len(fr)])
                 bead = fr.atoms[curatom]
                 ohenc2 = np.zeros([2])
                 ohenc2 = map(lambda x: x, onehot(locDict[bead.name], 2))
@@ -176,15 +192,23 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
                         bmatrix[lipid_beads == curblist.atoms[1].name] = curblist.length()
 
                 #~ ffr[curatom, 8:] = bmatrix
-                ffr[curatom, 8:] = bmatrix
+                ffr[curatom, 8:8+len(fr)] = bmatrix
                 #~ print lipid_beads
                 #~ print "Curr bead: ", bmatrix
+                outA[frame_ind, curfrag, curatom] = ffr[curatom, :]
+                '''
+                print "frame_ind: ", frame_ind
+                print "curfrag: ", curfrag
+                print "curatom: ", curatom
+                print "feature vector: ", ffr[curatom, :]
+                print "feature vector added: ", outA[frame_ind, curfrag, curatom]
+                '''
 
-            outL.append([ffr,voro.vertices])
+            #outL.append([ffr,voro.vertices])
 
-        outLn = np.array(outL)
-        outAL.append([outLn])
-        outA = np.array(outAL)
+        #outLn = np.array(outL)
+        #outAL.append([outLn])
+        #outA = np.array(outAL)
         # In case of debug, uncomment the line below
         #~ print "outA.shape = %s" % str(outA.shape)
 
