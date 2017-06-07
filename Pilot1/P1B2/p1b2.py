@@ -9,7 +9,11 @@ import os
 import sys
 import logging
 import argparse
-import ConfigParser
+try:
+    import configparser
+except ImportError:
+    import ConfigParser as configparser
+
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -41,11 +45,11 @@ def common_parser(parser):
 
 
 def read_config_file(file):
-    config=ConfigParser.ConfigParser()
+    config=configparser.ConfigParser()
     config.read(file)
     section=config.sections()
     fileParams={}
-    
+
     fileParams['activation']=eval(config.get(section[0],'activation'))
     fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
     fileParams['dense']=eval(config.get(section[0],'dense'))
@@ -60,7 +64,7 @@ def read_config_file(file):
     fileParams['rng_seed']=eval(config.get(section[0],'rng_seed'))
     fileParams['scaling']=eval(config.get(section[0],'scaling'))
     fileParams['validation_split']=eval(config.get(section[0],'validation_split'))
-    
+
     return fileParams
 
 
@@ -84,7 +88,7 @@ def extension_from_parameters(params, framework):
 def load_data_one_hot(params, seed):
     return p1_common.load_Xy_one_hot_data2(url_p1b2, file_train, file_test, class_col=['cancer_type'],
                                            drop_cols=['case_id', 'cancer_type'],
-                                           n_cols=params['feature_subsample']+2, # Compensate for the cols to drop
+                                           n_cols=params['feature_subsample'],
                                            shuffle=params['shuffle'],
                                            scaling=params['scaling'],
                                            validation_split=params['validation_split'],
@@ -95,7 +99,7 @@ def load_data_one_hot(params, seed):
 def load_data(params, seed):
     return p1_common.load_Xy_data2(url_p1b2, file_train, file_test, class_col=['cancer_type'],
                                   drop_cols=['case_id', 'cancer_type'],
-                                  n_cols=params['feature_subsample']+2, # Compensate for the cols to drop
+                                  n_cols=params['feature_subsample'],
                                   shuffle=params['shuffle'],
                                   scaling=params['scaling'],
                                   validation_split=params['validation_split'],
@@ -118,4 +122,3 @@ def evaluate_accuracy(y_pred, y_test):
     accuracy = accuracy_score(y_test, y_pred)
     # print('Accuracy: {}%'.format(100 * accuracy))
     return {'accuracy': accuracy}
-

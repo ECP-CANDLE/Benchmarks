@@ -7,6 +7,7 @@ import os
 import sys
 import gzip
 import argparse
+import ConfigParser
 
 from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
@@ -21,27 +22,27 @@ from data_utils import get_file
 SEED = 7102
 DEFAULT_DATATYPE = np.float32
 
-def get_p3_file(link):
+def get_p1_file(link):
     fname = os.path.basename(link)
-    return get_file(fname, origin=link, cache_subdir='Pilot3')
+    return get_file(fname, origin=link, cache_subdir='Pilot1')
 
 
 def get_default_neon_parse(parser):
-    """Parse command-line arguments that are default in neon parser (and are common to all frameworks).
+    """Parse command-line arguments that are default in neon parser (and are common to all frameworks). 
         Ignore if not present.
-
+        
         Parameters
         ----------
         parser : python argparse
             parser for neon default command-line options
     """
     # Logging Level
-    #parser.add_argument("-v", "--verbose", action="store_true",
-                        #help="increase output verbosity")
+    parser.add_argument("-v", "--verbose", action="store_true",
+                        help="increase output verbosity")
     parser.add_argument("-l", "--log", dest='logfile',
                         default=None,
                         help="log file")
-
+                        
     # Logging utilities
     parser.add_argument("-s", "--save_path", dest='save_path',
                         default=argparse.SUPPRESS, type=str,
@@ -81,28 +82,27 @@ def get_default_neon_parse(parser):
     return parser
 
 
-def get_p3_common_parser(parser):
+def get_p1_common_parser(parser):
     """Parse command-line arguments. Ignore if not present.
-
+        
         Parameters
         ----------
         parser : python argparse
             parser for command-line options
     """
-
+    
     # General behavior
-    # some of these conflict with P2B2 version, comment out for now
-    #parser.add_argument("--train", dest='train_bool', action="store_true",
-                        #default=True, #type=bool,
-                        #help="train model")
-    #parser.add_argument("--evaluate", dest='eval_bool', action="store_true",
-                        #default=argparse.SUPPRESS, #type=bool,
-                        #help="evaluate model (use it for inference)")
-
+    parser.add_argument("--train", dest='train_bool', action="store_true",
+                        default=True, #type=bool,
+                        help="train model")
+    parser.add_argument("--evaluate", dest='eval_bool', action="store_true",
+                        default=argparse.SUPPRESS, #type=bool,
+                        help="evaluate model (use it for inference)")
+        
     # Logging utilities
-    #parser.add_argument("--home_dir", dest='home_dir',
-                        #default=argparse.SUPPRESS, type=str,
-                        #help="set home directory")
+    parser.add_argument("--home_dir", dest='home_dir',
+                        default=argparse.SUPPRESS, type=str,
+                        help="set home directory")
     parser.add_argument("--save",
                         default='save',
                         help="prefix of output files")
@@ -119,7 +119,7 @@ def get_p3_common_parser(parser):
     parser.add_argument("-a", "--activation",
                         default=argparse.SUPPRESS,
                         help="keras activation function to use in inner layers: relu, tanh, sigmoid...")
-
+                        
     # Processing between layers
     parser.add_argument("--drop", type=float,
                         default=argparse.SUPPRESS,
@@ -130,7 +130,7 @@ def get_p3_common_parser(parser):
     parser.add_argument("--batch_normalization", action="store_true",
                         default=argparse.SUPPRESS,
                         help="use batch normalization")
-
+                        
     # Model Evaluation
     parser.add_argument("--loss",
                         default=argparse.SUPPRESS,
@@ -138,7 +138,7 @@ def get_p3_common_parser(parser):
     parser.add_argument("--optimizer",
                         default=argparse.SUPPRESS,
                         help="keras optimizer to use: sgd, rmsprop, ...")
-
+    
     # Data preprocessing
     parser.add_argument("--scaling",
                         default=argparse.SUPPRESS,
@@ -176,8 +176,8 @@ def get_p3_common_parser(parser):
     parser.add_argument("--val_samples", action="store",
                         default=argparse.SUPPRESS, type=int,
                         help="overrides the number of validation samples if set to nonzero")
-
-
+    
+    
     # Backend configuration
     parser.add_argument("--gpus", action="store", nargs='*',
                         default=[], type=int,
@@ -189,9 +189,9 @@ def get_p3_common_parser(parser):
 
 
 def args_overwrite_config(args, config):
-    """Overwrite configuration parameters with
+    """Overwrite configuration parameters with 
         parameters specified via command-line.
-
+        
         Parameters
         ----------
         args : python argparse
@@ -199,21 +199,21 @@ def args_overwrite_config(args, config):
         config : python dictionary
             parameters read from configuration file
     """
-
+    
     params = config
-
+    
     args_dict = vars(args)
-
+    
     for key in args_dict.keys():
         params[key] = args_dict[key]
-
-
+    
+    
     if 'datatype' not in params:
         params['datatype'] = DEFAULT_DATATYPE
     else:
         if params['datatype'] in set(['f16', 'f32', 'f64']):
             params['datatype'] = get_choice(params['datatype'])
-
+    
     return params
 
 
@@ -222,9 +222,9 @@ def keras_default_config():
     """Defines parameters that intervine in different functions using the keras defaults.
         This helps to keep consistency in parameters between frameworks.
     """
-
+    
     kerasDefaults = {}
-
+    
     # Optimizers
     #kerasDefaults['clipnorm']=?            # Maximum norm to clip all parameter gradients
     #kerasDefaults['clipvalue']=?          # Maximum (minimum=-max) value to clip all parameter gradients
@@ -251,22 +251,22 @@ def get_choice(name):
     """ Maps name string to the right type of argument
     """
     mapping = {}
-
+    
     # dtype
     mapping['f16'] = np.float16
     mapping['f32'] = np.float32
     mapping['f64'] = np.float64
-
+    
     mapped = mapping.get(name)
     if not mapped:
         raise Exception('No mapping found for "{}"'.format(name))
-
+    
     return mapped
 
 
 def scale_array(mat, scaling=None):
     """Scale data included in numpy array.
-
+        
         Parameters
         ----------
         mat : numpy array
@@ -274,7 +274,7 @@ def scale_array(mat, scaling=None):
         scaling : 'maxabs', 'minmax', 'std', or None, optional (default 'None')
             type of scaling to apply
     """
-
+    
     if scaling is None or scaling.lower() == 'none':
         return mat
 
@@ -288,13 +288,13 @@ def scale_array(mat, scaling=None):
     else:
         # Standard normalization
         scaler = StandardScaler(copy=False)
-
+    
     return scaler.fit_transform(mat)
 
 
 def impute_and_scale_array(mat, scaling=None):
     """Impute missing values with mean and scale data included in numpy array.
-
+        
         Parameters
         ----------
         mat : numpy array
@@ -302,11 +302,11 @@ def impute_and_scale_array(mat, scaling=None):
         scaling : 'maxabs', 'minmax', 'std', or None, optional (default 'None')
             type of scaling to apply
     """
-
+    
     imputer = Imputer(strategy='mean', axis=0, copy=False)
     imputer.fit_transform(mat)
     #mat = imputer.fit_transform(mat)
-
+    
     return scale_array(mat, scaling)
 
 
@@ -315,8 +315,8 @@ def load_X_data(path, train_filename, test_filename,
                 drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                 dtype=DEFAULT_DATATYPE, seed=SEED):
 
-    train_path = get_p3_file(path + train_filename)
-    test_path = get_p3_file(path + test_filename)
+    train_path = get_p1_file(path + train_filename)
+    test_path = get_p1_file(path + test_filename)
 
     usecols = list(range(n_cols)) if n_cols else None
 
@@ -350,8 +350,8 @@ def load_X_data2(path, train_filename, test_filename,
                 drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                 validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=SEED):
 
-    train_path = get_p3_file(path + train_filename)
-    test_path = get_p3_file(path + test_filename)
+    train_path = get_p1_file(path + train_filename)
+    test_path = get_p1_file(path + test_filename)
 
     usecols = list(range(n_cols)) if n_cols else None
 
@@ -391,15 +391,15 @@ def load_Xy_one_hot_data(path, train_filename, test_filename,
                         dtype=DEFAULT_DATATYPE, seed=SEED):
 
     assert class_col != None
-
-    train_path = get_p3_file(path + train_filename)
-    test_path = get_p3_file(path + test_filename)
+    
+    train_path = get_p1_file(path + train_filename)
+    test_path = get_p1_file(path + test_filename)
 
     usecols = list(range(n_cols)) if n_cols else None
 
     df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
-
+    
     if shuffle:
         df_train = df_train.sample(frac=1, random_state=seed)
         df_test = df_test.sample(frac=1, random_state=seed)
@@ -436,14 +436,14 @@ def load_Xy_one_hot_data(path, train_filename, test_filename,
 def load_Xy_one_hot_data2(path, train_filename, test_filename,
                     class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                     validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=SEED):
-
+    
     assert class_col != None
-
-    train_path = get_p3_file(path + train_filename)
-    test_path = get_p3_file(path + test_filename)
-
+    
+    train_path = get_p1_file(path + train_filename)
+    test_path = get_p1_file(path + test_filename)
+    
     usecols = list(range(n_cols)) if n_cols else None
-
+    
     df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
 
@@ -454,7 +454,7 @@ def load_Xy_one_hot_data2(path, train_filename, test_filename,
     # Get class
     y_train = pd.get_dummies(df_train[class_col]).values
     y_test = pd.get_dummies(df_test[class_col]).values
-
+    
     # Drop specified columns
     if drop_cols is not None:
         for col in drop_cols:
@@ -485,9 +485,9 @@ def load_Xy_one_hot_data2(path, train_filename, test_filename,
 
 def load_Xy_data2(path, train_filename, test_filename, class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                   validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=SEED):
-
+    
     assert class_col != None
-
+    
     (X_train, y_train_oh), (X_val, y_val_oh), (X_test, y_test_oh) = load_Xy_one_hot_data2(path, train_filename, test_filename,
                                                                                  class_col, drop_cols, n_cols, shuffle, scaling,
                                                                                  validation_split, dtype, seed)
@@ -495,7 +495,7 @@ def load_Xy_data2(path, train_filename, test_filename, class_col=None, drop_cols
     y_train = convert_to_class(y_train_oh)
     y_val = convert_to_class(y_val_oh)
     y_test = convert_to_class(y_test_oh)
-
+    
 
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
@@ -506,3 +506,5 @@ def convert_to_class(y_one_hot, dtype=int):
     maxi = lambda a: a.argmax()
     iter_to_na = lambda i: np.fromiter(i, dtype=dtype)
     return np.array([maxi(a) for a in y_one_hot])
+
+

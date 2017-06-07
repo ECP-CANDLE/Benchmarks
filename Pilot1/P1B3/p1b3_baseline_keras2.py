@@ -316,7 +316,7 @@ def run(gParameters):
 
     checkpointer = ModelCheckpoint(filepath=gParameters['save']+'.model'+ext+'.h5', save_best_only=True)
     progbar = MyProgbarLogger(train_steps * gParameters['batch_size'])
-    history = MyLossHistory(progbar=progbar, val_gen=val_gen2, test_gen=test_gen,
+    loss_history = MyLossHistory(progbar=progbar, val_gen=val_gen2, test_gen=test_gen,
                             val_steps=val_steps, test_steps=test_steps,
                             metric=gParameters['loss'], category_cutoffs=gParameters['category_cutoffs'],
                             ext=ext, pre=gParameters['save'])
@@ -329,7 +329,7 @@ def run(gParameters):
                         validation_data=val_gen,
                         validation_steps=val_steps,
                         verbose=0,
-                        # callbacks=[checkpointer, history, progbar],
+                        # callbacks=[checkpointer, loss_history, progbar],
                         pickle_safe=True,
                         workers=gParameters['workers'])
 
