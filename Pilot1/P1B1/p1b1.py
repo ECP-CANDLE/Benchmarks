@@ -1,19 +1,20 @@
 from __future__ import print_function
 
-import pandas as pd
-import numpy as np
-
-from sklearn.metrics import mean_squared_error
-
 import os
 import sys
 import logging
 import argparse
-
 try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
+
+import pandas as pd
+import numpy as np
+
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import r2_score
+from scipy.stats.stats import pearsonr
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -80,15 +81,17 @@ def extension_from_parameters(params, framework):
 
 def load_data(params, seed):
     return p1_common.load_X_data2(url_p1b1, file_train, file_test,
-                                drop_cols=['case_id'],
-                                shuffle=params['shuffle'],
-                                scaling=params['scaling'],
-                                validation_split=params['validation_split'],
-                                dtype=params['datatype'],
-                                seed=seed)
+                                  drop_cols=['case_id'],
+                                  shuffle=params['shuffle'],
+                                  scaling=params['scaling'],
+                                  validation_split=params['validation_split'],
+                                  dtype=params['datatype'],
+                                  seed=seed)
 
 
 def evaluate_autoencoder(y_pred, y_test):
     mse = mean_squared_error(y_pred, y_test)
+    r2 = r2_score(y_pred, y_test)
+    corr, _ = pearsonr(y_pred.flatten(), y_test.flatten())
     # print('Mean squared error: {}%'.format(mse))
-    return {'mse': mse}
+    return {'mse': mse, 'r2_score': r2, 'correlation': corr}
