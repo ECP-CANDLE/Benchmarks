@@ -47,7 +47,7 @@ class MyHistory(Callback):
         print("\n")
 
 
-def main():
+def initialize_parameters():
     # Get command-line parameters
     parser = get_p1b1_parser()
     args = parser.parse_args()
@@ -57,11 +57,13 @@ def main():
     #print ('Params:', fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
-    print('Params:', gParameters)
+    return gParameters
 
+
+def run(gParameters):
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(gParameters, '.keras')
-    logfile = args.logfile if args.logfile else args.save+ext+'.log'
+    logfile =  gParameters['logfile'] if gParameters['logfile'] else gParameters['save']+ext+'.log'
     p1b1.logger.info('Params: {}'.format(gParameters))
 
     # Get default parameters for initialization and optimizer functions
@@ -149,16 +151,14 @@ def main():
 
     X_val2 = np.copy(X_val)
     np.random.shuffle(X_val2)
-    print(X_val.shape)
-    print(X_val2.shape)
     start_scores = p1b1.evaluate_autoencoder(X_val, X_val2)
     print('\nBetween random permutations of validation data:', start_scores)
 
-    ae.fit(X_train, X_train,
-           batch_size=gParameters['batch_size'],
-           epochs=gParameters['epochs'],
-           callbacks=[MyHistory()],
-           validation_data=(X_val, X_val))
+    history = ae.fit(X_train, X_train,
+                     batch_size=gParameters['batch_size'],
+                     epochs=gParameters['epochs'],
+                     callbacks=[MyHistory()],
+                     validation_data=(X_val, X_val))
 
     # model save
     #save_filepath = "model_ae_W_" + ext
@@ -173,6 +173,13 @@ def main():
     plt.hist(diff.ravel(), bins='auto')
     plt.title("Histogram of Errors with 'auto' bins")
     plt.savefig('histogram_keras.png')
+
+    return history
+
+
+def main():
+    gParameters = initialize_parameters()
+    run(gParameters)
 
 
 if __name__ == '__main__':
