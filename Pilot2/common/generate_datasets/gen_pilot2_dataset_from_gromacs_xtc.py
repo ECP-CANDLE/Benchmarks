@@ -188,12 +188,13 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
         # In case of debug, uncomment the line below
         #~ print "outA.shape = %s" % str(outA.shape)
 
-  	# Flush the frames to disk
-  	if (i == fchunksize - 1):
+        # Flush the frames to disk
+        if (i == fchunksize - 1):
             flush_chunk_to_file(processname, i, outA, mdsys.opts.outfile, chunkcount, totalchunks)
             i = -1
             outAL = []  
             chunkcount = chunkcount + 1
+
         i = i + 1
 
     if (i != 0):
