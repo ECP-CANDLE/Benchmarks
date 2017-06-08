@@ -69,7 +69,7 @@ def p2b1_parser(parser):
     parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
     parser.add_argument("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
 		type=str,default="3k_Disordered")
-    parser.add_argument("--conv-AE", action="store_true",dest="conv_bool",default=False,help="Invoke training using Conv1D NN for inner AE")
+    parser.add_argument("--conv-AE", action="store_true",dest="conv_bool",default=True,help="Invoke training using Conv1D NN for inner AE")
     parser.add_argument("--include-type", action="store_true",dest="type_bool",default=False,help="Include molecule type information in desining AE")
     parser.add_argument("--backend",help="Keras Backend",dest="backend",type=str,default='theano')
     #(opts,args)=parser.parse_args()
@@ -385,14 +385,12 @@ class Candle_Composite_Train():
                     if e==0:
                         print f
                 X=np.load(f)
-                X = X.squeeze()
-                X = X[:,:,0]
-                X =np.array(X.tolist())
 
+                # Bond lengths are in the range of 0 - 10 angstroms -- normalize it to 0 - 1
                 if self.type_feature:
-                    Xnorm=np.concatenate([X[:,:,:,0:3]/255.,self.scale_factor*X[:,:,:,3:8],X[:,:,:,8:]/40.],axis=3)  ## normalizing the location coordinates and bond lengths and scale type encoding
+                    Xnorm=np.concatenate([X[:,:,:,0:3]/255.,X[:,:,:,3:8],X[:,:,:,8:]/10.],axis=3)  ## normalizing the location coordinates and bond lengths and scale type encoding
                 else:
-                    Xnorm=np.concatenate([X[:,:,:,0:3]/255.,X[:,:,:,8:]/40.],axis=3) ## only consider the location coordinates per molecule
+                    Xnorm=np.concatenate([X[:,:,:,0:3]/255.,X[:,:,:,8:]/10.],axis=3) ## only consider the location coordinates and bond lengths per molecule
                 ### Code for sub-autoencoder for molecule feature learing
                 #having some problems
                 num_frames=X.shape[0]
@@ -409,7 +407,7 @@ class Candle_Composite_Train():
                     w=self.molecular_model.get_weights()
                     #print self.molecular_model.evaluate(xt,yt,verbose=0)[0]
                     while self.molecular_model.evaluate(xt,yt,verbose=0)[0]>self.epsilon:
-                        print 'Inner AE loss..',self.molecular_model.evaluate(xt,yt,verbose=0)[0]
+                        print '[Frame %d]' % (i),'Inner AE loss..', self.molecular_model.evaluate(xt,yt,verbose=0)[0]
                         self.molecular_model.set_weights(w)
                         self.molecular_model.fit(xt, yt,epochs=self.mb_epochs,callbacks=self.callbacks,verbose=0)
                         w=self.molecular_model.get_weights()
@@ -419,7 +417,9 @@ class Candle_Composite_Train():
                 fout=f.split('.npy')[0]+'_AE'+'_Include%s'%self.type_feature+'_Conv%s'%self.conv_net+'.npy'
                 if e==0:
                     np.save(fout,XP)
-                X_train=get_data(XP,self.case)
+
+                # Flatten the output of the convolutional layer into a single dimension per frame
+                X_train=XP.copy().reshape(XP.shape[0],np.prod(XP.shape[1:]))
                 y_train=X_train.copy()
                 imggen=self.datagen.flow(X_train, y_train, batch_size=self.batch_size)
                 N_iter=XP.shape[0]//self.batch_size

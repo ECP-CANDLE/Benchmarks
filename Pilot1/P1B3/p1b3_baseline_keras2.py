@@ -14,7 +14,7 @@ import numpy as np
 from keras import backend as K
 from keras import metrics
 from keras.models import Sequential
-from keras.layers import Activation, BatchNormalization, Dense, Dropout, LocallyConnected1D, Conv1D, MaxPooling1D, Flatten
+from keras.layers import Activation, BatchNormalization, Dense, Dropout, LocallyConnected1D, Conv1D, MaxPooling1D, Flatten, Conv2D, LocallyConnected2D
 from keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
 
 # For non-interactive plotting
@@ -182,6 +182,36 @@ def initialize_parameters():
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
     return gParameters
 
+def add_conv_layer(model, layer_params, input_dim=None, locally_connected=False):
+    if len(layer_params) == 3: # 1D convolution
+        filters = layer_params[0]
+        filter_len = layer_params[1]
+        stride = layer_params[2]
+        if locally_connected:
+            if input_dim:
+                model.add(LocallyConnected1D(filters, filter_len, strides=stride, input_shape=(input_dim, 1)))
+            else:
+                model.add(LocallyConnected1D(filters, filter_len, strides=stride))
+        else:
+            if input_dim:
+                model.add(Conv1D(filters, filter_len, strides=stride, input_shape=(input_dim, 1)))
+            else:
+                model.add(Conv1D(filters, filter_len, strides=stride))
+    elif len(layer_params) == 5: # 2D convolution
+        filters = layer_params[0]
+        filter_len = (layer_params[1], layer_params[2])
+        stride = (layer_params[3], layer_params[4])
+        if locally_connected:
+            if input_dim:
+                model.add(LocallyConnected2D(filters, filter_len, strides=stride, input_shape=(input_dim, 1)))
+            else:
+                model.add(LocallyConnected2D(filters, filter_len, strides=stride))
+        else:
+            if input_dim:
+                model.add(Conv2D(filters, filter_len, strides=stride, input_shape=(input_dim, 1)))
+            else:
+                model.add(Conv2D(filters, filter_len, strides=stride))
+    return model
 
 def run(gParameters):
     """
@@ -194,25 +224,28 @@ def run(gParameters):
     #
     if 'dense' in gParameters:
         dval = gParameters['dense']
-        try:
-            is_str = isinstance(dval, basestring)
-        except NameError:
-            is_str = isinstance(dval, str)
-        if is_str:
-            res = str2lst(dval)
+        if type(dval) != list:
+            res = list(dval)
+        #try:
+            #is_str = isinstance(dval, basestring)
+        #except NameError:
+            #is_str = isinstance(dval, str)
+        #if is_str:
+            #res = str2lst(dval)
             gParameters['dense'] = res
         print(gParameters['dense'])
 
     if 'conv' in gParameters:
-        cval = gParameters['conv']
-        try:
-            is_str = isinstance(cval, basestring)
-        except NameError:
-            is_str = isinstance(cval, str)
-        if is_str:
-            res = str2lst(cval)
-            gParameters['conv'] = res
-        print(gParameters['conv'])
+        #conv_list = p1_common.parse_conv_list(gParameters['conv'])
+        #cval = gParameters['conv']
+        #try:
+            #is_str = isinstance(cval, basestring)
+        #except NameError:
+            #is_str = isinstance(cval, str)
+        #if is_str:
+            #res = str2lst(cval)
+            #gParameters['conv'] = res
+        print('Conv input', gParameters['conv'])
     # print('Params:', gParameters)
     # Construct extension to save model
     ext = p1b3.extension_from_parameters(gParameters, '.keras')
@@ -273,19 +306,18 @@ def run(gParameters):
                     model.add(Dropout(gParameters['drop']))
     else: # Build convolutional layers
         gen_shape = 'add_1d'
-        layer_list = list(range(0, len(gParameters['conv']), 3))
+        layer_list = list(range(0, len(gParameters['conv'])))
+        lc_flag=False
+        if 'locally_connected' in gParameters:
+            lc_flag = True
+        
         for l, i in enumerate(layer_list):
-            filters = gParameters['conv'][i]
-            filter_len = gParameters['conv'][i+1]
-            stride = gParameters['conv'][i+2]
-            if filters <= 0 or filter_len <= 0 or stride <= 0:
-                break
-            if 'locally_connected' in gParameters:
-                model.add(LocallyConnected1D(filters, filter_len, strides=stride, input_shape=(loader.input_dim, 1)))
+            if i == 0:
+                add_conv_layer(model, gParameters['conv'][i], input_dim=loader.input_dim,locally_connected=lc_flag)
             else:
-                model.add(Conv1D(filters, filter_len, strides=stride, input_shape=(loader.input_dim, 1)))
+                add_conv_layer(model, gParameters['conv'][i],locally_connected=lc_flag)
             if gParameters['batch_normalization']:
-                model.add(BatchNormalization())
+                    model.add(BatchNormalization())
             model.add(Activation(gParameters['activation']))
             if gParameters['pool']:
                 model.add(MaxPooling1D(pool_size=gParameters['pool']))

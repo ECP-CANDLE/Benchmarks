@@ -3,13 +3,13 @@ num_hidden=[512,256,128,64,32,16]
 batch_size=32
 learning_rate=0.01
 epochs=10
-cool=True
+cool=False
 weight_decay=0.0005
 noise_factor=0.0
 optimizer='adam'
 loss='mse'
 activation='relu'
 molecular_nonlinearity=elu
-molecular_num_hidden=[54,36,27,18,12]
+molecular_num_hidden=[54,12]
 molecular_epochs=1
 

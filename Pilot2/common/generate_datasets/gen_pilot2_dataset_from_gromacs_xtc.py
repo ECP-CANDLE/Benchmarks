@@ -142,9 +142,10 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
         temp = 'BL'+str(i+1)
         names.append(temp)
 
-    #print "Feature names:\n", names
+    print "Feature names:\n", names
 
-    outA = np.zeros([fchunksize, len(frags), 12], dtype={'names':names, 'formats':['float']*len(names)})
+#    outA = np.zeros([fchunksize, len(frags), 12], dtype={'names':names, 'formats':['float']*len(names)})
+    outA = np.zeros([fchunksize, len(frags), 12, 20])
     outA.shape
 
     i = 0
@@ -153,7 +154,7 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
     outAL = []
     for curframe in range(first_frame, last_frame):
         j = last_frame - curframe
-        frame_ind = curframe - first_frame
+        #frame_ind = curframe - first_frame
 
         mdt[curframe]
         print "[%d] Processing frame %d, %d remaining.\r" % (processname, mdt[curframe].frame, j)
@@ -195,7 +196,8 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks, 
                 ffr[curatom, 8:8+len(fr)] = bmatrix
                 #~ print lipid_beads
                 #~ print "Curr bead: ", bmatrix
-                outA[i, curfrag, curatom] = ffr[curatom, :]
+                #outA[i, curfrag, curatom] = ffr[curatom, :]
+                outA[i, curfrag, curatom, :] = ffr[curatom, :]
                 '''
                 print "frame_ind: ", frame_ind
                 print "curfrag: ", curfrag
