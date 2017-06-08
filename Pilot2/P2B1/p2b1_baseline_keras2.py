@@ -89,17 +89,23 @@ def run(GP):
 
     ## get data dimension ##
     num_samples = 0
-    for f in data_files:
-        X=np.load(f)
-        num_samples += X.shape[0]
+#    for f in data_files:
+#        X=np.load(f)
+#        num_samples += X.shape[0]
 
+    X=np.load(data_files[0])
     print X.shape
-    X_train=hf.get_data(X,case=GP['case'])
 
     molecular_hidden_layers=GP['molecular_num_hidden']
 
-    ## computing input dimension for outer AE
-    input_dim=X.shape[1]*molecular_hidden_layers[-1]
+    if not molecular_hidden_layers:
+        X_train=hf.get_data(X,case=GP['case'])
+        input_dim=X_train.shape[1]
+    else:
+        ## computing input dimension for outer AE
+        input_dim=X.shape[1]*molecular_hidden_layers[-1]
+
+    print "The input dimension is ", input_dim
 
     ## get data dimension for molecular autoencoder
     if not GP['type_bool']:
@@ -157,6 +163,7 @@ def run(GP):
     history = callbacks.History()
     #callbacks=[history,lr_scheduler]
     callbacks=[history]
+    loss = 0.
 
 #### Train the Model
     if GP['train_bool']:
@@ -184,7 +191,8 @@ def run(GP):
             pickle.dump(loss,o)
             o.close()
             model.save_weights(model_file)
-			
+
+    return loss
 	
 def main():
 
