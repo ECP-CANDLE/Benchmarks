@@ -89,11 +89,10 @@ def run(GP):
 
     ## get data dimension ##
     num_samples = 0
-#    for f in data_files:
-#        X=np.load(f)
-#        num_samples += X.shape[0]
+    for f in data_files[0:1]:
+        X=np.load(f)
+        num_samples += X.shape[0]
 
-    X=np.load(data_files[0])
     print X.shape
 
     molecular_hidden_layers=GP['molecular_num_hidden']

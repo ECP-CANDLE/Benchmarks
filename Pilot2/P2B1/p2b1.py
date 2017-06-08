@@ -380,7 +380,7 @@ class Candle_Composite_Train():
         for e in tqdm(range(self.epochs)):
             file_loss=[]
             filelist=[d for d in self.numpylist if 'AE' not in d]
-            for f in filelist:
+            for f in filelist[0:1]:
                 if self.print_data:
                     if e==0:
                         print f
@@ -415,8 +415,8 @@ class Candle_Composite_Train():
                     XP.append(yp)
                 XP=np.array(XP)
                 fout=f.split('.npy')[0]+'_AE'+'_Include%s'%self.type_feature+'_Conv%s'%self.conv_net+'.npy'
-                if e==0:
-                    np.save(fout,XP)
+                #if e==0:
+                #    np.save(fout,XP)
 
                 # Flatten the output of the convolutional layer into a single dimension per frame
                 X_train=XP.copy().reshape(XP.shape[0],np.prod(XP.shape[1:]))
