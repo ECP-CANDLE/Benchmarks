@@ -41,6 +41,16 @@ def common_parser(parser):
     parser = p1_common.get_default_neon_parse(parser)
     parser = p1_common.get_p1_common_parser(parser)
 
+    # Arguments that are applicable just to p1b1
+    parser = p1b1_parser(parser)
+
+    return parser
+
+
+def p1b1_parser(parser):
+    parser.add_argument("--latent_dim", type=int,
+                        default=argparse.SUPPRESS,
+                        help="latent dimensions")
     return parser
 
 
@@ -52,6 +62,7 @@ def read_config_file(file):
     fileParams['activation'] = eval(config.get(section[0],'activation'))
     fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
     fileParams['dense'] = eval(config.get(section[0],'dense'))
+    fileParams['drop']=eval(config.get(section[0],'drop'))
     fileParams['epochs'] = eval(config.get(section[0],'epochs'))
     fileParams['initialization'] = eval(config.get(section[0],'initialization'))
     fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
@@ -61,6 +72,7 @@ def read_config_file(file):
     fileParams['rng_seed'] = eval(config.get(section[0],'rng_seed'))
     fileParams['scaling'] = eval(config.get(section[0],'scaling'))
     fileParams['validation_split'] = eval(config.get(section[0],'validation_split'))
+    fileParams['latent_dim'] = eval(config.get(section[0],'latent_dim'))
 
     return fileParams
 
@@ -70,6 +82,7 @@ def extension_from_parameters(params, framework):
     ext = framework
     ext += '.A={}'.format(params['activation'])
     ext += '.B={}'.format(params['batch_size'])
+    ext += '.D={}'.format(params['drop'])
     ext += '.E={}'.format(params['epochs'])
     for i, n in enumerate(params['dense']):
         if n:
@@ -82,6 +95,7 @@ def extension_from_parameters(params, framework):
 def load_data(params, seed):
     return p1_common.load_X_data2(url_p1b1, file_train, file_test,
                                   drop_cols=['case_id'],
+                                  n_cols=params['feature_subsample'],
                                   shuffle=params['shuffle'],
                                   scaling=params['scaling'],
                                   validation_split=params['validation_split'],
@@ -91,7 +105,7 @@ def load_data(params, seed):
 
 def evaluate_autoencoder(y_pred, y_test):
     mse = mean_squared_error(y_pred, y_test)
-    r2 = r2_score(y_pred, y_test)
+    r2 = r2_score(y_test, y_pred)
     corr, _ = pearsonr(y_pred.flatten(), y_test.flatten())
     # print('Mean squared error: {}%'.format(mse))
     return {'mse': mse, 'r2_score': r2, 'correlation': corr}

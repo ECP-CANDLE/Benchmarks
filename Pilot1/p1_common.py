@@ -357,7 +357,6 @@ def load_X_data2(path, train_filename, test_filename,
     # compensates for the columns to drop if there is a feature subselection
     usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
 
-
     df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
 

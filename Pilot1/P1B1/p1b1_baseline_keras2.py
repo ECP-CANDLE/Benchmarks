@@ -71,16 +71,16 @@ def run(gParameters):
     seed = gParameters['rng_seed']
 
     # Load dataset
-    # X_train, X_val, X_test = p1b1.load_data(gParameters, seed)
+    X_train, X_val, X_test = p1b1.load_data(gParameters, seed)
     # with h5py.File('x_cache.h5', 'w') as hf:
         # hf.create_dataset("train",  data=X_train)
         # hf.create_dataset("val",  data=X_val)
         # hf.create_dataset("test",  data=X_test)
 
-    with h5py.File('x_cache.h5', 'r') as hf:
-        X_train = hf['train'][:]
-        X_val = hf['val'][:]
-        X_test = hf['test'][:]
+    # with h5py.File('x_cache.h5', 'r') as hf:
+    #     X_train = hf['train'][:]
+    #     X_val = hf['val'][:]
+    #     X_test = hf['test'][:]
 
     print("Shape X_train: ", X_train.shape)
     print("Shape X_val: ", X_val.shape)
@@ -93,45 +93,49 @@ def run(gParameters):
     input_dim = X_train.shape[1]
     output_dim = input_dim
     input_vector = Input(shape=(input_dim,))
+    latent_dim = gParameters['latent_dim']
 
     # Initialize weights and learning rule
     initializer_weights = p1_common_keras.build_initializer(gParameters['initialization'], kerasDefaults, seed)
     initializer_bias = p1_common_keras.build_initializer('constant', kerasDefaults, 0.)
 
     activation = gParameters['activation']
+    dropout = gParameters['drop']
 
     # Define Autoencoder architecture
     layers = gParameters['dense']
-
     if layers != None:
         if type(layers) != list:
             layers = list(layers)
-        # Encoder Part
-        for i, l in enumerate(layers):
-            if i == 0:
-                encoded = Dense(l, activation=activation,
-                                kernel_initializer=initializer_weights,
-                                bias_initializer=initializer_bias)(input_vector)
-            else:
-                encoded = Dense(l, activation=activation,
-                                kernel_initializer=initializer_weights,
-                                bias_initializer=initializer_bias)(encoded)
-        # Decoder Part
-        for i, l in reversed(list(enumerate(layers))):
-            if i < len(layers) - 1:
-                if i == len(layers) - 2:
-                    decoded = Dense(l, activation=activation,
-                                    kernel_initializer=initializer_weights,
-                                    bias_initializer=initializer_bias)(encoded)
-                else:
-                    decoded = Dense(l, activation=activation,
-                                    kernel_initializer=initializer_weights,
-                                    bias_initializer=initializer_bias)(decoded)
-        decoded = Dense(input_dim, kernel_initializer=initializer_weights,
-                        bias_initializer=initializer_bias)(decoded)
     else:
-        decoded = Dense(input_dim, kernel_initializer=initializer_weights,
-                        bias_initializer=initializer_bias)(input_vector)
+        layers = []
+
+    x = input_vector
+    # Encoder Part
+    for i, l in enumerate(layers):
+        if l > 0:
+            x = Dense(l, activation=activation,
+                      kernel_initializer=initializer_weights,
+                      bias_initializer=initializer_bias)(x)
+            if dropout > 0:
+                x = Dropout(dropout)(x)
+
+    h = Dense(latent_dim, activation=activation,
+              kernel_initializer=initializer_weights,
+              bias_initializer=initializer_bias)(x)
+    x = h
+
+    # Decoder Part
+    for i, l in reversed(list(enumerate(layers))):
+        if l > 0:
+            if dropout > 0:
+                x = Dropout(dropout)(x)
+            x = Dense(l, activation=activation,
+                      kernel_initializer=initializer_weights,
+                      bias_initializer=initializer_bias)(x)
+
+    decoded = Dense(input_dim, kernel_initializer=initializer_weights,
+                    bias_initializer=initializer_bias)(x)
 
     # Build Autoencoder model
     ae = Model(outputs=decoded, inputs=input_vector)
