@@ -163,11 +163,11 @@ def extension_from_parameters(params, framework):
         ext += '.N={}'.format(params['cell_noise_sigma'])
     if 'conv' in params:
         name = 'LC' if 'locally_connected' in params else 'C'
-        layer_list = list(range(0, len(params['conv']), 3))
+        layer_list = list(range(0, len(params['conv'])))
         for l, i in enumerate(layer_list):
-            filters = params['conv'][i]
-            filter_len = params['conv'][i+1]
-            stride = params['conv'][i+2]
+            filters = params['conv'][i][0]
+            filter_len = params['conv'][i][1]
+            stride = params['conv'][i][2]
             if filters <= 0 or filter_len <= 0 or stride <= 0:
                 break
             ext += '.{}{}={},{},{}'.format(name, l+1, filters, filter_len, stride)
@@ -492,6 +492,22 @@ def load_dose_response(path, seed, dtype, min_logconc=-5., max_logconc=-5., subs
 
     return df
 
+def stage_data():
+    server = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/'
+
+    cell_expr_path = p1_common.get_p1_file(server+'P1B3_cellline_expressions.tsv')
+    cell_mrna_path = p1_common.get_p1_file(server+'P1B3_cellline_mirna.tsv')
+    cell_prot_path = p1_common.get_p1_file(server+'P1B3_cellline_proteome.tsv')
+    cell_kino_path = p1_common.get_p1_file(server+'P1B3_cellline_kinome.tsv')
+    drug_desc_path = p1_common.get_p1_file(server+'P1B3_drug_descriptors.tsv')
+    drug_auen_path = p1_common.get_p1_file(server+'P1B3_drug_latent.csv')
+    dose_resp_path = p1_common.get_p1_file(server+'P1B3_dose_response.csv')
+    test_cell_path = p1_common.get_p1_file(server+'P1B3_test_celllines.txt')
+    test_drug_path = p1_common.get_p1_file(server+'P1B3_test_drugs.txt')
+
+    return(cell_expr_path, cell_mrna_path, cell_prot_path, cell_kino_path,
+           drug_desc_path, drug_auen_path, dose_resp_path, test_cell_path,
+           test_drug_path)
 
 class DataLoader(object):
     """Load merged drug response, drug descriptors and cell line essay data
@@ -537,18 +553,7 @@ class DataLoader(object):
             growth thresholds seperating non-response and response categories
         """
 
-        server = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/'
-
-        cell_expr_path = p1_common.get_p1_file(server+'P1B3_cellline_expressions.tsv')
-        cell_mrna_path = p1_common.get_p1_file(server+'P1B3_cellline_mirna.tsv')
-        cell_prot_path = p1_common.get_p1_file(server+'P1B3_cellline_proteome.tsv')
-        cell_kino_path = p1_common.get_p1_file(server+'P1B3_cellline_kinome.tsv')
-        drug_desc_path = p1_common.get_p1_file(server+'P1B3_drug_descriptors.tsv')
-        drug_auen_path = p1_common.get_p1_file(server+'P1B3_drug_latent.csv')
-        dose_resp_path = p1_common.get_p1_file(server+'P1B3_dose_response.csv')
-        test_cell_path = p1_common.get_p1_file(server+'P1B3_test_celllines.txt')
-        test_drug_path = p1_common.get_p1_file(server+'P1B3_test_drugs.txt')
-
+        cell_expr_path, cell_mrna_path, cell_prot_path, cell_kino_path,drug_desc_path, drug_auen_path, dose_resp_path, test_cell_path, test_drug_path = stage_data()
         # Seed random generator for loading data
         np.random.seed(seed)
 
