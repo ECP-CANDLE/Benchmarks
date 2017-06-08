@@ -254,7 +254,6 @@ def run(gParameters):
 
     # serialize model to JSON
     model_json = model.to_json()
-    model_name = gParameters['model_name']
     with open("{}/{}.model.json".format(output_dir, model_name), "w") as json_file:
         json_file.write(model_json)
 
