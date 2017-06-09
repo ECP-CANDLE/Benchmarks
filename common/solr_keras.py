@@ -111,6 +111,10 @@ class CandleRemoteMonitor(Callback):
     def save(self):
         """Save log_messages to file
         """
-        path = os.getenv('TURBINE_OUTPUT') if 'TURBINE_OUTPUT' in os.environ else '.'
+        # path = os.getenv('TURBINE_OUTPUT') if 'TURBINE_OUTPUT' in os.environ else '.'
+        path = self.global_params['save'] if 'save' in self.global_params else '.'
+        if not os.path.exists(path):
+            os.makedirs(path)
+
         with open(path + "/run.json", "a") as file_run_json:
             file_run_json.write(json.dumps(self.log_messages, indent=4, separators=(',', ': ')))
