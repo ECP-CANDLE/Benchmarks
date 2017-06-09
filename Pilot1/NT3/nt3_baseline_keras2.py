@@ -85,6 +85,11 @@ def read_config_file(file):
     fileParams['pool']=eval(config.get(section[0],'pool'))
     fileParams['save']=eval(config.get(section[0], 'save'))
 
+    # parse the remaining values
+    for k,v in config.items(section[0]):
+        if not k in fileParams:
+            fileParams[k] = eval(v)
+
     return fileParams
 
 def initialize_parameters():
