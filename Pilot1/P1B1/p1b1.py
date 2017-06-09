@@ -61,6 +61,7 @@ def read_config_file(file):
     fileParams['scaling'] = eval(config.get(section[0],'scaling'))
     fileParams['validation_split'] = eval(config.get(section[0],'validation_split'))
 
+    fileParams['solr_root'] = eval(config.get(section[1],'solr_root'))
     return fileParams
 
 
