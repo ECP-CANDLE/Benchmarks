@@ -43,7 +43,7 @@ class CandleRemoteMonitor(Callback):
         send = {'experiment_id': self.experiment_id,
                 'run_id': self.run_id,
                 'parameters': run_params,
-                'start_time': 'NOW',
+                'start_time': str(self.run_timestamp),
                 'status': 'Started'
                }
         # print("on_train_begin", send)
@@ -77,12 +77,13 @@ class CandleRemoteMonitor(Callback):
 
     def on_train_end(self, logs=None):
         logs = logs or {}
-        run_duration = datetime.now() - self.run_timestamp
+        run_end = datetime.now()
+        run_duration = run_end - self.run_timestamp
         run_in_hour = run_duration.total_seconds() / (60 * 60)
 
         send = {'run_id': self.run_id,
                 'runtime_hours': {'set': run_in_hour},
-                'end_time': {'set': 'NOW'},
+                'end_time': {'set': str(run_end)},
                 'status': {'set': 'Finished'},
                 'date_modified': {'set': 'NOW'}
                }
