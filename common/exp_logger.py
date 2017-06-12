@@ -3,7 +3,7 @@ import os
 from datetime import datetime
 
 
-def start(params):
+def start(params, sys_desc):
     """Capture exp start """
     exp_start = datetime.now()
     experiment_id = params['experiment_id']
@@ -15,6 +15,7 @@ def start(params):
     msg = [{
         'experiment_id': experiment_id,
         'start_time': str(exp_start),
+        'system_description': sys_desc,
         'search_space': search_space
     }]
     save("experiment_start.json", msg)
