@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import p1b3
 import p1_common
 import p1_common_keras
+from solr_keras import CandleRemoteMonitor
 
 np.set_printoptions(threshold=np.nan)
 
@@ -361,12 +362,14 @@ def run(gParameters):
     # Seed random generator for training
     np.random.seed(seed)
 
+    candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
+
     history = model.fit_generator(train_gen, train_steps,
                         epochs=gParameters['epochs'],
                         validation_data=val_gen,
                         validation_steps=val_steps,
                         verbose=0,
-                        callbacks=[checkpointer, loss_history, progbar],
+                        callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
                         pickle_safe=True,
                         workers=gParameters['workers'])
 
