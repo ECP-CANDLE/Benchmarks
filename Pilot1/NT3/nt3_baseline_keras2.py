@@ -250,7 +250,7 @@ def run(gParameters):
                     epochs=gParameters['epochs'],
                     verbose=1,
                     validation_data=(X_test, Y_test),
-                    callbacks = [checkpointer, csv_logger, reduce_lr])
+                    callbacks = [csv_logger, reduce_lr])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
