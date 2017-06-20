@@ -146,6 +146,7 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
 
     # retrieve truth-pred pair
+    avg_loss = 0.0
     ret = []
 
     for k in range( len( models ) ):
@@ -153,7 +154,11 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
         feature_test = features_test[ k ]
         truth_test = truths_test[ k ]
+        label_test = labels_test[ k ]
         model = models[ k ]
+
+        loss = model.evaluate( feature_test, label_test )
+        avg_loss = avg_loss + loss[ 0 ]
 
         pred = model.predict( feature_test )
 
@@ -162,6 +167,8 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
         ret.append( ret_k )
 
+    avg_loss = avg_loss / float( len( models ) )
+    ret.append( avg_loss )
 
     return ret
 
@@ -218,6 +225,7 @@ def do_n_fold(GP):
     # initialize arrays for all the features
     truth_array = [[] for _ in range(n_feat)]
     pred_array = [[] for _ in range(n_feat)]
+    avg_loss = 0.0
 
     for fold in range( n_fold ):
 
@@ -261,11 +269,18 @@ def do_n_fold(GP):
             truth_array[i].extend(ret[i][0])
             pred_array[i].extend(ret[i][1])
 
+        avg_loss += ret[ -1 ]
+
+    avg_loss /= float( n_fold )
+
     for task in range(n_feat):
         print 'Task',task+1,':',features[task],'- Macro F1 score', f1_score(truth_array[task], pred_array[task], average='macro')
         print 'Task',task+1,':',features[task],'- Micro F1 score', f1_score(truth_array[task], pred_array[task], average='micro')
 
+    return avg_loss
+
 
 if __name__  == "__main__":
     gParameters=initialize_parameters()
-    do_n_fold(gParameters)
+    avg_loss = do_n_fold(gParameters)
+    print( avg_loss )
