@@ -15,6 +15,7 @@ import argparse
 import p3b1
 import p3_common as p3c
 import p3_common_keras as p3ck
+from solr_keras import CandleRemoteMonitor
 
 def get_p3b1_parser():
         parser = argparse.ArgumentParser(prog='p3b1_baseline',
@@ -45,7 +46,10 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
              activation= 'relu',
              out_act = 'softmax',
              loss='categorical_crossentropy',
-             optimizer='sgd'
+             optimizer='sgd',
+             run_id= None,
+             fold= None,
+             gParameters= None
              ):
 
     labels_train = []
@@ -141,7 +145,11 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
             label_test = labels_test[ k ]
             model = models[ k ]
 
+            gParameters['run_id'] = run_id + ".{}.{}.{}".format(fold, epoch, k)
+            candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
+
             model.fit( { 'input': feature_train }, { 'out_' + str( k ) : label_train }, epochs= 1, verbose= verbose,
+                callbacks= [ candleRemoteMonitor ],
                 batch_size= batch_size, validation_data= ( feature_test, label_test ) )
 
 
@@ -262,7 +270,10 @@ def do_n_fold(GP):
             activation = activation,
             out_act = out_act,
             loss = loss,
-            optimizer = optimizer
+            optimizer = optimizer,
+            run_id = GP['run_id'] if 'run_id' in GP else "RUN_default",
+            fold = fold,
+            gParameters = GP
         )
 
         for i in range(n_feat):
