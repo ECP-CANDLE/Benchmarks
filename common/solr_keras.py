@@ -33,8 +33,8 @@ class CandleRemoteMonitor(Callback):
     def on_train_begin(self, logs=None):
         logs = logs or {}
         self.run_timestamp = datetime.now()
-        self.experiment_id = self.global_params['experiment_id']
-        self.run_id = self.global_params['run_id']
+        self.experiment_id = self.global_params['experiment_id'] if 'experiment_id' in self.global_params else "EXP_default"
+        self.run_id = self.global_params['run_id'] if 'run_id' in self.global_params else "RUN_default"
 
         run_params = []
         for key, val in self.global_params.items():
@@ -117,5 +117,6 @@ class CandleRemoteMonitor(Callback):
         if not os.path.exists(path):
             os.makedirs(path)
 
-        with open(path + "/run.json", "a") as file_run_json:
+        filename = "/run.{}.json".format(self.run_id)
+        with open(path + filename, "a") as file_run_json:
             file_run_json.write(json.dumps(self.log_messages, indent=4, separators=(',', ': ')))
