@@ -17,7 +17,7 @@ class CandleRemoteMonitor(Callback):
 
         self.global_params = params
         self.has_solr_config = False
-        if 'solr_root' in params:
+        if 'solr_root' in params and params['solr_root'] != '':
             self.has_solr_config = True
             self.root = params['solr_root']
             self.path = '/run/update?commit=true'
