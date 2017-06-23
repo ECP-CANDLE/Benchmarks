@@ -125,6 +125,15 @@ def run(gParameters):
     ae.compile(loss=gParameters['loss'], optimizer=optimizer)
     ae.summary()
 
+    # calculate trainable and non-trainable params
+    trainable_count = int(
+        np.sum([K.count_params(p) for p in set(ae.trainable_weights)]))
+    non_trainable_count = int(
+        np.sum([K.count_params(p) for p in set(ae.non_trainable_weights)]))
+    gParameters['trainable_params'] = trainable_count
+    gParameters['non_trainable_params'] = non_trainable_count
+    gParameters['total_params'] = trainable_count + non_trainable_count
+
     candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
 
     # Seed random generator for training

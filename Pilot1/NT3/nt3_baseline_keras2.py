@@ -238,6 +238,16 @@ def run(gParameters):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    # calculate trainable and non-trainable params
+    trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
+    non_trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+    gParameters['trainable_params'] = trainable_count
+    gParameters['non_trainable_params'] = non_trainable_count
+    gParameters['total_params'] = trainable_count + non_trainable_count
+
+
 # set up a bunch of callbacks to do work during model training..
 
     model_name = gParameters['model_name']
