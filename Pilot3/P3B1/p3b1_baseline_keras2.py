@@ -2,6 +2,7 @@ import numpy as np
 import os, sys, gzip
 import urllib, zipfile
 
+from keras import backend as K
 from keras.layers.core import Dense, Dropout
 from keras.optimizers import SGD
 
@@ -100,6 +101,9 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
     indiv_layers_arr= []
     models = []
 
+    trainable_count = 0
+    non_trainable_count = 0
+
     for l in range( len( individual_nnet_spec ) ):
         indiv_layers = [ shared_layers[ -1 ] ]
         for k in range( len( individual_nnet_spec[ l ] ) + 1 ):
@@ -119,7 +123,18 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
         model = Model( input= [ shared_layers[ 0 ] ], output= [ indiv_layers[ -1 ] ] )
 
+        # calculate trainable/non-trainable param count for each model
+        trainable_count += int(
+            np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
+        non_trainable_count += int(
+            np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+
         models.append( model )
+
+    # capture total param counts
+    gParameters['trainable_params'] = trainable_count
+    gParameters['non_trainable_params'] = non_trainable_count
+    gParameters['total_params'] = trainable_count + non_trainable_count
 
     kerasDefaults = p3c.keras_default_config()
     optimizer = p3ck.build_optimizer(optimizer, learning_rate, kerasDefaults)
