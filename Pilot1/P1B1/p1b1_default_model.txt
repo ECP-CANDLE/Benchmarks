@@ -13,4 +13,4 @@ rng_seed=2017
 initialization='glorot_uniform'
 
 [Monitor_Params]
-solr_root='http://chestnut.mcs.anl.gov:9090/solr'
+solr_root=''
