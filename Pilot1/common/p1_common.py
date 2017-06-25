@@ -318,11 +318,10 @@ def impute_and_scale_array(mat, scaling=None):
     return scale_array(mat, scaling)
 
 
-
 def load_X_data(path, train_filename, test_filename,
                 shuffle=False, scaling=None,
                 drop_cols=None, n_cols=None, onehot_cols=None,
-                validation_split=0., dtype=DEFAULT_DATATYPE, seed=SEED):
+                validation_split=None, dtype=DEFAULT_DATATYPE, seed=SEED):
 
     train_path = get_p1_file(path + train_filename)
     test_path = get_p1_file(path + test_filename)
@@ -338,6 +337,13 @@ def load_X_data(path, train_filename, test_filename,
         for col in drop_cols:
             df_train.drop(col, axis=1, inplace=True)
             df_test.drop(col, axis=1, inplace=True)
+
+    if onehot_cols is not None:
+        for col in onehot_cols:
+            df_cat = pd.concat([df_train[col], df_test[col]])
+            df_dummy = pd.get_dummies(df_cat, prefix=col, prefix_sep=': ')
+            df_train = pd.concat([df_dummy[:df_train.shape[0]], df_train.drop(col, axis=1)], axis=1)
+            df_test = pd.concat([df_dummy[df_train.shape[0]:], df_test.drop(col, axis=1)], axis=1)
 
     if shuffle:
         df_train = df_train.sample(frac=1, random_state=seed)

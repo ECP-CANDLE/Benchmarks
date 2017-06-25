@@ -99,8 +99,16 @@ def extension_from_parameters(params, framework):
 
 
 def load_data(params, seed):
+    if params['with_type']:
+        drop_cols = ['case_id']
+        onehot_cols = ['cancer_type']
+    else:
+        drop_cols = ['case_id', 'cancer_type']
+        onehot_cols = None
+
     return p1_common.load_X_data(url_p1b1, file_train, file_test,
-                                 drop_cols=['case_id', 'cancer_type'],
+                                 drop_cols=drop_cols,
+                                 onehot_cols=onehot_cols,
                                  n_cols=params['feature_subsample'],
                                  shuffle=params['shuffle'],
                                  scaling=params['scaling'],
