@@ -25,8 +25,8 @@ sys.path.append(lib_path2)
 import p1_common
 
 url_p1b1 = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/'
-file_train = 'P1B1.train.csv'
-file_test = 'P1B1.test.csv'
+file_train = 'P1B1.dev.train.csv'
+file_test = 'P1B1.dev.test.csv'
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +51,10 @@ def p1b1_parser(parser):
     parser.add_argument("--latent_dim", type=int,
                         default=argparse.SUPPRESS,
                         help="latent dimensions")
+    parser.add_argument("--vae", action='store_true',
+                        help="variational autoencoder")
+    parser.add_argument("--with_type", action='store_true',
+                        help="include one-hot encoded type information")
     return parser
 
 
@@ -73,6 +77,7 @@ def read_config_file(file):
     fileParams['scaling'] = eval(config.get(section[0],'scaling'))
     fileParams['validation_split'] = eval(config.get(section[0],'validation_split'))
     fileParams['latent_dim'] = eval(config.get(section[0],'latent_dim'))
+    fileParams['feature_subsample'] = eval(config.get(section[0],'feature_subsample'))
 
     return fileParams
 
