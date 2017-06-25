@@ -203,6 +203,15 @@ def run(gParameters):
     model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
     model.summary()
 
+    # calculate trainable and non-trainable params
+    trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
+    non_trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+    gParameters['trainable_params'] = trainable_count
+    gParameters['non_trainable_params'] = non_trainable_count
+    gParameters['total_params'] = trainable_count + non_trainable_count
+
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.0001)
     candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
 

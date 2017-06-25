@@ -99,6 +99,11 @@ def read_config_file(File):
     Global_Params['molecular_num_hidden']   =eval(config.get(section[0],'molecular_num_hidden'))
     Global_Params['molecular_nonlinearity'] =config.get(section[0],'molecular_nonlinearity')
 
+    # parse the remaining values
+    for k,v in config.items(section[0]):
+        if not k in Global_Params:
+            Global_Params[k] = eval(v)
+
     return Global_Params
 
 #### Extra Code #####
@@ -195,18 +200,18 @@ class ImageNoiseDataGenerator(object):
 def conv_dense_auto(weights_path=None,input_shape=(1,784),hidden_layers=None,nonlinearity='relu',l2_reg=0.0):
     kernel_size=7
     input_img = Input(shape=input_shape)
-    
+
     if hidden_layers!=None:
         if type(hidden_layers)!=list:
             hidden_layers=list(hidden_layers)
         for i,l in enumerate(hidden_layers):
-            if i==0: 
+            if i==0:
                 encoded=Convolution1D(l,kernel_size,padding='same',input_shape=input_shape,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(input_img)
             else:
                 encoded=Convolution1D(l,kernel_size,padding='same',input_shape=input_shape,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
-        
-        encoded=Flatten()(encoded) ## reshape output of 1d convolution layer 
-        
+
+        encoded=Flatten()(encoded) ## reshape output of 1d convolution layer
+
         for i,l in reversed(list(enumerate(hidden_layers))):
             if i <len(hidden_layers)-1:
                 if i==len(hidden_layers)-2:
@@ -214,12 +219,12 @@ def conv_dense_auto(weights_path=None,input_shape=(1,784),hidden_layers=None,non
                 else:
                     decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(decoded)
         decoded=Dense(input_shape[1],kernel_regularizer=l2(l2_reg))(decoded)
-    
+
     else:
         decoded=Dense(input_shape[1],kernel_regularizer=l2(l2_reg))(input_img)
 
     model=Model(inputs=input_img,outputs=decoded)
-    
+
     if weights_path:
         print('Loading Model')
         model.load_weights(weights_path)
@@ -415,8 +420,8 @@ class Candle_Composite_Train():
                     XP.append(yp)
                 XP=np.array(XP)
                 fout=f.split('.npy')[0]+'_AE'+'_Include%s'%self.type_feature+'_Conv%s'%self.conv_net+'.npy'
-                if e==0:
-                    np.save(fout,XP)
+                #if e==0:
+                #    np.save(fout,XP)
 
                 # Flatten the output of the convolutional layer into a single dimension per frame
                 X_train=XP.copy().reshape(XP.shape[0],np.prod(XP.shape[1:]))
@@ -432,7 +437,7 @@ class Candle_Composite_Train():
                 #print iter_loss
                 file_loss.append(np.array(iter_loss).mean(axis=0))
 
-                
+
             print 'Loss on epoch %d:'%e, file_loss[-1]
             epoch_loss.append(np.array(file_loss).mean(axis=0))
         return epoch_loss

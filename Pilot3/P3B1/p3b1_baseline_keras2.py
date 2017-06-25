@@ -2,6 +2,7 @@ import numpy as np
 import os, sys, gzip
 import urllib, zipfile
 
+from keras import backend as K
 from keras.layers.core import Dense, Dropout
 from keras.optimizers import SGD
 
@@ -15,6 +16,7 @@ import argparse
 import p3b1
 import p3_common as p3c
 import p3_common_keras as p3ck
+from solr_keras import CandleRemoteMonitor
 
 def get_p3b1_parser():
         parser = argparse.ArgumentParser(prog='p3b1_baseline',
@@ -45,7 +47,10 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
              activation= 'relu',
              out_act = 'softmax',
              loss='categorical_crossentropy',
-             optimizer='sgd'
+             optimizer='sgd',
+             run_id= None,
+             fold= None,
+             gParameters= None
              ):
 
     labels_train = []
@@ -96,6 +101,9 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
     indiv_layers_arr= []
     models = []
 
+    trainable_count = 0
+    non_trainable_count = 0
+
     for l in range( len( individual_nnet_spec ) ):
         indiv_layers = [ shared_layers[ -1 ] ]
         for k in range( len( individual_nnet_spec[ l ] ) + 1 ):
@@ -115,7 +123,18 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
         model = Model( input= [ shared_layers[ 0 ] ], output= [ indiv_layers[ -1 ] ] )
 
+        # calculate trainable/non-trainable param count for each model
+        trainable_count += int(
+            np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
+        non_trainable_count += int(
+            np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+
         models.append( model )
+
+    # capture total param counts
+    gParameters['trainable_params'] = trainable_count
+    gParameters['non_trainable_params'] = non_trainable_count
+    gParameters['total_params'] = trainable_count + non_trainable_count
 
     kerasDefaults = p3c.keras_default_config()
     optimizer = p3ck.build_optimizer(optimizer, learning_rate, kerasDefaults)
@@ -141,11 +160,16 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
             label_test = labels_test[ k ]
             model = models[ k ]
 
+            gParameters['run_id'] = run_id + ".{}.{}.{}".format(fold, epoch, k)
+            candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
+
             model.fit( { 'input': feature_train }, { 'out_' + str( k ) : label_train }, epochs= 1, verbose= verbose,
+                callbacks= [ candleRemoteMonitor ],
                 batch_size= batch_size, validation_data= ( feature_test, label_test ) )
 
 
     # retrieve truth-pred pair
+    avg_loss = 0.0
     ret = []
 
     for k in range( len( models ) ):
@@ -153,7 +177,11 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
         feature_test = features_test[ k ]
         truth_test = truths_test[ k ]
+        label_test = labels_test[ k ]
         model = models[ k ]
+
+        loss = model.evaluate( feature_test, label_test )
+        avg_loss = avg_loss + loss[ 0 ]
 
         pred = model.predict( feature_test )
 
@@ -162,6 +190,8 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
         ret.append( ret_k )
 
+    avg_loss = avg_loss / float( len( models ) )
+    ret.append( avg_loss )
 
     return ret
 
@@ -218,6 +248,7 @@ def do_n_fold(GP):
     # initialize arrays for all the features
     truth_array = [[] for _ in range(n_feat)]
     pred_array = [[] for _ in range(n_feat)]
+    avg_loss = 0.0
 
     for fold in range( n_fold ):
 
@@ -254,18 +285,28 @@ def do_n_fold(GP):
             activation = activation,
             out_act = out_act,
             loss = loss,
-            optimizer = optimizer
+            optimizer = optimizer,
+            run_id = GP['run_id'] if 'run_id' in GP else "RUN_default",
+            fold = fold,
+            gParameters = GP
         )
 
         for i in range(n_feat):
             truth_array[i].extend(ret[i][0])
             pred_array[i].extend(ret[i][1])
 
+        avg_loss += ret[ -1 ]
+
+    avg_loss /= float( n_fold )
+
     for task in range(n_feat):
         print 'Task',task+1,':',features[task],'- Macro F1 score', f1_score(truth_array[task], pred_array[task], average='macro')
         print 'Task',task+1,':',features[task],'- Micro F1 score', f1_score(truth_array[task], pred_array[task], average='micro')
 
+    return avg_loss
+
 
 if __name__  == "__main__":
     gParameters=initialize_parameters()
-    do_n_fold(gParameters)
+    avg_loss = do_n_fold(gParameters)
+    print( avg_loss )

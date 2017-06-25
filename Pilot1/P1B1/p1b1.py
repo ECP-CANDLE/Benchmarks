@@ -79,6 +79,7 @@ def read_config_file(file):
     fileParams['latent_dim'] = eval(config.get(section[0],'latent_dim'))
     fileParams['feature_subsample'] = eval(config.get(section[0],'feature_subsample'))
 
+    fileParams['solr_root'] = eval(config.get(section[1],'solr_root'))
     return fileParams
 
 

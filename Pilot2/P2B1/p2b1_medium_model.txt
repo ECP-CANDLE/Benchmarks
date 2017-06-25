@@ -1,8 +1,9 @@
 [Global_Params]
-num_hidden=[5120,2560,1280,640,320,160] 
+num_hidden=[5120,2560,1280,640,320,160]
 batch_size=32
 learning_rate=0.01
 epochs=10
 cool=True
 weight_decay=0.0005
 noise_factor=0
+base_memo='p2b1'

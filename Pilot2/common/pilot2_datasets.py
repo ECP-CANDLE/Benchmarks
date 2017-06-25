@@ -1,7 +1,5 @@
 data_sets = {
-  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20-ernf.dir', '150dedb890751aa14673ff4260fe20e5'),
-#  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20-rnf.dir', '97d6f14f9159993280df4fd94bf10478'),
-#  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20-nf.dir', '16c216a3e65dc2b5fc4b7bd465f509b1'),
+  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20-f20.dir', '36ebb5bbc39e1086176133c92c29b5ce'),
 #  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir', '3a5fc83d3de48de2f389f5f0fa5df6d2'),
   '3k_Ordered' : ('3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir', '6de30893cecbd9c66ea433df0122b328'),
   '3k_Ordered_and_gel' : ('3k_run43_10us.35fs-DPPC.70-DOPC.10-CHOL.20.dir', '45b9a2f7deefb8d5b016b1c42f5fba71'),

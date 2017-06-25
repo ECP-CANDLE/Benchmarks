@@ -28,6 +28,7 @@ sys.path.append(lib_path2)
 
 import data_utils
 import p1_common
+from solr_keras import CandleRemoteMonitor
 
 #url_nt3 = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/'
 #file_train = 'nt_train2.csv'
@@ -84,6 +85,11 @@ def read_config_file(file):
     fileParams['classes']=eval(config.get(section[0],'classes'))
     fileParams['pool']=eval(config.get(section[0],'pool'))
     fileParams['save']=eval(config.get(section[0], 'save'))
+
+    # parse the remaining values
+    for k,v in config.items(section[0]):
+        if not k in fileParams:
+            fileParams[k] = eval(v)
 
     return fileParams
 
@@ -232,6 +238,16 @@ def run(gParameters):
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
+    # calculate trainable and non-trainable params
+    trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
+    non_trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+    gParameters['trainable_params'] = trainable_count
+    gParameters['non_trainable_params'] = non_trainable_count
+    gParameters['total_params'] = trainable_count + non_trainable_count
+
+
 # set up a bunch of callbacks to do work during model training..
 
     model_name = gParameters['model_name']
@@ -239,13 +255,14 @@ def run(gParameters):
     checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
+    candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
 
     history = model.fit(X_train, Y_train,
                     batch_size=gParameters['batch_size'],
                     epochs=gParameters['epochs'],
                     verbose=1,
                     validation_data=(X_test, Y_test),
-                    callbacks = [checkpointer, csv_logger, reduce_lr])
+                    callbacks = [csv_logger, reduce_lr, candleRemoteMonitor])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
