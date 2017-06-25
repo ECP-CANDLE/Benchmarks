@@ -17,7 +17,7 @@ from sklearn.metrics import r2_score
 from scipy.stats.stats import pearsonr
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..'))
+lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
 sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
@@ -99,14 +99,14 @@ def extension_from_parameters(params, framework):
 
 
 def load_data(params, seed):
-    return p1_common.load_X_data2(url_p1b1, file_train, file_test,
-                                  drop_cols=['case_id', 'cancer_type'],
-                                  n_cols=params['feature_subsample'],
-                                  shuffle=params['shuffle'],
-                                  scaling=params['scaling'],
-                                  validation_split=params['validation_split'],
-                                  dtype=params['datatype'],
-                                  seed=seed)
+    return p1_common.load_X_data(url_p1b1, file_train, file_test,
+                                 drop_cols=['case_id', 'cancer_type'],
+                                 n_cols=params['feature_subsample'],
+                                 shuffle=params['shuffle'],
+                                 scaling=params['scaling'],
+                                 validation_split=params['validation_split'],
+                                 dtype=params['datatype'],
+                                 seed=seed)
 
 
 def evaluate_autoencoder(y_pred, y_test):
