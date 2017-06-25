@@ -100,7 +100,7 @@ def extension_from_parameters(params, framework):
 
 def load_data(params, seed):
     return p1_common.load_X_data2(url_p1b1, file_train, file_test,
-                                  drop_cols=['case_id'],
+                                  drop_cols=['case_id', 'cancer_type'],
                                   n_cols=params['feature_subsample'],
                                   shuffle=params['shuffle'],
                                   scaling=params['scaling'],

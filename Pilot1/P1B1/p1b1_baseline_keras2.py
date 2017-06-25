@@ -12,7 +12,7 @@ from keras.models import Model, Sequential
 from keras.layers import Activation, Dense, Dropout, Input, Lambda
 from keras.initializers import RandomUniform
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, ProgbarLogger
-from keras.metrics import binary_crossentropy
+from keras.metrics import binary_crossentropy, mse
 from scipy.stats.stats import pearsonr
 
 import warnings
@@ -90,16 +90,17 @@ def run(gParameters):
     seed = gParameters['rng_seed']
 
     # Load dataset
-    # X_train, X_val, X_test = p1b1.load_data(gParameters, seed)
+    X_train, X_val, X_test = p1b1.load_data(gParameters, seed)
+
     # with h5py.File('x_cache.h5', 'w') as hf:
         # hf.create_dataset("train",  data=X_train)
         # hf.create_dataset("val",  data=X_val)
         # hf.create_dataset("test",  data=X_test)
 
-    with h5py.File('x_cache.h5', 'r') as hf:
-        X_train = hf['train'][:]
-        X_val = hf['val'][:]
-        X_test = hf['test'][:]
+    # with h5py.File('x_cache.h5', 'r') as hf:
+        # X_train = hf['train'][:]
+        # X_val = hf['val'][:]
+        # X_test = hf['test'][:]
 
     print("Shape X_train: ", X_train.shape)
     print("Shape X_val: ", X_val.shape)
@@ -152,6 +153,7 @@ def run(gParameters):
         def vae_loss(x, x_decoded_mean):
             xent_loss = binary_crossentropy(x, x_decoded_mean)
             kl_loss = - 0.5 * K.mean(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
+            # return mse(x, x_decoded_mean)
             # return xent_loss
             return xent_loss + kl_loss
 
