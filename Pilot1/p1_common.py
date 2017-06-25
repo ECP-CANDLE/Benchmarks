@@ -182,6 +182,15 @@ def get_p1_common_parser(parser):
                         default=[], type=int,
                         help="set IDs of GPUs to use")
 
+    # solr monitor configuration
+    parser.add_argument("--experiment_id", type=str,
+                        default="EXP.000",
+                        help="experiment id")
+
+    parser.add_argument("--run_id", type=str,
+                        default="RUN.000",
+                        help="run id")
+
 
     return parser
 

@@ -62,7 +62,7 @@ def run(GP):
 	
 #	lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
 #	sys.path.append(lib_path)
-    os.environ['KERAS_BACKEND'] = opts.backend
+#    os.environ['KERAS_BACKEND'] = opts.backend
 
     import keras_model_utils as KEU
     reload(KEU)
@@ -82,7 +82,7 @@ def run(GP):
     kerasDefaults = p2c.keras_default_config()
 	
 ##### Read Data ########
-    data_files=p2c.get_list_of_data_files(GP)
+    (data_files, fields)=p2c.get_list_of_data_files(GP)
         
     ## Define datagenerator
     datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])  
@@ -92,42 +92,28 @@ def run(GP):
     for f in data_files:
         X=np.load(f)
         num_samples += X.shape[0]
-        
-	X=np.load(filelist[0])
-	X = X.squeeze()
-	X = X[:,:,0]
-	X =np.array(X.tolist())
-	print X.shape
-	X_train=hf.get_data(X,case=GP['case'])
 
-	molecular_hidden_layers=GP['molecular_num_hidden']
-	## modify the inner AE design if type molecule type feature is not included in data
-	if not opts.type_bool:
-		molecular_hidden_layers=molecular_hidden_layers[1:]
-		molecular_hidden_layers.append(8)
+    print X.shape
+    X_train=hf.get_data(X,case=GP['case'])
 
-	## computing input dimension for outer AE
-	input_dim=X.shape[1]*molecular_hidden_layers[-1]
+    molecular_hidden_layers=GP['molecular_num_hidden']
 
-	## get data dimension for molecular autoencoder
-	if not opts.type_bool:
-		molecular_input_dim=np.prod([X.shape[2],X.shape[3]-5])## only consider molecular location coordinates
-		molecular_output_dim=np.prod([X.shape[2],X.shape[3]-5])
-	else:
-		molecular_input_dim=np.prod(X.shape[2:])
-		molecular_output_dim=np.prod(X.shape[2:])
+    ## computing input dimension for outer AE
+    input_dim=X.shape[1]*molecular_hidden_layers[-1]
 
-    # BVE What do we do here
-#    X=np.load(data_files[0])
-#    print 'Data Format: [Num Sample (%s), Num Molecules (%s), Num Atoms (%s), Position + Molecule Tag (One-hot encoded) (%s)]' % (
-#        num_samples, X.shape[1], X.shape[2], X.shape[3])
+    ## get data dimension for molecular autoencoder
+    if not GP['type_bool']:
+        molecular_input_dim=np.prod([X.shape[2],X.shape[3]-5])## only consider molecular location coordinates
+        molecular_output_dim=np.prod([X.shape[2],X.shape[3]-5])
+    else:
+        molecular_input_dim=np.prod(X.shape[2:])
+        molecular_output_dim=np.prod(X.shape[2:])
 
-#    X_train=hf.get_data(X,case=GP['case'])
-#    input_dim=X_train.shape[1]
+    print 'Data Format:\n  [Frames (%s), Molecules (%s), Beads (%s), %s (%s)]' % (
+        num_samples, X.shape[1], X.shape[2], fields.keys(), X.shape[3])
 	
 ### Define Model, Solver and Compile ##########
     print ('Define the model and compile')
-    #	opt = Adam(lr=learning_rate)
     opt = p2ck.build_optimizer(GP['optimizer'], learning_rate, kerasDefaults)
     
     print ('using mlp network')
@@ -142,13 +128,13 @@ def run(GP):
 
 #### Print Model Stats ###########
     KEU.Model_Info(model)
+    #model.summary()
 
 ######## Define Molecular Model, Solver and Compile #########
     molecular_nonlinearity=GP['molecular_nonlinearity']
-	
 
     len_molecular_hidden_layers=len(molecular_hidden_layers)
-    conv_bool=opts.conv_bool
+    conv_bool=GP['conv_bool']
     if conv_bool:
         molecular_model=hf.conv_dense_auto(weights_path=None,input_shape=(1,molecular_input_dim),nonlinearity=molecular_nonlinearity,\
         hidden_layers=molecular_hidden_layers,l2_reg=GP['weight_decay'])
@@ -176,7 +162,7 @@ def run(GP):
     if GP['train_bool']:
         if not str2bool(GP['cool']):
             effec_epochs=GP['epochs']
-            ct=hf.Candle_Composite_Train(datagen, model, molecular_model, data_files,mb_epochs,effec_epochs,callbacks,batch_size=32, case=opts.case,scale_factor=0.5,len_molecular_hidden_layers=len_molecular_hidden_layers,conv_bool=conv_bool,type_bool=opts.type_bool)
+            ct=hf.Candle_Composite_Train(datagen, model, molecular_model, data_files,mb_epochs,effec_epochs,callbacks,batch_size=32, case=GP['case'],scale_factor=0.5,len_molecular_hidden_layers=len_molecular_hidden_layers,conv_bool=conv_bool,type_bool=GP['type_bool'])
 #            ct=hf.Candle_Train(datagen,model,data_files,effec_epochs,case=GP['case'])
             loss=ct.train_ac()
         else:

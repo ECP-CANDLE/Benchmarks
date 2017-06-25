@@ -79,6 +79,7 @@ def read_config_file(file):
     fileParams['drop']=eval(config.get(section[0],'drop'))
     fileParams['classes']=eval(config.get(section[0],'classes'))
     fileParams['pool']=eval(config.get(section[0],'pool'))
+    fileParams['save']=eval(config.get(section[0], 'save'))
 
     return fileParams
 
@@ -222,12 +223,15 @@ def run(gParameters):
               optimizer=gParameters['optimizer'],
               metrics=[gParameters['metrics']])
 
-
+    output_dir = gParameters['save']
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 # set up a bunch of callbacks to do work during model training..
 
     model_name = gParameters['model_name']
-    checkpointer = ModelCheckpoint(filepath=model_name+'.autosave.model.h5', verbose=1, save_weights_only=False, save_best_only=True)
-    csv_logger = CSVLogger('training.log')
+    path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
+    checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
+    csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 
     history = model.fit(X_train, Y_train,
@@ -244,35 +248,35 @@ def run(gParameters):
 
     # serialize model to JSON
     model_json = model.to_json()
-    with open("tc1.model.json", "w") as json_file:
+    with open("{}/{}.model.json".format(output_dir, model_name), "w") as json_file:
         json_file.write(model_json)
 
     # serialize model to YAML
     model_yaml = model.to_yaml()
-    with open("tc1.model.yaml", "w") as yaml_file:
+    with open("{}/{}.model.yaml".format(output_dir, model_name), "w") as yaml_file:
         yaml_file.write(model_yaml)
 
 
     # serialize weights to HDF5
-    model.save_weights("tc1.model.h5")
+    model.save_weights("{}/{}.model.h5".format(output_dir, model_name))
     print("Saved model to disk")
 
     # load json and create model
-    json_file = open(model_name+'.model.json', 'r')
+    json_file = open('{}/{}.model.json'.format(output_dir, model_name), 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model_json = model_from_json(loaded_model_json)
 
 
     # load yaml and create model
-    yaml_file = open(model_name+'.model.yaml', 'r')
+    yaml_file = open('{}/{}.model.yaml'.format(output_dir, model_name), 'r')
     loaded_model_yaml = yaml_file.read()
     yaml_file.close()
     loaded_model_yaml = model_from_yaml(loaded_model_yaml)
 
 
     # load weights into new model
-    loaded_model_json.load_weights("tc1.model.h5")
+    loaded_model_json.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
     print("Loaded json model from disk")
 
     # evaluate json loaded model on test data
@@ -289,7 +293,7 @@ def run(gParameters):
 
 
     # load weights into new model
-    loaded_model_yaml.load_weights("tc1.model.h5")
+    loaded_model_yaml.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
     print("Loaded yaml model from disk")
 
     # evaluate loaded model on test data
@@ -302,6 +306,8 @@ def run(gParameters):
     print('yaml Test accuracy:', score_yaml[1])
 
     print("yaml %s: %.2f%%" % (loaded_model_yaml.metrics_names[1], score_yaml[1]*100))
+
+    return history
 
 def main():
 
