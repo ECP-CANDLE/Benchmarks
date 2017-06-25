@@ -227,7 +227,7 @@ def run(gParameters):
                      batch_size=gParameters['batch_size'],
                      epochs=gParameters['epochs'],
                      # callbacks=[candleRemoteMonitor],
-                     callbacks=[reduce_lr],
+                     callbacks=[reduce_lr, candleRemoteMonitor],
                      validation_data=(X_val, X_val))
 
     # model save
