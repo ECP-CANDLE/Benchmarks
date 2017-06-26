@@ -16,7 +16,7 @@ import argparse
 import p3b1
 import p3_common as p3c
 import p3_common_keras as p3ck
-from solr_keras import CandleRemoteMonitor
+from solr_keras import CandleRemoteMonitor, compute_trainable_params
 
 def get_p3b1_parser():
         parser = argparse.ArgumentParser(prog='p3b1_baseline',
@@ -124,10 +124,9 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
         model = Model( input= [ shared_layers[ 0 ] ], output= [ indiv_layers[ -1 ] ] )
 
         # calculate trainable/non-trainable param count for each model
-        trainable_count += int(
-            np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
-        non_trainable_count += int(
-            np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+        param_counts = compute_trainable_params(model)
+        trainable_count += param_counts['trainable_params']
+        non_trainable_count += param_counts['non_trainable_params']
 
         models.append( model )
 

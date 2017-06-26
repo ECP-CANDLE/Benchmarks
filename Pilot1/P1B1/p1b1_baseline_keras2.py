@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 import p1b1
 import p1_common
 import p1_common_keras
-from solr_keras import CandleRemoteMonitor
+from solr_keras import CandleRemoteMonitor, compute_trainable_params
 
 
 def get_p1b1_parser():
@@ -206,13 +206,7 @@ def run(gParameters):
     model.summary()
 
     # calculate trainable and non-trainable params
-    trainable_count = int(
-        np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
-    non_trainable_count = int(
-        np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
-    gParameters['trainable_params'] = trainable_count
-    gParameters['non_trainable_params'] = non_trainable_count
-    gParameters['total_params'] = trainable_count + non_trainable_count
+    gParameters.update(compute_trainable_params(model))
 
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.0001)
     candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
