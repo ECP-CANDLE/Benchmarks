@@ -3,8 +3,22 @@ import os
 import warnings
 from datetime import datetime
 
+import numpy as np
 import requests
+from keras import backend as K
 from keras.callbacks import Callback
+
+
+def compute_trainable_params(model):
+
+    trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
+    non_trainable_count = int(
+        np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+
+    return {'trainable_params': trainable_count,
+            'non_trainable_params': non_trainable_count,
+            'total_params': (trainable_count + non_trainable_count)}
 
 
 class CandleRemoteMonitor(Callback):

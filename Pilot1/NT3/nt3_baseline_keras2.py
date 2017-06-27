@@ -21,14 +21,14 @@ from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..'))
+lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
 sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
 import data_utils
 import p1_common
-from solr_keras import CandleRemoteMonitor
+from solr_keras import CandleRemoteMonitor, compute_trainable_params
 
 #url_nt3 = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/'
 #file_train = 'nt_train2.csv'
@@ -239,13 +239,7 @@ def run(gParameters):
         os.makedirs(output_dir)
 
     # calculate trainable and non-trainable params
-    trainable_count = int(
-        np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
-    non_trainable_count = int(
-        np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
-    gParameters['trainable_params'] = trainable_count
-    gParameters['non_trainable_params'] = non_trainable_count
-    gParameters['total_params'] = trainable_count + non_trainable_count
+    gParameters.update(compute_trainable_params(model))
 
 
 # set up a bunch of callbacks to do work during model training..
