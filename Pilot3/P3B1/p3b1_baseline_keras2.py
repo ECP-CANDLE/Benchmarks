@@ -238,11 +238,11 @@ def do_n_fold(GP):
     sys.path.append(lib_path)
 
     from data_utils import get_file
-    origin = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P3B1/P3B1_data.tgz'
-    data_loc = get_file('P3B1_data.tgz', origin, untar=True, md5_hash=None, cache_subdir='P3B1')
+    origin = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P3B1/P3B1_data.tar.gz'
+    data_set = 'P3B1_data'
+    data_path = get_file(data_set, origin, untar=True, md5_hash=None, cache_subdir='P3B1')
 
-    print 'Data downloaded and stored at: ' + data_loc
-    data_path = os.path.dirname(data_loc)
+    print 'Data downloaded and stored at: ' + os.path.dirname(data_path)
     print 'Data path:' + data_path
 
     # initialize arrays for all the features
@@ -264,7 +264,7 @@ def do_n_fold(GP):
             label_train_0 = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_train_label.csv', delimiter= ',' )
             features_train.append( feature_train_0 )
             labels_train.append( label_train_0 )
-        
+
             feature_test_0 = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_test_feature.csv', delimiter= ',' )
             label_test_0 = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_test_label.csv', delimiter= ',' )
             features_test.append( feature_test_0 )
