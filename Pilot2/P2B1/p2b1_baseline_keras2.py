@@ -17,7 +17,7 @@ from data_utils import get_file
 import p2b1 as p2b1
 import p2_common as p2c
 import p2_common_keras as p2ck
-from solr_keras import CandleRemoteMonitor
+from solr_keras import CandleRemoteMonitor, compute_trainable_params
 
 HOME=os.environ['HOME']
 def parse_list(option, opt, value, parser):
@@ -163,6 +163,7 @@ def run(GP):
     lr_scheduler = LearningRateScheduler(step_decay)
     history = callbacks.History()
     #callbacks=[history,lr_scheduler]
+    GP.update(compute_trainable_params(model))
     candleRemoteMonitor = CandleRemoteMonitor(params=GP)
     callbacks=[history, candleRemoteMonitor]
     loss = 0.
