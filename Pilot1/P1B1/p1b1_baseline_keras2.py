@@ -122,6 +122,7 @@ def run(gParameters):
     activation = gParameters['activation']
     dropout = gParameters['drop']
     layers = gParameters['dense']
+    dropout_layer = keras.layers.noise.AlphaDropout if gParameters['alpha_dropout'] else Dropout
 
     if layers != None:
         if type(layers) != list:
@@ -138,7 +139,7 @@ def run(gParameters):
                       kernel_initializer=initializer_weights,
                       bias_initializer=initializer_bias)(h)
             if dropout > 0:
-                h = Dropout(dropout)(h)
+                h = dropout_layer(dropout)(h)
 
     if not vae:
         encoded = Dense(latent_dim, activation=activation,
@@ -152,10 +153,8 @@ def run(gParameters):
 
         def vae_loss(x, x_decoded_mean):
             xent_loss = binary_crossentropy(x, x_decoded_mean)
-            kl_loss = - 0.5 * K.mean(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
-            # return mse(x, x_decoded_mean)
-            # return xent_loss
-            return xent_loss + kl_loss
+            kl_loss = - 0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
+            return K.mean(xent_loss + kl_loss/input_dim)
 
         def sampling(params):
             z_mean_, z_log_var_ = params
@@ -174,7 +173,7 @@ def run(gParameters):
     for i, l in reversed(list(enumerate(layers))):
         if l > 0:
             if dropout > 0:
-                h = Dropout(dropout)(h)
+                h = dropout_layer(dropout)(h)
             h = Dense(l, activation=activation,
                       kernel_initializer=initializer_weights,
                       bias_initializer=initializer_bias)(h)
