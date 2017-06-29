@@ -147,8 +147,10 @@ class TerminateOnTimeOut(Callback):
         run_duration = run_end - self.run_timestamp
         run_in_sec = run_duration.total_seconds() #/ (60 * 60)
         print('Current time ....%2.3f' % run_in_sec)
-        if run_in_sec >= self.timeout_in_sec:
-            print('Timeout==>Runtime: %2.3fs, Maxtime: %2.3fs' % (run_in_sec, self.timeout_in_sec))
-            self.model.stop_training = True
+        if self.timeout_in_sec != -1:
+            if run_in_sec >= self.timeout_in_sec:
+                print('Timeout==>Runtime: %2.3fs, Maxtime: %2.3fs' % (run_in_sec, self.timeout_in_sec))
+                self.model.stop_training = True
+
 
 

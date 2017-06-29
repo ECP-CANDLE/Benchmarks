@@ -1,6 +1,7 @@
 import numpy as np
 import os, sys, gzip
 import urllib, zipfile
+TIMEOUT=3600 # in sec; set this to -1 for no timeout
 
 from keras import backend as K
 from keras.layers.core import Dense, Dropout
@@ -163,7 +164,7 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
             gParameters['run_id'] = run_id + ".{}.{}.{}".format(fold, epoch, k)
             candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
-            timeoutMonitor = TerminateOnTimeOut(3600)
+            timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
 
             model.fit( { 'input': feature_train }, { 'out_' + str( k ) : label_train }, epochs= 1, verbose= verbose,
                 callbacks= [ candleRemoteMonitor, timeoutMonitor ],

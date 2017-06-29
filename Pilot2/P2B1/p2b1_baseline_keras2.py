@@ -4,6 +4,8 @@ import scipy as sp
 import pickle
 import sys,os
 import argparse
+
+TIMEOUT=3600 # in sec; set this to -1 for no timeout 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
 sys.path.append(lib_path)
@@ -17,7 +19,7 @@ from data_utils import get_file
 import p2b1 as p2b1
 import p2_common as p2c
 import p2_common_keras as p2ck
-from solr_keras import CandleRemoteMonitor, compute_trainable_params
+from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
 HOME=os.environ['HOME']
 def parse_list(option, opt, value, parser):
@@ -165,7 +167,8 @@ def run(GP):
     #callbacks=[history,lr_scheduler]
     GP.update(compute_trainable_params(model))
     candleRemoteMonitor = CandleRemoteMonitor(params=GP)
-    callbacks=[history, candleRemoteMonitor]
+    timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
+    callbacks=[history, candleRemoteMonitor,timeoutMonitor]
     loss = 0.
 
 #### Train the Model
