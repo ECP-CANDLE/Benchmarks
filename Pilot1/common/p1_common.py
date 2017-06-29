@@ -130,14 +130,6 @@ def get_p1_common_parser(parser):
                         default=argparse.SUPPRESS,
                         help="use batch normalization")
 
-    # Model Evaluation
-    parser.add_argument("--loss",
-                        default=argparse.SUPPRESS,
-                        help="keras loss function to use: mse, ...")
-    parser.add_argument("--optimizer",
-                        default=argparse.SUPPRESS,
-                        help="keras optimizer to use: sgd, rmsprop, ...")
-
     # Data preprocessing
     parser.add_argument("--scaling",
                         default=argparse.SUPPRESS,
@@ -153,10 +145,21 @@ def get_p1_common_parser(parser):
                         help="number of features to randomly sample from each category (cellline expression, drug descriptors, etc), 0 means using all features")
 
     # Training configuration
+    parser.add_argument("--loss",
+                        default=argparse.SUPPRESS,
+                        help="keras loss function to use: mse, ...")
+    parser.add_argument("--optimizer",
+                        default=argparse.SUPPRESS,
+                        help="keras optimizer to use: sgd, rmsprop, ...")
+    parser.add_argument('--lr', dest='learning_rate', type=float,
+                        default=argparse.SUPPRESS,
+                        help='learning rate')
     parser.add_argument("--initialization",
                         default=argparse.SUPPRESS,
-                        choices=['constant', 'uniform', 'normal', 'glorot_uniform', 'lecun_uniform', 'he_normal'],
-                        help="type of weight initialization; 'constant': to 0; 'uniform': to [-0.05,0.05], 'normal': mean 0, stddev 0.05; 'glorot_uniform': [-lim,lim] with lim = sqrt(6/(fan_in+fan_out)); 'lecun_uniform' : [-lim,lim] with lim = sqrt(3/fan_in); 'he_normal' : mean 0, stddev sqrt(2/fan_in)")
+                        choices=['constant', 'uniform', 'normal', 'glorot_uniform', 'lecun_uniform', 'lecun_normal', 'he_normal'],
+                        help="type of weight initialization; 'constant': to 0; 'uniform': to [-0.05,0.05], 'normal': mean 0, stddev 0.05; 'glorot_uniform': [-lim,lim] with lim = sqrt(6/(fan_in+fan_out)); 'lecun_uniform': [-lim,lim] with lim = sqrt(3/fan_in); 'lecun_normal': truncated normal with mean 0, stddev sqrt(1/fan_in); 'he_normal' : mean 0, stddev sqrt(2/fan_in)")
+    parser.add_argument("--alpha_dropout", action='store_true',
+                        help="use AlphaDropout instead of regular Dropout")
     parser.add_argument("--val_split", type=float,
                         default=argparse.SUPPRESS,
                         help="fraction of data to use in validation")

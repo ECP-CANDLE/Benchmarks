@@ -90,9 +90,12 @@ def extension_from_parameters(params, framework):
     ext += '.B={}'.format(params['batch_size'])
     ext += '.D={}'.format(params['drop'])
     ext += '.E={}'.format(params['epochs'])
+    if params['feature_subsample'] > 0:
+        ext += '.FS={}'.format(params['feature_subsample'])
     for i, n in enumerate(params['dense']):
         if n:
             ext += '.D{}={}'.format(i+1, n)
+    ext += '.L={}'.format(params['latent_dim'])
     ext += '.S={}'.format(params['scaling'])
 
     return ext

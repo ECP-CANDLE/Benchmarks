@@ -64,28 +64,29 @@ def get_nt3_parser():
 	return common_parser(parser)
 
 def read_config_file(file):
-    config=configparser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(file)
-    section=config.sections()
-    fileParams={}
+    section = config.sections()
+    fileParams = {}
 
-    fileParams['data_url']=eval(config.get(section[0],'data_url'))
-    fileParams['train_data']=eval(config.get(section[0],'train_data'))
-    fileParams['test_data']=eval(config.get(section[0],'test_data'))
-    fileParams['model_name']=eval(config.get(section[0],'model_name'))
-    fileParams['conv']=eval(config.get(section[0],'conv'))
-    fileParams['dense']=eval(config.get(section[0],'dense'))
-    fileParams['activation']=eval(config.get(section[0],'activation'))
-    fileParams['out_act']=eval(config.get(section[0],'out_act'))
-    fileParams['loss']=eval(config.get(section[0],'loss'))
-    fileParams['optimizer']=eval(config.get(section[0],'optimizer'))
-    fileParams['metrics']=eval(config.get(section[0],'metrics'))
-    fileParams['epochs']=eval(config.get(section[0],'epochs'))
-    fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
-    fileParams['drop']=eval(config.get(section[0],'drop'))
-    fileParams['classes']=eval(config.get(section[0],'classes'))
-    fileParams['pool']=eval(config.get(section[0],'pool'))
-    fileParams['save']=eval(config.get(section[0], 'save'))
+    fileParams['data_url'] = eval(config.get(section[0],'data_url'))
+    fileParams['train_data'] = eval(config.get(section[0],'train_data'))
+    fileParams['test_data'] = eval(config.get(section[0],'test_data'))
+    fileParams['model_name'] = eval(config.get(section[0],'model_name'))
+    fileParams['conv'] = eval(config.get(section[0],'conv'))
+    fileParams['dense'] = eval(config.get(section[0],'dense'))
+    fileParams['activation'] = eval(config.get(section[0],'activation'))
+    fileParams['out_act'] = eval(config.get(section[0],'out_act'))
+    fileParams['loss'] = eval(config.get(section[0],'loss'))
+    fileParams['optimizer'] = eval(config.get(section[0],'optimizer'))
+    fileParams['metrics'] = eval(config.get(section[0],'metrics'))
+    fileParams['epochs'] = eval(config.get(section[0],'epochs'))
+    fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
+    fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
+    fileParams['drop'] = eval(config.get(section[0],'drop'))
+    fileParams['classes'] = eval(config.get(section[0],'classes'))
+    fileParams['pool'] = eval(config.get(section[0],'pool'))
+    fileParams['save'] = eval(config.get(section[0], 'save'))
 
     # parse the remaining values
     for k,v in config.items(section[0]):
@@ -228,11 +229,17 @@ def run(gParameters):
 #model.add(Dense(CLASSES))
 #model.add(Activation('softmax'))
 
-    model.summary()
+    kerasDefaults = p1_common.keras_default_config()
 
+    # Define optimizer
+    optimizer = p1_common_keras.build_optimizer(gParameters['optimizer'],
+                                                gParameters['learning_rate'],
+                                                kerasDefaults)
+
+    model.summary()
     model.compile(loss=gParameters['loss'],
-              optimizer=gParameters['optimizer'],
-              metrics=[gParameters['metrics']])
+                  optimizer=optimizer,
+                  metrics=[gParameters['metrics']])
 
     output_dir = gParameters['save']
 
@@ -242,9 +249,7 @@ def run(gParameters):
     # calculate trainable and non-trainable params
     gParameters.update(compute_trainable_params(model))
 
-
-# set up a bunch of callbacks to do work during model training..
-
+    # set up a bunch of callbacks to do work during model training..
     model_name = gParameters['model_name']
     path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
     checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
@@ -273,7 +278,6 @@ def run(gParameters):
     model_yaml = model.to_yaml()
     with open("{}/{}.model.yaml".format(output_dir, model_name), "w") as yaml_file:
         yaml_file.write(model_yaml)
-
 
     # serialize weights to HDF5
     model.save_weights("{}/{}.model.h5".format(output_dir, model_name))
@@ -307,8 +311,6 @@ def run(gParameters):
     print('json Test accuracy:', score_json[1])
 
     print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1]*100))
-
-
 
     # load weights into new model
     loaded_model_yaml.load_weights('{}/{}.model.h5'.format(output_dir, model_name))

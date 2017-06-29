@@ -7,8 +7,9 @@ param.set <- makeParamSet(
   makeDiscreteParam("molecular_num_hidden", values = c("54 12", "32 16 8"),
   makeDiscreteParam("activation", values = c("relu", "sigmoid", "tanh")),
   makeDiscreteParam("optimizer", values = c("adam", "sgd", "rmsprop")),
-  makeNumericParam("drop", lower = 0, upper = 0.6),
-  makeIntegerParam("latent_dim", lower = 100, upper = 1000),
+  makeNumericParam("learning_rate", lower = 0.00001, upper = 0.1),
+  makeNumericParam("drop", lower = 0, upper = 0.9),
+  makeIntegerParam("latent_dim", lower = 2, upper = 1000),
   makeIntegerParam("epochs", lower = 100, upper = 100),
 
   ## DEBUG PARAMETERS: DON'T USE THESE IN PRODUCTION RUN
