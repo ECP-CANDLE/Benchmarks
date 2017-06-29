@@ -28,7 +28,7 @@ lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
 import data_utils
-import p1_common
+import p1_common, p1_common_keras
 from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
 
