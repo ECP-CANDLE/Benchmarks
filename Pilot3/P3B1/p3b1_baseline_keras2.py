@@ -205,7 +205,7 @@ def do_n_fold(GP):
         shared_nnet_spec.append( int( el ) )
 
     individual_nnet_spec = []
-    indiv = GP['ind_nnet_spec'].split( ';' )
+    indiv = GP['ind_nnet_spec'].split( ':' )
     for ind in indiv:
         indiv_nnet_spec = []
         elem = ind.split( ',' )
