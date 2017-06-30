@@ -190,7 +190,7 @@ def run(GP):
                     print 'Cooling Learning Rate by factor of 10...'
                 loss.extend(ct.train_ac())
 
-        if GP['save_path']!=None:
+        if False and GP['save_path']!=None:
             if not os.path.exists(GP['save_path']):
                 os.makedirs(GP['save_path'])
 
