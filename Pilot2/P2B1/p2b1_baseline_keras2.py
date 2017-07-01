@@ -1,4 +1,3 @@
-import theano
 import numpy as np
 import scipy as sp
 import pickle
@@ -42,6 +41,17 @@ def initialize_parameters():
     print GP
 
     GP = p2c.args_overwrite_config(args, GP)
+
+    if GP['backend'] != 'theano' and GP['backend'] != 'tensorflow':
+      sys.exit('Invalid backend selected: %s' % GP['backend'])
+
+    os.environ['KERAS_BACKEND'] = GP['backend']
+    reload(K)
+    if GP['backend'] == 'theano':
+      K.set_image_dim_ordering('th')
+    elif GP['backend'] == 'tensorflow':
+      K.set_image_dim_ordering('tf')
+
     return GP
 
 def run(GP):
@@ -61,13 +71,10 @@ def run(GP):
     import p2b1 as hf
     reload(hf)
 
-#	lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
-#	sys.path.append(lib_path)
-#    os.environ['KERAS_BACKEND'] = opts.backend
-
     import keras_model_utils as KEU
     reload(KEU)
     reload(p2ck)
+    reload(p2ck.optimizers)
     maps=hf.autoencoder_preprocess()
 
     from keras.optimizers import SGD,RMSprop,Adam

@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import theano
 import matplotlib
 if 'MACOSX' in matplotlib.get_backend().upper():
   matplotlib.use('TKAgg')
@@ -11,7 +10,6 @@ import numpy as np
 from PIL import Image
 import cv2
 import keras.backend as K
-K.set_image_dim_ordering('th')
 from keras.layers import Input
 from keras.models import Sequential,Model
 from keras.layers.core import Flatten, Dense, Dropout, Activation, Reshape
@@ -71,7 +69,7 @@ def p2b1_parser(parser):
 		type=str,default="3k_Disordered")
     parser.add_argument("--conv-AE", action="store_true",dest="conv_bool",default=True,help="Invoke training using Conv1D NN for inner AE")
     parser.add_argument("--include-type", action="store_true",dest="type_bool",default=False,help="Include molecule type information in desining AE")
-    parser.add_argument("--backend",help="Keras Backend",dest="backend",type=str,default='theano')
+    parser.add_argument("--backend",help="Keras Backend",dest="backend",type=str,default='tensorflow')
     #(opts,args)=parser.parse_args()
     return parser
 
@@ -314,7 +312,7 @@ class autoencoder_preprocess():
 
 ## get activations for hidden layers of the model
 def get_activations(model, layer, X_batch):
-    get_activations = K.function([model.layers[0].input, K.learning_phase()], model.layers[layer].output)
+    get_activations = K.function([model.layers[0].input, K.learning_phase()], [model.layers[layer].output])
     activations = get_activations([X_batch,0])
     return activations
 
