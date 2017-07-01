@@ -134,3 +134,23 @@ class CandleRemoteMonitor(Callback):
         filename = "/run.{}.json".format(self.run_id)
         with open(path + filename, "a") as file_run_json:
             file_run_json.write(json.dumps(self.log_messages, indent=4, separators=(',', ': ')))
+
+class TerminateOnTimeOut(Callback):
+    def __init__(self, timeout_in_sec = 10):
+        super(TerminateOnTimeOut, self).__init__()
+        self.run_timestamp = None
+        self.timeout_in_sec = timeout_in_sec
+    def on_train_begin(self, logs={}):
+        self.run_timestamp = datetime.now()
+    def on_epoch_end(self, epoch, logs={}):
+        run_end = datetime.now()
+        run_duration = run_end - self.run_timestamp
+        run_in_sec = run_duration.total_seconds() #/ (60 * 60)
+        print('Current time ....%2.3f' % run_in_sec)
+        if self.timeout_in_sec != -1:
+            if run_in_sec >= self.timeout_in_sec:
+                print('Timeout==>Runtime: %2.3fs, Maxtime: %2.3fs' % (run_in_sec, self.timeout_in_sec))
+                self.model.stop_training = True
+
+
+

@@ -383,7 +383,7 @@ class Candle_Composite_Train():
         for e in tqdm(range(self.epochs)):
             file_loss=[]
             filelist=[d for d in self.numpylist if 'AE' not in d]
-            for f in filelist:
+            for f in filelist[0:1]:
                 if self.print_data:
                     if e==0:
                         print f

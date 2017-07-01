@@ -1,10 +1,13 @@
 import numpy as np
 import os, sys, gzip
 import urllib, zipfile
+TIMEOUT=3600 # in sec; set this to -1 for no timeout
 
 from keras import backend as K
 from keras.layers.core import Dense, Dropout
-from keras.optimizers import SGD
+#from keras.optimizers import SGD
+
+from keras import optimizers
 
 from keras.layers import Input
 from keras.models import Model
@@ -16,7 +19,7 @@ import argparse
 import p3b1
 import p3_common as p3c
 import p3_common_keras as p3ck
-from solr_keras import CandleRemoteMonitor, compute_trainable_params
+from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
 def get_p3b1_parser():
         parser = argparse.ArgumentParser(prog='p3b1_baseline',
@@ -161,9 +164,10 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
             gParameters['run_id'] = run_id + ".{}.{}.{}".format(fold, epoch, k)
             candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
+            timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
 
             model.fit( { 'input': feature_train }, { 'out_' + str( k ) : label_train }, epochs= 1, verbose= verbose,
-                callbacks= [ candleRemoteMonitor ],
+                callbacks= [ candleRemoteMonitor, timeoutMonitor ],
                 batch_size= batch_size, validation_data= ( feature_test, label_test ) )
 
 
@@ -201,7 +205,7 @@ def do_n_fold(GP):
         shared_nnet_spec.append( int( el ) )
 
     individual_nnet_spec = []
-    indiv = GP['ind_nnet_spec'].split( ';' )
+    indiv = GP['ind_nnet_spec'].split( ':' )
     for ind in indiv:
         indiv_nnet_spec = []
         elem = ind.split( ',' )
