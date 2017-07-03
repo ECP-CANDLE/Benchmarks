@@ -1,7 +1,7 @@
 import numpy as np
 import os, sys, gzip
 import urllib, zipfile
-TIMEOUT=3600 # in sec; set this to -1 for no timeout
+TIMEOUT=1800 # in sec; set this to -1 for no timeout
 
 from keras import backend as K
 from keras.layers.core import Dense, Dropout
