@@ -388,6 +388,9 @@ class Candle_Composite_Train():
                     if e==0:
                         print f
                 X=np.load(f)
+                X=X[0:20,:,:,:] # please remove it for original test 
+                #print(X.shape)
+                #sys.exit(0)
 
                 # Bond lengths are in the range of 0 - 10 angstroms -- normalize it to 0 - 1
                 if self.type_feature:
@@ -401,6 +404,8 @@ class Candle_Composite_Train():
                 input_feature_dim=np.prod(Xnorm.shape[2:])
                 XP=[]
                 for i in range(num_frames):
+                    #print(i)
+                    #print(num_frames)
                     if self.conv_net:
                         xt=Xnorm[i].reshape(X.shape[1],1,input_feature_dim)
                         yt=Xnorm[i].reshape(X.shape[1],input_feature_dim)
@@ -412,7 +417,8 @@ class Candle_Composite_Train():
                     while self.molecular_model.evaluate(xt,yt,verbose=0)[0]>self.epsilon:
                         print '[Frame %d]' % (i),'Inner AE loss..', self.molecular_model.evaluate(xt,yt,verbose=0)[0]
                         self.molecular_model.set_weights(w)
-                        self.molecular_model.fit(xt, yt,epochs=self.mb_epochs,callbacks=self.callbacks,verbose=0)
+                        print(xt.shape)
+                        self.molecular_model.fit(xt, yt,epochs=self.mb_epochs,callbacks=self.callbacks)
                         w=self.molecular_model.get_weights()
                     yp=get_activations(self.molecular_model,self.len_molecular_hidden_layers,xt)
                     XP.append(yp)
