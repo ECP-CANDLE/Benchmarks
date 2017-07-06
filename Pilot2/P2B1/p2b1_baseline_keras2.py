@@ -40,7 +40,7 @@ def initialize_parameters():
     print('Args', args)
 
     GP=p2b1.read_config_file(args.config_file)
-    print GP
+    print (GP)
 
     GP = p2c.args_overwrite_config(args, GP)
 
@@ -104,7 +104,7 @@ def run(GP):
         num_samples += X.shape[0]
 
     X=np.load(data_files[0])
-    print X.shape
+    print (X.shape)
 
     molecular_hidden_layers=GP['molecular_num_hidden']
 
@@ -115,7 +115,7 @@ def run(GP):
         ## computing input dimension for outer AE
         input_dim=X.shape[1]*molecular_hidden_layers[-1]
 
-    print "The input dimension is ", input_dim
+    print ('The input dimension is ', input_dim)
 
     ## get data dimension for molecular autoencoder
     if not GP['type_bool']:
@@ -125,8 +125,8 @@ def run(GP):
         molecular_input_dim=np.prod(X.shape[2:])
         molecular_output_dim=np.prod(X.shape[2:])
 
-    print 'Data Format:\n  [Frames (%s), Molecules (%s), Beads (%s), %s (%s)]' % (
-        num_samples, X.shape[1], X.shape[2], fields.keys(), X.shape[3])
+    print ('Data Format:\n  [Frames (%s), Molecules (%s), Beads (%s), %s (%s)]' % (
+        num_samples, X.shape[1], X.shape[2], fields.keys(), X.shape[3]))
 
 ### Define Model, Solver and Compile ##########
     print ('Define the model and compile')
@@ -139,7 +139,7 @@ def run(GP):
                         hidden_layers=hidden_layers,l2_reg=GP['weight_decay'])
     memo='%s_%s'%(GP['base_memo'],model_type)
 
-    print 'Autoencoder Regression problem'
+    print ('Autoencoder Regression problem')
     model.compile(optimizer=opt, loss='mean_squared_error')
 
 #### Print Model Stats ###########
@@ -194,7 +194,7 @@ def run(GP):
                 ct.model.optimizer.lr.set_value(lr)
                 if i>0:
                     ct.print_data=False
-                    print 'Cooling Learning Rate by factor of 10...'
+                    print ('Cooling Learning Rate by factor of 10...')
                 loss.extend(ct.train_ac())
 
         if False and GP['save_path']!=None:

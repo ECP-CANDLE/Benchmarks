@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 import os, sys, gzip
 import urllib, zipfile
@@ -34,7 +35,7 @@ def initialize_parameters():
     print('Args', args)
 
     GP=p3b1.read_config_file(args.config_file)
-    print GP
+    print(GP)
 
     GP = p3c.args_overwrite_config(args, GP)
     return GP
@@ -145,7 +146,7 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
     if verbose == 1:
         for k in range( len( models ) ):
             model = models[ k ]
-            print'Model:',k
+            print('Model:',k)
             model.summary()
 
     for k in range( len( models ) ):
@@ -224,19 +225,19 @@ def do_n_fold(GP):
     optimizer = GP['optimizer']
 
     features = []
-    feat = GP['feature_names'].split(';')
+    feat = GP['feature_names'].split(':')
     for f in feat:
         features.append(f)
 
     n_feat = len(feat)
 
-    print 'Feature names:'
+    print('Feature names:')
     for i in range(n_feat):
-        print features[i]
+        print(features[i])
 
    ## Read files
     file_path = os.path.dirname(os.path.realpath(__file__))
-    print file_path
+    print(file_path)
     lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
     sys.path.append(lib_path)
 
@@ -245,8 +246,8 @@ def do_n_fold(GP):
     data_set = 'P3B1_data'
     data_path = get_file(data_set, origin, untar=True, md5_hash=None, cache_subdir='P3B1')
 
-    print 'Data downloaded and stored at: ' + os.path.dirname(data_path)
-    print 'Data path:' + data_path
+    print('Data downloaded and stored at: ' + os.path.dirname(data_path))
+    print('Data path:' + data_path)
 
     # initialize arrays for all the features
     truth_array = [[] for _ in range(n_feat)]
@@ -303,8 +304,8 @@ def do_n_fold(GP):
     avg_loss /= float( n_fold )
 
     for task in range(n_feat):
-        print 'Task',task+1,':',features[task],'- Macro F1 score', f1_score(truth_array[task], pred_array[task], average='macro')
-        print 'Task',task+1,':',features[task],'- Micro F1 score', f1_score(truth_array[task], pred_array[task], average='micro')
+        print('Task',task+1,':',features[task],'- Macro F1 score', f1_score(truth_array[task], pred_array[task], average='macro'))
+        print('Task',task+1,':',features[task],'- Micro F1 score', f1_score(truth_array[task], pred_array[task], average='micro'))
 
     return avg_loss
 

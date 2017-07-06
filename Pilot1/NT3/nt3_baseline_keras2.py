@@ -1,3 +1,4 @@
+from __future__ import print_function
 import pandas as pd
 import numpy as np
 import os
@@ -182,7 +183,7 @@ def run(gParameters):
         filters = gParameters['conv'][i]
         filter_len = gParameters['conv'][i+1]
         stride = gParameters['conv'][i+2]
-        print(i/3, filters, filter_len, stride)
+        print(int(i/3), filters, filter_len, stride)
         if gParameters['pool']:
             pool_list=gParameters['pool']
             if type(pool_list) != list:
@@ -200,7 +201,7 @@ def run(gParameters):
                 model.add(Conv1D(filters=filters, kernel_size=filter_len, strides=stride, padding='valid'))
         model.add(Activation(gParameters['activation']))
         if gParameters['pool']:
-                model.add(MaxPooling1D(pool_size=pool_list[i/3]))
+                model.add(MaxPooling1D(pool_size=pool_list[int(i/3)]))
 
     model.add(Flatten())
 

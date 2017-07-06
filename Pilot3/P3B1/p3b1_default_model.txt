@@ -9,5 +9,5 @@ loss = 'categorical_crossentropy'
 optimizer = 'sgd'
 n_fold = 1
 shared_nnet_spec = '1200'
-ind_nnet_spec = '1200, 1200;1200, 1200;1200, 1200'
-feature_names = 'Primary site;Tumor laterality;Histological grade'
+ind_nnet_spec = '1200, 1200:1200, 1200:1200, 1200'
+feature_names = 'Primary site:Tumor laterality:Histological grade'

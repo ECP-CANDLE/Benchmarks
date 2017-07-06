@@ -44,7 +44,7 @@ def initialize_parameters():
     print('Args', args)
 
     GP=p2b2.read_config_file(args.config_file)
-    print GP
+    print(GP)
 
     GP = p2c.args_overwrite_config(args, GP)
     return GP
@@ -59,7 +59,7 @@ def run(GP):
 
     ## Set paths
     if not os.path.isdir(GP['home_dir']):
-    	print ('Keras home directory not set')
+    	print('Keras home directory not set')
     	sys.exit(0)
     sys.path.append(GP['home_dir'])
 	
@@ -99,11 +99,11 @@ def run(GP):
     print('X_train.max():', X_train.max())
 	
 ### Define Model, Solver and Compile ##########
-    print ('Define the model and compile')
+    print('Define the model and compile')
     #opt=Adam(lr=GP['learning_rate'])
     opt = p2ck.build_optimizer(GP['optimizer'], learning_rate, kerasDefaults)
 
-    print ('using mlp network')
+    print('using mlp network')
     model_type='mlp'
     hidden_layers=GP['num_hidden']
     if len(hidden_layers)==0:
@@ -115,7 +115,7 @@ def run(GP):
 		
     memo='%s_%s'%(GP['base_memo'],model_type)
 
-    print 'Autoencoder Regression problem'
+    print('Autoencoder Regression problem')
     model.compile(optimizer=opt, loss='mean_squared_error',sample_weight_mode="temporal")
     model.summary()	## print model summary in details
 
@@ -136,7 +136,7 @@ def run(GP):
     	    	ct.model.optimizer.lr.set_value(lr)
     	    	if i>0:
     	    	    ct.print_data=False
-    	    	    print 'Cooling Learning Rate by factor of 10...'
+    	    	    print('Cooling Learning Rate by factor of 10...')
     	    	loss.extend(ct.train_ac())
 
     	if GP['save_path']!=None:

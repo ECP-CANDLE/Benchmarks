@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import theano
 import matplotlib
 if 'MACOSX' in matplotlib.get_backend().upper():
@@ -192,15 +193,15 @@ def generate_timedistributed_forecast(model,x,prediction_length=10):
     for i in range(prediction_length):
         y_pred=model.predict(x_revise[0:1,:,:],batch_size=1)
         yf=y_pred[:,0,:]
-        #print 'prediction:',yf
+        #print('prediction:',yf)
         x_data=np.vstack([x_data,yf])
 
         #x=x.reshape(T,D) ## assume N=1 ... i.e. one sample
-        #print 'data before prediction:\n',x
+        #print('data before prediction:\n',x)
         x_revise[0,0:T-1,:]=x_revise[0,1:T,:]
         x_revise[0,T-1:T,:]=yf
         #x=x.reshape(1,T,D)
-        #print 'data after appending prediction\n',x
+        #print('data after appending prediction\n',x)
     return x_data
 
 ##### Define Neural Network Models ###################
@@ -318,7 +319,7 @@ class Candle_Train():
             for f in self.numpylist:
                 if self.print_data:
                     if e==0:
-                        print f
+                        print(f)
                 X=np.load(f)
                 data=get_data(X,self.case)
                 X_train,y_train=create_dataset(data,look_back=self.look_back,look_forward=self.look_forward)
@@ -334,7 +335,7 @@ class Candle_Train():
                     loss_data=self.model.train_on_batch(x,y,sample_weight=sample_weight)
                     iter_loss.append(loss_data)
                 file_loss.append(np.array(iter_loss).mean(axis=0))
-            print '\nLoss on epoch %d:'%e, file_loss[-1]
+            print('\nLoss on epoch %d:'%e, file_loss[-1])
             epoch_loss.append(np.array(file_loss).mean(axis=0))
         return epoch_loss
 

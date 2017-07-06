@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 import matplotlib
 if 'MACOSX' in matplotlib.get_backend().upper():
   matplotlib.use('TKAgg')
@@ -344,7 +345,7 @@ class Candle_Train():
             for f in self.numpylist:
                 if self.print_data:
                     if e==0:
-                        print f
+                        print (f)
                 X=np.load(f)
                 X_train=get_data(X,self.case)
                 y_train=X_train.copy()
@@ -357,7 +358,7 @@ class Candle_Train():
                     loss_data=self.model.train_on_batch(x,y)
                     iter_loss.append(loss_data)
                 file_loss.append(np.array(iter_loss).mean(axis=0))
-            print '\nLoss on epoch %d:'%e, file_loss[-1]
+            print ('\nLoss on epoch %d:'%e, file_loss[-1])
             epoch_loss.append(np.array(file_loss).mean(axis=0))
         return epoch_loss
 
@@ -386,7 +387,7 @@ class Candle_Composite_Train():
             for f in filelist[0:1]:
                 if self.print_data:
                     if e==0:
-                        print f
+                        print (f)
                 X=np.load(f)
                 X=X[0:20,:,:,:] # please remove it for original test 
                 #print(X.shape)
@@ -413,9 +414,9 @@ class Candle_Composite_Train():
                         xt=Xnorm[i].reshape(X.shape[1],input_feature_dim)
                         yt=xt.copy()
                     w=self.molecular_model.get_weights()
-                    #print self.molecular_model.evaluate(xt,yt,verbose=0)[0]
+                    #print (self.molecular_model.evaluate(xt,yt,verbose=0)[0])
                     while self.molecular_model.evaluate(xt,yt,verbose=0)[0]>self.epsilon:
-                        print '[Frame %d]' % (i),'Inner AE loss..', self.molecular_model.evaluate(xt,yt,verbose=0)[0]
+                        print ('[Frame %d]' % (i),'Inner AE loss..', self.molecular_model.evaluate(xt,yt,verbose=0)[0])
                         self.molecular_model.set_weights(w)
                         print(xt.shape)
                         self.molecular_model.fit(xt, yt,epochs=self.mb_epochs,callbacks=self.callbacks)
@@ -438,10 +439,10 @@ class Candle_Composite_Train():
                     x,y=next(imggen)
                     loss_data=self.model.train_on_batch(x,y)
                     iter_loss.append(loss_data)
-                #print iter_loss
+                #print (iter_loss)
                 file_loss.append(np.array(iter_loss).mean(axis=0))
 
 
-            print 'Loss on epoch %d:'%e, file_loss[-1]
+            print ('Loss on epoch %d:'%e, file_loss[-1])
             epoch_loss.append(np.array(file_loss).mean(axis=0))
         return epoch_loss
