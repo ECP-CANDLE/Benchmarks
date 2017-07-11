@@ -49,15 +49,15 @@ dense		: specification of dense or fully-connected layers. These are specified a
 
 activation 	: keyword describing the type of activation function applied to the output of a hidden layer. We provide mechanisms to implement the commonly used Keras activation functions (‘relu’, ‘sigmoid’,’tanh’)
 
-loss		: keyword describing the loss function to be used. We provide mechanisms to implement the commonly used Keras loss functions (‘mse’ ‘binary_crossentropy’,’categorical_crossentropy’,’smoothL1’)
+loss		: keyword describing the loss function to be used. We provide mechanisms to implement the commonly used Keras loss functions (‘mse’, ‘binary_crossentropy’, ’categorical_crossentropy’, ’smoothL1’)
 
 optimizer	: One of ‘sgd’, ‘rmsprop’, ‘adam’, ‘adagrad’, ‘adadelta’
 
-initialization 	: One of ‘constant’,’uniform’,’normal’,’glorot_uniform’,’lecun_uniform’,’he_normal’ 
+initialization 	: One of ‘constant’, ’uniform’, ’normal’, ’glorot_uniform’, ’lecun_uniform’, ’he_normal’ 
 
 metrics         : Metrics used to compute the accuracy when evaluating the trained model.
 
 rng_seed        : Value for the random number seed. Otherwise a random seed is chosen. 
 
-More examples can be found within the respective default model files, but are generally limited to numerical parameters which can substantially affect model performace, such as learning_rate, batch_size and so on. 
+More examples can be found within the respective default model files, but are generally limited to numerical parameters which can substantially affect model performace, such as learning_rate, batch_size and so on. For non-numeric inputs, the available values will generally correspond to the appropriate Keras function. 
 
