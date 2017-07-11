@@ -1,14 +1,8 @@
 from __future__ import print_function
-import pandas as pd
+
 import numpy as np
-import os
-import sys
-import gzip
+
 import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 from keras import backend as K
 
@@ -18,147 +12,35 @@ from keras.models import Sequential, Model, model_from_json, model_from_yaml
 from keras.utils import np_utils
 from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-
-TIMEOUT=3600 # in sec; set this to -1 for no timeout 
-file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
-sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
-
+import nt3 as benchmark
+import default_utils
+import keras_utils
 import data_utils
-import p1_common, p1_common_keras
+
 from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
 
-#url_nt3 = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/'
-#file_train = 'nt_train2.csv'
-#file_test = 'nt_test2.csv'
-
-#EPOCH = 400
-#BATCH = 20
-#CLASSES = 2
-
-#PL = 60484   # 1 + 60483 these are the width of the RNAseq datasets
-#P     = 60483   # 60483
-#DR    = 0.1      # Dropout rate
-
-def common_parser(parser):
-
-    parser.add_argument("--config_file", dest='config_file', type=str,
-                        default=os.path.join(file_path, 'nt3_default_model.txt'),
-                        help="specify model configuration file")
-
-    # Parse has been split between arguments that are common with the default neon parser
-    # and all the other options
-    parser = p1_common.get_default_neon_parse(parser)
-    parser = p1_common.get_p1_common_parser(parser)
-
-    return parser
-
-def get_nt3_parser():
-
-	parser = argparse.ArgumentParser(prog='nt3_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description='Train Autoencoder - Pilot 1 Benchmark NT3')
-
-	return common_parser(parser)
-
-def read_config_file(file):
-    config = configparser.ConfigParser()
-    config.read(file)
-    section = config.sections()
-    fileParams = {}
-
-    fileParams['data_url'] = eval(config.get(section[0],'data_url'))
-    fileParams['train_data'] = eval(config.get(section[0],'train_data'))
-    fileParams['test_data'] = eval(config.get(section[0],'test_data'))
-    fileParams['model_name'] = eval(config.get(section[0],'model_name'))
-    fileParams['conv'] = eval(config.get(section[0],'conv'))
-    fileParams['dense'] = eval(config.get(section[0],'dense'))
-    fileParams['activation'] = eval(config.get(section[0],'activation'))
-    fileParams['out_act'] = eval(config.get(section[0],'out_act'))
-    fileParams['loss'] = eval(config.get(section[0],'loss'))
-    fileParams['optimizer'] = eval(config.get(section[0],'optimizer'))
-    fileParams['metrics'] = eval(config.get(section[0],'metrics'))
-    fileParams['epochs'] = eval(config.get(section[0],'epochs'))
-    fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
-    fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
-    fileParams['drop'] = eval(config.get(section[0],'drop'))
-    fileParams['classes'] = eval(config.get(section[0],'classes'))
-    fileParams['pool'] = eval(config.get(section[0],'pool'))
-    fileParams['save'] = eval(config.get(section[0], 'save'))
-
-    # parse the remaining values
-    for k,v in config.items(section[0]):
-        if not k in fileParams:
-            fileParams[k] = eval(v)
-
-    return fileParams
-
 def initialize_parameters():
-    # Get command-line parameters
-    parser = get_nt3_parser()
-    args = parser.parse_args()
-    #print('Args:', args)
-    # Get parameters from configuration file
-    fileParameters = read_config_file(args.config_file)
-    #print ('Params:', fileParameters)
-    # Consolidate parameter set. Command-line parameters overwrite file configuration
-    gParameters = p1_common.args_overwrite_config(args, fileParameters)
+
+    # Build benchmark object
+    nt3Bmk = benchmark.BenchmarkNT3(benchmark.file_path, 'nt3_default_model.txt', 'keras',
+    prog='nt3_baseline', desc='Train Autoencoder - Pilot 1 Benchmark NT3')
+    
+    # Initialize parameters
+    gParameters = default_utils.initialize_parameters(nt3Bmk)
+    csv_logger = CSVLogger('{}/params.log'.format(gParameters))
+    #benchmark.logger.info('Params: {}'.format(gParameters))
+
     return gParameters
 
 
-def load_data(train_path, test_path, gParameters):
+def load_data(gParameters):
 
-    print('Loading data...')
-    df_train = (pd.read_csv(train_path,header=None).values).astype('float32')
-    df_test = (pd.read_csv(test_path,header=None).values).astype('float32')
-    print('done')
-
-    print('df_train shape:', df_train.shape)
-    print('df_test shape:', df_test.shape)
-
-    seqlen = df_train.shape[1]
-
-    df_y_train = df_train[:,0].astype('int')
-    df_y_test = df_test[:,0].astype('int')
-
-    Y_train = np_utils.to_categorical(df_y_train,gParameters['classes'])
-    Y_test = np_utils.to_categorical(df_y_test,gParameters['classes'])
-
-    df_x_train = df_train[:, 1:seqlen].astype(np.float32)
-    df_x_test = df_test[:, 1:seqlen].astype(np.float32)
-
-#        X_train = df_x_train.as_matrix()
-#        X_test = df_x_test.as_matrix()
-
-    X_train = df_x_train
-    X_test = df_x_test
-
-    scaler = MaxAbsScaler()
-    mat = np.concatenate((X_train, X_test), axis=0)
-    mat = scaler.fit_transform(mat)
-
-    X_train = mat[:X_train.shape[0], :]
-    X_test = mat[X_train.shape[0]:, :]
-
-    return X_train, Y_train, X_test, Y_test
-
-
-def run(gParameters):
-
-    print ('Params:', gParameters)
-
-    file_train = gParameters['train_data']
-    file_test = gParameters['test_data']
-    url = gParameters['data_url']
-
-    train_file = data_utils.get_file(file_train, url+file_train, cache_subdir='Pilot1')
-    test_file = data_utils.get_file(file_test, url+file_test, cache_subdir='Pilot1')
-
-    X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
+    path = gParameters['data_url']
+    train_file = default_utils.fetch_file(path + gParameters['train_data'], 'Pilot1')
+    test_file = default_utils.fetch_file(path + gParameters['test_data'], 'Pilot1')
+    
+    X_train, Y_train, X_test, Y_test = benchmark.load_data(train_file, test_file, gParameters)
 
     print('X_train shape:', X_train.shape)
     print('X_test shape:', X_test.shape)
@@ -175,7 +57,27 @@ def run(gParameters):
 
     print('X_train shape:', X_train.shape)
     print('X_test shape:', X_test.shape)
+    
+    data = (X_train, Y_train, X_test, Y_test, x_train_len)
+    
+    return data
 
+
+def run(gParameters, data):
+
+    # Get default parameters for initialization and optimizer functions
+    kerasDefaults = default_utils.keras_default_config()
+
+    # 'unfold' data
+    X_train, Y_train, X_test, Y_test, x_train_len = data
+
+    seed = gParameters['rng_seed']
+
+    # Initialize weights and learning rule
+    initializer_weights = keras_utils.build_initializer(gParameters['initialization'], kerasDefaults, seed)
+    initializer_bias = keras_utils.build_initializer('constant', kerasDefaults, 0.)
+    
+    # Define model architecture
     model = Sequential()
 
     layer_list = list(range(0, len(gParameters['conv']), 3))
@@ -212,53 +114,30 @@ def run(gParameters):
             if gParameters['drop']:
                     model.add(Dropout(gParameters['drop']))
     model.add(Dense(gParameters['classes']))
-    model.add(Activation(gParameters['out_act']))
+    model.add(Activation(gParameters['out_activation']))
 
-#Reference case
-#model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
-#model.add(Activation('relu'))
-#model.add(MaxPooling1D(pool_size=1))
-#model.add(Conv1D(filters=128, kernel_size=10, strides=1, padding='valid'))
-#model.add(Activation('relu'))
-#model.add(MaxPooling1D(pool_size=10))
-#model.add(Flatten())
-#model.add(Dense(200))
-#model.add(Activation('relu'))
-#model.add(Dropout(0.1))
-#model.add(Dense(20))
-#model.add(Activation('relu'))
-#model.add(Dropout(0.1))
-#model.add(Dense(CLASSES))
-#model.add(Activation('softmax'))
-
-    kerasDefaults = p1_common.keras_default_config()
 
     # Define optimizer
-    optimizer = p1_common_keras.build_optimizer(gParameters['optimizer'],
-                                                gParameters['learning_rate'],
-                                                kerasDefaults)
+    optimizer = keras_utils.build_optimizer(gParameters['optimizer'],
+                                            gParameters['learning_rate'],
+                                            kerasDefaults)
 
+    # Compile and display model
+    model.compile(loss=gParameters['loss'], optimizer=optimizer, metrics=[gParameters['metrics']])
     model.summary()
-    model.compile(loss=gParameters['loss'],
-                  optimizer=optimizer,
-                  metrics=[gParameters['metrics']])
-
-    output_dir = gParameters['save']
-
-    if not os.path.exists(output_dir):
-        os.makedirs(output_dir)
 
     # calculate trainable and non-trainable params
     gParameters.update(compute_trainable_params(model))
 
     # set up a bunch of callbacks to do work during model training..
     model_name = gParameters['model_name']
+    output_dir = gParameters['output_dir']
     path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
     # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
     candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
-    timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
+    timeoutMonitor = TerminateOnTimeOut(gParameters['timeout'])
     history = model.fit(X_train, Y_train,
                     batch_size=gParameters['batch_size'],
                     epochs=gParameters['epochs'],
@@ -331,10 +210,15 @@ def run(gParameters):
 
     return history
 
+
+
 def main():
 
     gParameters = initialize_parameters()
-    run(gParameters)
+    data = load_data(gParameters)
+    run(gParameters, data)
+
+
 
 if __name__ == '__main__':
     main()

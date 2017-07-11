@@ -1,124 +1,163 @@
 from __future__ import absolute_import
 from __future__ import print_function
-import matplotlib
-if 'MACOSX' in matplotlib.get_backend().upper():
-  matplotlib.use('TKAgg')
-import pylab as py
-py.ion() ## Turn on plot visualization
 
-import gzip,pickle
 import numpy as np
-from PIL import Image
-import cv2
-import keras.backend as K
-from keras.layers import Input
-from keras.models import Sequential,Model
-from keras.layers.core import Flatten, Dense, Dropout, Activation, Reshape
-from keras.layers.convolutional import Convolution2D, MaxPooling2D,Convolution1D
-#from keras.layers.convolutional import ZeroPadding2D,UpSampling2D,Unpooling2D,perforated_Unpooling2D,DePool2D
-from keras.initializers import normal, identity, he_normal,glorot_normal,glorot_uniform,he_uniform
-from keras.layers.normalization import BatchNormalization
-from keras.regularizers import l2
+
+import os
+import sys
+#import logging
+import argparse
+import glob
 import threading
+
 try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
+
 from tqdm import *
-import re,copy
-import os
-import sys
+
+import keras.backend as K # This common file (used by all the frameworks) should be keras independent !
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
+lib_path = os.path.abspath(os.path.join(file_path, '..'))
 sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-import p2_common
-
-def common_parser(parser):
-
-    parser.add_argument("--config_file", dest='config_file', type=str,
-                        default=os.path.join(file_path, 'p2b1_default_model.txt'),
-                        help="specify model configuration file")
-
-    # Parse has been split between arguments that are common with the default neon parser
-    # and all the other options
-    parser = p2_common.get_default_neon_parse(parser)
-    parser = p2_common.get_p2_common_parser(parser)
-
-    # Arguments that are applicable just to p2b1
-    parser = p2b1_parser(parser)
-
-    return parser
-
-def p2b1_parser(parser):
-    ### Hyperparameters and model save path
-
-#    parser.add_argument("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
-#    parser.add_argument("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
-#    parser.add_argument("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
-    parser.add_argument("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
-    parser.add_argument("--config-file",help="Config File",dest="config_file",type=str,default=os.path.join(file_path, 'p2b1_small_model.txt'))
-    parser.add_argument("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
-    parser.add_argument("--memo",help="Memo",dest="base_memo",type=str,default=None)
-    parser.add_argument("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
-    parser.add_argument("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='CenterZ')
-    parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
-    parser.add_argument("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
-		type=str,default="3k_Disordered")
-    parser.add_argument("--conv-AE", action="store_true",dest="conv_bool",default=True,help="Invoke training using Conv1D NN for inner AE")
-    parser.add_argument("--include-type", action="store_true",dest="type_bool",default=False,help="Include molecule type information in desining AE")
-    parser.add_argument("--backend",help="Keras Backend",dest="backend",type=str,default='tensorflow')
-    #(opts,args)=parser.parse_args()
-    return parser
+import default_utils
+import data_utils
 
 
-#### Read Config File
-def read_config_file(File):
-    config=configparser.ConfigParser()
-    config.read(File)
-    section=config.sections()
-    Global_Params={}
+class BenchmarkP2B1(default_utils.Benchmark):
 
-    Global_Params['num_hidden']    =eval(config.get(section[0],'num_hidden'))
-    Global_Params['batch_size']    =eval(config.get(section[0],'batch_size'))
-    Global_Params['learning_rate'] =eval(config.get(section[0],'learning_rate'))
-    Global_Params['epochs']        =eval(config.get(section[0],'epochs'))
-    Global_Params['weight_decay']  =eval(config.get(section[0],'weight_decay'))
-    Global_Params['noise_factor']  =eval(config.get(section[0],'noise_factor'))
-    Global_Params['optimizer']     =eval(config.get(section[0],'optimizer'))
-    Global_Params['loss']          =eval(config.get(section[0],'loss'))
-    Global_Params['activation']    =eval(config.get(section[0],'activation'))
-    # note 'cool' is a boolean
-    Global_Params['cool']          =config.get(section[0],'cool')
 
-    Global_Params['molecular_epochs']       =eval(config.get(section[0],'molecular_epochs'))
-    Global_Params['molecular_num_hidden']   =eval(config.get(section[0],'molecular_num_hidden'))
-    Global_Params['molecular_nonlinearity'] =config.get(section[0],'molecular_nonlinearity')
+    def parse_from_benchmark(self):
 
-    # parse the remaining values
-    for k,v in config.items(section[0]):
-        if not k in Global_Params:
-            Global_Params[k] = eval(v)
+        self.parser.add_argument("--train_data", dest='train_data',
+                        default=argparse.SUPPRESS, type=str,
+                        choices=['3k_Disordered', '3k_Ordered', '3k_Ordered_and_gel', '6k_Disordered', '6k_Ordered', '6k_Ordered_and_gel'],
+                        help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]")
 
-    return Global_Params
+        self.parser.add_argument("--molecular_epochs", action="store", type= int,
+                        default=argparse.SUPPRESS,
+                        help= "number of training epochs for the molecular part of the model")
 
-#### Extra Code #####
-def reorder_npfiles(files):
-    files1=copy.deepcopy(files)
-    for i in range(len(files)):
-        inx=map(int,re.findall('\d+',files[i][96:98]))[0]
-        files1[inx-1]=files[i]
-    return files1
+        self.parser.add_argument("--molecular_num_hidden", nargs='+',
+                        default=argparse.SUPPRESS,
+                        help="number of units in fully connected layers for the molecular part of the model in an integer array")
+    
+        self.parser.add_argument("--molecular_activation",
+                        default=argparse.SUPPRESS,
+                        help="keras activation function to use for the molecular part of the model in inner layers: relu, tanh, sigmoid...")
+        self.parser.add_argument("--conv-AE", action="store_true",dest="conv_bool",default=True,help="Invoke training using Conv1D NN for inner AE")
 
-def convert_to_helgi_format(data):
-    new_data=np.zeros((data.shape[0],data.shape[1],12,6))
-    for i in range(data.shape[0]):
-        for j in range(data.shape[1]):
-            new_data[i,j,:,:]=np.hstack([data[i,j][0],np.array(12*[list(data[i,j][1])])])
-    return new_data
+        self.parser.add_argument("--cool", action="store_true",
+                        default=argparse.SUPPRESS,
+                        help= "flag for cooling")
+    
+        self.parser.add_argument("--weight_decay", action="store", type=float,
+                        default=argparse.SUPPRESS,
+                        help= "weight decay factor")
+    
+        self.parser.add_argument("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='CenterZ')
+        self.parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
+    
+        self.parser.add_argument("--include-type", action="store_true",dest="type_bool",default=False,help="Include molecule type information in designing AE")
+    
+        self.parser.add_argument("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
+
+
+
+    def read_config_file(self, file):
+        """Functionality to read the configue file
+           specific for each benchmark.
+        """
+
+        config=configparser.ConfigParser()
+        config.read(file)
+        section=config.sections()
+        fileParams={}
+    
+        fileParams['activation']=eval(config.get(section[0],'activation'))
+        fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
+        fileParams['dense']=eval(config.get(section[0],'dense'))
+        fileParams['epochs']=eval(config.get(section[0],'epochs'))
+        fileParams['initialization']=eval(config.get(section[0],'initialization'))
+        fileParams['learning_rate']=eval(config.get(section[0], 'learning_rate'))
+        fileParams['loss']=eval(config.get(section[0],'loss'))
+        fileParams['metrics'] = eval(config.get(section[0],'metrics'))
+        fileParams['noise_factor'] = eval(config.get(section[0],'noise_factor'))
+        fileParams['optimizer']=eval(config.get(section[0],'optimizer'))
+        fileParams['scaling']=eval(config.get(section[0],'scaling'))
+    
+        fileParams['data_url']=eval(config.get(section[0],'data_url'))
+        fileParams['train_data']=eval(config.get(section[0],'train_data'))
+        fileParams['model_name']=eval(config.get(section[0],'model_name'))
+#        fileParams['output_dir'] = eval(config.get(section[0], 'output_dir'))
+
+        fileParams['molecular_epochs']=eval(config.get(section[0],'molecular_epochs'))
+        fileParams['molecular_num_hidden']=eval(config.get(section[0],'molecular_num_hidden'))
+        fileParams['molecular_activation']=eval(config.get(section[0],'molecular_activation'))
+        fileParams['cool']=eval(config.get(section[0],'cool'))
+        fileParams['weight_decay']=eval(config.get(section[0],'weight_decay'))
+        
+
+        # parse the remaining values
+        for k,v in config.items(section[0]):
+            if not k in fileParams:
+                fileParams[k] = eval(v)
+    
+        return fileParams
+
+
+data_sets = {
+  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20-f20.dir', '36ebb5bbc39e1086176133c92c29b5ce'),
+#  '3k_Disordered' : ('3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir', '3a5fc83d3de48de2f389f5f0fa5df6d2'),
+  '3k_Ordered' : ('3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir', '6de30893cecbd9c66ea433df0122b328'),
+  '3k_Ordered_and_gel' : ('3k_run43_10us.35fs-DPPC.70-DOPC.10-CHOL.20.dir', '45b9a2f7deefb8d5b016b1c42f5fba71'),
+  '6k_Disordered' : ('6k_run10_25us.35fs-DPPC.10-DOPC.70-CHOL.20.dir', '24e4f8d3e32569e8bdd2252f7259a65b'),
+  '6k_Ordered' : ('6k_run32_25us.35fs-DPPC.50-DOPC.10-CHOL.40.dir', '0b3b39086f720f73ce52d5b07682570d'),
+  '6k_Ordered_and_gel' : ('6k_run43_25us.35fs-DPPC.70-DOPC.10-CHOL.20.dir', '3b3e069a7c55a4ddf805f5b898d6b1d1')
+  }
+
+from collections import OrderedDict
+
+def gen_data_set_dict():
+    # Generating names for the data set
+    names= {'x' : 0, 'y' : 1, 'z' : 2, 
+            'CHOL' : 3, 'DPPC' : 4, 'DIPC' : 5, 
+            'Head' : 6, 'Tail' : 7}
+    for i in range(12):
+        temp = 'BL'+str(i+1)
+        names.update({temp : i+8})
+
+    # dictionary sorted by value
+    fields=OrderedDict(sorted(names.items(), key=lambda t: t[1]))
+
+    return fields
+
+
+def get_list_of_data_files(GP):
+
+    print ('Reading Data...')
+    ## Identify the data set selected
+    data_set = data_sets[GP['train_data']][0]
+    ## Get the MD5 hash for the proper data set
+    data_hash=data_sets[GP['train_data']][1]
+    print ('Reading Data Files... %s->%s' % (GP['train_data'], data_set))
+    ## Check if the data files are in the data director, otherwise fetch from FTP
+    path = GP['data_url']
+    data_file = default_utils.fetch_file(path + data_set + '.tar.gz', 'Pilot2', untar=True, md5_hash=data_hash)
+    data_dir = os.path.join(os.path.dirname(data_file), data_set)
+    ## Make a list of all of the data files in the data set
+    data_files=glob.glob('%s/*.npy'%data_dir)
+
+    fields = gen_data_set_dict()
+
+    return (data_files, fields)
+
+
 
 ############# Define Data Generators ################
 class ImageNoiseDataGenerator(object):
@@ -196,127 +235,6 @@ class ImageNoiseDataGenerator(object):
     def insertnoise(self,x,corruption_level=0.5):
         return np.random.binomial(1,1-corruption_level,x.shape)*x
 
-def conv_dense_auto(weights_path=None,input_shape=(1,784),hidden_layers=None,nonlinearity='relu',l2_reg=0.0):
-    kernel_size=7
-    input_img = Input(shape=input_shape)
-
-    if hidden_layers!=None:
-        if type(hidden_layers)!=list:
-            hidden_layers=list(hidden_layers)
-        for i,l in enumerate(hidden_layers):
-            if i==0:
-                encoded=Convolution1D(l,kernel_size,padding='same',input_shape=input_shape,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(input_img)
-            else:
-                encoded=Convolution1D(l,kernel_size,padding='same',input_shape=input_shape,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
-
-        encoded=Flatten()(encoded) ## reshape output of 1d convolution layer
-
-        for i,l in reversed(list(enumerate(hidden_layers))):
-            if i <len(hidden_layers)-1:
-                if i==len(hidden_layers)-2:
-                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
-                else:
-                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(decoded)
-        decoded=Dense(input_shape[1],kernel_regularizer=l2(l2_reg))(decoded)
-
-    else:
-        decoded=Dense(input_shape[1],kernel_regularizer=l2(l2_reg))(input_img)
-
-    model=Model(inputs=input_img,outputs=decoded)
-
-    if weights_path:
-        print('Loading Model')
-        model.load_weights(weights_path)
-    return model
-
-##### Define Neural Network Models ###################
-def dense_auto(weights_path=None,input_shape=(784,),hidden_layers=None,nonlinearity='relu',l2_reg=0.0):
-    input_img = Input(shape=input_shape)
-
-    if hidden_layers!=None:
-        if type(hidden_layers)!=list:
-            hidden_layers=list(hidden_layers)
-        for i,l in enumerate(hidden_layers):
-            if i==0:
-                encoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(input_img)
-            else:
-                encoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
-
-        for i,l in reversed(list(enumerate(hidden_layers))):
-            if i <len(hidden_layers)-1:
-                if i==len(hidden_layers)-2:
-                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(encoded)
-                else:
-                    decoded=Dense(l,activation=nonlinearity,kernel_regularizer=l2(l2_reg))(decoded)
-        decoded=Dense(input_shape[0],kernel_regularizer=l2(l2_reg))(decoded)
-    else:
-        decoded=Dense(input_shape[0],kernel_regularizer=l2(l2_reg))(input_img)
-
-    model=Model(outputs=decoded,inputs=input_img)
-
-    if weights_path:
-        print('Loading Model')
-        model.load_weights(weights_path)
-    return model
-
-def dense_simple(weights_path=None,input_shape=(784,),nonlinearity='relu'):
-    model=Sequential()
-    ## encoder
-    model.add(Dense(512,input_shape=input_shape,activation=nonlinearity))
-    BatchNormalization()
-    model.add(Dense(256,activation=nonlinearity))
-    BatchNormalization()
-    model.add(Dense(128,activation=nonlinearity))
-    BatchNormalization()
-    model.add(Dense(64,activation=nonlinearity))
-    BatchNormalization()
-    model.add(Dense(32,activation=nonlinearity))
-    BatchNormalization()
-    model.add(Dense(16,activation=nonlinearity))
-    BatchNormalization()
-    ## decoder
-    model.add(Dense(32))
-    BatchNormalization()
-    model.add(Dense(64))
-    BatchNormalization()
-    model.add(Dense(128))
-    BatchNormalization()
-    model.add(Dense(256))
-    BatchNormalization()
-    model.add(Dense(512))
-    BatchNormalization()
-    model.add(Dense(input_shape[0],activation='linear'))
-    if weights_path:
-        print('Loading Model')
-        model.load_weights(weights_path)
-    return model
-
-
-class autoencoder_preprocess():
-    def __init__(self,img_size=(784,),noise_factor=0.):
-        self.noise=noise_factor
-        self.img_size=img_size
-        self.lock = threading.Lock()
-
-    def add_noise(self,X_train):
-        ## Add noise to input data
-        np.random.seed(100)
-        ind=np.where(X_train==0)
-        rn=self.noise*np.random.rand(np.shape(ind)[1])
-        X_train[ind]=rn
-        return X_train
-
-    def renormalize(self,X_train,mu,sigma):
-        X_train=(X_train-mu)/sigma
-        X_train = X_train.astype("float32")
-        return X_train
-
-## get activations for hidden layers of the model
-def get_activations(model, layer, X_batch):
-    get_activations = K.function([model.layers[0].input, K.learning_phase()], [model.layers[layer].output])
-    activations = get_activations([X_batch,0])
-    return activations
-
 
 def get_data(X,case='Full'):
     if case.upper()=='FULL':
@@ -327,6 +245,16 @@ def get_data(X,case='Full'):
         X_train=X.mean(axis=2)[:,:,2].reshape(X.shape[0],np.prod(X.mean(axis=2)[:,:,2].shape[1:]))
 
     return X_train
+
+
+## get activations for hidden layers of the model
+def get_activations(model, layer, X_batch):
+    get_activations = K.function([model.layers[0].input, K.learning_phase()], [model.layers[layer].output])
+    activations = get_activations([X_batch,0])
+    return activations
+
+
+############# Define CANDLE Functionality ################
 
 class Candle_Train():
     def __init__(self, datagen, model, numpylist,nb_epochs,case='Full',batch_size=32,print_data=True):
@@ -361,6 +289,7 @@ class Candle_Train():
             print ('\nLoss on epoch %d:'%e, file_loss[-1])
             epoch_loss.append(np.array(file_loss).mean(axis=0))
         return epoch_loss
+
 
 class Candle_Composite_Train():
     def __init__(self, datagen, model, molecular_ammodel, numpylist,mnb_epochs,nb_epochs,callbacks,batch_size=32,case='Full',print_data=True,scale_factor=1,epsilon=.064,len_molecular_hidden_layers=1,conv_bool=False,type_bool=False):
@@ -446,3 +375,4 @@ class Candle_Composite_Train():
             print ('Loss on epoch %d:'%e, file_loss[-1])
             epoch_loss.append(np.array(file_loss).mean(axis=0))
         return epoch_loss
+

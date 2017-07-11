@@ -1,144 +1,282 @@
 from __future__ import absolute_import
-from __future__ import print_function
 
-import tarfile
-import os
-import sys
-import shutil
-import hashlib
-from six.moves.urllib.request import urlopen
-from six.moves.urllib.error import URLError, HTTPError
+import numpy as np
+import pandas as pd
 
-from generic_utils import Progbar
+from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
+from keras.utils import np_utils
 
-# Under Python 2, 'urlretrieve' relies on FancyURLopener from legacy
-# urllib module, known to have issues with proxy management
-if sys.version_info[0] == 2:
-    def urlretrieve(url, filename, reporthook=None, data=None):
-        def chunk_read(response, chunk_size=8192, reporthook=None):
-            total_size = response.info().get('Content-Length').strip()
-            total_size = int(total_size)
-            count = 0
-            while 1:
-                chunk = response.read(chunk_size)
-                count += 1
-                if not chunk:
-                    reporthook(count, total_size, total_size)
-                    break
-                if reporthook:
-                    reporthook(count, chunk_size, total_size)
-                yield chunk
+from default_utils import DEFAULT_SEED
+from default_utils import DEFAULT_DATATYPE
 
-        response = urlopen(url, data)
-        with open(filename, 'wb') as fd:
-            for chunk in chunk_read(response, reporthook=reporthook):
-                fd.write(chunk)
-else:
-    from six.moves.urllib.request import urlretrieve
+def convert_to_class(y_one_hot, dtype=int):
+
+    maxi = lambda a: a.argmax()
+    iter_to_na = lambda i: np.fromiter(i, dtype=dtype)
+    return np.array([maxi(a) for a in y_one_hot])
 
 
-def get_file(fname, origin, untar=False,
-             md5_hash=None, cache_subdir='common'):
-    '''Downloads a file from a URL if it not already in the cache.
+def scale_array(mat, scaling=None):
+    """Scale data included in numpy array.
+        
+        Parameters
+        ----------
+        mat : numpy array
+            array to scale
+        scaling : 'maxabs', 'minmax', 'std', or None, optional (default 'None')
+            type of scaling to apply
+    """
+    
+    if scaling is None or scaling.lower() == 'none':
+        return mat
 
-    Passing the MD5 hash will verify the file after download as well as if it is already present in the cache.
-
-    # Arguments
-        fname: name of the file
-        origin: original URL of the file
-        untar: boolean, whether the file should be decompressed
-        md5_hash: MD5 hash of the file for verification
-        cache_subdir: directory being used as the cache
-
-    # Returns
-        Path to the downloaded file
-    '''
-    file_path = os.path.dirname(os.path.realpath(__file__))
-    datadir_base = os.path.expanduser(os.path.join(file_path, '..', 'Data'))
-    datadir = os.path.join(datadir_base, cache_subdir)
-    if not os.path.exists(datadir):
-        os.makedirs(datadir)
-
-    if untar:
-        untar_fpath = os.path.join(datadir, fname)
-        fpath = untar_fpath + '.tar.gz'
+    # Scaling data
+    if scaling == 'maxabs':
+        # Normalizing -1 to 1
+        scaler = MaxAbsScaler(copy=False)
+    elif scaling == 'minmax':
+        # Scaling to [0,1]
+        scaler = MinMaxScaler(copy=False)
     else:
-        fpath = os.path.join(datadir, fname)
-
-    download = False
-    if os.path.exists(fpath):
-        # file found; verify integrity if a hash was provided
-        if md5_hash is not None:
-            if not validate_file(fpath, md5_hash):
-                print('A local file was found, but it seems to be '
-                      'incomplete or outdated.')
-                download = True
-    else:
-        download = True
-
-    if download:
-        print('Downloading data from', origin)
-        global progbar
-        progbar = None
-
-        def dl_progress(count, block_size, total_size):
-            global progbar
-            if progbar is None:
-                progbar = Progbar(total_size)
-            else:
-                progbar.update(count * block_size)
-
-        error_msg = 'URL fetch failure on {}: {} -- {}'
-        try:
-            try:
-                urlretrieve(origin, fpath, dl_progress)
-            except URLError as e:
-                raise Exception(error_msg.format(origin, e.errno, e.reason))
-            except HTTPError as e:
-                raise Exception(error_msg.format(origin, e.code, e.msg))
-        except (Exception, KeyboardInterrupt) as e:
-            if os.path.exists(fpath):
-                os.remove(fpath)
-            raise
-        progbar = None
-        print()
-
-    if untar:
-        if not os.path.exists(untar_fpath):
-            print('Untarring file...')
-            tfile = tarfile.open(fpath, 'r:gz')
-            try:
-                tfile.extractall(path=datadir)
-            except (Exception, KeyboardInterrupt) as e:
-                if os.path.exists(untar_fpath):
-                    if os.path.isfile(untar_fpath):
-                        os.remove(untar_fpath)
-                    else:
-                        shutil.rmtree(untar_fpath)
-                raise
-            tfile.close()
-        return untar_fpath
-        print()
-
-    return fpath
+        # Standard normalization
+        scaler = StandardScaler(copy=False)
+    
+    return scaler.fit_transform(mat)
 
 
-def validate_file(fpath, md5_hash):
-    '''Validates a file against a MD5 hash
 
-    # Arguments
-        fpath: path to the file being validated
-        md5_hash: the MD5 hash being validated against
+def impute_and_scale_array(mat, scaling=None):
+    """Impute missing values with mean and scale data included in numpy array.
+        
+        Parameters
+        ----------
+        mat : numpy array
+            array to scale
+        scaling : 'maxabs', 'minmax', 'std', or None, optional (default 'None')
+            type of scaling to apply
+    """
+    
+    imputer = Imputer(strategy='mean', axis=0, copy=False)
+    imputer.fit_transform(mat)
+    #mat = imputer.fit_transform(mat)
+    
+    return scale_array(mat, scaling)
 
-    # Returns
-        Whether the file is valid
-    '''
-    hasher = hashlib.md5()
-    with open(fpath, 'rb') as f:
-        buf = f.read()
-        hasher.update(buf)
-    if str(hasher.hexdigest()) == str(md5_hash):
-        return True
-    else:
-        return False
+
+
+def load_X_data(train_file, test_file,
+                drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+
+    # compensates for the columns to drop if there is a feature subselection
+    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
+        
+    df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
+    df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
+
+    # Drop specified columns
+    if drop_cols is not None:
+        for col in drop_cols:
+            df_train.drop(col, axis=1, inplace=True)
+            df_test.drop(col, axis=1, inplace=True)
+
+    if shuffle:
+        df_train = df_train.sample(frac=1, random_state=seed)
+        df_test = df_test.sample(frac=1, random_state=seed)
+
+    X_train = df_train.values.astype(dtype)
+    X_test = df_test.values.astype(dtype)
+
+    mat = np.concatenate((X_train, X_test), axis=0)
+    # Scale data
+    if scaling is not None:
+        mat = scale_array(mat, scaling)
+
+    X_train = mat[:X_train.shape[0], :]
+    X_test = mat[X_train.shape[0]:, :]
+
+    return X_train, X_test
+
+
+def load_X_data2(train_file, test_file,
+                drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+
+    # compensates for the columns to drop if there is a feature subselection
+    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
+
+    df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
+    df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
+
+    # Drop specified columns
+    if drop_cols is not None:
+        for col in drop_cols:
+            df_train.drop(col, axis=1, inplace=True)
+            df_test.drop(col, axis=1, inplace=True)
+
+    if shuffle:
+        df_train = df_train.sample(frac=1, random_state=seed)
+        df_test = df_test.sample(frac=1, random_state=seed)
+
+    X_train = df_train.values.astype(dtype)
+    X_test = df_test.values.astype(dtype)
+
+    mat = np.concatenate((X_train, X_test), axis=0)
+    # Scale data
+    if scaling is not None:
+        mat = scale_array(mat, scaling)
+
+    # Separate training in training and validation splits after scaling
+    sizeTrain = X_train.shape[0]
+    X_test = mat[sizeTrain:, :]
+    numVal = int(sizeTrain * validation_split)
+    X_val = mat[:numVal, :]
+    X_train = mat[numVal:sizeTrain, :]
+
+    return X_train, X_val, X_test
+
+
+def load_Xy_one_hot_data(train_file, test_file,
+                        class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                        dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+
+    assert class_col != None
+    
+    # compensates for the columns to drop if there is a feature subselection
+    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
+
+    df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
+    df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
+    
+    if shuffle:
+        df_train = df_train.sample(frac=1, random_state=seed)
+        df_test = df_test.sample(frac=1, random_state=seed)
+
+    # Get class
+    y_train = pd.get_dummies(df_train[class_col]).values
+    y_test = pd.get_dummies(df_test[class_col]).values
+
+    # Drop specified columns
+    if drop_cols is not None:
+        for col in drop_cols:
+            df_train.drop(col, axis=1, inplace=True)
+            df_test.drop(col, axis=1, inplace=True)
+
+
+    # Convert from pandas dataframe to numpy array
+    X_train = df_train.values.astype(dtype)
+    print("X_train dtype: ", X_train.dtype)
+    X_test = df_test.values.astype(dtype)
+    print("X_test dtype: ", X_test.dtype)
+    # Concatenate training and testing to scale data
+    mat = np.concatenate((X_train, X_test), axis=0)
+    print("mat dtype: ", mat.dtype)
+    # Scale data
+    if scaling is not None:
+        mat = scale_array(mat, scaling)
+    # Recover training and testing splits after scaling
+    X_train = mat[:X_train.shape[0], :]
+    X_test = mat[X_train.shape[0]:, :]
+
+    return (X_train, y_train), (X_test, y_test)
+
+
+def load_Xy_one_hot_data2(train_file, test_file,
+                    class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                    validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+    
+    assert class_col != None
+    
+    # compensates for the columns to drop if there is a feature subselection
+    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
+    
+    df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
+    df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
+
+    if shuffle:
+        df_train = df_train.sample(frac=1, random_state=seed)
+        df_test = df_test.sample(frac=1, random_state=seed)
+
+    # Get class
+    y_train = pd.get_dummies(df_train[class_col]).values
+    y_test = pd.get_dummies(df_test[class_col]).values
+    
+    # Drop specified columns
+    if drop_cols is not None:
+        for col in drop_cols:
+            df_train.drop(col, axis=1, inplace=True)
+            df_test.drop(col, axis=1, inplace=True)
+
+    # Convert from pandas dataframe to numpy array
+    X_train = df_train.values.astype(dtype)
+    X_test = df_test.values.astype(dtype)
+    # Concatenate training and testing to scale data
+    mat = np.concatenate((X_train, X_test), axis=0)
+    # Scale data
+    if scaling is not None:
+        mat = scale_array(mat, scaling)
+    # Separate training in training and validation splits after scaling
+    sizeTrain = X_train.shape[0]
+    X_test = mat[sizeTrain:, :]
+    numVal = int(sizeTrain * validation_split)
+    X_val = mat[:numVal, :]
+    X_train = mat[numVal:sizeTrain, :]
+    # Analogously separate y in training in training and validation splits
+    y_val = y_train[:numVal, :]
+    y_train = y_train[numVal:sizeTrain, :]
+
+    return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+
+
+
+def load_Xy_data2(train_file, test_file, class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                  validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+    
+    assert class_col != None
+    
+    (X_train, y_train_oh), (X_val, y_val_oh), (X_test, y_test_oh) = load_Xy_one_hot_data2(train_file, test_file,
+                                                                                 class_col, drop_cols, n_cols, shuffle, scaling,
+                                                                                 validation_split, dtype, seed)
+
+    y_train = convert_to_class(y_train_oh)
+    y_val = convert_to_class(y_val_oh)
+    y_test = convert_to_class(y_test_oh)
+    
+
+    return (X_train, y_train), (X_val, y_val), (X_test, y_test)
+
+
+
+def load_Xy_data_noheader(train_file, test_file, classes, scaling=None, dtype=DEFAULT_DATATYPE):
+
+    df_train = pd.read_csv(train_file, header=None)
+    df_test = pd.read_csv(test_file, header=None)
+
+    Xy_train = df_train.values.astype(dtype)
+    Xy_test = df_test.values.astype(dtype)
+    
+    seqlen = Xy_train.shape[1]
+
+    df_y_train = Xy_train[:,0].astype('int')
+    df_y_test = Xy_test[:,0].astype('int')
+
+    Y_train = np_utils.to_categorical(df_y_train, classes)
+    Y_test = np_utils.to_categorical(df_y_test, classes)
+
+    X_train = Xy_train[:, 1:seqlen].astype(dtype)
+    X_test = Xy_test[:, 1:seqlen].astype(dtype)
+    
+    mat = np.concatenate((X_train, X_test), axis=0)
+    # Scale data
+    if scaling is not None:
+        mat = scale_array(mat, scaling)
+
+    # Separate training in training and validation splits after scaling
+    X_train = mat[:X_train.shape[0], :]
+    X_test = mat[X_train.shape[0]:, :]
+
+    return X_train, Y_train, X_test, Y_test
+
+

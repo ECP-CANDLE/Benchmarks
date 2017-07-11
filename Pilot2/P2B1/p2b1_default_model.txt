@@ -1,5 +1,8 @@
 [Global_Params]
-num_hidden=[512,32] 
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'
+train_data = '3k_Disordered'
+model_name = 'p2b1'
+dense=[512,32] 
 batch_size=32
 learning_rate=0.01
 epochs=10
@@ -8,8 +11,12 @@ weight_decay=0.0005
 noise_factor=0.0
 optimizer='adam'
 loss='mse'
-activation='relu'
-molecular_nonlinearity=elu
+metrics = 'mean_squared_error'
+activation='elu'
+molecular_activation='elu'
 molecular_num_hidden=[54,12]
 molecular_epochs=1
-base_memo='p2b1'
+timeout=3600
+scaling = 'none'
+initialization='glorot_uniform'
+

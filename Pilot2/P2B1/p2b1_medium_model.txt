@@ -1,9 +1,18 @@
 [Global_Params]
-num_hidden=[5120,2560,1280,640,320,160]
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'
+train_data = '3k_Disordered'
+model_name = 'p2b1'
+dense=[5120,2560,1280,640,320,160]
 batch_size=32
 learning_rate=0.01
 epochs=10
 cool=True
 weight_decay=0.0005
 noise_factor=0
-base_memo='p2b1'
+optimizer='adam'
+loss='mse'
+metrics = 'mean_squared_error'
+activation='elu'
+timeout=3600
+scaling = 'none'
+initialization='glorot_uniform'
