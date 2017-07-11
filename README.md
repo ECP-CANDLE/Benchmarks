@@ -59,10 +59,5 @@ metrics         : Metrics used to compute the accuracy when evaluating the train
 
 rng_seed        : Value for the random number seed. Otherwise a random seed is chosen. 
 
-The following are self-explanatory but may substantially influence model performance. 
-epochs         
-batch_size    
-learning_rate
-scaling
-noise_factor
-validation_split
+More examples can be found within the respective default model files, but are generally limited to numerical parameters which can substantially affect model performace, such as learning_rate, batch_size and so on. 
+
