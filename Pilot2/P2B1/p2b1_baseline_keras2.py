@@ -290,7 +290,7 @@ def run(gParameters, data):
     loss = train_model(gParameters, datagen, data_files,
                 model, molecular_model)
 
-    # evaluate model
+    return loss
 
 
 
