@@ -13,9 +13,11 @@ Pilot2 (P2) benchmarks are formed out of problems and data at the molecular leve
 Pilot3 (P3) benchmarks are formed out of problems and data at the population level. The high level goal of the problem behind the P3 benchmarks is to predict cancer recurrence in patients based on patient related data.
 
 Each of the problems (P1,P2,P3) informed the implementation of specific benchmarks, so P1B3 would be benchmark three of problem 1.
-At this point, we will refer to a benchmark by it's problem area and benchmark number. So it's natural to talk of the P1B1 benchmark. Inside each benchmark directory, there exists a readme file that contains an overview of the benchmark, a description of the data and expected outcomes along with instructions for running the benchmark code.
+At this point, we will refer to a benchmark by it's problem area and benchmark number, so it's natural to talk of the P1B1 benchmark.In the course of development, two new benchmarks were added to Pilot 1, named NT3 and TC1, which do not currretly fit the naming convention. This will be resolved in future. Inside each benchmark directory, there exists a readme file that contains an overview of the benchmark, a description of the data and expected outcomes along with instructions for running the benchmark code.
 
-Over time, we will be adding implementations that make use of different tensor frameworks. The primary (baseline) benchmarks are implemented using keras, and are named with '_baseline' in the name, for example p3b1_baseline_keras2.py. 
+For the 0.0 Release, we only include those benchmarks which have been extensively tested with the Supervisor workflows. The initial release will therefore only include Pilot1/NT3, Pilot2/P2B1 and Pilot3/P3B1. As more benchmarks are tested with the latest Supervisor, the will be added into the release branch. 
+
+Over time, we will also be adding implementations that make use of different tensor frameworks. The primary (baseline) benchmarks are implemented using keras, and are named with '_baseline' in the name, for example p3b1_baseline_keras2.py. 
 
 Implementations that use alternative tensor frameworks, such as mxnet or neon, will have the name of the framework in the name. Examples can be seen in the P1B3 benchmark contribs/ directory, for example:
         p1b3_mxnet.py
