@@ -273,6 +273,7 @@ class Candle_Train():
             for f in self.numpylist:
                 if self.print_data:
                     if e==0:
+                        print ()
                         print (f)
                 X=np.load(f)
                 X_train=get_data(X,self.case)
@@ -316,6 +317,7 @@ class Candle_Composite_Train():
             for f in filelist[0:1]:
                 if self.print_data:
                     if e==0:
+                        print ()
                         print (f)
                 X=np.load(f)
                 X=X[0:20,:,:,:] # please remove it for original test 
