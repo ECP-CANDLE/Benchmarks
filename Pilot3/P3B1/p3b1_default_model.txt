@@ -17,5 +17,5 @@ ind_nnet_spec = '1200, 1200:1200, 1200:1200, 1200'
 feature_names = 'Primary site:Tumor laterality:Histological grade'
 timeout=1800
 scaling = 'none'
+output_dir = '.'
 initialization='glorot_uniform'
-

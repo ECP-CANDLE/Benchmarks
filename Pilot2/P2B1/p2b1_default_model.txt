@@ -2,7 +2,7 @@
 data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'
 train_data = '3k_Disordered'
 model_name = 'p2b1'
-dense=[512,32] 
+dense=[512,32]
 batch_size=32
 learning_rate=0.01
 epochs=10
@@ -18,5 +18,5 @@ molecular_num_hidden=[54,12]
 molecular_epochs=1
 timeout=3600
 scaling = 'none'
+output_dir='.'
 initialization='glorot_uniform'
-
