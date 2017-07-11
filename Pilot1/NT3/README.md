@@ -5,7 +5,9 @@ The NT3 benchmark is a binary classification task on 1400 RNA-seq based gene exp
 The following example out put is from a truncated run, using only 20 epochs, which is accomplished by modifying the nt3_default_model.txt file and then running:
 
 ```
-python n3_baseline_keras2.py
+python nt3_baseline_keras2.py
+```
+```
 
 Using TensorFlow backend.
 Params: {'logfile': None, 'metrics': 'accuracy', 'shuffle': True, 'out_activation': 'softmax', 'activation': 'relu', 'run_id': 'RUN000', 'train_bool': True, 'scaling': 'maxabs', 'output_dir': '/home/jamal/Code/ECP/CANDLE/benchmarks/Pilot1/NT3', 'gpus': [], 'optimizer': 'sgd', 'learning_rate': 0.001, 'initialization': 'glorot_uniform', 'train_data': 'nt_train2.csv', 'classes': 2, 'verbose': False, 'conv': [128, 20, 1, 128, 10, 1], 'dense': [200, 20], 'timeout': 3600, 'rng_seed': 7102, 'experiment_id': 'EXP000', 'pool': [1, 10], 'test_data': 'nt_test2.csv', 'loss': 'categorical_crossentropy', 'config_file': '/home/jamal/Code/ECP/CANDLE/benchmarks/Pilot1/NT3/nt3_default_model.txt', 'datatype': <class 'numpy.float32'>, 'batch_size': 20, 'model_name': 'nt3', 'drop': 0.1, 'data_url': 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/', 'epochs': 20}
