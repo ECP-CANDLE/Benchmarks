@@ -1,0 +1,1 @@
+The NT3 benchmark is a binary classification task on 1400 RNA-seq based gene expression profiles from the NCI Genomic Data Commons (GDC). 700 of these samples are from tumor tissues and the other 700 are their matched normals. There are 60483 features for each sample that are fed into a neural network with two dense layers on top of two convolution layers by default. 
