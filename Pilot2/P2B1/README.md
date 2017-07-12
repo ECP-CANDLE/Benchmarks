@@ -40,7 +40,7 @@ The training and test data files will be downloaded the first time this is run a
 
 ```
 Using TensorFlow backend.
-Params: {'shuffle': True, 'metrics': 'mean_squared_error', 'train_data': '3k_Disordered', 'run_id': 'RUN000', 'rng_seed': 7102, 'case': 'CenterZ', 'experiment_id': 'EXP000', 'epochs': 10, 'conv_bool': True, 'type_bool': False, 'molecular_activation': 'elu', 'data_url': 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/', 'learning_rate': 0.01, 'verbose': False, 'datatype': <class 'numpy.float32'>, 'loss': 'mse', 'cool': False, 'scaling': 'none', 'train_bool': True, 'output_dir': '/home/jamal/Code/ECP/CANDLE/benchmarks/Pilot2/P2B1/Output/EXP000/RUN000', 'optimizer': 'adam', 'timeout': 3600, 'activation': 'elu', 'fig_bool': False, 'weight_decay': 0.0005, 'initialization': 'glorot_uniform', 'weight_path': None, 'gpus': [], 'dense': [512, 32], 'molecular_num_hidden': [54, 12], 'model_name': 'p2b1', 'molecular_epochs': 1, 'config_file': '/home/jamal/Code/ECP/CANDLE/benchmarks/Pilot2/P2B1/p2b1_default_model.txt', 'batch_size': 32, 'logfile': None, 'noise_factor': 0.0}
+Params: {'shuffle': True, 'metrics': 'mean_squared_error', 'train_data': '3k_Disordered', 'run_id': 'RUN000', 'rng_seed': 7102, 'case': 'CenterZ', 'experiment_id': 'EXP000', 'epochs': 10, 'conv_bool': True, 'type_bool': False, 'molecular_activation': 'elu', 'data_url': 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/', 'learning_rate': 0.01, 'verbose': False, 'datatype': <class 'numpy.float32'>, 'loss': 'mse', 'cool': False, 'scaling': 'none', 'train_bool': True, 'output_dir': '/CANDLE/benchmarks/Pilot2/P2B1/Output/EXP000/RUN000', 'optimizer': 'adam', 'timeout': 3600, 'activation': 'elu', 'fig_bool': False, 'weight_decay': 0.0005, 'initialization': 'glorot_uniform', 'weight_path': None, 'gpus': [], 'dense': [512, 32], 'molecular_num_hidden': [54, 12], 'model_name': 'p2b1', 'molecular_epochs': 1, 'config_file': '/CANDLE/benchmarks/Pilot2/P2B1/p2b1_default_model.txt', 'batch_size': 32, 'logfile': None, 'noise_factor': 0.0}
 Reading Data...
 Reading Data Files... 3k_Disordered->3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20-f20.dir
 X shape:  (100, 3040, 12, 20)
@@ -87,7 +87,7 @@ Trainable params: 83,244
 Non-trainable params: 0
 _____________________________________________________________
   0%|                                                                                | 0/10 [00:00<?, ?it/s]
-/home/jamal/Code/ECP/CANDLE/benchmarks/common/../Data/Pilot2/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20-f20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_02_outof_29.npy
+/CANDLE/benchmarks/common/../Data/Pilot2/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20-f20.dir/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20_chunk_02_outof_29.npy
 [Frame 0] Inner AE loss.. 0.134360544776
 (3040, 1, 180)
 Epoch 1/1
