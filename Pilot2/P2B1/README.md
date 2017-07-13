@@ -20,7 +20,7 @@
 * Expected performance of a naive method: N/A
 
 #### Description of the Network
-* Proposed network architecture: stacked fully-connected autoencoder
+* Proposed network architecture: Two stage multi-layer stacked autoencoder: convolutional "molecular" autoencoder, feeding stacked fully-connected autoencoder
 * Number of layers: 5-8
 
 ### Running the baseline implementation
