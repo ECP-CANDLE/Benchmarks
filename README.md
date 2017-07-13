@@ -12,10 +12,10 @@ Pilot2 (P2) benchmarks are formed out of problems and data at the molecular leve
 
 Pilot3 (P3) benchmarks are formed out of problems and data at the population level. The high level goal of the problem behind the P3 benchmarks is to predict cancer recurrence in patients based on patient related data.
 
-Each of the problems (P1,P2,P3) informed the implementation of specific benchmarks, so P1B3 would be benchmark 3 of problem 1. At this point, we will refer to a benchmark by it's problem area and benchmark number, so it's natural to talk of the P1B1 benchmark. In the course of development, two new benchmarks were added to Pilot 1, named NT3 and TC1, which do not currretly fit the naming convention. This will be resolved in future. Inside each benchmark directory, there exists a readme file that contains an overview of the benchmark, a description of the data and expected outcomes along with instructions for running the benchmark code.
+Each of the problems (P1,P2,P3) informed the implementation of specific benchmarks, so P1B3 would be benchmark 3 of problem 1. At this point, we will refer to a benchmark by it's problem area and benchmark number, so it's natural to talk of the P1B1 benchmark. In the course of development, two new benchmarks were added to Pilot 1, named NT3 and TC1, which do not currently fit the naming convention. This will be resolved in future. Inside each benchmark directory, there exists a readme file that contains an overview of the benchmark, a description of the data and expected outcomes along with instructions for running the benchmark code.
 
 
-Over time, we will also be adding implementations that make use of different tensor frameworks. The primary (baseline) benchmarks are implemented using keras, and are named with '_baseline' in the name, for example p3b1_baseline_keras2.py. 
+Over time, we will also be adding implementations that make use of different tensor frameworks. The primary (baseline) benchmarks are implemented using Keras, and are named with '_baseline' in the name, for example p3b1_baseline_keras2.py. 
 
 Implementations that use alternative tensor frameworks, such as mxnet or neon, will have the name of the framework in the name. Examples can be seen in the P1B3 benchmark contribs/ directory, for example:
         p1b3_mxnet.py
@@ -26,7 +26,7 @@ General guidelines
    
 For the 0.0 Release, we only include those benchmarks which have been extensively tested with the Supervisor workflows. The initial release will therefore only include Pilot1/NT3, Pilot2/P2B1 and Pilot3/P3B1. As more benchmarks are tested with the latest Supervisor, these will be added into the release branch. 
 
-One major difference between the Release 0.0 codes and the pre-relaese codes is the development of a uniform code structure and command-line interface. This is both to improve compatibility with the Supervisor interface (allowing experiments to sweep over hyperparameters in a consistent way) as well as to improve the readability of the codes for users. 
+One major difference between the Release 0.0 codes and the pre-release codes is the development of a uniform code structure and command-line interface. This is both to improve compatibility with the Supervisor interface (allowing experiments to sweep over hyperparameters in a consistent way) as well as to improve the readability of the codes for users. 
 
 Each benchmark includes a default_model.txt which includes the basic information required to describe a model, as well as defining keywords for the Supervisor framework to sweep over. 
 
@@ -59,5 +59,5 @@ metrics         : Metrics used to compute the accuracy when evaluating the train
 
 rng_seed        : Value for the random number seed. Otherwise a random seed is chosen. 
 
-More examples can be found within the respective default model files, but are generally limited to numerical parameters which can substantially affect model performace, such as learning_rate, batch_size and so on. For non-numeric inputs, the available values will generally correspond to the appropriate Keras function. 
+More examples can be found within the respective default model files, but are generally limited to numerical parameters which can substantially affect model performance, such as learning_rate, batch_size and so on. For non-numeric inputs, the available values will generally correspond to the appropriate Keras function. 
 
