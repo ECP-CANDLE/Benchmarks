@@ -43,7 +43,7 @@ test_data 	: file name for the testing data (if needed)
 
 model_name: meta data which is passed to the logger to allow creation of appropriate file paths
 
-conv		: specification of convolutional layers. These are specified by a list of vectors. Each vector represents a single convolutional layer, ordered as [# of filters, filer size, stride] with the dimensionality of the layer being inferred from the vector length; vector length is 2N + 1 where N is the dimensionality of the filter. Thus, all filter and stride dimensions must be specified, even if the filter is a square or cube.  Thus, [[100, 10, 1],[100, 20, 1]] specifies two 1D convolutional layers, while [100, 10, 10, 1, 1] specifies a single 2D convolutional layer. 
+conv		: specification of convolutional layers. In the current version, the dimension of the filter is specified by the network design, and the list of values is parsed accordingly. The depth of the model is then inferred from the length of the list. For example, a set of 1D convolutional layers requires 3 values (number of filters, filter width, stride) per layer. 
 
 dense		: specification of dense or fully-connected layers. These are specified as a list of integers, each representing the size of the output of the respective layer. 
 
