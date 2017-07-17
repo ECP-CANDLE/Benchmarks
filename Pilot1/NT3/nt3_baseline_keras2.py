@@ -24,7 +24,7 @@ def initialize_parameters():
 
     # Build benchmark object
     nt3Bmk = benchmark.BenchmarkNT3(benchmark.file_path, 'nt3_default_model.txt', 'keras',
-    prog='nt3_baseline', desc='Train Autoencoder - Pilot 1 Benchmark NT3')
+    prog='nt3_baseline', desc='Train Normal/Tumor Tissue Classifier - Pilot 1 Benchmark NT3')
     
     # Initialize parameters
     gParameters = default_utils.initialize_parameters(nt3Bmk)
