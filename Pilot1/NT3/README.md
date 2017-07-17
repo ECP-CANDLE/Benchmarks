@@ -1,12 +1,42 @@
-The NT3 benchmark is a binary classification task on 1400 RNA-seq based gene expression profiles from the NCI Genomic Data Commons (GDC). 700 of these samples are from tumor tissues and the other 700 are their matched normals. There are 60483 features for each sample that are fed into a neural network with two dense layers on top of two convolution layers by default. 
+## NT3: Convolutional Neural Net for Tissue Typen Prediction from Gene Expression
+
+**Overview**: Given the gene expression profile of a tissue sample, build a neural network model that can predict whether it is a normal or tumor sample.
+
+**Relationship to core problem**: This benchmark aims at understanding the difference in gene expression profiles between tumor tissues and their matched normal samples. It also exercises two core capabilities we need to build for the drug response problem: (1) classification based on sparse input data; and (2) evaluation of the information content and predictive value in a molecular assay with auxiliary learning tasks.
+
+**Expected outcome**: Build a DNN that can classify a tissue sample as tumor or normal.
+
+### Benchmark Specs Requirements
+
+#### Description of the Data
+* Data source: RNA-seq data from GDC
+* Input dimensions: 60,483 floats; log(1+x) transformed FPKM-UQ values
+* Output dimensions: Boolean
+* Sample size: 1,400 (700 tumor samples + 700 matched normal samples)
+* Notes on data balance and other issues: balanced two-class dataset
+
+#### Expected Outcomes
+* Classification
+* Output range or number of classes: 2
+
+#### Evaluation Metrics
+* Accuracy or loss function: Standard approaches such as F1-score, accuracy, ROC-AUC, cross entropy, etc.
+* Expected performance of a naïve method: linear regression or ensemble methods without feature selection
+
+#### Description of the Network
+* Proposed network architecture: neural network with convolution layers, dropout layers, and fully connected layers
+* Number of layers: At least two dense layers
+
+### Running the baseline implementation
+```
+python nt3_baseline_keras2.py
+```
+The training and test data files will be downloaded the first time this is run and will be cached for future runs.
 
 #### Sample output
 
 The following example out put is from a truncated run, using only 20 epochs, which is accomplished by modifying the nt3_default_model.txt file and then running:
 
-```
-python nt3_baseline_keras2.py
-```
 ```
 
 Using TensorFlow backend.
