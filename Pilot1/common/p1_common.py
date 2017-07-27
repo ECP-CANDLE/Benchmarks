@@ -565,7 +565,7 @@ def load_csv_data(train_path, test_path=None, return_dataframe=True, sep=',',
             if col in y_names:
                 df_dummy = pd.get_dummies(df_y[col], prefix=col, prefix_sep=':')
                 df_y = pd.concat([df_dummy, df_y.drop(col, axis=1)], axis=1)
-                print(df_dummy.columns)
+                # print(df_dummy.columns)
             else:
                 df_dummy = pd.get_dummies(df_x[col], prefix=col, prefix_sep=':')
                 df_x = pd.concat([df_dummy, df_x.drop(col, axis=1)], axis=1)

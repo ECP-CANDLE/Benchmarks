@@ -59,6 +59,12 @@ def p1b1_parser(parser):
                         help="use the 978 landmark genes from LINCS (L1000) as expression features")
     parser.add_argument("--residual", action="store_true",
                         help="add skip connections to the layers")
+    parser.add_argument('--cp', action='store_true',
+                        help='checkpoint models with best val_loss')
+    parser.add_argument('--tb', action='store_true',
+                        help='use tensorboard')
+    parser.add_argument('--reduce_lr', action='store_true',
+                        help='reduce learning rate on plateau')
 
     return parser
 
