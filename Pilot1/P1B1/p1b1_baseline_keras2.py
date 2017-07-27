@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import argparse
 import h5py
+import logging
+import os
 
 import numpy as np
 
@@ -9,9 +11,10 @@ import keras
 from keras import backend as K
 from keras import optimizers
 from keras.models import Model, Sequential
-from keras.layers import Activation, Dense, Dropout, Input, Lambda
+from keras.layers import Activation, BatchNormalization, Dense, Dropout, Input, Lambda
 from keras.initializers import RandomUniform
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, ProgbarLogger
+from keras.callbacks import TensorBoard
 from keras.metrics import binary_crossentropy, mse
 from scipy.stats.stats import pearsonr
 
@@ -65,6 +68,43 @@ class MetricHistory(Callback):
         print("\n")
 
 
+class LoggingCallback(Callback):
+    def __init__(self, print_fcn=print):
+        Callback.__init__(self)
+        self.print_fcn = print_fcn
+
+    def on_epoch_end(self, epoch, logs={}):
+        msg = "[Epoch: %i] %s" % (epoch, ", ".join("%s: %f" % (k, v) for k, v in sorted(logs.items())))
+        self.print_fcn(msg)
+
+
+def plot_history(out, history, metric='loss', title=None):
+    title = title or 'model {}'.format(metric)
+    val_metric = 'val_{}'.format(metric)
+    plt.figure(figsize=(16, 9))
+    plt.plot(history.history[metric])
+    plt.plot(history.history[val_metric])
+    plt.title(title)
+    plt.ylabel(metric)
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    png = '{}.plot.{}.png'.format(out, metric)
+    plt.savefig(png, bbox_inches='tight')
+
+
+def build_type_classifier(X_train, y_train, X_test, y_test):
+    y_train = np.argmax(y_train, axis=1)
+    y_test = np.argmax(y_test, axis=1)
+    from xgboost import XGBClassifier
+    from sklearn.metrics import accuracy_score
+    clf = XGBClassifier(max_depth=6, n_estimators=100)
+    clf.fit(X_train, y_train, eval_set=[(X_train, y_train), (X_test, y_test)], verbose=False)
+    y_pred = clf.predict(X_test)
+    acc = accuracy_score(y_test, y_pred)
+    print(acc)
+    return clf
+
+
 def initialize_parameters():
     # Get command-line parameters
     parser = get_p1b1_parser()
@@ -79,10 +119,24 @@ def initialize_parameters():
     return gParameters
 
 
+def verify_path(path):
+    folder = os.path.dirname(path)
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
+
 def run(gParameters):
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(gParameters, '.keras')
     logfile =  gParameters['logfile'] if gParameters['logfile'] else gParameters['save']+ext+'.log'
+
+    verify_path(logfile)
+    fh = logging.FileHandler(logfile)
+    fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+    fh.setLevel(logging.DEBUG)
+
+    p1b1.logger.setLevel(logging.DEBUG)
+    p1b1.logger.addHandler(fh)
     p1b1.logger.info('Params: {}'.format(gParameters))
 
     # Get default parameters for initialization and optimizer functions
@@ -90,7 +144,10 @@ def run(gParameters):
     seed = gParameters['rng_seed']
 
     # Load dataset
-    X_train, X_val, X_test = p1b1.load_data(gParameters, seed)
+    if gParameters['with_type']:
+        X_train, X_val, X_test = p1b1.load_data(gParameters, seed)
+    else:
+        X_train, y_train, X_val, y_val, X_test, y_test = p1b1.load_data(gParameters, seed)
 
     # with h5py.File('x_cache.h5', 'w') as hf:
         # hf.create_dataset("train",  data=X_train)
@@ -102,13 +159,15 @@ def run(gParameters):
         # X_val = hf['val'][:]
         # X_test = hf['test'][:]
 
-    print("Shape X_train: ", X_train.shape)
-    print("Shape X_val: ", X_val.shape)
+    print("Shape X_train:", X_train.shape)
+    print("Shape X_val:  ", X_val.shape)
     print("Shape X_test: ", X_test.shape)
 
-    print("Range X_train --> Min: ", np.min(X_train), ", max: ", np.max(X_train))
-    print("Range X_val --> Min: ", np.min(X_val), ", max: ", np.max(X_val))
-    print("Range X_test --> Min: ", np.min(X_test), ", max: ", np.max(X_test))
+    print("Range X_train: [{:.3g}, {:.3g}]".format(np.min(X_train), np.max(X_train)))
+    print("Range X_val:   [{:.3g}, {:.3g}]".format(np.min(X_val), np.max(X_val)))
+    print("Range X_test:  [{:.3g}, {:.3g}]".format(np.min(X_test), np.max(X_test)))
+
+    # clf = build_type_classifier(X_train, y_train, X_val, y_val)
 
     # Initialize weights and learning rule
     initializer_weights = p1_common_keras.build_initializer(gParameters['initialization'], kerasDefaults, seed)
@@ -135,9 +194,14 @@ def run(gParameters):
     h = input_vector
     for i, l in enumerate(layers):
         if l > 0:
+            x = h
             h = Dense(l, activation=activation,
                       kernel_initializer=initializer_weights,
                       bias_initializer=initializer_bias)(h)
+            if gParameters['residual']:
+                h = keras.layers.add([h, x])
+            if gParameters['batch_normalization']:
+                h = BatchNormalization()(h)
             if dropout > 0:
                 h = dropout_layer(dropout)(h)
 
@@ -172,11 +236,16 @@ def run(gParameters):
     h = decoder_input
     for i, l in reversed(list(enumerate(layers))):
         if l > 0:
-            if dropout > 0:
-                h = dropout_layer(dropout)(h)
+            x = h
             h = Dense(l, activation=activation,
                       kernel_initializer=initializer_weights,
                       bias_initializer=initializer_bias)(h)
+            if gParameters['residual'] and i < len(layers) - 1:
+                h = keras.layers.add([h, x])
+            if gParameters['batch_normalization']:
+                h = BatchNormalization()(h)
+            if dropout > 0:
+                h = dropout_layer(dropout)(h)
 
     decoded = Dense(input_dim, kernel_initializer=initializer_weights,
                     bias_initializer=initializer_bias)(h)
@@ -203,12 +272,26 @@ def run(gParameters):
     # Compile and display model
     model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
     model.summary()
+    decoder.summary()
 
     # calculate trainable and non-trainable params
     gParameters.update(compute_trainable_params(model))
 
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.0001)
-    candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
+    ext = p1b1.extension_from_parameters(gParameters, '.keras')
+
+    checkpointer = ModelCheckpoint(gParameters['save']+ext+'.weights.h5', save_best_only=True, save_weights_only=True)
+    tensorboard = TensorBoard(log_dir="tb/tb{}".format(ext))
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
+    candle_monitor = CandleRemoteMonitor(params=gParameters)
+    history_logger = LoggingCallback(p1b1.logger.info)
+
+    callbacks = [candle_monitor, history_logger]
+    if gParameters['reduce_lr']:
+        callbacks.append(reduce_lr)
+    if gParameters['cp']:
+        callbacks.append(checkpointer)
+    if gParameters['tb']:
+        callbacks.append(tensorboard)
 
     # Seed random generator for training
     np.random.seed(seed)
@@ -216,28 +299,47 @@ def run(gParameters):
     X_val2 = np.copy(X_val)
     np.random.shuffle(X_val2)
     start_scores = p1b1.evaluate_autoencoder(X_val, X_val2)
-    print('\nBetween random permutations of validation data:', start_scores)
+    print('\nBetween random pairs of validation samples:', start_scores)
 
     history = model.fit(X_train, X_train,
-                     batch_size=gParameters['batch_size'],
-                     epochs=gParameters['epochs'],
-                     # callbacks=[candleRemoteMonitor],
-                     callbacks=[reduce_lr, candleRemoteMonitor],
-                     validation_data=(X_val, X_val))
+                        batch_size=gParameters['batch_size'],
+                        epochs=gParameters['epochs'],
+                        callbacks=callbacks,
+                        verbose=2,
+                        validation_data=(X_val, X_val))
 
-    # model save
-    #save_filepath = "model_ae_W_" + ext
-    #model.save_weights(save_filepath)
+    out = '{}{}'.format(gParameters['save'], ext)
+    plot_history(out, history, 'loss')
+    plot_history(out, history, 'corr', 'streaming pearson correlation')
 
     # Evalute model on test set
     X_pred = model.predict(X_test)
     scores = p1b1.evaluate_autoencoder(X_pred, X_test)
     print('\nEvaluation on test data:', scores)
 
+    X_test_encoded = encoder.predict(X_test, batch_size=gParameters['batch_size'])
+    y_test_classes = np.argmax(y_test, axis=1)
+    # print(y_test_classes)
+    cmap = plt.cm.get_cmap('gist_rainbow')
+    plt.figure(figsize=(10, 8))
+    # plt.scatter(X_test_encoded[:, 0], X_test_encoded[:, 1], c=y_test_classes, cmap=cmap)
+    plt.scatter(X_test_encoded[:, 0], X_test_encoded[:, 1], c=y_test_classes, cmap=cmap, lw=0.5, edgecolor='black', alpha=0.7)
+    plt.colorbar()
+    png = '{}.latent.png'.format(out)
+    plt.savefig(png, bbox_inches='tight')
+
     # diff = X_pred - X_test
     # plt.hist(diff.ravel(), bins='auto')
     # plt.title("Histogram of Errors with 'auto' bins")
     # plt.savefig('histogram_keras.png')
+
+    # generate synthetic data
+    # epsilon_std = 1.0
+    # for i in range(1000):
+    #     z_sample = np.random.normal(size=(1, 2)) * epsilon_std
+    #     x_decoded = decoder.predict(z_sample)
+
+    p1b1.logger.removeHandler(fh)
 
     return history
 
