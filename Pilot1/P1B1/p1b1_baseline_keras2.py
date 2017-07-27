@@ -121,7 +121,7 @@ def initialize_parameters():
 
 def verify_path(path):
     folder = os.path.dirname(path)
-    if not os.path.exists(folder):
+    if folder and not os.path.exists(folder):
         os.makedirs(folder)
 
 
