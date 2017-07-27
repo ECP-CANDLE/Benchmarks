@@ -17,9 +17,11 @@ sys.path.append(lib_path)
 
 from data_utils import get_file
 
+
 # Seed for random generation -- default value
 SEED = 7102
 DEFAULT_DATATYPE = np.float32
+
 
 def get_p1_file(link):
     fname = os.path.basename(link)
@@ -323,14 +325,15 @@ def impute_and_scale_array(mat, scaling=None):
 
 def load_X_data(path, train_filename, test_filename,
                 shuffle=False, scaling=None,
-                drop_cols=None, n_cols=None, onehot_cols=None,
+                drop_cols=None, usecols=None, n_cols=None, onehot_cols=None,
                 validation_split=None, dtype=DEFAULT_DATATYPE, seed=SEED):
 
     train_path = get_p1_file(path + train_filename)
     test_path = get_p1_file(path + test_filename)
 
     # compensates for the columns to drop if there is a feature subselection
-    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
+    if usecols is None:
+        usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
 
     df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
@@ -373,28 +376,242 @@ def load_X_data(path, train_filename, test_filename,
         return X_train, X_test
 
 
-def load_X_data2(path, train_filename, test_filename,
-                drop_cols=None, n_cols=None, shuffle=False, scaling=None,
-                validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=SEED):
+def test_load_csv_data():
+    train_path = '_train_load_data.csv'
+    test_path = '_test_load_data.csv'
 
-    train_path = get_p1_file(path + train_filename)
-    test_path = get_p1_file(path + test_filename)
+    nrows = 5
+    df1 = pd.DataFrame({'y': np.random.randint(0, 9, nrows),
+                        'x0': np.random.randint(30, 39, nrows),
+                        'x1': np.random.randint(-10, 10, nrows) / 10.,
+                        'x2': np.random.randint(0, 10, nrows),
+                        'x3': np.random.randint(0, 10, nrows),
+                        'x4': np.random.randint(0, 10, nrows),
+                        'x5': np.random.randint(0, 100, nrows) / 10.,
+                        'x6': np.random.randint(-10, 10, nrows),
+                        'z1': pd.Categorical(['cat'] * 2 + ['dog'] * (nrows - 2)),
+                        'z2': np.random.randint(0, 3, nrows)})
 
-    # compensates for the columns to drop if there is a feature subselection
-    usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
+    nrows = 2
+    df2 = pd.DataFrame({'y': np.random.randint(0, 9, nrows),
+                        'x0': np.random.randint(30, 39, nrows),
+                        'x1': np.random.randint(-10, 10, nrows) / 10.,
+                        'x2': np.random.randint(0, 10, nrows),
+                        'x3': np.random.randint(0, 3, nrows),
+                        'x4': np.random.randint(0, 10, nrows),
+                        'x5': np.random.randint(0, 100, nrows) / 10.,
+                        'x6': np.random.randint(-10, 10, nrows),
+                        'z1': pd.Categorical(['cat'] * 2 + ['dog'] * (nrows - 2)),
+                        'z2': np.random.randint(0, 3, nrows)})
 
-    df_train = pd.read_csv(train_path, engine='c', usecols=usecols)
-    df_test = pd.read_csv(test_path, engine='c', usecols=usecols)
+    df1.to_csv(train_path, index=False)
+    df2.to_csv(test_path, index=False)
 
-    # Drop specified columns
-    if drop_cols is not None:
-        for col in drop_cols:
-            df_train.drop(col, axis=1, inplace=True)
-            df_test.drop(col, axis=1, inplace=True)
+    x_train = load_csv_data(train_path)
+
+    x_train, x_test = load_csv_data(train_path, test_path)
+
+    x_train, x_val, x_test = load_csv_data(train_path, test_path, validation_split=0.2)
+
+    x_train, x_val, x_test = load_csv_data(train_path, test_path, validation_split=0.2, shuffle=True)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=[7])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=[7, 8, 9])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y', 'z1'])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y', 'z1'], onehot_cols=['z1'])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], onehot_cols=['z1'])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], drop_cols=['x5', 'z1'])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], drop_cols=['x5', 'z1'], return_dataframe=False)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], x_cols=['x3', 'x5'])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], x_cols=['x3', 'x6'], n_cols=3)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], x_cols=['x3', 'x6'], onehot_cols=['z1'], n_cols=3)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], x_cols=['x3', 'x6'], onehot_cols=['z1'], n_cols=4, random_cols=True)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], onehot_cols=['z1'], n_cols=3)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], onehot_cols=['z1'], n_cols=3, random_cols=True)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], onehot_cols=['z1', 'x3'], n_cols=2)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], onehot_cols=['z1', 'x3'], n_cols=1)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], onehot_cols=['z1', 'x3'], n_cols=1, random_cols=True)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], onehot_cols=['z1', 'x3'], n_cols=1, random_cols=True)
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], onehot_cols=['z1', 'y'])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y'], onehot_cols=['x3', 'z1', 'y'])
+
+    x_train, y_train = load_csv_data(train_path, y_cols=['y', 'z1', 'z2'], onehot_cols=['x3', 'z1', 'y'])
+
+    x_train, y_train, x_test, y_test = load_csv_data(train_path, test_path, y_cols=['y', 'z1', 'z2'], onehot_cols=['x3', 'z1', 'y'])
+
+    x_train, y_train, x_val, y_val, x_test, y_test = load_csv_data(train_path, test_path, y_cols=['y', 'z1', 'z2'], onehot_cols=['x3', 'z1', 'y'], validation_split=0.4)
+
+    x_train, y_train, x_val, y_val, x_test, y_test = load_csv_data(train_path, test_path, y_cols=['y', 'z1', 'z2'], onehot_cols=['x3', 'z1', 'y'], validation_split=0.4, return_dataframe=False)
+
+    x_train, y_train, x_val, y_val, x_test, y_test = load_csv_data(train_path, test_path, scaling='minmax', y_cols=['y', 'z1', 'z2'], onehot_cols=['x3', 'z1', 'y'], validation_split=0.4)
+
+    train_path = '/home/fangfang/Benchmarks/Pilot1/P1B1/tmp.csv'
+    test_path = None
+    y_cols = [0]
+    y_cols = ['y']
+    x_cols = None
+    drop_cols = [3, 9]
+    drop_cols = None
+    n_cols = 3
+    n_cols = None
+    random_cols = True
+    random_cols = False
+    onehot_cols = None
+    # onehot_cols = None
+    dtype = None
+    shuffle = False
+    shuffle = True
+    scaling = None
+    scaling = 'minmax'
+    return_dataframe = True
+    validation_split = None
+    sep = ','
+
+
+def load_csv_data(train_path, test_path=None, return_dataframe=True, sep=',',
+                  y_cols=None, x_cols=None, drop_cols=None, onehot_cols=None,
+                  n_cols=None, random_cols=False, shuffle=False, scaling=None,
+                  dtype=None, validation_split=None, seed=2017):
+
+    """Load training and test data from CSV
+
+        Parameters
+        ----------
+        train_path : path
+            training file path
+    """
+
+    if x_cols is None and drop_cols is None and n_cols is None:
+        usecols = None
+        y_names = None
+    else:
+        df_cols = pd.read_csv(train_path, engine='c', sep=sep, nrows=0)
+        df_x_cols = df_cols.copy()
+        # drop columns by name or index
+        if y_cols is not None:
+            df_x_cols = df_x_cols.drop(df_cols[y_cols], axis=1)
+        if drop_cols is not None:
+            df_x_cols = df_x_cols.drop(df_cols[drop_cols], axis=1)
+
+        reserved = []
+        if onehot_cols is not None:
+            reserved += onehot_cols
+        if x_cols is not None:
+            reserved += x_cols
+
+        nx = df_x_cols.shape[1]
+        if n_cols and n_cols < nx:
+            if random_cols:
+                indexes = sorted(np.random.choice(list(range(nx)), n_cols, replace=False))
+            else:
+                indexes = list(range(n_cols))
+            x_names = list(df_x_cols[indexes])
+            unreserved = [x for x in x_names if x not in reserved]
+            n_keep = np.maximum(n_cols - len(reserved), 0)
+            combined = reserved + unreserved[:n_keep]
+            x_names = [x for x in df_x_cols if x in combined]
+        elif x_cols is not None:
+            x_names = list(df_x_cols[x_cols])
+        else:
+            x_names = list(df_x_cols.columns)
+
+        usecols = x_names
+        if y_cols is not None:
+            y_names = list(df_cols[y_cols])
+            usecols = y_names + x_names
+
+    df_train = pd.read_csv(train_path, engine='c', sep=sep, usecols=usecols)
+    if test_path:
+        df_test = pd.read_csv(test_path, engine='c', sep=sep, usecols=usecols)
+    else:
+        df_test = df_train[0:0].copy()
+
+    if y_cols is None:
+        y_names = []
+    elif y_names is None:
+        y_names = list(df_train[0:0][y_cols])
 
     if shuffle:
         df_train = df_train.sample(frac=1, random_state=seed)
-        df_test = df_test.sample(frac=1, random_state=seed)
+        if test_path:
+            df_test = df_test.sample(frac=1, random_state=seed)
+
+    df_cat = pd.concat([df_train, df_test])
+    df_y = df_cat[y_names]
+    df_x = df_cat.drop(y_names, axis=1)
+
+    if onehot_cols is not None:
+        for col in onehot_cols:
+            if col in y_names:
+                df_dummy = pd.get_dummies(df_y[col], prefix=col, prefix_sep=':')
+                df_y = pd.concat([df_dummy, df_y.drop(col, axis=1)], axis=1)
+                # print(df_dummy.columns)
+            else:
+                df_dummy = pd.get_dummies(df_x[col], prefix=col, prefix_sep=':')
+                df_x = pd.concat([df_dummy, df_x.drop(col, axis=1)], axis=1)
+
+    if scaling is not None:
+        mat = scale_array(df_x.values, scaling)
+        df_x = pd.DataFrame(mat, index=df_x.index, columns=df_x.columns, dtype=dtype)
+
+    n_train = df_train.shape[0]
+
+    x_train = df_x[:n_train]
+    y_train = df_y[:n_train]
+    x_test = df_x[n_train:]
+    y_test = df_y[n_train:]
+
+    return_y = y_cols is not None
+    return_val = validation_split and validation_split > 0 and validation_split < 1
+    return_test = test_path
+
+    if return_val:
+        n_val = int(n_train * validation_split)
+        x_val = x_train[-n_val:]
+        y_val = y_train[-n_val:]
+        x_train = x_train[:-n_val]
+        y_train = y_train[:-n_val]
+
+    ret = [x_train]
+    ret = ret + [y_train] if return_y else ret
+    ret = ret + [x_val] if return_val else ret
+    ret = ret + [y_val] if return_y and return_val else ret
+    ret = ret + [x_test] if return_test else ret
+    ret = ret + [y_test] if return_y and return_test else ret
+
+    if not return_dataframe:
+        ret = [x.values for x in ret]
+
+    return tuple(ret) if len(ret) > 1 else ret
+
+
+def load_Xy_data(path, train_filename, test_filename, y_col=0,
+                 shuffle=False, scaling=None, onehot_y=False, random_cols=False,
+                 drop_cols=None, usecols=None, n_cols=None, onehot_cols=None,
+                 validation_split=None, dtype=DEFAULT_DATATYPE, seed=SEED):
+
+    train_path = get_p1_file(path + train_filename)
+    test_path = get_p1_file(path + test_filename)
 
     X_train = df_train.values.astype(dtype)
     X_test = df_test.values.astype(dtype)
@@ -404,14 +621,17 @@ def load_X_data2(path, train_filename, test_filename,
     if scaling is not None:
         mat = scale_array(mat, scaling)
 
-    # Separate training in training and validation splits after scaling
-    sizeTrain = X_train.shape[0]
-    X_test = mat[sizeTrain:, :]
-    numVal = int(sizeTrain * validation_split)
-    X_val = mat[:numVal, :]
-    X_train = mat[numVal:sizeTrain, :]
+    n = X_train.shape[0]
+    X_train = mat[:n, :]
+    X_test = mat[n:, :]
 
-    return X_train, X_val, X_test
+    if validation_split and validation_split > 0 and validation_split < 1:
+        n_val = int(n * validation_split)
+        X_val = X_train[-n_val:, :]
+        X_train = X_train[:-n_val, :]
+        return X_train, X_val, X_test
+    else:
+        return X_train, X_test
 
 
 def load_Xy_one_hot_data(path, train_filename, test_filename,
@@ -442,7 +662,6 @@ def load_Xy_one_hot_data(path, train_filename, test_filename,
         for col in drop_cols:
             df_train.drop(col, axis=1, inplace=True)
             df_test.drop(col, axis=1, inplace=True)
-
 
     # Convert from pandas dataframe to numpy array
     X_train = df_train.values.astype(dtype)
@@ -526,13 +745,11 @@ def load_Xy_data2(path, train_filename, test_filename, class_col=None, drop_cols
     y_val = convert_to_class(y_val_oh)
     y_test = convert_to_class(y_test_oh)
 
-
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 
 
 def convert_to_class(y_one_hot, dtype=int):
-
     maxi = lambda a: a.argmax()
     iter_to_na = lambda i: np.fromiter(i, dtype=dtype)
     return np.array([maxi(a) for a in y_one_hot])
