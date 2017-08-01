@@ -124,6 +124,21 @@ def initialize_parameters():
     return params
 
 
+def set_seed(seed):
+    os.environ['PYTHONHASHSEED'] = '0'
+    np.random.seed(seed)
+
+    import random
+    random.seed(seed)
+
+    if K.backend() == 'tensorflow':
+        import tensorflow as tf
+        session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+        tf.set_random_seed(seed)
+        sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+        K.set_session(sess)
+
+
 def verify_path(path):
     folder = os.path.dirname(path)
     if folder and not os.path.exists(folder):
@@ -182,19 +197,20 @@ def run(params):
     logger.info('Params: {}'.format(params))
 
     # Get default parameters for initialization and optimizer functions
-    kerasDefaults = p1_common.keras_default_config()
+    keras_defaults = p1_common.keras_default_config()
     seed = params['rng_seed']
+    set_seed(seed)
 
     # Load dataset
-    x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = p1b1.load_data(params, seed)
+    # x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = p1b1.load_data(params, seed)
 
-    # cache_file = 'data_l1000_cache.h5'
+    cache_file = 'data_l1000_cache.h5'
     # save_cache(cache_file, x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels)
-    # x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = load_cache(cache_file)
+    x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = load_cache(cache_file)
 
-    logger.info("Shape x_train:", x_train.shape)
-    logger.info("Shape x_val:  ", x_val.shape)
-    logger.info("Shape x_test: ", x_test.shape)
+    logger.info("Shape x_train: {}".format(x_train.shape))
+    logger.info("Shape x_val:   {}".format(x_val.shape))
+    logger.info("Shape x_test:  {}".format(x_test.shape))
 
     logger.info("Range x_train: [{:.3g}, {:.3g}]".format(np.min(x_train), np.max(x_train)))
     logger.info("Range x_val:   [{:.3g}, {:.3g}]".format(np.min(x_val), np.max(x_val)))
@@ -203,8 +219,8 @@ def run(params):
     # clf = build_type_classifier(x_train, y_train, x_val, y_val)
 
     # Initialize weights and learning rule
-    initializer_weights = p1_common_keras.build_initializer(params['initialization'], kerasDefaults, seed)
-    initializer_bias = p1_common_keras.build_initializer('constant', kerasDefaults, 0.)
+    initializer_weights = p1_common_keras.build_initializer(params['initialization'], keras_defaults, seed)
+    initializer_bias = p1_common_keras.build_initializer('constant', keras_defaults, 0.)
 
     input_dim = x_train.shape[1]
     latent_dim = params['latent_dim']
@@ -304,7 +320,7 @@ def run(params):
     # Define optimizer
     # optimizer = p1_common_keras.build_optimizer(params['optimizer'],
     #                                             params['learning_rate'],
-    #                                             kerasDefaults)
+    #                                             keras_defaults)
     optimizer = optimizers.deserialize({'class_name': params['optimizer'], 'config': {}})
     base_lr = params['base_lr'] or K.get_value(optimizer.lr)
     if params['learning_rate']:
@@ -352,7 +368,7 @@ def run(params):
     x_val2 = np.copy(x_val)
     np.random.shuffle(x_val2)
     start_scores = p1b1.evaluate_autoencoder(x_val, x_val2)
-    logger.info('\nBetween random pairs of validation samples:', start_scores)
+    logger.info('\nBetween random pairs of validation samples: {}'.format(start_scores))
 
     history = model.fit(x_train, x_train,
                         batch_size=params['batch_size'],
@@ -368,7 +384,7 @@ def run(params):
     # Evalute model on test set
     x_pred = model.predict(x_test)
     scores = p1b1.evaluate_autoencoder(x_pred, x_test)
-    logger.info('\nEvaluation on test data:', scores)
+    logger.info('\nEvaluation on test data: {}'.format(scores))
 
     x_test_encoded = encoder.predict(x_test, batch_size=params['batch_size'])
     y_test_classes = np.argmax(y_test, axis=1)
@@ -397,7 +413,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-    try:
+    if K.backend() == 'tensorflow':
         K.clear_session()
-    except AttributeError:      # theano does not have this function
-        pass
