@@ -15,6 +15,7 @@ from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from keras.metrics import binary_crossentropy, mean_squared_error
 from scipy.stats.stats import pearsonr
+from sklearn.manifold import TSNE
 
 import warnings
 with warnings.catch_warnings():
@@ -196,7 +197,8 @@ def load_cache(cache_file):
 def run(params):
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(params, '.keras')
-    logfile = params['logfile'] if params['logfile'] else params['save']+ext+'.log'
+    prefix = '{}{}'.format(params['save'], ext)
+    logfile = params['logfile'] if params['logfile'] else prefix+'.log'
 
     verify_path(logfile)
     logger = set_up_logger(logfile, params['verbose'])
@@ -223,20 +225,29 @@ def run(params):
     logger.info("Range x_val:   [{:.3g}, {:.3g}]".format(np.min(x_val), np.max(x_val)))
     logger.info("Range x_test:  [{:.3g}, {:.3g}]".format(np.min(x_test), np.max(x_test)))
 
+    logger.debug('Class labels')
+    for i, label in enumerate(y_labels):
+        logger.debug('  {}: {}'.format(i, label))
+
     # clf = build_type_classifier(x_train, y_train, x_val, y_val)
 
-    # Initialize weights and learning rule
-    initializer_weights = p1_common_keras.build_initializer(params['initialization'], keras_defaults, seed)
-    initializer_bias = p1_common_keras.build_initializer('constant', keras_defaults, 0.)
+    n_classes = len(y_labels)
+    cond_train = y_train
+    cond_val = y_val
+    cond_test = y_test
 
     input_dim = x_train.shape[1]
+    cond_dim = cond_train.shape[1]
     latent_dim = params['latent_dim']
 
-    model = params['model']
     activation = params['activation']
     dropout = params['drop']
     dense_layers = params['dense']
     dropout_layer = keras.layers.noise.AlphaDropout if params['alpha_dropout'] else Dropout
+
+    # Initialize weights and learning rule
+    initializer_weights = p1_common_keras.build_initializer(params['initialization'], keras_defaults, seed)
+    initializer_bias = p1_common_keras.build_initializer('constant', keras_defaults, 0.)
 
     if dense_layers is not None:
         if type(dense_layers) != list:
@@ -245,8 +256,12 @@ def run(params):
         dense_layers = []
 
     # Encoder Part
-    input_vector = Input(shape=(input_dim,))
-    h = input_vector
+    x_input = Input(shape=(input_dim,))
+    cond_input = Input(shape=(cond_dim,))
+    h = x_input
+    if params['model'] == 'cvae':
+        h = keras.layers.concatenate([x_input, cond_input])
+
     for i, layer in enumerate(dense_layers):
         if layer > 0:
             x = h
@@ -263,7 +278,7 @@ def run(params):
             if dropout > 0:
                 h = dropout_layer(dropout)(h)
 
-    if model == 'ae':
+    if params['model'] == 'ae':
         encoded = Dense(latent_dim, activation=activation,
                         kernel_initializer=initializer_weights,
                         bias_initializer=initializer_bias)(h)
@@ -286,12 +301,15 @@ def run(params):
             return z_mean_ + K.exp(z_log_var_ / 2) * epsilon
 
         z = Lambda(sampling, output_shape=(latent_dim,))([z_mean, z_log_var])
-
-    encoder = Model(input_vector, encoded)
+        if params['model'] == 'cvae':
+            z_cond = keras.layers.concatenate([z, cond_input])
 
     # Decoder Part
     decoder_input = Input(shape=(latent_dim,))
     h = decoder_input
+    if params['model'] == 'cvae':
+        h = keras.layers.concatenate([decoder_input, cond_input])
+
     for i, layer in reversed(list(enumerate(dense_layers))):
         if layer > 0:
             x = h
@@ -312,17 +330,33 @@ def run(params):
                     kernel_initializer=initializer_weights,
                     bias_initializer=initializer_bias)(h)
 
-    decoder = Model(decoder_input, decoded)
-
-    # Build and compile autoencoder model
-    if model == 'ae':
-        model = Model(input_vector, decoder(encoded))
-        loss = params['loss']
-        metrics = [xent, corr]
-    else:
-        model = Model(input_vector, decoder(z))
+    # Build autoencoder model
+    if params['model'] == 'cvae':
+        encoder = Model([x_input, cond_input], encoded)
+        decoder = Model([decoder_input, cond_input], decoded)
+        model = Model([x_input, cond_input], decoder([z, cond_input]))
         loss = vae_loss
         metrics = [xent, corr, mse]
+    elif params['model'] == 'vae':
+        encoder = Model(x_input, encoded)
+        decoder = Model(decoder_input, decoded)
+        model = Model(x_input, decoder(z))
+        loss = vae_loss
+        metrics = [xent, corr, mse]
+    else:
+        encoder = Model(x_input, encoded)
+        decoder = Model(decoder_input, decoded)
+        model = Model(x_input, decoder(encoded))
+        loss = params['loss']
+        metrics = [xent, corr]
+
+    model.summary()
+    decoder.summary()
+
+    if params['cp']:
+        model_json = model.to_json()
+        with open(prefix+'.model.json', 'w') as f:
+            print(model_json, file=f)
 
     # Define optimizer
     # optimizer = p1_common_keras.build_optimizer(params['optimizer'],
@@ -333,17 +367,10 @@ def run(params):
     if params['learning_rate']:
         K.set_value(optimizer.lr, params['learning_rate'])
 
-    logger.debug('Model: {}'.format(model.to_json()))
-
-    # Compile and display model
     model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
-    model.summary()
-    decoder.summary()
 
     # calculate trainable and non-trainable params
     params.update(compute_trainable_params(model))
-
-    ext = p1b1.extension_from_parameters(params, '.keras')
 
     def warmup_scheduler(epoch):
         lr = params['learning_rate'] or base_lr * params['batch_size']/100
@@ -369,33 +396,50 @@ def run(params):
     if params['tb']:
         callbacks.append(tensorboard)
 
-    # Seed random generator for training
-    np.random.seed(seed)
-
     x_val2 = np.copy(x_val)
     np.random.shuffle(x_val2)
     start_scores = p1b1.evaluate_autoencoder(x_val, x_val2)
     logger.info('\nBetween random pairs of validation samples: {}'.format(start_scores))
 
-    history = model.fit(x_train, x_train,
+    if params['model'] == 'cvae':
+        inputs = [x_train, cond_train]
+        val_inputs = [x_val, cond_val]
+        test_inputs = [x_test, cond_test]
+    else:
+        inputs = x_train
+        val_inputs = x_val
+        test_inputs = x_test
+
+    outputs = x_train
+    val_outputs = x_val
+    test_outputs = x_test
+
+    history = model.fit(inputs, outputs,
+                        verbose=2,
                         batch_size=params['batch_size'],
                         epochs=params['epochs'],
                         callbacks=callbacks,
-                        verbose=2,
-                        validation_data=(x_val, x_val))
+                        validation_data=(val_inputs, val_outputs))
 
-    out = '{}{}'.format(params['save'], ext)
-    plot_history(out, history, 'loss')
-    plot_history(out, history, 'corr', 'streaming pearson correlation')
+    if params['cp']:
+        decoder.save(prefix+'.decoder.h5')
+
+    plot_history(prefix, history, 'loss')
+    plot_history(prefix, history, 'corr', 'streaming pearson correlation')
 
     # Evalute model on test set
-    x_pred = model.predict(x_test)
+    x_pred = model.predict(test_inputs)
     scores = p1b1.evaluate_autoencoder(x_pred, x_test)
     logger.info('\nEvaluation on test data: {}'.format(scores))
 
-    x_test_encoded = encoder.predict(x_test, batch_size=params['batch_size'])
+    x_test_encoded = encoder.predict(test_inputs, batch_size=params['batch_size'])
     y_test_classes = np.argmax(y_test, axis=1)
-    plot_scatter(x_test_encoded, y_test_classes, out+'.latent')
+    plot_scatter(x_test_encoded, y_test_classes, prefix+'.latent')
+
+    if params['tsne']:
+        tsne = TSNE(n_components=2, random_state=seed)
+        x_test_encoded_tsne = tsne.fit_transform(x_test_encoded)
+        plot_scatter(x_test_encoded_tsne, y_test_classes, prefix+'.latent.tsne')
 
     # diff = x_pred - x_test
     # plt.hist(diff.ravel(), bins='auto')
