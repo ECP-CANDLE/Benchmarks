@@ -422,6 +422,7 @@ def run(params):
                         validation_data=(val_inputs, val_outputs))
 
     if params['cp']:
+        encoder.save(prefix+'.encoder.h5')
         decoder.save(prefix+'.decoder.h5')
 
     plot_history(prefix, history, 'loss')
