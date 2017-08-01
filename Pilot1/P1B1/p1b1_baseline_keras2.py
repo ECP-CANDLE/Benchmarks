@@ -211,11 +211,11 @@ def run(params):
     set_seed(seed)
 
     # Load dataset
-    # x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = p1b1.load_data(params, seed)
+    x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = p1b1.load_data(params, seed)
 
-    cache_file = 'data_l1000_cache.h5'
+    # cache_file = 'data_l1000_cache.h5'
     # save_cache(cache_file, x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels)
-    x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = load_cache(cache_file)
+    # x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = load_cache(cache_file)
 
     logger.info("Shape x_train: {}".format(x_train.shape))
     logger.info("Shape x_val:   {}".format(x_val.shape))
