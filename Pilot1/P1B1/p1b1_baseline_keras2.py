@@ -161,10 +161,7 @@ def run(params):
     seed = params['rng_seed']
 
     # Load dataset
-    if params['with_type']:
-        x_train, x_val, x_test = p1b1.load_data(params, seed)
-    else:
-        x_train, y_train, x_val, y_val, x_test, y_test = p1b1.load_data(params, seed)
+    x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = p1b1.load_data(params, seed)
 
     # with h5py.File('x_cache.h5', 'w') as hf:
         # hf.create_dataset("train",  data=x_train)
@@ -196,22 +193,22 @@ def run(params):
     vae = params['vae']
     activation = params['activation']
     dropout = params['drop']
-    layers = params['dense']
+    dense_layers = params['dense']
     dropout_layer = keras.layers.noise.AlphaDropout if params['alpha_dropout'] else Dropout
 
-    if layers is not None:
-        if type(layers) != list:
-            layers = list(layers)
+    if dense_layers is not None:
+        if type(dense_layers) != list:
+            dense_layers = list(dense_layers)
     else:
-        layers = []
+        dense_layers = []
 
     # Encoder Part
     input_vector = Input(shape=(input_dim,))
     h = input_vector
-    for i, l in enumerate(layers):
-        if l > 0:
+    for i, layer in enumerate(dense_layers):
+        if layer > 0:
             x = h
-            h = Dense(l, activation=activation,
+            h = Dense(layer, activation=activation,
                       kernel_initializer=initializer_weights,
                       bias_initializer=initializer_bias)(h)
             if params['residual']:
@@ -253,10 +250,10 @@ def run(params):
     # Decoder Part
     decoder_input = Input(shape=(latent_dim,))
     h = decoder_input
-    for i, l in reversed(list(enumerate(layers))):
-        if l > 0:
+    for i, layer in reversed(list(enumerate(dense_layers))):
+        if layer > 0:
             x = h
-            h = Dense(l, activation=activation,
+            h = Dense(layer, activation=activation,
                       kernel_initializer=initializer_weights,
                       bias_initializer=initializer_bias)(h)
             if params['residual']:

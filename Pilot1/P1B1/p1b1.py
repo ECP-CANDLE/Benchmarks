@@ -53,8 +53,8 @@ def p1b1_parser(parser):
                         help="latent dimensions")
     parser.add_argument("--vae", action='store_true',
                         help="variational autoencoder")
-    parser.add_argument("--with_type", action='store_true',
-                        help="include one-hot encoded type information")
+    # parser.add_argument("--with_type", action='store_true',
+    #                     help="include one-hot encoded type information")
     parser.add_argument("--use_landmark_genes", action="store_true",
                         help="use the 978 landmark genes from LINCS (L1000) as expression features")
     parser.add_argument("--residual", action="store_true",
@@ -135,22 +135,16 @@ def extension_from_parameters(params, framework=''):
         ext += '.Res'
     if params['vae']:
         ext += '.VAE'
-    if params['with_type']:
-        ext += '.WT'
+    # if params['with_type']:
+        # ext += '.WT'
 
     return ext
 
 
 def load_data(params, seed):
-    if params['with_type']:
-        drop_cols = ['case_id']
-        onehot_cols = ['cancer_type']
-        y_cols = None
-    else:
-        drop_cols = ['case_id']
-        onehot_cols = ['cancer_type']
-        # onehot_cols = None
-        y_cols = ['cancer_type']
+    drop_cols = ['case_id']
+    onehot_cols = ['cancer_type']
+    y_cols = ['cancer_type']
 
     if params['use_landmark_genes']:
         lincs_file = 'lincs1000.tsv'
@@ -165,9 +159,8 @@ def load_data(params, seed):
     test_path = p1_common.get_p1_file(url_p1b1 + file_test)
 
     return p1_common.load_csv_data(train_path, test_path,
-                                   return_dataframe=False,
-                                   y_cols=y_cols,
                                    x_cols=x_cols,
+                                   y_cols=y_cols,
                                    drop_cols=drop_cols,
                                    onehot_cols=onehot_cols,
                                    n_cols=params['feature_subsample'],
@@ -175,6 +168,8 @@ def load_data(params, seed):
                                    scaling=params['scaling'],
                                    dtype=params['datatype'],
                                    validation_split=params['validation_split'],
+                                   return_dataframe=False,
+                                   return_header=True,
                                    seed=seed)
 
 

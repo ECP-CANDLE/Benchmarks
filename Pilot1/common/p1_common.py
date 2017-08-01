@@ -465,33 +465,35 @@ def test_load_csv_data():
 
     x_train, y_train, x_val, y_val, x_test, y_test = load_csv_data(train_path, test_path, scaling='minmax', y_cols=['y', 'z1', 'z2'], onehot_cols=['x3', 'z1', 'y'], validation_split=0.4)
 
-    train_path = '/home/fangfang/Benchmarks/Pilot1/P1B1/tmp.csv'
-    test_path = None
-    y_cols = [0]
-    y_cols = ['y']
-    x_cols = None
-    drop_cols = [3, 9]
-    drop_cols = None
-    n_cols = 3
-    n_cols = None
-    random_cols = True
-    random_cols = False
-    onehot_cols = None
+    # train_path = '/home/fangfang/Benchmarks/Pilot1/P1B1/tmp.csv'
+    # test_path = None
+    # y_cols = [0]
+    # y_cols = ['y']
+    # x_cols = None
+    # drop_cols = [3, 9]
+    # drop_cols = None
+    # n_cols = 3
+    # n_cols = None
+    # random_cols = True
+    # random_cols = False
     # onehot_cols = None
-    dtype = None
-    shuffle = False
-    shuffle = True
-    scaling = None
-    scaling = 'minmax'
-    return_dataframe = True
-    validation_split = None
-    sep = ','
+    # # onehot_cols = None
+    # dtype = None
+    # shuffle = False
+    # shuffle = True
+    # scaling = None
+    # scaling = 'minmax'
+    # return_dataframe = True
+    # validation_split = None
+    # sep = ','
 
 
-def load_csv_data(train_path, test_path=None, return_dataframe=True, sep=',',
-                  y_cols=None, x_cols=None, drop_cols=None, onehot_cols=None,
-                  n_cols=None, random_cols=False, shuffle=False, scaling=None,
-                  dtype=None, validation_split=None, seed=2017):
+def load_csv_data(train_path, test_path=None, sep=',', n_rows=None,
+                  x_cols=None, y_cols=None, drop_cols=None,
+                  onehot_cols=None, n_cols=None, random_cols=False,
+                  shuffle=False, scaling=None, dtype=None,
+                  validation_split=None, return_dataframe=True,
+                  return_header=False, seed=2017):
 
     """Load training and test data from CSV
 
@@ -540,9 +542,9 @@ def load_csv_data(train_path, test_path=None, return_dataframe=True, sep=',',
             y_names = list(df_cols[y_cols])
             usecols = y_names + x_names
 
-    df_train = pd.read_csv(train_path, engine='c', sep=sep, usecols=usecols)
+    df_train = pd.read_csv(train_path, engine='c', sep=sep, n_rows=n_rows, usecols=usecols)
     if test_path:
-        df_test = pd.read_csv(test_path, engine='c', sep=sep, usecols=usecols)
+        df_test = pd.read_csv(test_path, engine='c', sep=sep, n_rows=n_rows, usecols=usecols)
     else:
         df_test = df_train[0:0].copy()
 
@@ -601,6 +603,9 @@ def load_csv_data(train_path, test_path=None, return_dataframe=True, sep=',',
 
     if not return_dataframe:
         ret = [x.values for x in ret]
+
+    if return_header:
+        ret = ret + [df_x.columns.tolist(), df_y.columns.tolist()]
 
     return tuple(ret) if len(ret) > 1 else ret
 
