@@ -173,13 +173,13 @@ def run(params):
         # x_val = hf['val'][:]
         # x_test = hf['test'][:]
 
-    print("Shape x_train:", x_train.shape)
-    print("Shape x_val:  ", x_val.shape)
-    print("Shape x_test: ", x_test.shape)
+    logger.info("Shape x_train:", x_train.shape)
+    logger.info("Shape x_val:  ", x_val.shape)
+    logger.info("Shape x_test: ", x_test.shape)
 
-    print("Range x_train: [{:.3g}, {:.3g}]".format(np.min(x_train), np.max(x_train)))
-    print("Range x_val:   [{:.3g}, {:.3g}]".format(np.min(x_val), np.max(x_val)))
-    print("Range x_test:  [{:.3g}, {:.3g}]".format(np.min(x_test), np.max(x_test)))
+    logger.info("Range x_train: [{:.3g}, {:.3g}]".format(np.min(x_train), np.max(x_train)))
+    logger.info("Range x_val:   [{:.3g}, {:.3g}]".format(np.min(x_val), np.max(x_val)))
+    logger.info("Range x_test:  [{:.3g}, {:.3g}]".format(np.min(x_test), np.max(x_test)))
 
     # clf = build_type_classifier(x_train, y_train, x_val, y_val)
 
@@ -333,7 +333,7 @@ def run(params):
     x_val2 = np.copy(x_val)
     np.random.shuffle(x_val2)
     start_scores = p1b1.evaluate_autoencoder(x_val, x_val2)
-    print('\nBetween random pairs of validation samples:', start_scores)
+    logger.info('\nBetween random pairs of validation samples:', start_scores)
 
     history = model.fit(x_train, x_train,
                         batch_size=params['batch_size'],
@@ -349,7 +349,7 @@ def run(params):
     # Evalute model on test set
     x_pred = model.predict(x_test)
     scores = p1b1.evaluate_autoencoder(x_pred, x_test)
-    print('\nEvaluation on test data:', scores)
+    logger.info('\nEvaluation on test data:', scores)
 
     x_test_encoded = encoder.predict(x_test, batch_size=params['batch_size'])
     y_test_classes = np.argmax(y_test, axis=1)

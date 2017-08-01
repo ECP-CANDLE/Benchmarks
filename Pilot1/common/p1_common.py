@@ -488,7 +488,7 @@ def test_load_csv_data():
     # sep = ','
 
 
-def load_csv_data(train_path, test_path=None, sep=',', n_rows=None,
+def load_csv_data(train_path, test_path=None, sep=',', nrows=None,
                   x_cols=None, y_cols=None, drop_cols=None,
                   onehot_cols=None, n_cols=None, random_cols=False,
                   shuffle=False, scaling=None, dtype=None,
@@ -542,9 +542,9 @@ def load_csv_data(train_path, test_path=None, sep=',', n_rows=None,
             y_names = list(df_cols[y_cols])
             usecols = y_names + x_names
 
-    df_train = pd.read_csv(train_path, engine='c', sep=sep, n_rows=n_rows, usecols=usecols)
+    df_train = pd.read_csv(train_path, engine='c', sep=sep, nrows=nrows, usecols=usecols)
     if test_path:
-        df_test = pd.read_csv(test_path, engine='c', sep=sep, n_rows=n_rows, usecols=usecols)
+        df_test = pd.read_csv(test_path, engine='c', sep=sep, nrows=nrows, usecols=usecols)
     else:
         df_test = df_train[0:0].copy()
 
