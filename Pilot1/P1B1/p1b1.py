@@ -65,6 +65,14 @@ def p1b1_parser(parser):
                         help='use tensorboard')
     parser.add_argument('--reduce_lr', action='store_true',
                         help='reduce learning rate on plateau')
+    parser.add_argument('--warmup_lr', action='store_true',
+                        help='gradually increase learning rate on start')
+    parser.add_argument('--base_lr', type=float,
+                        default=None,
+                        help='base learning rate')
+    parser.add_argument("--epsilon_std", type=float,
+                        default=argparse.SUPPRESS,
+                        help="epsilon std for sampling latent noise")
 
     return parser
 
@@ -73,26 +81,26 @@ def read_config_file(file):
     config = configparser.ConfigParser()
     config.read(file)
     section = config.sections()
-    fileParams = {}
-    fileParams['activation'] = eval(config.get(section[0],'activation'))
-    fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
-    fileParams['dense'] = eval(config.get(section[0],'dense'))
-    fileParams['drop']=eval(config.get(section[0],'drop'))
-    fileParams['epochs'] = eval(config.get(section[0],'epochs'))
-    fileParams['initialization'] = eval(config.get(section[0],'initialization'))
-    fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
-    fileParams['loss'] = eval(config.get(section[0],'loss'))
-    fileParams['noise_factor'] = eval(config.get(section[0],'noise_factor'))
-    fileParams['optimizer'] = eval(config.get(section[0],'optimizer'))
-    fileParams['rng_seed'] = eval(config.get(section[0],'rng_seed'))
-    fileParams['scaling'] = eval(config.get(section[0],'scaling'))
-    fileParams['validation_split'] = eval(config.get(section[0],'validation_split'))
-    fileParams['latent_dim'] = eval(config.get(section[0],'latent_dim'))
-    fileParams['feature_subsample'] = eval(config.get(section[0],'feature_subsample'))
-    fileParams['batch_normalization'] = eval(config.get(section[0],'batch_normalization'))
-
-    fileParams['solr_root'] = eval(config.get(section[1],'solr_root'))
-    return fileParams
+    file_params = {}
+    file_params['activation'] = eval(config.get(section[0], 'activation'))
+    file_params['batch_size'] = eval(config.get(section[0], 'batch_size'))
+    file_params['dense'] = eval(config.get(section[0], 'dense'))
+    file_params['drop'] = eval(config.get(section[0], 'drop'))
+    file_params['epochs'] = eval(config.get(section[0], 'epochs'))
+    file_params['initialization'] = eval(config.get(section[0], 'initialization'))
+    file_params['learning_rate'] = eval(config.get(section[0],  'learning_rate'))
+    file_params['loss'] = eval(config.get(section[0], 'loss'))
+    file_params['noise_factor'] = eval(config.get(section[0], 'noise_factor'))
+    file_params['optimizer'] = eval(config.get(section[0], 'optimizer'))
+    file_params['rng_seed'] = eval(config.get(section[0], 'rng_seed'))
+    file_params['scaling'] = eval(config.get(section[0], 'scaling'))
+    file_params['validation_split'] = eval(config.get(section[0], 'validation_split'))
+    file_params['latent_dim'] = eval(config.get(section[0], 'latent_dim'))
+    file_params['feature_subsample'] = eval(config.get(section[0], 'feature_subsample'))
+    file_params['batch_normalization'] = eval(config.get(section[0], 'batch_normalization'))
+    file_params['epsilon_std'] = eval(config.get(section[0], 'epsilon_std'))
+    file_params['solr_root'] = eval(config.get(section[1],'solr_root'))
+    return file_params
 
 
 def extension_from_parameters(params, framework=''):
@@ -105,8 +113,10 @@ def extension_from_parameters(params, framework=''):
     ext += '.B={}'.format(params['batch_size'])
     ext += '.E={}'.format(params['epochs'])
     ext += '.L={}'.format(params['latent_dim'])
-    ext += '.R={}'.format(params['learning_rate'])
+    ext += '.LR={}'.format(params['learning_rate'])
     ext += '.S={}'.format(params['scaling'])
+    if params['epsilon_std'] != 1.0:
+        ext += '.EPS={}'.format(params['epsilon_std'])
     if params['feature_subsample'] > 0:
         ext += '.FS={}'.format(params['feature_subsample'])
     if params['drop']:
@@ -117,6 +127,10 @@ def extension_from_parameters(params, framework=''):
         ext += '.BN'
     if params['use_landmark_genes']:
         ext += '.L1000'
+    if params['warmup_lr']:
+        ext += '.WU_LR'
+    if params['reduce_lr']:
+        ext += '.Re_LR'
     if params['residual']:
         ext += '.Res'
     if params['vae']:
