@@ -31,6 +31,9 @@ import p1_common_keras
 from solr_keras import CandleRemoteMonitor, compute_trainable_params
 
 
+np.set_printoptions(precision=4)
+
+
 def get_p1b1_parser():
     parser = argparse.ArgumentParser(prog='p1b1_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                      description='Train Autoencoder - Pilot 1 Benchmark 1')
