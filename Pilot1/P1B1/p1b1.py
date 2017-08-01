@@ -51,10 +51,9 @@ def p1b1_parser(parser):
     parser.add_argument("--latent_dim", type=int,
                         default=argparse.SUPPRESS,
                         help="latent dimensions")
-    parser.add_argument("--vae", action='store_true',
-                        help="variational autoencoder")
-    # parser.add_argument("--with_type", action='store_true',
-    #                     help="include one-hot encoded type information")
+    parser.add_argument('-m', '--model',
+                        default=argparse.SUPPRESS,
+                        help='model to use: ae, vae, cvae')
     parser.add_argument("--use_landmark_genes", action="store_true",
                         help="use the 978 landmark genes from LINCS (L1000) as expression features")
     parser.add_argument("--residual", action="store_true",
@@ -93,12 +92,14 @@ def read_config_file(file):
     file_params['noise_factor'] = eval(config.get(section[0], 'noise_factor'))
     file_params['optimizer'] = eval(config.get(section[0], 'optimizer'))
     file_params['rng_seed'] = eval(config.get(section[0], 'rng_seed'))
+    file_params['model'] = eval(config.get(section[0], 'model'))
     file_params['scaling'] = eval(config.get(section[0], 'scaling'))
     file_params['validation_split'] = eval(config.get(section[0], 'validation_split'))
     file_params['latent_dim'] = eval(config.get(section[0], 'latent_dim'))
     file_params['feature_subsample'] = eval(config.get(section[0], 'feature_subsample'))
     file_params['batch_normalization'] = eval(config.get(section[0], 'batch_normalization'))
     file_params['epsilon_std'] = eval(config.get(section[0], 'epsilon_std'))
+
     file_params['solr_root'] = eval(config.get(section[1],'solr_root'))
     return file_params
 
@@ -106,6 +107,7 @@ def read_config_file(file):
 def extension_from_parameters(params, framework=''):
     """Construct string for saving model with annotation of parameters"""
     ext = framework
+    ext += '.{}'.format(params['model'])
     for i, n in enumerate(params['dense']):
         if n:
             ext += '.D{}={}'.format(i+1, n)
@@ -133,10 +135,6 @@ def extension_from_parameters(params, framework=''):
         ext += '.Re_LR'
     if params['residual']:
         ext += '.Res'
-    if params['vae']:
-        ext += '.VAE'
-    # if params['with_type']:
-        # ext += '.WT'
 
     return ext
 

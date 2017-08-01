@@ -13,7 +13,7 @@ from keras import optimizers
 from keras.models import Model
 from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from keras.metrics import binary_crossentropy
+from keras.metrics import binary_crossentropy, mean_squared_error
 from scipy.stats.stats import pearsonr
 
 import warnings
@@ -50,6 +50,10 @@ def corr(y_true, y_pred):
 
 def xent(y_true, y_pred):
     return binary_crossentropy(y_true, y_pred)
+
+
+def mse(y_true, y_pred):
+    return mean_squared_error(y_true, y_pred)
 
 
 class MetricHistory(Callback):
@@ -225,7 +229,7 @@ def run(params):
     input_dim = x_train.shape[1]
     latent_dim = params['latent_dim']
 
-    vae = params['vae']
+    model = params['model']
     activation = params['activation']
     dropout = params['drop']
     dense_layers = params['dense']
@@ -256,7 +260,7 @@ def run(params):
             if dropout > 0:
                 h = dropout_layer(dropout)(h)
 
-    if not vae:
+    if model == 'ae':
         encoded = Dense(latent_dim, activation=activation,
                         kernel_initializer=initializer_weights,
                         bias_initializer=initializer_bias)(h)
@@ -308,14 +312,14 @@ def run(params):
     decoder = Model(decoder_input, decoded)
 
     # Build and compile autoencoder model
-    if not vae:
+    if model == 'ae':
         model = Model(input_vector, decoder(encoded))
         loss = params['loss']
         metrics = [xent, corr]
     else:
         model = Model(input_vector, decoder(z))
         loss = vae_loss
-        metrics = [xent, corr]
+        metrics = [xent, corr, mse]
 
     # Define optimizer
     # optimizer = p1_common_keras.build_optimizer(params['optimizer'],
