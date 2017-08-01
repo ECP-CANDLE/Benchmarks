@@ -146,6 +146,31 @@ def set_up_logger(logfile, verbose):
     return p1b1.logger
 
 
+def save_cache(cache_file, x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels):
+    with h5py.File(cache_file, 'w') as hf:
+        hf.create_dataset("x_train",  data=x_train)
+        hf.create_dataset("y_train",  data=y_train)
+        hf.create_dataset("x_val", data=x_val)
+        hf.create_dataset("y_val", data=y_val)
+        hf.create_dataset("x_test", data=x_test)
+        hf.create_dataset("y_test", data=y_test)
+        hf.create_dataset("x_labels", (len(x_labels), 1), 'S100', data=[x.encode("ascii", "ignore") for x in x_labels])
+        hf.create_dataset("y_labels", (len(y_labels), 1), 'S100', data=[x.encode("ascii", "ignore") for x in y_labels])
+
+
+def load_cache(cache_file):
+    with h5py.File(cache_file, 'r') as hf:
+        x_train = hf['x_train'][:]
+        y_train = hf['y_train'][:]
+        x_val = hf['x_val'][:]
+        y_val = hf['y_val'][:]
+        x_test = hf['x_test'][:]
+        y_test = hf['y_test'][:]
+        x_labels = [x[0].decode('unicode_escape') for x in hf['x_labels'][:]]
+        y_labels = [x[0].decode('unicode_escape') for x in hf['y_labels'][:]]
+    return x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels
+
+
 def run(params):
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(params, '.keras')
@@ -163,15 +188,9 @@ def run(params):
     # Load dataset
     x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = p1b1.load_data(params, seed)
 
-    # with h5py.File('x_cache.h5', 'w') as hf:
-        # hf.create_dataset("train",  data=x_train)
-        # hf.create_dataset("val",  data=x_val)
-        # hf.create_dataset("test",  data=x_test)
-
-    # with h5py.File('x_cache.h5', 'r') as hf:
-        # x_train = hf['train'][:]
-        # x_val = hf['val'][:]
-        # x_test = hf['test'][:]
+    # cache_file = 'data_l1000_cache.h5'
+    # save_cache(cache_file, x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels)
+    # x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = load_cache(cache_file)
 
     logger.info("Shape x_train:", x_train.shape)
     logger.info("Shape x_val:  ", x_val.shape)
