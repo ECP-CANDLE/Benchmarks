@@ -21,6 +21,7 @@ import warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from sklearn.metrics import r2_score
+    from sklearn.metrics import accuracy_score
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -111,7 +112,6 @@ def build_type_classifier(x_train, y_train, x_test, y_test):
     y_train = np.argmax(y_train, axis=1)
     y_test = np.argmax(y_test, axis=1)
     from xgboost import XGBClassifier
-    from sklearn.metrics import accuracy_score
     clf = XGBClassifier(max_depth=6, n_estimators=100)
     clf.fit(x_train, y_train, eval_set=[(x_train, y_train), (x_test, y_test)], verbose=False)
     y_pred = clf.predict(x_test)
