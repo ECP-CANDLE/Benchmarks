@@ -12,7 +12,7 @@ from keras import backend as K
 from keras import optimizers
 from keras.models import Model
 from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard, CSVLogger
 from keras.metrics import binary_crossentropy, mean_squared_error
 from scipy.stats.stats import pearsonr
 from sklearn.manifold import TSNE
@@ -23,6 +23,8 @@ with warnings.catch_warnings():
     from sklearn.metrics import r2_score
     from sklearn.metrics import accuracy_score
 
+TIMEOUT=3600 # in sec; set this to -1 for no timeout 
+
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -30,11 +32,10 @@ import matplotlib.pyplot as plt
 import p1b1
 import p1_common
 import p1_common_keras
-from solr_keras import CandleRemoteMonitor, compute_trainable_params
+from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
 
 np.set_printoptions(precision=4)
-
 
 def get_p1b1_parser():
     parser = argparse.ArgumentParser(prog='p1b1_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -195,10 +196,16 @@ def load_cache(cache_file):
 
 
 def run(params):
+
+    output_dir = params['save']
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(params, '.keras')
-    prefix = '{}{}'.format(params['save'], ext)
-    logfile = params['logfile'] if params['logfile'] else prefix+'.log'
+    prefix = '{}{}'.format(output_dir, ext)
+    logfile = params['logfile'] if params['logfile'] else output_dir+"/"+prefix+'.log'
 
     verify_path(logfile)
     logger = set_up_logger(logfile, params['verbose'])
@@ -353,9 +360,11 @@ def run(params):
     model.summary()
     decoder.summary()
 
+    model_name = params['model_name']
+
     if params['cp']:
         model_json = model.to_json()
-        with open(prefix+'.model.json', 'w') as f:
+        with open(prefix+'.model.json'.format(output_dir, model_name), "w") as f:
             print(model_json, file=f)
 
     # Define optimizer
@@ -379,14 +388,18 @@ def run(params):
         logger.debug('Epoch {}: lr={}'.format(epoch, K.get_value(model.optimizer.lr)))
         return K.get_value(model.optimizer.lr)
 
+    path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
+    csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
     warmup_lr = LearningRateScheduler(warmup_scheduler)
     checkpointer = ModelCheckpoint(params['save']+ext+'.weights.h5', save_best_only=True, save_weights_only=True)
     tensorboard = TensorBoard(log_dir="tb/tb{}".format(ext))
     candle_monitor = CandleRemoteMonitor(params=params)
+    timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
+
     history_logger = LoggingCallback(logger.debug)
 
-    callbacks = [candle_monitor, history_logger]
+    callbacks = [candle_monitor, history_logger, timeoutMonitor, csv_logger]
     if params['reduce_lr']:
         callbacks.append(reduce_lr)
     if params['warmup_lr']:
@@ -425,8 +438,8 @@ def run(params):
         encoder.save(prefix+'.encoder.h5')
         decoder.save(prefix+'.decoder.h5')
 
-    plot_history(prefix, history, 'loss')
-    plot_history(prefix, history, 'corr', 'streaming pearson correlation')
+    plot_history(output_dir+"/"+prefix, history, 'loss')
+    plot_history(output_dir+"/"+prefix, history, 'corr', 'streaming pearson correlation')
 
     # Evalute model on test set
     x_pred = model.predict(test_inputs)
@@ -435,12 +448,12 @@ def run(params):
 
     x_test_encoded = encoder.predict(test_inputs, batch_size=params['batch_size'])
     y_test_classes = np.argmax(y_test, axis=1)
-    plot_scatter(x_test_encoded, y_test_classes, prefix+'.latent')
+    plot_scatter(x_test_encoded, y_test_classes, output_dir+"/"+prefix+'.latent')
 
     if params['tsne']:
         tsne = TSNE(n_components=2, random_state=seed)
         x_test_encoded_tsne = tsne.fit_transform(x_test_encoded)
-        plot_scatter(x_test_encoded_tsne, y_test_classes, prefix+'.latent.tsne')
+        plot_scatter(x_test_encoded_tsne, y_test_classes, output_dir+"/"+prefix+'.latent.tsne')
 
     # diff = x_pred - x_test
     # plt.hist(diff.ravel(), bins='auto')
