@@ -21,3 +21,4 @@ batch_normalization=False
 
 [Monitor_Params]
 solr_root=''
+timeout=3600

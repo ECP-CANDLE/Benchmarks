@@ -99,6 +99,9 @@ def get_p1_common_parser(parser):
     parser.add_argument("--evaluate", dest='eval_bool', action="store_true",
                         default=argparse.SUPPRESS, #type=bool,
                         help="evaluate model (use it for inference)")
+    parser.add_argument("--timeout", type=int,
+                        default=-1,
+                        help="timeout in seconds")
 
     # Logging utilities
     parser.add_argument("--home_dir", dest='home_dir',
