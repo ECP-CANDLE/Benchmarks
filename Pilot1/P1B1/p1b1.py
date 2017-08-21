@@ -85,6 +85,7 @@ def read_config_file(file):
     file_params = {}
     file_params['activation'] = eval(config.get(section[0], 'activation'))
     file_params['batch_size'] = eval(config.get(section[0], 'batch_size'))
+    file_params['model_name'] = eval(config.get(section[0],'model_name'))
     file_params['dense'] = eval(config.get(section[0], 'dense'))
     file_params['drop'] = eval(config.get(section[0], 'drop'))
     file_params['epochs'] = eval(config.get(section[0], 'epochs'))
