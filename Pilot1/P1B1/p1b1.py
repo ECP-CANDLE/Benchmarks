@@ -102,7 +102,8 @@ def read_config_file(file):
     file_params['batch_normalization'] = eval(config.get(section[0], 'batch_normalization'))
     file_params['epsilon_std'] = eval(config.get(section[0], 'epsilon_std'))
 
-    file_params['solr_root'] = eval(config.get(section[1],'solr_root'))
+    file_params['solr_root'] = eval(config.get(section[1], 'solr_root'))
+    file_params['timeout'] = eval(config.get(section[1], 'timeout'))
     return file_params
 
 

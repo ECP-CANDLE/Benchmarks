@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 import p1b1
 import p1_common
 import p1_common_keras
-from solr_keras import CandleRemoteMonitor, compute_trainable_params
+from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
 
 np.set_printoptions(precision=4)
@@ -384,9 +384,10 @@ def run(params):
     checkpointer = ModelCheckpoint(params['save']+ext+'.weights.h5', save_best_only=True, save_weights_only=True)
     tensorboard = TensorBoard(log_dir="tb/tb{}".format(ext))
     candle_monitor = CandleRemoteMonitor(params=params)
+    timeout_monitor = TerminateOnTimeOut(params['timeout'])
     history_logger = LoggingCallback(logger.debug)
 
-    callbacks = [candle_monitor, history_logger]
+    callbacks = [candle_monitor, timeout_monitor, history_logger]
     if params['reduce_lr']:
         callbacks.append(reduce_lr)
     if params['warmup_lr']:
