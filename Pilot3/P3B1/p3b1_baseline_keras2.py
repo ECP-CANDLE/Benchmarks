@@ -199,7 +199,7 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
     return ret
 
-def do_n_fold(GP):
+def do_n_fold(GP, verbose=1):
     shared_nnet_spec = []
     elem = GP['shared_nnet_spec'].split( ',' )
     for el in elem:
@@ -292,7 +292,8 @@ def do_n_fold(GP):
             optimizer = optimizer,
             run_id = GP['run_id'] if 'run_id' in GP else "RUN_default",
             fold = fold,
-            gParameters = GP
+            gParameters = GP,
+            verbose = verbose
         )
 
         for i in range(n_feat):
