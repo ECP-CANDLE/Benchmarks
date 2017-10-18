@@ -19,6 +19,7 @@ initialization='glorot_uniform'
 latent_dim=2
 feature_subsample=0
 batch_normalization=False
+save='save'
 
 [Monitor_Params]
 solr_root=''

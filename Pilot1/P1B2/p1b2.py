@@ -65,6 +65,11 @@ def read_config_file(file):
     fileParams['scaling']=eval(config.get(section[0],'scaling'))
     fileParams['validation_split']=eval(config.get(section[0],'validation_split'))
 
+    # parse the remaining values
+    for k, v in config.items(section[0]):
+        if not k in fileParams:
+            fileParams[k] = eval(v)
+
     return fileParams
 
 

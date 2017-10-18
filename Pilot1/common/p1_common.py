@@ -108,7 +108,7 @@ def get_p1_common_parser(parser):
                         default=argparse.SUPPRESS, type=str,
                         help="set home directory")
     parser.add_argument("--save",
-                        default='save',
+                        default=argparse.SUPPRESS, type=str,
                         help="prefix of output files")
 
 
@@ -222,7 +222,6 @@ def args_overwrite_config(args, config):
 
     for key in args_dict.keys():
         params[key] = args_dict[key]
-
 
     if 'datatype' not in params:
         params['datatype'] = DEFAULT_DATATYPE

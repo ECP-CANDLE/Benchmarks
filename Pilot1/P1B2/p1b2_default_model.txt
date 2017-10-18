@@ -1,5 +1,5 @@
 [Global_Params]
-dense=[1024, 512, 256] 
+dense=[1024, 512, 256]
 batch_size=60
 epochs=1
 activation='sigmoid'
@@ -13,3 +13,4 @@ penalty=0.00001
 validation_split=0.1
 rng_seed=2017
 initialization='glorot_uniform'
+save='save'
