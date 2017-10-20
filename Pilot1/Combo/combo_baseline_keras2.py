@@ -728,6 +728,8 @@ def run(params):
 
     logger.handlers = []
 
+    return history
+
 
 def main():
     params = initialize_parameters()
