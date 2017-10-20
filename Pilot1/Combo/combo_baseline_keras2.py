@@ -510,7 +510,7 @@ class ModelRecorder(Callback):
         val_loss = logs.get('val_loss')
         self.val_losses.append(val_loss)
         if val_loss < self.best_val_loss:
-            self.best_model = keras.models.clone_model(self.model)
+            # self.best_model = keras.models.clone_model(self.model)
             self.best_val_loss = val_loss
 
 
@@ -617,7 +617,7 @@ def run(params):
 
     model = build_model(loader, args, verbose=True)
     model.summary()
-    plot_model(model, to_file=prefix+'.model.png', show_shapes=True)
+    # plot_model(model, to_file=prefix+'.model.png', show_shapes=True)
 
     if args.cp:
         model_json = model.to_json()
