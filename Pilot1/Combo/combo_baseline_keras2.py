@@ -702,7 +702,7 @@ def run(params):
         if not args.gen:
             y_val_pred = model.predict(x_val_list, batch_size=args.batch_size).flatten()
             scores = evaluate_prediction(y_val, y_val_pred)
-            if scores[args.loss] > args.max_val_loss:
+            if args.cv > 1 and scores[args.loss] > args.max_val_loss:
                 logger.warn('Best val_loss {} is greater than {}; retrain the model...'.format(scores[args.loss], args.max_val_loss))
                 continue
             else:
