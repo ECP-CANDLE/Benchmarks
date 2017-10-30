@@ -73,5 +73,5 @@ The current best performance in terms of validation correlation for the three ty
 
 Here is an visual example of the 2D latent representation from VAE color coded by cancer types.
 
-![VAE latent representation](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/Pilot1/P1B1/images/VAE-latent-2D.png)
+![VAE latent representation](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/frameworks/Pilot1/P1B1/images/VAE-latent-2D.png)
 
