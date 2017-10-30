@@ -116,16 +116,3 @@ cd Pilot1/P1B2
 python p1b2_xgboost.py
 ```
 
-David Anthony Brewster, Jr, Yashasvi Sharma, and Sergei Maslov have
-achived 60.2% accuracy in their experiment. See the following links for details:
-
-* [DOE-NCI Confluence P1B2 scatch pad](https://doe-nci.atlassian.net/wiki/display/PROJECT/P1B2+Networks)
-* [David Brewster's github repo](https://github.com/ljeabmreosn/NeuralNetwork/tree/master/benchmarks/P1B2)
-
-Try the following commands to run a replicate of their network (modified for the P1B2 data loader).
-
-```
-cd Pilot1/P1B2
-python contrib/David_Brewster/p1b2_ljeabmreosn_mlp.py
-```
-
