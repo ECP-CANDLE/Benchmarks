@@ -651,10 +651,14 @@ def run(params):
 
         model = build_model(loader, args)
 
-        optimizer = optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
-        base_lr = args.base_lr or K.get_value(optimizer.lr)
-        if args.learning_rate:
-            K.set_value(optimizer.lr, args.learning_rate)
+        # edit by pbalapra
+        if False:
+            optimizer = optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
+            base_lr = args.base_lr or K.get_value(optimizer.lr)
+            if args.learning_rate:
+                K.set_value(optimizer.lr, args.learning_rate)
+ 
+        optimizer = p1_common_keras.build_optimizer(args)
 
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 

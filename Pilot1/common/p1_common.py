@@ -80,6 +80,8 @@ def get_default_neon_parse(parser):
                         default=argparse.SUPPRESS,
                         help="batch size")
 
+
+
     return parser
 
 
@@ -153,16 +155,17 @@ def get_p1_common_parser(parser):
     parser.add_argument("--loss",
                         default=argparse.SUPPRESS,
                         help="keras loss function to use: mse, ...")
-    parser.add_argument("--optimizer",
-                        default=argparse.SUPPRESS,
-                        help="keras optimizer to use: sgd, rmsprop, ...")
-    parser.add_argument('--lr', dest='learning_rate', type=float,
-                        default=argparse.SUPPRESS,
-                        help='learning rate')
-    parser.add_argument("--initialization",
-                        default=argparse.SUPPRESS,
-                        choices=['constant', 'uniform', 'normal', 'glorot_uniform', 'lecun_uniform', 'lecun_normal', 'he_normal'],
-                        help="type of weight initialization; 'constant': to 0; 'uniform': to [-0.05,0.05], 'normal': mean 0, stddev 0.05; 'glorot_uniform': [-lim,lim] with lim = sqrt(6/(fan_in+fan_out)); 'lecun_uniform': [-lim,lim] with lim = sqrt(3/fan_in); 'lecun_normal': truncated normal with mean 0, stddev sqrt(1/fan_in); 'he_normal' : mean 0, stddev sqrt(2/fan_in)")
+    # pbalapra commenting out the following three
+    #parser.add_argument("--optimizer",
+    #                    default=argparse.SUPPRESS,
+    #                    help="keras optimizer to use: sgd, rmsprop, ...")
+    #parser.add_argument('--lr', dest='learning_rate', type=float,
+    #                    default=argparse.SUPPRESS,
+    #                    help='learning rate')
+    #parser.add_argument("--initialization",
+    #                    default=argparse.SUPPRESS,
+    #                    choices=['constant', 'uniform', 'normal', 'glorot_uniform', 'lecun_uniform', 'lecun_normal', 'he_normal'],
+    #                    help="type of weight initialization; 'constant': to 0; 'uniform': to [-0.05,0.05], 'normal': mean 0, stddev 0.05; 'glorot_uniform': [-lim,lim] with lim = sqrt(6/(fan_in+fan_out)); 'lecun_uniform': [-lim,lim] with lim = sqrt(3/fan_in); 'lecun_normal': truncated normal with mean 0, stddev sqrt(1/fan_in); 'he_normal' : mean 0, stddev sqrt(2/fan_in)")
     parser.add_argument("--alpha_dropout", action='store_true',
                         help="use AlphaDropout instead of regular Dropout")
     parser.add_argument("--val_split", type=float,
@@ -183,6 +186,50 @@ def get_p1_common_parser(parser):
     parser.add_argument("--val_samples", action="store",
                         default=argparse.SUPPRESS, type=int,
                         help="overrides the number of validation samples if set to nonzero")
+
+
+    #optimizer parameters
+    parser.add_argument('--optimizer', action='store',
+                        dest='optimizer',
+                        nargs='?', const=1, type=str, default='sgd',
+                        choices=['sgd', 'rmsprop', 'adagrad', 'adadelta', 'adam', 'adamax', 'nadam'],
+                        help='type of optimizer')
+
+    # common optimizer parameters
+    parser.add_argument('--clipnorm', action='store', dest='clipnorm',
+                        nargs='?', const=1, type=float, default=1.0,
+                        help='float >= 0. Gradients will be clipped when their \
+                        L2 norm exceeds this value.')
+    parser.add_argument('--clipvalue', action='store', dest='clipvalue',
+                        nargs='?', const=1, type=float, default=0.5,
+                        help='float >= 0. Gradients will be clipped when their \
+                        absolute value exceeds this value.')
+    # optimizer parameters
+    parser.add_argument('--learning_rate', action='store', dest='lr',
+                        nargs='?', const=1, type=float, default=0.01,
+                        help='float >= 0. Learning rate')
+    parser.add_argument('--momentum', action='store', dest='momentum',
+                        nargs='?', const=1, type=float, default=0.0,
+                        help='float >= 0. Parameter updates momentum')
+    parser.add_argument('--decay', action='store', dest='decay',
+                        nargs='?', const=1, type=float, default=0.0,
+                        help='float >= 0. Learning rate decay over each update')
+    parser.add_argument('--nesterov', action='store', dest='nesterov',
+                        nargs='?', const=1, type=bool, default=False,
+                        help='boolean. Whether to apply Nesterov momentum?')
+    parser.add_argument('--rho', action='store', dest='rho',
+                        nargs='?', const=1, type=float, default=0.9,
+                        help='float >= 0')
+    parser.add_argument('--epsilon', action='store',
+                        dest='epsilon',
+                        nargs='?', const=1, type=float, default=1e-08,
+                        help='float >= 0')
+    parser.add_argument('--beta1', action='store', dest='beta1',
+                        nargs='?', const=1, type=float, default=0.9,
+                        help='float >= 0')
+    parser.add_argument('--beta2', action='store', dest='beta2',
+                        nargs='?', const=1, type=float, default=0.999,
+                        help='float >= 0')
 
 
     # Backend configuration
@@ -241,13 +288,13 @@ def keras_default_config():
     kerasDefaults = {}
 
     # Optimizers
-    #kerasDefaults['clipnorm']=?            # Maximum norm to clip all parameter gradients
-    #kerasDefaults['clipvalue']=?          # Maximum (minimum=-max) value to clip all parameter gradients
+    kerasDefaults['clipnorm']=1.0            # Maximum norm to clip all parameter gradients
+    kerasDefaults['clipvalue']=0.5          # Maximum (minimum=-max) value to clip all parameter gradients
     kerasDefaults['decay_lr']=0.            # Learning rate decay over each update
     kerasDefaults['epsilon']=1e-8           # Factor to avoid divide by zero (fuzz factor)
     kerasDefaults['rho']=0.9                # Decay parameter in some optmizer updates (rmsprop, adadelta)
-    kerasDefaults['momentum_sgd']=0.        # Momentum for parameter update in sgd optimizer
-    kerasDefaults['nesterov_sgd']=False     # Whether to apply Nesterov momentum in sgd optimizer
+    kerasDefaults['momentum_']=0.        # Momentum for parameter update in sgd optimizer
+    kerasDefaults['nesterov']=False     # Whether to apply Nesterov momentum in sgd optimizer
     kerasDefaults['beta_1']=0.9             # Parameter in some optmizer updates (adam, adamax, nadam)
     kerasDefaults['beta_2']=0.999           # Parameter in some optmizer updates (adam, adamax, nadam)
     kerasDefaults['decay_schedule_lr']=0.004# Parameter for nadam optmizer

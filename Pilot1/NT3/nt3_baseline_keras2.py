@@ -107,6 +107,7 @@ def initialize_parameters():
     #print ('Params:', fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
+
     return gParameters
 
 
@@ -234,10 +235,10 @@ def run(gParameters):
     kerasDefaults = p1_common.keras_default_config()
 
     # Define optimizer
-    optimizer = p1_common_keras.build_optimizer(gParameters['optimizer'],
-                                                gParameters['learning_rate'],
-                                                kerasDefaults)
-
+    #optimizer = p1_common_keras.build_optimizer(gParameters['optimizer'],
+    #                                            gParameters['learning_rate'],
+    #                                            kerasDefaults)
+    optimizer = p1_common_keras.build_optimizer(gParameters)
     model.summary()
     model.compile(loss=gParameters['loss'],
                   optimizer=optimizer,
