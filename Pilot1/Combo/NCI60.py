@@ -179,6 +179,51 @@ def load_drug_descriptors(ncols=None, scaling='std', add_prefix=True):
         add feature namespace prefix
     """
 
+    path = get_file(DATA_URL + 'new_descriptors.txt')
+
+    df = global_cache.get(path)
+    if df is None:
+        df = pd.read_csv(path, sep='\t', engine='c',
+                         na_values=['na','-',''],
+                         dtype=np.float32)
+        global_cache[path] = df
+
+    df1 = df.drop('No.', 1)
+    df1 = pd.DataFrame(df.loc[:,'NAME'].astype(int).astype(str))
+    df1.rename(columns={'NAME': 'NSC'}, inplace=True)
+
+    df2 = df.drop('NAME', 1)
+    if add_prefix:
+        df2 = df2.add_prefix('dragon7.')
+
+    total = df2.shape[1]
+    if ncols and ncols < total:
+        usecols = np.random.choice(total, size=ncols, replace=False)
+        df2 = df2.iloc[:,usecols]
+
+    df2 = impute_and_scale(df2, scaling)
+    df2 = df2.astype(np.float32)
+
+    df_dg = pd.concat([df1, df2], axis=1)
+
+    return df_dg
+
+
+def load_drug_descriptors_old(ncols=None, scaling='std', add_prefix=True):
+    """Load drug descriptor data, sub-select columns of drugs descriptors
+        randomly if specificed, impute and scale the selected data, and return a
+        pandas dataframe.
+
+    Parameters
+    ----------
+    ncols : int or None
+        number of columns (drugs descriptors) to randomly subselect (default None : use all data)
+    scaling : 'maxabs' [-1,1], 'minmax' [0,1], 'std', or None, optional (default 'std')
+        type of scaling to apply
+    add_prefix: True or False
+        add feature namespace prefix
+    """
+
     path = get_file(P1B3_URL + 'descriptors.2D-NSC.5dose.filtered.txt')
 
     df = global_cache.get(path)
@@ -216,6 +261,50 @@ def load_drug_smiles():
         df = pd.read_csv(path, sep='\t', engine='c', dtype={'nsc_id':object})
         df = df.rename(columns={'nsc_id': 'NSC'})
         global_cache[path] = df
+
+    return df
+
+
+def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False):
+
+    path = get_file(DATA_URL + 'combined_rnaseq_data_lincs1000')
+
+    df = global_cache.get(path)
+    if df is None:
+        df = pd.read_csv(path, sep='\t', engine='c')
+        global_cache[path] = df
+
+    df = df[df['Sample'].str.startswith('NCI60')]
+
+    cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.new.txt')
+    df_cellmap = pd.read_csv(cellmap_path, sep='\t')
+    df_cellmap.set_index('NCI60.ID', inplace=True)
+    cellmap = df_cellmap[['CELLNAME']].to_dict()['CELLNAME']
+
+    df = df.rename(columns={'Sample': 'CELLNAME'})
+    df['CELLNAME'] = df['CELLNAME'].map(lambda x: cellmap[x])
+
+    # if use_landmark_genes:
+    #     lincs_path = get_file(DATA_URL + 'lincs1000.tsv')
+    #     df_l1000 = pd.read_csv(lincs_path, sep='\t')
+    #     cols = sorted([x for x in df_l1000['symbol'] if x in df.columns])
+    #     df = df[['CELLNAME'] + cols]
+
+    df1 = df['CELLNAME']
+    df1 = df1.map(lambda x: x.replace(':', '.'))
+
+    df2 = df.drop('CELLNAME', 1)
+    if add_prefix:
+        df2 = df2.add_prefix('expr.')
+
+    total = df.shape[1]
+    if ncols and ncols < total:
+        usecols = np.random.choice(total, size=ncols, replace=False)
+        df2 = df2.iloc[:, usecols]
+
+    df2 = impute_and_scale(df2, scaling)
+    df2 = df2.astype(np.float32)
+    df = pd.concat([df1, df2], axis=1)
 
     return df
 

@@ -181,7 +181,10 @@ class ComboDataLoader(object):
             self.drug_features = drug_features
 
         for fea in self.cell_features:
-            if fea == 'expression' or fea == 'expression_u133p2':
+            if fea == 'expression':
+                self.df_cell_expr = NCI60.load_cell_expression_rnaseq(ncols=feature_subsample, scaling=scaling, use_landmark_genes=use_landmark_genes)
+                df = df.merge(self.df_cell_expr[['CELLNAME']], on='CELLNAME')
+            elif fea == 'expression_u133p2':
                 self.df_cell_expr = NCI60.load_cell_expression_u133p2(ncols=feature_subsample, scaling=scaling, use_landmark_genes=use_landmark_genes)
                 df = df.merge(self.df_cell_expr[['CELLNAME']], on='CELLNAME')
             elif fea == 'expression_5platform':
