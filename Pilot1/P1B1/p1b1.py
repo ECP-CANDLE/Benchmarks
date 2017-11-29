@@ -104,6 +104,12 @@ def read_config_file(file):
 
     file_params['solr_root'] = eval(config.get(section[1], 'solr_root'))
     file_params['timeout'] = eval(config.get(section[1], 'timeout'))
+
+    # parse the remaining values
+    for k, v in config.items(section[0]):
+        if not k in file_params:
+            file_params[k] = eval(v)
+
     return file_params
 
 
