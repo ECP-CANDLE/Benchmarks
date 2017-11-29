@@ -290,14 +290,14 @@ def keras_default_config():
     # Optimizers
     kerasDefaults['clipnorm']=1.0            # Maximum norm to clip all parameter gradients
     kerasDefaults['clipvalue']=0.5          # Maximum (minimum=-max) value to clip all parameter gradients
-    kerasDefaults['decay_lr']=0.            # Learning rate decay over each update
+    kerasDefaults['decay']=0.            # Learning rate decay over each update
     kerasDefaults['epsilon']=1e-8           # Factor to avoid divide by zero (fuzz factor)
     kerasDefaults['rho']=0.9                # Decay parameter in some optmizer updates (rmsprop, adadelta)
     kerasDefaults['momentum_']=0.        # Momentum for parameter update in sgd optimizer
     kerasDefaults['nesterov']=False     # Whether to apply Nesterov momentum in sgd optimizer
     kerasDefaults['beta_1']=0.9             # Parameter in some optmizer updates (adam, adamax, nadam)
     kerasDefaults['beta_2']=0.999           # Parameter in some optmizer updates (adam, adamax, nadam)
-    kerasDefaults['decay_schedule_lr']=0.004# Parameter for nadam optmizer
+    #kerasDefaults['decay_schedule_lr']=0.004# Parameter for nadam optmizer
 
     # Initializers
     kerasDefaults['minval_uniform']=-0.05   #  Lower bound of the range of random values to generate

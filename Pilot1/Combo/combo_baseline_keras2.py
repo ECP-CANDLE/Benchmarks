@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 
 import combo
 import p1_common
-# import p1_common_keras
+import p1_common_keras
 from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
 # import argparser
