@@ -179,17 +179,19 @@ def load_drug_descriptors(ncols=None, scaling='std', add_prefix=True):
         add feature namespace prefix
     """
 
-    path = get_file(DATA_URL + 'new_descriptors.txt')
+    path = get_file(DATA_URL + 'ALMANAC_drug_descriptors_dragon7.txt')
 
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path, sep='\t', engine='c',
                          na_values=['na','-',''],
-                         dtype=np.float32)
+                         )
+                         # dtype=np.float32)
         global_cache[path] = df
 
-    df1 = df.drop('No.', 1)
-    df1 = pd.DataFrame(df.loc[:,'NAME'].astype(int).astype(str))
+    # df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
+    df1 = pd.DataFrame(df.loc[:, 'NAME'])
+    df1['NAME'] = df1['NAME'].map(lambda x: x[4:])
     df1.rename(columns={'NAME': 'NSC'}, inplace=True)
 
     df2 = df.drop('NAME', 1)
@@ -199,7 +201,7 @@ def load_drug_descriptors(ncols=None, scaling='std', add_prefix=True):
     total = df2.shape[1]
     if ncols and ncols < total:
         usecols = np.random.choice(total, size=ncols, replace=False)
-        df2 = df2.iloc[:,usecols]
+        df2 = df2.iloc[:, usecols]
 
     df2 = impute_and_scale(df2, scaling)
     df2 = df2.astype(np.float32)
@@ -274,7 +276,7 @@ def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_
         df = pd.read_csv(path, sep='\t', engine='c')
         global_cache[path] = df
 
-    df = df[df['Sample'].str.startswith('NCI60')]
+    df = df[df['Sample'].str.startswith('NCI60')].reset_index()
 
     cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.new.txt')
     df_cellmap = pd.read_csv(cellmap_path, sep='\t')
@@ -295,7 +297,7 @@ def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_
 
     df2 = df.drop('CELLNAME', 1)
     if add_prefix:
-        df2 = df2.add_prefix('expr.')
+        df2 = df2.add_prefix('rnaseq.')
 
     total = df.shape[1]
     if ncols and ncols < total:

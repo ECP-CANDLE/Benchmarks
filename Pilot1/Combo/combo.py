@@ -42,7 +42,7 @@ def common_parser(parser):
 def combo_parser(parser):
     parser.add_argument("--cell_features", nargs='+',
                         default=argparse.SUPPRESS,
-                        choices=['expression', 'mirna', 'proteome', 'all', 'expression_5platform', 'categorical'],
+                        choices=['expression', 'mirna', 'proteome', 'all', 'expression_5platform', 'expression_u133p2', 'rnaseq', 'categorical'],
                         help="use one or more cell line feature sets: 'expression', 'mirna', 'proteome', 'all'; use all for ['expression', 'mirna', 'proteome']; use 'categorical' for one-hot encoded cell lines")
     parser.add_argument("--drug_features", nargs='+',
                         default=argparse.SUPPRESS,
