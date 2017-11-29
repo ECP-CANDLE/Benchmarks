@@ -94,20 +94,26 @@ def run(GP):
 ##### Read Data ########
     (data_files, fields)=p2c.get_list_of_data_files(GP)
 
+    ## Read from local directoy
+    import helper
+#    (data_files, fields)=helper.get_local_files()
+
     ## Define datagenerator
     datagen=hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])
 
     ## get data dimension ##
     num_samples = 0
     for f in data_files[0:1]:
-        X=np.load(f)
+        print f
+        # Seperate different arrays from the data 
+        (X, nbrs, resnums) = helper.get_data_arrays(f)
+
         num_samples += X.shape[0]
 
-    X=np.load(data_files[0])
+    (X, nbrs, resnums) = helper.get_data_arrays(data_files[0])
     print (X.shape)
 
     molecular_hidden_layers=GP['molecular_num_hidden']
-
     if not molecular_hidden_layers:
         X_train=hf.get_data(X,case=GP['case'])
         input_dim=X_train.shape[1]
@@ -115,15 +121,23 @@ def run(GP):
         ## computing input dimension for outer AE
         input_dim=X.shape[1]*molecular_hidden_layers[-1]
 
-    print ('The input dimension is ', input_dim)
+    print ('The input dimension to the State AE is ', input_dim)
 
     ## get data dimension for molecular autoencoder
+    molecular_nbrs = np.int(GP['molecular_nbrs'])
     if not GP['type_bool']:
-        molecular_input_dim=np.prod([X.shape[2],X.shape[3]-5])## only consider molecular location coordinates
-        molecular_output_dim=np.prod([X.shape[2],X.shape[3]-5])
+        ## only consider molecular location coordinates
+        dim = np.prod([X.shape[2],X.shape[3]-5,molecular_nbrs+1])
+
+        molecular_input_dim= dim
+        molecular_output_dim= dim
     else:
-        molecular_input_dim=np.prod(X.shape[2:])
-        molecular_output_dim=np.prod(X.shape[2:])
+        dim = np.prod(X.shape[2:]+(molecular_nbrs+1,))
+
+        molecular_input_dim=dim
+        molecular_output_dim=dim
+
+    print ('The input/output dimension to the Moelecular AE is ', molecular_input_dim)
 
     print ('Data Format:\n  [Frames (%s), Molecules (%s), Beads (%s), %s (%s)]' % (
         num_samples, X.shape[1], X.shape[2], fields.keys(), X.shape[3]))
@@ -182,7 +196,12 @@ def run(GP):
     if GP['train_bool']:
         if not str2bool(GP['cool']):
             effec_epochs=GP['epochs']
-            ct=hf.Candle_Composite_Train(datagen, model, molecular_model, data_files,mb_epochs,effec_epochs,callbacks,batch_size=32, case=GP['case'],scale_factor=0.5,len_molecular_hidden_layers=len_molecular_hidden_layers,conv_bool=conv_bool,type_bool=GP['type_bool'])
+            ct=hf.Candle_Composite_Train(datagen, model, molecular_model, data_files,mb_epochs,effec_epochs,
+                                         callbacks, batch_size=32, case=GP['case'],scale_factor=0.5,
+                                         len_molecular_hidden_layers=len_molecular_hidden_layers,
+                                         molecular_nbrs = molecular_nbrs,
+                                         conv_bool=conv_bool,
+                                         type_bool=GP['type_bool'])
 #            ct=hf.Candle_Train(datagen,model,data_files,effec_epochs,case=GP['case'])
             loss=ct.train_ac()
         else:

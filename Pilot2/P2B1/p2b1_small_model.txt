@@ -12,4 +12,5 @@ activation='relu'
 molecular_nonlinearity=elu
 molecular_num_hidden=[54,12]
 molecular_epochs=1
+molecular_nbrs=10
 base_memo='p2b1'
