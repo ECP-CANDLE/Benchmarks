@@ -268,8 +268,10 @@ def load_drug_smiles():
 
 
 def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False):
-
-    path = get_file(DATA_URL + 'combined_rnaseq_data_lincs1000')
+    if use_landmark_genes:
+        path = get_file(DATA_URL + 'combined_rnaseq_data_lincs1000')
+    else:
+        path = get_file(DATA_URL + 'combined_rnaseq_data')
 
     df = global_cache.get(path)
     if df is None:

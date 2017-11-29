@@ -69,6 +69,10 @@ def combo_parser(parser):
     parser.add_argument('--max_val_loss', type=float,
                         default=argparse.SUPPRESS,
                         help='retrain if val_loss is greater than the threshold')
+    parser.add_argument("--cv_partition",
+                        choices=['overlapping', 'disjoint'],
+                        default=argparse.SUPPRESS,
+                        help="cross validation paritioning scheme: overlapping or disjoint")
     parser.add_argument("--cv", type=int,
                         default=argparse.SUPPRESS,
                         help="cross validation folds")
