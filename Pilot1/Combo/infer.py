@@ -3,6 +3,8 @@
 from __future__ import division, print_function
 
 import argparse
+import os
+
 import pandas as pd
 import keras
 from keras import backend as K
@@ -10,6 +12,9 @@ from keras.models import Model
 from tqdm import tqdm
 
 import NCI60
+
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 def get_parser(description=None):
@@ -21,7 +26,7 @@ def get_parser(description=None):
                         default='ALMANAC',
                         help='drug set: ALMANAC, GDSC, NCI_IOA_AOA, ...')
     parser.add_argument('-z', '--batch_size', type=int,
-                        default=10000,
+                        default=100000,
                         help='batch size')
     parser.add_argument('--step', type=int,
                         default=10000,
@@ -32,6 +37,9 @@ def get_parser(description=None):
     parser.add_argument('-w', '--weights_file',
                         default='saved.weights.h5',
                         help='trained weights file (loading model file alone sometimes does not work in keras)')
+    parser.add_argument('--head', type=int,
+                        default=0,
+                        help='subsample the first n entries of cell samples and drugs for if set to nonzero')
 
     return parser
 
@@ -65,17 +73,18 @@ def main():
     parser = get_parser(description)
     args = parser.parse_args()
 
-    model = keras.models.load_model(args.model_file)
+    model = keras.models.load_model(args.model_file, compile=False)
     model.load_weights(args.weights_file)
     # model.summary()
 
     df_expr, df_desc = prepare_data(sample_set=args.sample_set, drug_set=args.drug_set)
-    # df_expr, df_desc = prepare_data(sample_set='NCI60')
-    # df_expr, df_desc = prepare_data(sample_set='NCIPDM')
-    # df_sample_ids = df_expr[['Sample']].head(10)
-    # df_drug_ids = df_desc[['Drug']].head()
-    df_sample_ids = df_expr[['Sample']].copy()
-    df_drug_ids = df_desc[['Drug']].copy()
+    if args.head > 0:
+        df_sample_ids = df_expr[['Sample']].head(args.head)
+        df_drug_ids = df_desc[['Drug']].head(args.head)
+    else:
+        df_sample_ids = df_expr[['Sample']].copy()
+        df_drug_ids = df_desc[['Drug']].copy()
+
     df_all = cross_join3(df_sample_ids, df_drug_ids, df_drug_ids, suffixes=('1', '2'))
 
     n_samples = df_sample_ids.shape[0]
