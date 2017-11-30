@@ -9,7 +9,6 @@ py.ion() ## Turn on plot visualization
 import gzip,pickle
 import numpy as np
 from PIL import Image
-import cv2
 import keras.backend as K
 from keras.layers import Input
 from keras.models import Sequential,Model
@@ -24,7 +23,6 @@ try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
-from tqdm import *
 import re,copy
 import os
 import sys
@@ -36,6 +34,8 @@ lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
 import p2_common
+
+import helper
 
 def common_parser(parser):
 
@@ -64,12 +64,12 @@ def p2b1_parser(parser):
     parser.add_argument("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
     parser.add_argument("--memo",help="Memo",dest="base_memo",type=str,default=None)
     parser.add_argument("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
-    parser.add_argument("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='CenterZ')
+    parser.add_argument("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='Full')
     parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
     parser.add_argument("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
 		type=str,default="3k_Disordered")
     parser.add_argument("--conv-AE", action="store_true",dest="conv_bool",default=True,help="Invoke training using Conv1D NN for inner AE")
-    parser.add_argument("--include-type", action="store_true",dest="type_bool",default=False,help="Include molecule type information in desining AE")
+    parser.add_argument("--include-type", action="store_true",dest="type_bool",default=False,help="Include molecule type information in designing AE")
     parser.add_argument("--backend",help="Keras Backend",dest="backend",type=str,default='tensorflow')
     #(opts,args)=parser.parse_args()
     return parser
@@ -97,6 +97,7 @@ def read_config_file(File):
     Global_Params['molecular_epochs']       =eval(config.get(section[0],'molecular_epochs'))
     Global_Params['molecular_num_hidden']   =eval(config.get(section[0],'molecular_num_hidden'))
     Global_Params['molecular_nonlinearity'] =config.get(section[0],'molecular_nonlinearity')
+    Global_Params['molecular_nbrs'] =config.get(section[0],'molecular_nbrs')
 
     # parse the remaining values
     for k,v in config.items(section[0]):
@@ -340,7 +341,7 @@ class Candle_Train():
 
     def train_ac(self):
         epoch_loss=[]
-        for e in tqdm(range(self.epochs)):
+        for e in range(self.epochs):
             file_loss=[]
             for f in self.numpylist:
                 if self.print_data:
@@ -363,7 +364,7 @@ class Candle_Train():
         return epoch_loss
 
 class Candle_Composite_Train():
-    def __init__(self, datagen, model, molecular_ammodel, numpylist,mnb_epochs,nb_epochs,callbacks,batch_size=32,case='Full',print_data=True,scale_factor=1,epsilon=.064,len_molecular_hidden_layers=1,conv_bool=False,type_bool=False):
+    def __init__(self, datagen, model, molecular_ammodel, numpylist,mnb_epochs,nb_epochs,callbacks,batch_size=32,case='Full',print_data=True,scale_factor=1,epsilon=.064,len_molecular_hidden_layers=1,molecular_nbrs=0,conv_bool=False,type_bool=False):
         self.numpylist=numpylist
         self.molecular_model=molecular_ammodel
         self.mb_epochs=mnb_epochs
@@ -377,28 +378,28 @@ class Candle_Composite_Train():
         self.scale_factor=scale_factor
         self.epsilon=epsilon
         self.len_molecular_hidden_layers=len_molecular_hidden_layers
+        self.molecular_nbrs = molecular_nbrs
         self.conv_net=conv_bool
         self.type_feature=type_bool
+
     def train_ac(self):
         epoch_loss=[]
-        for e in tqdm(range(self.epochs)):
+        for e in range(self.epochs):
             file_loss=[]
             filelist=[d for d in self.numpylist if 'AE' not in d]
             for f in filelist[0:1]:
                 if self.print_data:
                     if e==0:
                         print (f)
-                X=np.load(f)
-                X=X[0:20,:,:,:] # please remove it for original test 
-                #print(X.shape)
-                #sys.exit(0)
+
+                (X, nbrs, resnums) = helper.get_data_arrays(f)
 
                 # Bond lengths are in the range of 0 - 10 angstroms -- normalize it to 0 - 1
                 if self.type_feature:
                     Xnorm=np.concatenate([X[:,:,:,0:3]/255.,X[:,:,:,3:8],X[:,:,:,8:]/10.],axis=3)  ## normalizing the location coordinates and bond lengths and scale type encoding
                 else:
                     Xnorm=np.concatenate([X[:,:,:,0:3]/255.,X[:,:,:,8:]/10.],axis=3) ## only consider the location coordinates and bond lengths per molecule
-                ### Code for sub-autoencoder for molecule feature learing
+                ### Code for sub-autoencoder for molecule feature learning
                 #having some problems
                 num_frames=X.shape[0]
                 num_molecules=X.shape[1]
@@ -408,11 +409,18 @@ class Candle_Composite_Train():
                     #print(i)
                     #print(num_frames)
                     if self.conv_net:
-                        xt=Xnorm[i].reshape(X.shape[1],1,input_feature_dim)
-                        yt=Xnorm[i].reshape(X.shape[1],input_feature_dim)
+                        xt=Xnorm[i].reshape(X.shape[1],input_feature_dim)
+                        xt= helper.append_nbrs(xt, nbrs[i], self.molecular_nbrs)
+
+                        yt=xt.copy()
+                        xt = xt.reshape(xt.shape[0],1,xt.shape[1])
+
                     else:
                         xt=Xnorm[i].reshape(X.shape[1],input_feature_dim)
+                        xt= helper.append_nbrs(xt, nbrs[i], self.molecular_nbrs)
+
                         yt=xt.copy()
+                    #print("xt shape: ", xt.shape)
                     w=self.molecular_model.get_weights()
                     #print (self.molecular_model.evaluate(xt,yt,verbose=0)[0])
                     while self.molecular_model.evaluate(xt,yt,verbose=0)[0]>self.epsilon:

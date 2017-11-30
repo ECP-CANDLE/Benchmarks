@@ -58,6 +58,13 @@ def set_seed(seed):
         # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
         # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
         # K.set_session(sess)
+        
+        # Uncommit when running on an optimized tensorflow where NUM_INTER_THREADS and 
+        # NUM_INTRA_THREADS env vars are set.
+        # session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']), 
+        #	intra_op_parallelism_threads=int(os.environ['NUM_INTRA_THREADS']))
+        # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+        # K.set_session(sess)
 
 
 def verify_path(path):
