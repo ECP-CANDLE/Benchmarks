@@ -37,9 +37,12 @@ def get_parser(description=None):
     parser.add_argument('-w', '--weights_file',
                         default='saved.weights.h5',
                         help='trained weights file (loading model file alone sometimes does not work in keras)')
-    parser.add_argument('--head', type=int,
+    parser.add_argument('--ns', type=int,
                         default=0,
-                        help='subsample the first n entries of cell samples and drugs for if set to nonzero')
+                        help='the first n entries of cell samples to subsample if set to nonzero')
+    parser.add_argument('--nd', type=int,
+                        default=0,
+                        help='the first n entries of drugs to subsample if set to nonzero')
 
     return parser
 
@@ -102,11 +105,13 @@ def main():
     # model.summary()
 
     df_expr, df_desc = prepare_data(sample_set=args.sample_set, drug_set=args.drug_set)
-    if args.head > 0:
-        df_sample_ids = df_expr[['Sample']].head(args.head)
-        df_drug_ids = df_desc[['Drug']].head(args.head)
+    if args.ns > 0:
+        df_sample_ids = df_expr[['Sample']].head(args.ns)
     else:
         df_sample_ids = df_expr[['Sample']].copy()
+    if args.nd > 0:
+        df_drug_ids = df_desc[['Drug']].head(args.nd)
+    else:
         df_drug_ids = df_desc[['Drug']].copy()
 
     df_all = cross_join3(df_sample_ids, df_drug_ids, df_drug_ids, suffixes=('1', '2'))
@@ -134,12 +139,12 @@ def main():
         df_all.loc[i:j-1, 'PredGrowth'] = y_pred
 
     df = df_all.copy()
-    df['PredCustomComboScore'] = df.apply(lambda x: custom_combo_score(x['PredGrowth'],
-                                                                       lookup(df, x['Sample'], x['Drug1'], value='PredGrowth'),
-                                                                       lookup(df, x['Sample'], x['Drug2'], value='PredGrowth')), axis=1)
+    # df['PredCustomComboScore'] = df.apply(lambda x: custom_combo_score(x['PredGrowth'],
+    #                                                                    lookup(df, x['Sample'], x['Drug1'], value='PredGrowth'),
+    #                                                                    lookup(df, x['Sample'], x['Drug2'], value='PredGrowth')), axis=1)
 
-    csv = 'comb_pred_{}_{}.csv'.format(args.sample_set, args.drug_set)
-    df.to_csv(csv, index=False, float_format='%.4f')
+    csv = 'comb_pred_{}_{}.tsv'.format(args.sample_set, args.drug_set)
+    df.to_csv(csv, index=False, sep='\t', float_format='%.4f')
 
 
 if __name__ == '__main__':
