@@ -56,6 +56,8 @@ def main():
 
     y_pred = model.predict(x_all_list, batch_size=128).flatten()
 
+    df_all['Pred_Growth'] = y_pred
+
 
 if __name__ == '__main__':
     main()
