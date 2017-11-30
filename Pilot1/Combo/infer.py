@@ -39,10 +39,10 @@ def get_parser(description=None):
                         help='trained weights file (loading model file alone sometimes does not work in keras)')
     parser.add_argument('--ns', type=int,
                         default=0,
-                        help='the first n entries of cell samples to subsample if set to nonzero')
+                        help='the first n entries of cell samples to subsample')
     parser.add_argument('--nd', type=int,
                         default=0,
-                        help='the first n entries of drugs to subsample if set to nonzero')
+                        help='the first n entries of drugs to subsample')
 
     return parser
 
