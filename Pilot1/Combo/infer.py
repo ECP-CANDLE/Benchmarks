@@ -86,8 +86,9 @@ def cross_join3(df1, df2, df3, **kwargs):
 
 def prepare_data(sample_set='NCI60', drug_set='ALMANAC'):
     df_expr = NCI60.load_sample_rnaseq(use_landmark_genes=True, sample_set=sample_set)
-    df_old = NCI60.load_cell_expression_rnaseq(use_landmark_genes=True)
-    df_desc = NCI60.load_drug_descriptors_new()
+    # df_old = NCI60.load_cell_expression_rnaseq(use_landmark_genes=True)
+    # df_desc = NCI60.load_drug_descriptors_new()
+    df_desc = NCI60.load_drug_set_descriptors(drug_set=drug_set)
     return df_expr, df_desc
 
 

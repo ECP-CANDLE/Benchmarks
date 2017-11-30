@@ -164,6 +164,46 @@ def load_combo_response(min_logconc=-4., max_logconc=-4., subsample=None, fracti
     return df
 
 
+def load_drug_set_descriptors(drug_set='ALMANAC', ncols=None, scaling='std', add_prefix=True):
+    if drug_set == 'ALMANAC':
+        path = get_file(DATA_URL + 'ALMANAC_drug_descriptors_dragon7.txt')
+    elif drug_set == 'GDSC':
+        path = get_file(DATA_URL + 'GDSC_PubChemCID_drug_descriptors_dragon7')
+    elif drug_set == 'NCI_IOA_AOA':
+        path = get_file(DATA_URL + 'NCI_IOA_AOA_drug_descriptors_dragon7')
+    else:
+        raise Exception('Drug set {} not supported!'.format(drug_set))
+
+    df = global_cache.get(path)
+    if df is None:
+        df = pd.read_csv(path, sep='\t', engine='c',
+                         na_values=['na','-',''],
+                         )
+                         # dtype=np.float32)
+        global_cache[path] = df
+
+    # df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
+    df1 = pd.DataFrame(df.loc[:, 'NAME'])
+    # df1['NAME'] = df1['NAME'].map(lambda x: x[4:])
+    df1.rename(columns={'NAME': 'Drug'}, inplace=True)
+
+    df2 = df.drop('NAME', 1)
+    if add_prefix:
+        df2 = df2.add_prefix('dragon7.')
+
+    total = df2.shape[1]
+    if ncols and ncols < total:
+        usecols = np.random.choice(total, size=ncols, replace=False)
+        df2 = df2.iloc[:, usecols]
+
+    df2 = impute_and_scale(df2, scaling)
+    df2 = df2.astype(np.float32)
+
+    df_dg = pd.concat([df1, df2], axis=1)
+
+    return df_dg
+
+
 def load_drug_descriptors_new(ncols=None, scaling='std', add_prefix=True):
     """Load drug descriptor data, sub-select columns of drugs descriptors
         randomly if specificed, impute and scale the selected data, and return a
