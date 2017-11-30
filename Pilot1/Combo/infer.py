@@ -72,16 +72,21 @@ def main():
     df_expr, df_desc = prepare_data(sample_set=args.sample_set, drug_set=args.drug_set)
     # df_expr, df_desc = prepare_data(sample_set='NCI60')
     # df_expr, df_desc = prepare_data(sample_set='NCIPDM')
-    df_sample_ids = df_expr[['Sample']].head(10)
-    df_drug_ids = df_desc[['Drug']].head()
-    # df_sample_ids = df_expr[['Sample']].copy()
-    # df_drug_ids = df_desc[['Drug']].copy()
+    # df_sample_ids = df_expr[['Sample']].head(10)
+    # df_drug_ids = df_desc[['Drug']].head()
+    df_sample_ids = df_expr[['Sample']].copy()
+    df_drug_ids = df_desc[['Drug']].copy()
     df_all = cross_join3(df_sample_ids, df_drug_ids, df_drug_ids, suffixes=('1', '2'))
 
-    step = 100
+    n_samples = df_sample_ids.shape[0]
+    n_drugs = df_drug_ids.shape[0]
+    n_rows = n_samples * n_drugs * n_drugs
+
+    print('Predicting drug response for {} combinations: {} samples x {} drugs x {} drugs'.format(n_rows, n_samples, n_drugs, n_drugs))
+
     total = df_all.shape[0]
-    for i in tqdm(range(0, total, step)):
-        j = min(i+step, total)
+    for i in tqdm(range(0, total, args.step)):
+        j = min(i+args.step, total)
 
         x_all_list = []
         df_x_all = pd.merge(df_all[['Sample']].iloc[i:j], df_expr, on='Sample', how='left')
@@ -92,8 +97,7 @@ def main():
             df_x_all = pd.merge(df_all[[drug]].iloc[i:j], df_desc, left_on=drug, right_on='Drug', how='left')
             x_all_list.append(df_x_all.drop([drug, 'Drug'], axis=1).values)
 
-        y_pred = model.predict(x_all_list, batch_size=100, verbose=0).flatten()
-        print(len(y_pred))
+        y_pred = model.predict(x_all_list, batch_size=args.batch_size, verbose=0).flatten()
         df_all.loc[i:j-1, 'Pred_Growth'] = y_pred
 
     csv = 'comb_pred_{}_{}.csv'.format(args.sample_set, args.drug_set)

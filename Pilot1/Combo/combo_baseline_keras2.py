@@ -748,6 +748,14 @@ def run(params):
             # model.save(prefix+'.model.h5')
             model_recorder.best_model.save(prefix+'.model.h5')
 
+            # test reloadded model prediction
+            new_model = keras.models.load_model(prefix+'.model.h5')
+            new_model.load_weights(prefix+cv_ext+'.weights.h5')
+            new_pred = new_model.predict(x_val_list, batch_size=args.batch_size).flatten()
+            print('y_val:', y_val[:10])
+            print('old_pred:', y_val_pred[:10])
+            print('new_pred:', new_pred[:10])
+
         plot_history(prefix, history, 'loss')
         plot_history(prefix, history, 'r2')
 
