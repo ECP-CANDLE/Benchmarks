@@ -153,3 +153,16 @@ Comparing y_true and y_pred:
   r2: 0.8557
   corr: 0.9254
 ```
+
+#### Inference
+
+There is a separate inference script that can be used to predict drug pair response on combinations of sample sets and drug sets with a trained model.
+```
+python infer.py --sample_set NCIPDM --drug_set ALMANAC
+
+Using TensorFlow backend.
+Predicting drug response for 6381440 combinations: 590 samples x 104 drugs x 104 drugs
+100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 639/639 [14:56<00:00,  1.40s/it]
+```
+The trained model files can be downloaded here: [saved.model.h5](http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/saved.model.h5) and [saved.weights.h5](http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/saved.weights.h5).
+
