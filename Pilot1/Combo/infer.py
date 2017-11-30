@@ -44,6 +44,29 @@ def get_parser(description=None):
     return parser
 
 
+def lookup(df, sample, drug1, drug2=None, value=None):
+    drug2 = drug2 or drug1
+    df_result = df[(df['Sample'] == sample) & (df['Drug1'] == drug1) & (df['Drug2'] == drug2)]
+    if df_result.empty:
+        df_result = df[(df['Sample'] == sample) & (df['Drug1'] == drug2) & (df['Drug2'] == drug1)]
+    if value:
+        if df_result.empty:
+            return 1.0
+        else:
+            return df_result[value].iloc[0]
+    else:
+        return df_result
+
+
+def custom_combo_score(combined_growth, growth_1, growth_2):
+    if growth_1 <= 0 or growth_2 <= 0:
+        expected_growth = min(growth_1, growth_2)
+    else:
+        expected_growth = growth_1 * growth_2
+    custom_score = (expected_growth - combined_growth) * 100
+    return custom_score
+
+
 def cross_join(df1, df2, **kwargs):
     df1['_tmpkey'] = 1
     df2['_tmpkey'] = 1
@@ -107,10 +130,15 @@ def main():
             x_all_list.append(df_x_all.drop([drug, 'Drug'], axis=1).values)
 
         y_pred = model.predict(x_all_list, batch_size=args.batch_size, verbose=0).flatten()
-        df_all.loc[i:j-1, 'Pred_Growth'] = y_pred
+        df_all.loc[i:j-1, 'PredGrowth'] = y_pred
+
+    df = df_all.copy()
+    df['PredCustomComboScore'] = df.apply(lambda x: custom_combo_score(x['PredGrowth'],
+                                                                       lookup(df, x['Sample'], x['Drug1'], value='PredGrowth'),
+                                                                       lookup(df, x['Sample'], x['Drug2'], value='PredGrowth')), axis=1)
 
     csv = 'comb_pred_{}_{}.csv'.format(args.sample_set, args.drug_set)
-    df_all.to_csv(csv, index=False, float_format='%.4f')
+    df.to_csv(csv, index=False, float_format='%.4f')
 
 
 if __name__ == '__main__':
