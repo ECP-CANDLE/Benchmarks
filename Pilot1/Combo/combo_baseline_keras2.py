@@ -657,9 +657,11 @@ def run(params):
             base_lr = args.base_lr or K.get_value(optimizer.lr)
             if args.learning_rate:
                 K.set_value(optimizer.lr, args.learning_rate)
- 
-        optimizer = p1_common_keras.build_optimizer(args)
-
+        print(args)
+        optimizer = p1_common_keras.build_optimizer(args.__dict__)
+        base_lr = K.get_value(optimizer.lr)
+        # end edit by pbalapra
+        
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 
         # calculate trainable and non-trainable params

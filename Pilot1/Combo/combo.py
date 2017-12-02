@@ -59,9 +59,9 @@ def combo_parser(parser):
                         help='reduce learning rate on plateau')
     parser.add_argument('--warmup_lr', action='store_true',
                         help='gradually increase learning rate on start')
-    parser.add_argument('--base_lr', type=float,
-                        default=None,
-                        help='base learning rate')
+    #parser.add_argument('--base_lr', type=float,
+    #                    default=None,
+    #                    help='base learning rate')
     parser.add_argument('--cp', action='store_true',
                         help='checkpoint models with best val_loss')
     parser.add_argument('--tb', action='store_true',
