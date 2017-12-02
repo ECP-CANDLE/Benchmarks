@@ -59,7 +59,7 @@ def combo_parser(parser):
                         help='reduce learning rate on plateau')
     parser.add_argument('--warmup_lr', action='store_true',
                         help='gradually increase learning rate on start')
-    # commented out by pbalapra
+    #commented out by pbalapra
     #parser.add_argument('--base_lr', type=float,
     #                    default=None,
     #                    help='base learning rate')
