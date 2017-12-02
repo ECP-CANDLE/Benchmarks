@@ -14,9 +14,6 @@ def get_function(name):
 
 #def build_optimizer(type, lr, kerasDefaults):
 def build_optimizer(kerasParams):
-    #print(kerasParams)
-    #print(kerasParams['clipvalue'])
-    #print(kerasParams['learning_rate'])
     type = kerasParams['optimizer']
     if type == 'sgd':
         return optimizers.SGD(lr=kerasParams['learning_rate'], 
