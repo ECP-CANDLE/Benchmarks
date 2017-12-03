@@ -362,14 +362,15 @@ def run(params):
     # optimizer = p1_common_keras.build_optimizer(params['optimizer'],
     #                                             params['learning_rate'],
     #                                             keras_defaults)
-    
+    # edit by pbalapra
     if False:
         optimizer = optimizers.deserialize({'class_name': params['optimizer'], 'config': {}})
         base_lr = params['base_lr'] or K.get_value(optimizer.lr)
         if params['learning_rate']:
             K.set_value(optimizer.lr, params['learning_rate'])
-
     optimizer = p1_common_keras.build_optimizer(params)
+    base_lr = K.get_value(optimizer.lr)
+
     model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
     # calculate trainable and non-trainable params

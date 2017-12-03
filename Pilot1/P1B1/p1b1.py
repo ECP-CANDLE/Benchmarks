@@ -62,9 +62,10 @@ def p1b1_parser(parser):
                         help='reduce learning rate on plateau')
     parser.add_argument('--warmup_lr', action='store_true',
                         help='gradually increase learning rate on start')
-    parser.add_argument('--base_lr', type=float,
-                        default=None,
-                        help='base learning rate')
+    #commented out by pbalapra
+    #parser.add_argument('--base_lr', type=float,
+    #                    default=None,
+    #                    help='base learning rate')
     parser.add_argument("--epsilon_std", type=float,
                         default=argparse.SUPPRESS,
                         help="epsilon std for sampling latent noise")
