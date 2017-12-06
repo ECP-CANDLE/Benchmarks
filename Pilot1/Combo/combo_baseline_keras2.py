@@ -58,10 +58,10 @@ def set_seed(seed):
         # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
         # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
         # K.set_session(sess)
-        
-        # Uncommit when running on an optimized tensorflow where NUM_INTER_THREADS and 
+
+        # Uncommit when running on an optimized tensorflow where NUM_INTER_THREADS and
         # NUM_INTRA_THREADS env vars are set.
-        # session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']), 
+        # session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']),
         #	intra_op_parallelism_threads=int(os.environ['NUM_INTRA_THREADS']))
         # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
         # K.set_session(sess)
@@ -276,8 +276,9 @@ class ComboDataLoader(object):
         logger.info('Rows in train: {}, val: {}'.format(self.n_train, self.n_val))
 
         self.cell_df_dict = {'expression': 'df_cell_expr',
-                             'expression_5platform' : 'df_cell_expr',
-                             'expression_u133p2' : 'df_cell_expr',
+                             'expression_5platform': 'df_cell_expr',
+                             'expression_u133p2': 'df_cell_expr',
+                             'rnaseq': 'df_cell_expr',
                              'mirna': 'df_cell_mirna',
                              'proteome': 'df_cell_prot',
                              'categorical': 'df_cell_cat'}
