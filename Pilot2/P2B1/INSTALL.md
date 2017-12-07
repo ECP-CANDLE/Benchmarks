@@ -6,23 +6,15 @@ Here is an alternate set of directions for using the Spack tool
 ### Using spack
 
 ```
-# Install the keras python tools
-spack install py-keras ^py-theano +gpu
+# Use the install directions at: http://spack.readthedocs.io/en/latest/
+git clone https://github.com/spack/spack.git <path>/spack.git
 
-# Also include opencv with python support
-spack install opencv@3.2.0 +python
+# Put spack into your path
+export SPACK_ROOT=/usr/workspace/wsa/vanessen/spack_test.git;
+. $SPACK_ROOT/share/spack/setup-env.sh
 
-# Install iPython so that you can play interactively
-spack install py-ipython
-
-# Add matplotlib with image support
-spack install py-matplotlib +image
-
-# Add tqdm package
-spack install py-tqdm
-
-# Add scikit-learn
-spack install py-scikit-learn
+# Install the set of packages required to run the CANDLE benchmarks
+spack install candle-benchmarks %gcc@7.1.0
 ```
 
 #### Activating Spack
@@ -33,12 +25,18 @@ spack activate py-ipython
 spack activate py-keras
 spack activate py-matplotlib
 spack activate py-tqdm
+spack activate py-scikit-learn
+spack activate py-mdanalysis
+spack activate py-mpi4py
+spack activate py-h5py
+
+# Show what packages are activated in your python environment
+spack extensions python
 
 # Load the ipython environment into your path
 module avail
-module load py-ipython-5.1.0-gcc-4.9.3
-
-module load python/2.7.13-gcc-4.9.3 jpeg/9b-gcc-4.9.3
+module load py-ipython-5.1.0-gcc-7.1.0
+module load python/2.7.13-gcc-7.1.0 jpeg/9b-gcc-7.1.0
 
 # Lauch ipython and then run the example
 ipython

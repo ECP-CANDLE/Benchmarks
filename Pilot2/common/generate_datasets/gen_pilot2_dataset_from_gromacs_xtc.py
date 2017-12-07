@@ -36,6 +36,7 @@ from neighborhood import Neighborhood
 # with warnings.catch_warnings():
 #     warnings.filterwarnings("ignore", category=DeprecationWarning)
 
+max_neighborhood_size = 50
 
 # This routine generates a onehot encoding vector for c=3 lipid types
 def onehot(x, c=3):
@@ -264,14 +265,14 @@ def process_gromacs_xtc(queue, processname, totframes, fchunksize, totalchunks,
             # Extrac t and save meighbors ordered by distance
             if fr.resnum in tp.resnums:
                 ind = np.argwhere(tp.resnums == fr.resnum)
-                _, klist = top_nbrs.get_nbrs_k(ind[0, 0], 50, False)
+                _, klist = top_nbrs.get_nbrs_k(ind[0, 0], max_neighborhood_size, False)
                 current_resnums = tp[klist].resnums
-                outNbrs[i, curfrag, :51] = [resnum_dict.get(x, None) for x in current_resnums]
+                outNbrs[i, curfrag, : max_neighborhood_size + 1] = [resnum_dict.get(x, None) for x in current_resnums]
             elif fr.resnum in bt.resnums:
                 ind = np.argwhere(bt.resnums == fr.resnum)
-                _, klist = bot_nbrs.get_nbrs_k(ind[0, 0], 50, False)
+                _, klist = bot_nbrs.get_nbrs_k(ind[0, 0], max_neighborhood_size, False)
                 current_resnums = bt[klist].resnums
-                outNbrs[i, curfrag, :51] = [resnum_dict.get(x, None) for x in current_resnums]
+                outNbrs[i, curfrag, : max_neighborhood_size + 1] = [resnum_dict.get(x, None) for x in current_resnums]
 
             # outL.append([ffr,voro.vertices])
 
