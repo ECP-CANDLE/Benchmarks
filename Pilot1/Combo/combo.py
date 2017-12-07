@@ -42,7 +42,7 @@ def common_parser(parser):
 def combo_parser(parser):
     parser.add_argument("--cell_features", nargs='+',
                         default=argparse.SUPPRESS,
-                        choices=['expression', 'mirna', 'proteome', 'all', 'expression_5platform', 'categorical'],
+                        choices=['expression', 'mirna', 'proteome', 'all', 'expression_5platform', 'expression_u133p2', 'rnaseq', 'categorical'],
                         help="use one or more cell line feature sets: 'expression', 'mirna', 'proteome', 'all'; use all for ['expression', 'mirna', 'proteome']; use 'categorical' for one-hot encoded cell lines")
     parser.add_argument("--drug_features", nargs='+',
                         default=argparse.SUPPRESS,
@@ -69,6 +69,10 @@ def combo_parser(parser):
     parser.add_argument('--max_val_loss', type=float,
                         default=argparse.SUPPRESS,
                         help='retrain if val_loss is greater than the threshold')
+    parser.add_argument("--cv_partition",
+                        choices=['overlapping', 'disjoint'],
+                        default=argparse.SUPPRESS,
+                        help="cross validation paritioning scheme: overlapping or disjoint")
     parser.add_argument("--cv", type=int,
                         default=argparse.SUPPRESS,
                         help="cross validation folds")

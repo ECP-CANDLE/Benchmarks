@@ -58,10 +58,10 @@ def set_seed(seed):
         # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
         # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
         # K.set_session(sess)
-        
-        # Uncommit when running on an optimized tensorflow where NUM_INTER_THREADS and 
+
+        # Uncommit when running on an optimized tensorflow where NUM_INTER_THREADS and
         # NUM_INTRA_THREADS env vars are set.
-        # session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']), 
+        # session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']),
         #	intra_op_parallelism_threads=int(os.environ['NUM_INTRA_THREADS']))
         # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
         # K.set_session(sess)
@@ -140,7 +140,8 @@ class ComboDataLoader(object):
     def __init__(self, seed, val_split=0.2, shuffle=True,
                  cell_features=['expression'], drug_features=['descriptors'],
                  use_landmark_genes=False, use_combo_score=False,
-                 feature_subsample=None, scaling='std', scramble=False, cv=0):
+                 feature_subsample=None, scaling='std', scramble=False,
+                 cv_partition='overlapping', cv=0):
         """Initialize data merging drug response, drug descriptors and cell line essay.
            Shuffle and split training and validation set
 
@@ -172,6 +173,8 @@ class ComboDataLoader(object):
             type of feature scaling: 'maxabs' to [-1,1], 'maxabs' to [-1, 1], 'std' for standard normalization
         """
 
+        self.cv_partition = cv_partition
+
         np.random.seed(seed)
 
         df = NCI60.load_combo_response(use_combo_score=use_combo_score, fraction=True)
@@ -188,7 +191,10 @@ class ComboDataLoader(object):
             self.drug_features = drug_features
 
         for fea in self.cell_features:
-            if fea == 'expression' or fea == 'expression_u133p2':
+            if fea == 'expression' or fea == 'rnaseq':
+                self.df_cell_expr = NCI60.load_cell_expression_rnaseq(ncols=feature_subsample, scaling=scaling, use_landmark_genes=use_landmark_genes)
+                df = df.merge(self.df_cell_expr[['CELLNAME']], on='CELLNAME')
+            elif fea == 'expression_u133p2':
                 self.df_cell_expr = NCI60.load_cell_expression_u133p2(ncols=feature_subsample, scaling=scaling, use_landmark_genes=use_landmark_genes)
                 df = df.merge(self.df_cell_expr[['CELLNAME']], on='CELLNAME')
             elif fea == 'expression_5platform':
@@ -222,8 +228,9 @@ class ComboDataLoader(object):
                 df_drug_cat.index = df_drug_ids['NSC']
                 self.df_drug_cat = df_drug_cat.reset_index()
             elif fea == 'noise':
-                df_drug_ids = df[['NSC1']].drop_duplicates()
-                df_drug_ids.columns = ['NSC']
+                ids1 = df[['NSC1']].drop_duplicates().rename(columns={'NSC1':'NSC'})
+                ids2 = df[['NSC2']].drop_duplicates().rename(columns={'NSC2':'NSC'})
+                df_drug_ids = pd.concat([ids1, ids2]).drop_duplicates()
                 noise = np.random.normal(size=(df_drug_ids.shape[0], 500))
                 df_rand = pd.DataFrame(noise, index=df_drug_ids['NSC'],
                                        columns=['RAND-{:03d}'.format(x) for x in range(500)])
@@ -231,15 +238,28 @@ class ComboDataLoader(object):
 
         logger.info('Filtered down to {} rows with matching information.'.format(df.shape[0]))
 
+        ids1 = df[['NSC1']].drop_duplicates().rename(columns={'NSC1':'NSC'})
+        ids2 = df[['NSC2']].drop_duplicates().rename(columns={'NSC2':'NSC'})
+        df_drug_ids = pd.concat([ids1, ids2]).drop_duplicates().reset_index(drop=True)
+
+        n_drugs = df_drug_ids.shape[0]
+        n_val_drugs = int(n_drugs * val_split)
+        n_train_drugs = n_drugs - n_val_drugs
+
         logger.info('Unique cell lines: {}'.format(df['CELLNAME'].nunique()))
-        logger.info('Unique drugs: {}'.format(df['NSC1'].nunique()))
+        logger.info('Unique drugs: {}'.format(n_drugs))
         # df.to_csv('filtered.growth.min.tsv', sep='\t', index=False, float_format='%.4g')
         # df.to_csv('filtered.score.max.tsv', sep='\t', index=False, float_format='%.4g')
 
         if shuffle:
-            df = df.sample(frac=1.0, random_state=seed)
+            df = df.sample(frac=1.0, random_state=seed).reset_index(drop=True)
+            df_drug_ids = df_drug_ids.sample(frac=1.0, random_state=seed).reset_index(drop=True)
 
         self.df_response = df
+        self.df_drug_ids = df_drug_ids
+
+        self.train_drug_ids = df_drug_ids['NSC'][:n_train_drugs]
+        self.val_drug_ids = df_drug_ids['NSC'][-n_val_drugs:]
 
         if scramble:
             growth = df[['GROWTH']]
@@ -256,6 +276,9 @@ class ComboDataLoader(object):
         logger.info('Rows in train: {}, val: {}'.format(self.n_train, self.n_val))
 
         self.cell_df_dict = {'expression': 'df_cell_expr',
+                             'expression_5platform': 'df_cell_expr',
+                             'expression_u133p2': 'df_cell_expr',
+                             'rnaseq': 'df_cell_expr',
                              'mirna': 'df_cell_mirna',
                              'proteome': 'df_cell_prot',
                              'categorical': 'df_cell_cat'}
@@ -290,17 +313,20 @@ class ComboDataLoader(object):
         logger.info('Total input dimensions: {}'.format(self.input_dim))
 
         if cv > 1:
-            y = self.df_response['GROWTH'].values
-            # kf = KFold(n_splits=cv)
-            # splits = kf.split(y)
-            skf = StratifiedKFold(n_splits=cv, random_state=seed)
-            splits = skf.split(y, discretize(y, bins=cv))
-            self.cv_train_indexes = []
-            self.cv_val_indexes = []
-            for index, (train_index, val_index) in enumerate(splits):
-                print(index, train_index)
-                self.cv_train_indexes.append(train_index)
-                self.cv_val_indexes.append(val_index)
+            if cv_partition == 'disjoint':
+                pass
+            else:
+                y = self.df_response['GROWTH'].values
+                # kf = KFold(n_splits=cv)
+                # splits = kf.split(y)
+                skf = StratifiedKFold(n_splits=cv, random_state=seed)
+                splits = skf.split(y, discretize(y, bins=cv))
+                self.cv_train_indexes = []
+                self.cv_val_indexes = []
+                for index, (train_index, val_index) in enumerate(splits):
+                    print(index, train_index)
+                    self.cv_train_indexes.append(train_index)
+                    self.cv_val_indexes.append(val_index)
 
     def load_data_all(self, switch_drugs=False):
         df_all = self.df_response
@@ -346,6 +372,9 @@ class ComboDataLoader(object):
         y_val = y_all[val_index]
         df_train = df_all.iloc[train_index, :]
         df_val = df_all.iloc[val_index, :]
+        if self.cv_partition == 'disjoint':
+            print('df_train drugs:', set(df_train['NSC1']))
+            print('df_val drugs:', set(df_val['NSC1']))
         return x_train_list, y_train, x_val_list, y_val, df_train, df_val
 
     def load_data_cv(self, fold):
@@ -356,8 +385,12 @@ class ComboDataLoader(object):
         return self.load_data_by_index(train_index, val_index)
 
     def load_data(self):
-        train_index = range(self.n_train)
-        val_index = range(self.n_train, self.total)
+        if self.cv_partition == 'disjoint':
+            train_index = self.df_response[(self.df_response['NSC1'].isin(self.train_drug_ids)) & (self.df_response['NSC2'].isin(self.train_drug_ids))].index
+            val_index = self.df_response[(self.df_response['NSC1'].isin(self.val_drug_ids)) & (self.df_response['NSC2'].isin(self.val_drug_ids))].index
+        else:
+            train_index = range(self.n_train)
+            val_index = range(self.n_train, self.total)
         return self.load_data_by_index(train_index, val_index)
 
     def load_data_old(self):
@@ -517,9 +550,8 @@ class ModelRecorder(Callback):
         val_loss = logs.get('val_loss')
         self.val_losses.append(val_loss)
         if val_loss < self.best_val_loss:
-            # self.best_model = keras.models.clone_model(self.model)
+            self.best_model = keras.models.clone_model(self.model)
             self.best_val_loss = val_loss
-
 
 
 def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
@@ -612,7 +644,7 @@ def run(params):
                              drug_features=args.drug_features,
                              use_landmark_genes=args.use_landmark_genes,
                              use_combo_score=args.use_combo_score,
-                             cv=args.cv)
+                             cv_partition=args.cv_partition, cv=args.cv)
     # test_loader(loader)
     # test_generator(loader)
 
@@ -723,6 +755,14 @@ def run(params):
         if args.cp:
             # model.save(prefix+'.model.h5')
             model_recorder.best_model.save(prefix+'.model.h5')
+
+            # test reloadded model prediction
+            new_model = keras.models.load_model(prefix+'.model.h5')
+            new_model.load_weights(prefix+cv_ext+'.weights.h5')
+            new_pred = new_model.predict(x_val_list, batch_size=args.batch_size).flatten()
+            print('y_val:', y_val[:10])
+            print('old_pred:', y_val_pred[:10])
+            print('new_pred:', new_pred[:10])
 
         plot_history(prefix, history, 'loss')
         plot_history(prefix, history, 'r2')
