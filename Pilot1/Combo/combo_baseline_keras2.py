@@ -767,6 +767,9 @@ def run(params):
         plot_history(prefix, history, 'loss')
         plot_history(prefix, history, 'r2')
 
+        if K.backend() == 'tensorflow':
+            K.clear_session()
+
     pred_fname = prefix + '.predicted.growth.tsv'
     if args.use_combo_score:
         pred_fname = prefix + '.predicted.score.tsv'
