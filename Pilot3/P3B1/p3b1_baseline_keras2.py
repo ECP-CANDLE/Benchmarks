@@ -199,7 +199,7 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
 
     return ret
 
-def do_n_fold(GP, verbose=1):
+def run(GP, verbose=1):
     shared_nnet_spec = []
     elem = GP['shared_nnet_spec'].split( ',' )
     for el in elem:
