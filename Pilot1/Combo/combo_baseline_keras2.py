@@ -20,6 +20,7 @@ from keras import optimizers
 from keras.models import Model
 from keras.layers import Input, Dense, Dropout
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from keras.utils import get_custom_objects
 from keras.utils.vis_utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import KFold, StratifiedKFold
@@ -536,10 +537,23 @@ class LoggingCallback(Callback):
         self.print_fcn(msg)
 
 
+class PermanentDropout(Dropout):
+    def __init__(self, rate, **kwargs):
+        super(PermanentDropout, self).__init__(rate, **kwargs)
+        self.uses_learning_phase = False
+
+    def call(self, x, mask=None):
+        if 0. < self.rate < 1.:
+            noise_shape = self._get_noise_shape(x)
+            x = K.dropout(x, self.rate, noise_shape)
+        return x
+
+
 class ModelRecorder(Callback):
     def __init__(self, save_all_models=False):
         Callback.__init__(self)
         self.save_all_models = save_all_models
+        get_custom_objects()['PermanentDropout'] = PermanentDropout
 
     def on_train_begin(self, logs={}):
         self.val_losses = []
@@ -555,12 +569,18 @@ class ModelRecorder(Callback):
 
 
 def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
-                        activation='relu', residual=False):
+                        activation='relu', residual=False,
+                        dropout_rate=0, permanent_dropout=True):
     x_input = Input(shape=input_shape)
     h = x_input
     for i, layer in enumerate(dense_layers):
         x = h
         h = Dense(layer, activation=activation)(h)
+        if dropout_rate > 0:
+            if permanent_dropout:
+                h = PermanentDropout(dropout_rate)(h)
+            else:
+                h = Dropout(dropout_rate)(h)
         if residual:
             try:
                 h = keras.layers.add([h, x])
@@ -572,8 +592,12 @@ def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
 
 def build_model(loader, args, verbose=False):
     input_models = {}
+    dropout_rate = args.drop
+    permanent_dropout = True
     for fea_type, shape in loader.feature_shapes.items():
-        box = build_feature_model(input_shape=shape, name=fea_type, dense_layers=args.dense_feature_layers)
+        box = build_feature_model(input_shape=shape, name=fea_type,
+                                  dense_layers=args.dense_feature_layers,
+                                  dropout_rate=dropout_rate, permanent_dropout=permanent_dropout)
         if verbose:
             box.summary()
         input_models[fea_type] = box
@@ -594,6 +618,11 @@ def build_model(loader, args, verbose=False):
     for i, layer in enumerate(args.dense):
         x = h
         h = Dense(layer, activation=args.activation)(h)
+        if dropout_rate > 0:
+            if permanent_dropout:
+                h = PermanentDropout(dropout_rate)(h)
+            else:
+                h = Dropout(dropout_rate)(h)
         if args.residual:
             try:
                 h = keras.layers.add([h, x])
