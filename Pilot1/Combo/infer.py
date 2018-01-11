@@ -5,16 +5,30 @@ from __future__ import division, print_function
 import argparse
 import os
 
+import numpy as np
 import pandas as pd
 import keras
 from keras import backend as K
 from keras.models import Model
+from keras.utils import get_custom_objects
 from tqdm import tqdm
 
 import NCI60
 
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+
+class PermanentDropout(keras.layers.Dropout):
+    def __init__(self, rate, **kwargs):
+        super(PermanentDropout, self).__init__(rate, **kwargs)
+        self.uses_learning_phase = False
+
+    def call(self, x, mask=None):
+        if 0. < self.rate < 1.:
+            noise_shape = self._get_noise_shape(x)
+            x = K.dropout(x, self.rate, noise_shape)
+        return x
 
 
 def get_parser(description=None):
@@ -34,6 +48,9 @@ def get_parser(description=None):
     parser.add_argument('-m', '--model_file',
                         default='saved.model.h5',
                         help='trained model file')
+    parser.add_argument('-n', '--n_pred', type=int,
+                        default=1,
+                        help='the number of predictions to make for each sample-drug combination for uncertainty quantification')
     parser.add_argument('-w', '--weights_file',
                         default='saved.weights.h5',
                         help='trained weights file (loading model file alone sometimes does not work in keras)')
@@ -100,6 +117,7 @@ def main():
     parser = get_parser(description)
     args = parser.parse_args()
 
+    get_custom_objects()['PermanentDropout'] = PermanentDropout
     model = keras.models.load_model(args.model_file, compile=False)
     model.load_weights(args.weights_file)
     # model.summary()
@@ -122,6 +140,7 @@ def main():
 
     print('Predicting drug response for {} combinations: {} samples x {} drugs x {} drugs'.format(n_rows, n_samples, n_drugs, n_drugs))
 
+    df_all['N'] = args.n_pred
     total = df_all.shape[0]
     for i in tqdm(range(0, total, args.step)):
         j = min(i+args.step, total)
@@ -135,8 +154,16 @@ def main():
             df_x_all = pd.merge(df_all[[drug]].iloc[i:j], df_desc, left_on=drug, right_on='Drug', how='left')
             x_all_list.append(df_x_all.drop([drug, 'Drug'], axis=1).values)
 
-        y_pred = model.predict(x_all_list, batch_size=args.batch_size, verbose=0).flatten()
-        df_all.loc[i:j-1, 'PredGrowth'] = y_pred
+        preds = []
+        for k in range(args.n_pred):
+            y_pred = model.predict(x_all_list, batch_size=args.batch_size, verbose=0).flatten()
+            preds.append(y_pred)
+
+        # df_all.loc[i:j-1, 'PredGrowth'] = y_pred
+        df_all.loc[i:j-1, 'PredGrowthMean'] = np.mean(preds, axis=0)
+        df_all.loc[i:j-1, 'PredGrowthStd'] = np.std(preds, axis=0)
+        df_all.loc[i:j-1, 'PredGrowthMin'] = np.min(preds, axis=0)
+        df_all.loc[i:j-1, 'PredGrowthMax'] = np.max(preds, axis=0)
 
     df = df_all.copy()
     # df['PredCustomComboScore'] = df.apply(lambda x: custom_combo_score(x['PredGrowth'],
