@@ -132,7 +132,7 @@ def main():
     else:
         df_drug_ids = df_desc[['Drug']].copy()
 
-    df_all = cross_join3(df_sample_ids, df_drug_ids, df_drug_ids, suffixes=('1', '2'))
+    df_sum = cross_join3(df_sample_ids, df_drug_ids, df_drug_ids, suffixes=('1', '2'))
 
     n_samples = df_sample_ids.shape[0]
     n_drugs = df_drug_ids.shape[0]
@@ -140,8 +140,12 @@ def main():
 
     print('Predicting drug response for {} combinations: {} samples x {} drugs x {} drugs'.format(n_rows, n_samples, n_drugs, n_drugs))
 
-    df_all['N'] = args.n_pred
-    total = df_all.shape[0]
+    n = args.n_pred
+    df_sum['N'] = n
+    df_seq = pd.DataFrame({'Seq': range(1, n+1)})
+    df_all = cross_join(df_sum, df_seq)
+
+    total = df_sum.shape[0]
     for i in tqdm(range(0, total, args.step)):
         j = min(i+args.step, total)
 
@@ -155,23 +159,29 @@ def main():
             x_all_list.append(df_x_all.drop([drug, 'Drug'], axis=1).values)
 
         preds = []
-        for k in range(args.n_pred):
+        for k in range(n):
             y_pred = model.predict(x_all_list, batch_size=args.batch_size, verbose=0).flatten()
             preds.append(y_pred)
+            df_all.loc[i*n+k:(j-1)*n+k:n, 'PredGrowth'] = y_pred
+            df_all.loc[i*n+k:(j-1)*n+k:n, 'Seq'] = k + 1
 
-        # df_all.loc[i:j-1, 'PredGrowth'] = y_pred
-        df_all.loc[i:j-1, 'PredGrowthMean'] = np.mean(preds, axis=0)
-        df_all.loc[i:j-1, 'PredGrowthStd'] = np.std(preds, axis=0)
-        df_all.loc[i:j-1, 'PredGrowthMin'] = np.min(preds, axis=0)
-        df_all.loc[i:j-1, 'PredGrowthMax'] = np.max(preds, axis=0)
+        if n > 0:
+            df_sum.loc[i:j-1, 'PredGrowthMean'] = np.mean(preds, axis=0)
+            df_sum.loc[i:j-1, 'PredGrowthStd'] = np.std(preds, axis=0)
+            df_sum.loc[i:j-1, 'PredGrowthMin'] = np.min(preds, axis=0)
+            df_sum.loc[i:j-1, 'PredGrowthMax'] = np.max(preds, axis=0)
 
-    df = df_all.copy()
+    # df = df_all.copy()
     # df['PredCustomComboScore'] = df.apply(lambda x: custom_combo_score(x['PredGrowth'],
     #                                                                    lookup(df, x['Sample'], x['Drug1'], value='PredGrowth'),
     #                                                                    lookup(df, x['Sample'], x['Drug2'], value='PredGrowth')), axis=1)
 
-    csv = 'comb_pred_{}_{}.tsv'.format(args.sample_set, args.drug_set)
-    df.to_csv(csv, index=False, sep='\t', float_format='%.4f')
+    csv_all = 'comb_pred_{}_{}.all.tsv'.format(args.sample_set, args.drug_set)
+    df_all.to_csv(csv_all, index=False, sep='\t', float_format='%.4f')
+
+    if n > 0:
+        csv = 'comb_pred_{}_{}.tsv'.format(args.sample_set, args.drug_set)
+        df_sum.to_csv(csv, index=False, sep='\t', float_format='%.4f')
 
 
 if __name__ == '__main__':
