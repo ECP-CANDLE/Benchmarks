@@ -23,7 +23,7 @@ from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, Learni
 from keras.utils import get_custom_objects
 from keras.utils.vis_utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
 
 import matplotlib as mpl
@@ -316,6 +316,17 @@ class ComboDataLoader(object):
         if cv > 1:
             if cv_partition == 'disjoint':
                 pass
+            elif cv_partition == 'disjoint_cells':
+                y = self.df_response['GROWTH'].values
+                groups = self.df_response['CELLNAME'].values
+                gkf = GroupKFold(n_splits=cv)
+                splits = gkf.split(y, groups=groups)
+                self.cv_train_indexes = []
+                self.cv_val_indexes = []
+                for index, (train_index, val_index) in enumerate(splits):
+                    print(index, train_index)
+                    self.cv_train_indexes.append(train_index)
+                    self.cv_val_indexes.append(val_index)
             else:
                 y = self.df_response['GROWTH'].values
                 # kf = KFold(n_splits=cv)
@@ -374,8 +385,11 @@ class ComboDataLoader(object):
         df_train = df_all.iloc[train_index, :]
         df_val = df_all.iloc[val_index, :]
         if self.cv_partition == 'disjoint':
-            print('df_train drugs:', set(df_train['NSC1']))
-            print('df_val drugs:', set(df_val['NSC1']))
+            logger.info('Training drugs: {}'.format(set(df_train['NSC1'])))
+            logger.info('Validation drugs: {}'.format(set(df_val['NSC1'])))
+        elif self.cv_partition == 'disjoint_cells':
+            logger.info('Training cells: {}'.format(set(df_train['CELLNAME'])))
+            logger.info('Validation cells: {}'.format(set(df_val['CELLNAME'])))
         return x_train_list, y_train, x_val_list, y_val, df_train, df_val
 
     def load_data_cv(self, fold):
