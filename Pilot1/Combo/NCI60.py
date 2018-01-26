@@ -122,22 +122,24 @@ def load_combo_response(min_logconc=-4., max_logconc=-4., subsample=None, fracti
     use_combo_score: bool (default False)
         return combination score in place of percent growth (stored in 'GROWTH' column)
     """
-    path = get_file(DATA_URL + 'ComboDrugGrowth.txt')
+    path = get_file(DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(path, sep='\t',
-                         usecols=['CELLNAME', 'NSC1', 'CONC1', 'NSC2', 'CONC2', 'PERCENTGROWTH', 'VALID', 'SCORE'],
+        df = pd.read_csv(path,
+                         usecols=['CELLNAME', 'NSC1', 'CONC1', 'NSC2', 'CONC2', 'PERCENTGROWTH', 'VALID', 'SCORE', 'SCREENER', 'STUDY'],
                          na_values=['na','-',''],
                          dtype={'NSC1':object, 'NSC2':object, 'CONC1':object, 'CONC2':object, 'PERCENTGROWTH':str, 'SCORE':str},
                          engine='c', error_bad_lines=False, warn_bad_lines=True)
                          # nrows=10000)
         global_cache[path] = df
 
-    df = df[(df['VALID'] == 'Y')]
-    df = df[['CELLNAME', 'NSC1', 'NSC2', 'PERCENTGROWTH', 'SCORE']]
+    df = df[df['VALID'] == 'Y']
+
+    df = df[['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2', 'PERCENTGROWTH', 'SCORE']]
     df['PERCENTGROWTH'] = df['PERCENTGROWTH'].astype(np.float32)
     df['SCORE'] = df['SCORE'].astype(np.float32)
     df['NSC2'] = df['NSC2'].fillna(df['NSC1'])
+    df['CONC2'] = df['CONC2'].fillna(df['CONC1'])
     df['SCORE'] = df['SCORE'].fillna(0)
 
     cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.txt')
@@ -147,9 +149,15 @@ def load_combo_response(min_logconc=-4., max_logconc=-4., subsample=None, fracti
 
     df['CELLNAME'] = df['CELLNAME'].map(lambda x: cellmap[x])
 
-    df_min = df.groupby(['CELLNAME', 'NSC1', 'NSC2']).min()
-    df_min = df_min.add_suffix('_MIN').reset_index()  # add PERCENTGROWTH_MIN by flattening the hierarchical index
+    df_mean_min = df.groupby(['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2']).mean()
+    df_mean_min = df_mean_min.groupby(['CELLNAME', 'NSC1', 'NSC2']).min()
+    df_mean_min = df_mean_min.add_suffix('_MIN').reset_index()  # add PERCENTGROWTH_MIN by flattening the hierarchical index
+    df_min = df_mean_min
 
+    # df_min = df.groupby(['CELLNAME', 'NSC1', 'NSC2']).min()
+    # df_min = df_min.add_suffix('_MIN').reset_index()  # add PERCENTGROWTH_MIN by flattening the hierarchical index
+
+    df = df.drop(['CONC1', 'CONC2'], axis=1)
     df_max = df.groupby(['CELLNAME', 'NSC1', 'NSC2']).max()
     df_max = df_max.add_suffix('_MAX').reset_index()  # add SCORE_MAX by flattening the hierarchical index
 
