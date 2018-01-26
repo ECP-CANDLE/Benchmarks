@@ -60,6 +60,8 @@ def get_parser(description=None):
     parser.add_argument('--nd', type=int,
                         default=0,
                         help='the first n entries of drugs to subsample')
+    parser.add_argument("--use_landmark_genes", action="store_true",
+                        help="use the 978 landmark genes from LINCS (L1000) as expression features")
 
     return parser
 
@@ -104,8 +106,8 @@ def cross_join3(df1, df2, df3, **kwargs):
     return cross_join(cross_join(df1, df2), df3, **kwargs)
 
 
-def prepare_data(sample_set='NCI60', drug_set='ALMANAC'):
-    df_expr = NCI60.load_sample_rnaseq(use_landmark_genes=True, sample_set=sample_set)
+def prepare_data(sample_set='NCI60', drug_set='ALMANAC', use_landmark_genes=False):
+    df_expr = NCI60.load_sample_rnaseq(use_landmark_genes=use_landmark_genes, sample_set=sample_set)
     # df_old = NCI60.load_cell_expression_rnaseq(use_landmark_genes=True)
     # df_desc = NCI60.load_drug_descriptors_new()
     df_desc = NCI60.load_drug_set_descriptors(drug_set=drug_set)
@@ -122,7 +124,7 @@ def main():
     model.load_weights(args.weights_file)
     # model.summary()
 
-    df_expr, df_desc = prepare_data(sample_set=args.sample_set, drug_set=args.drug_set)
+    df_expr, df_desc = prepare_data(sample_set=args.sample_set, drug_set=args.drug_set, use_landmark_genes=args.use_landmark_genes)
     if args.ns > 0:
         df_sample_ids = df_expr[['Sample']].head(args.ns)
     else:
