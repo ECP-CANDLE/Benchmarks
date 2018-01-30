@@ -5,30 +5,17 @@ from __future__ import division, print_function
 import argparse
 import os
 
-import numpy as np
 import pandas as pd
 import keras
 from keras import backend as K
 from keras.models import Model
-from keras.utils import get_custom_objects
 from tqdm import tqdm
 
 import NCI60
-
+import combo
+import p1_common
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-
-class PermanentDropout(keras.layers.Dropout):
-    def __init__(self, rate, **kwargs):
-        super(PermanentDropout, self).__init__(rate, **kwargs)
-        self.uses_learning_phase = False
-
-    def call(self, x, mask=None):
-        if 0. < self.rate < 1.:
-            noise_shape = self._get_noise_shape(x)
-            x = K.dropout(x, self.rate, noise_shape)
-        return x
 
 
 def get_parser(description=None):
@@ -48,9 +35,6 @@ def get_parser(description=None):
     parser.add_argument('-m', '--model_file',
                         default='saved.model.h5',
                         help='trained model file')
-    parser.add_argument('-n', '--n_pred', type=int,
-                        default=1,
-                        help='the number of predictions to make for each sample-drug combination for uncertainty quantification')
     parser.add_argument('-w', '--weights_file',
                         default='saved.weights.h5',
                         help='trained weights file (loading model file alone sometimes does not work in keras)')
@@ -60,10 +44,29 @@ def get_parser(description=None):
     parser.add_argument('--nd', type=int,
                         default=0,
                         help='the first n entries of drugs to subsample')
-    parser.add_argument("--use_landmark_genes", action="store_true",
-                        help="use the 978 landmark genes from LINCS (L1000) as expression features")
 
     return parser
+
+# def get_combo_parser():
+#     description = 'Build neural network based models to predict tumor response to drug pairs.'
+#     parser = argparse.ArgumentParser(prog='combo_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+#                                      description=description)
+#     return combo.common_parser(parser)
+
+
+def initialize_parameters():
+    # Get command-line parameters
+    # parser = get_combo_parser()
+    parser = get_parser()
+    args = parser.parse_args()
+    # Get parameters from configuration file
+    # file_params = combo.read_config_file(args.config_file)
+    # Consolidate parameter set. Command-line parameters overwrite file configuration
+    # file_params={}
+    # params = p1_common.args_overwrite_config(args, file_params)
+    print('Params inside infer.py initialize_parameters()')
+    print(params)
+    return params
 
 
 def lookup(df, sample, drug1, drug2=None, value=None):
@@ -106,25 +109,26 @@ def cross_join3(df1, df2, df3, **kwargs):
     return cross_join(cross_join(df1, df2), df3, **kwargs)
 
 
-def prepare_data(sample_set='NCI60', drug_set='ALMANAC', use_landmark_genes=False):
-    df_expr = NCI60.load_sample_rnaseq(use_landmark_genes=use_landmark_genes, sample_set=sample_set)
+def prepare_data(sample_set='NCI60', drug_set='ALMANAC'):
+    df_expr = NCI60.load_sample_rnaseq(use_landmark_genes=False, sample_set=sample_set)
     # df_old = NCI60.load_cell_expression_rnaseq(use_landmark_genes=True)
     # df_desc = NCI60.load_drug_descriptors_new()
     df_desc = NCI60.load_drug_set_descriptors(drug_set=drug_set)
     return df_expr, df_desc
 
 
-def main():
-    description = 'Infer drug pair response from trained combo model.'
-    parser = get_parser(description)
-    args = parser.parse_args()
+class Struct:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
 
-    get_custom_objects()['PermanentDropout'] = PermanentDropout
+def run(params):
+    args = Struct(**params)
+
     model = keras.models.load_model(args.model_file, compile=False)
     model.load_weights(args.weights_file)
     # model.summary()
 
-    df_expr, df_desc = prepare_data(sample_set=args.sample_set, drug_set=args.drug_set, use_landmark_genes=args.use_landmark_genes)
+    df_expr, df_desc = prepare_data(sample_set=args.sample_set, drug_set=args.drug_set)
     if args.ns > 0:
         df_sample_ids = df_expr[['Sample']].head(args.ns)
     else:
@@ -134,7 +138,7 @@ def main():
     else:
         df_drug_ids = df_desc[['Drug']].copy()
 
-    df_sum = cross_join3(df_sample_ids, df_drug_ids, df_drug_ids, suffixes=('1', '2'))
+    df_all = cross_join3(df_sample_ids, df_drug_ids, df_drug_ids, suffixes=('1', '2'))
 
     n_samples = df_sample_ids.shape[0]
     n_drugs = df_drug_ids.shape[0]
@@ -142,12 +146,7 @@ def main():
 
     print('Predicting drug response for {} combinations: {} samples x {} drugs x {} drugs'.format(n_rows, n_samples, n_drugs, n_drugs))
 
-    n = args.n_pred
-    df_sum['N'] = n
-    df_seq = pd.DataFrame({'Seq': range(1, n+1)})
-    df_all = cross_join(df_sum, df_seq)
-
-    total = df_sum.shape[0]
+    total = df_all.shape[0]
     for i in tqdm(range(0, total, args.step)):
         j = min(i+args.step, total)
 
@@ -160,31 +159,22 @@ def main():
             df_x_all = pd.merge(df_all[[drug]].iloc[i:j], df_desc, left_on=drug, right_on='Drug', how='left')
             x_all_list.append(df_x_all.drop([drug, 'Drug'], axis=1).values)
 
-        preds = []
-        for k in range(n):
-            y_pred = model.predict(x_all_list, batch_size=args.batch_size, verbose=0).flatten()
-            preds.append(y_pred)
-            df_all.loc[i*n+k:(j-1)*n+k:n, 'PredGrowth'] = y_pred
-            df_all.loc[i*n+k:(j-1)*n+k:n, 'Seq'] = k + 1
+        y_pred = model.predict(x_all_list, batch_size=args.batch_size, verbose=0).flatten()
+        df_all.loc[i:j-1, 'PredGrowth'] = y_pred
 
-        if n > 0:
-            df_sum.loc[i:j-1, 'PredGrowthMean'] = np.mean(preds, axis=0)
-            df_sum.loc[i:j-1, 'PredGrowthStd'] = np.std(preds, axis=0)
-            df_sum.loc[i:j-1, 'PredGrowthMin'] = np.min(preds, axis=0)
-            df_sum.loc[i:j-1, 'PredGrowthMax'] = np.max(preds, axis=0)
-
-    # df = df_all.copy()
+    df = df_all.copy()
     # df['PredCustomComboScore'] = df.apply(lambda x: custom_combo_score(x['PredGrowth'],
     #                                                                    lookup(df, x['Sample'], x['Drug1'], value='PredGrowth'),
     #                                                                    lookup(df, x['Sample'], x['Drug2'], value='PredGrowth')), axis=1)
 
-    csv_all = 'comb_pred_{}_{}.all.tsv'.format(args.sample_set, args.drug_set)
-    df_all.to_csv(csv_all, index=False, sep='\t', float_format='%.4f')
+    csv = 'comb_pred_{}_{}.tsv'.format(args.sample_set, args.drug_set)
+    df.to_csv(csv, index=False, sep='\t', float_format='%.4f')
 
-    if n > 0:
-        csv = 'comb_pred_{}_{}.tsv'.format(args.sample_set, args.drug_set)
-        df_sum.to_csv(csv, index=False, sep='\t', float_format='%.4f')
-
+def main():
+    description = 'Infer drug pair response from trained combo model.'
+    parser = get_parser(description)
+    args = parser.parse_args()
+    run(args)
 
 if __name__ == '__main__':
     main()
