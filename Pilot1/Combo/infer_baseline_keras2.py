@@ -62,8 +62,8 @@ def initialize_parameters():
     # Get parameters from configuration file
     # file_params = combo.read_config_file(args.config_file)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
-    # file_params={}
-    params = {} # p1_common.args_overwrite_config(args, file_params)
+    file_params={}
+    params = p1_common.args_overwrite_config(args, file_params)
     print('Params inside infer.py initialize_parameters()')
     print(params)
     return params
