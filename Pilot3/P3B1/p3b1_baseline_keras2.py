@@ -313,5 +313,5 @@ def run(GP, verbose=1):
 
 if __name__  == "__main__":
     gParameters=initialize_parameters()
-    avg_loss = do_n_fold(gParameters)
+    avg_loss = run(gParameters)
     print( avg_loss )
