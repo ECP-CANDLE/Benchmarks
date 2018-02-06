@@ -153,6 +153,8 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
         model = models[ k ]
         model.compile( loss= loss, optimizer= optimizer, metrics= [ 'accuracy' ] )
 
+    # fix naming problem
+    base_run_id = run_id
 
     # train
     for epoch in range( n_epochs ):
@@ -163,7 +165,7 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
             label_test = labels_test[ k ]
             model = models[ k ]
 
-            gParameters['run_id'] = run_id + ".{}.{}.{}".format(fold, epoch, k)
+            gParameters['run_id'] = base_run_id + ".{}.{}.{}".format(fold, epoch, k)
             candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
             timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
 
@@ -171,6 +173,7 @@ def run_mtl( features_train= [], truths_train= [], features_test= [], truths_tes
                 callbacks= [ candleRemoteMonitor, timeoutMonitor ],
                 batch_size= batch_size, validation_data= ( feature_test, label_test ) )
 
+    gParameters['run_id'] = base_run_id
 
     # retrieve truth-pred pair
     avg_loss = 0.0
