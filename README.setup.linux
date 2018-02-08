@@ -2,16 +2,16 @@
 # ------------------------------
 
 # Download the Anaconda installer
-curl -o Anaconda2-4.3.1-Linux-x86_64.sh https://repo.continuum.io/archive/Anaconda2-4.3.1-Linux-x86_64.sh
+curl -o Anaconda3-5.0.1-Linux-x86_64.sh https://repo.continuum.io/archive/Anaconda3-5.0.1-Linux-x86_64.sh
 
 # Make the installer executable
-chmod u+x ./Anaconda2-4.3.1-Linux-x86_64.sh
+chmod u+x ./Anaconda3-5.0.1-Linux-x86_64.sh
 
 # Run the installer, accepting the defaults.
-./Anaconda2-4.3.1-Linux-x86_64.sh
+./Anaconda3-5.0.1-Linux-x86_64.sh
 
-# Add anaconda2/bin to your path (assumes default install location)
-export PATH=$HOME/anaconda2/bin:$PATH
+# Add anaconda3/bin to your path (assumes default install location)
+export PATH=$HOME/anaconda3/bin:$PATH
 
 # Install additonal modules not shipped with Anaconda
 conda install -c conda-forge tensorflow
@@ -29,7 +29,7 @@ git clone https://github.com/ECP-Candle/benchmarks
 
 # Run the Pilot1 benchmark
 pushd benchmarks/Pilot1/P1B1/
-python p1b1_baseline_keras2.py 
+python p1b1_baseline_keras2.py
 popd
 
 pushd benchmarks/Pilot1/P1B2/
@@ -56,5 +56,4 @@ popd
 
 pushd benchmarks/Pilot3/P3B2/
 python p3b2_baseline_keras2.py
-popd 
-
+popd
