@@ -282,7 +282,7 @@ def run(gParameters):
             yaml_file.write(model_yaml)
 
         # serialize weights to HDF5
-        model.save_weights("{}/{}.model.h5".format(output_dir, model_name))
+        model.save_weights("{}/{}.weights.h5".format(output_dir, model_name))
         print("Saved model to disk")
 
         # load json and create model
@@ -300,7 +300,7 @@ def run(gParameters):
 
 
         # load weights into new model
-        loaded_model_json.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
+        loaded_model_json.load_weights('{}/{}.weights.h5'.format(output_dir, model_name))
         print("Loaded json model from disk")
 
         # evaluate json loaded model on test data
@@ -315,7 +315,7 @@ def run(gParameters):
         print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1]*100))
 
         # load weights into new model
-        loaded_model_yaml.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
+        loaded_model_yaml.load_weights('{}/{}.weights.h5'.format(output_dir, model_name))
         print("Loaded yaml model from disk")
 
         # evaluate loaded model on test data
