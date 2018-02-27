@@ -4,6 +4,7 @@ import numpy as np
 import os
 import sys
 from datetime import datetime
+import time
 import gzip
 import argparse
 try:
@@ -22,7 +23,9 @@ from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
-TIMEOUT=3600 # in sec; set this to -1 for no timeout 
+TIMEOUT=3600 # in sec; set this to -1 for no timeoutA
+ 
+# needed to find libs in ../common and ../../common
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
 sys.path.append(lib_path)
@@ -91,6 +94,7 @@ gParameters['classes'] = classes
 
 # load json and create model
 print (str(datetime.now()),  " loading model")
+start = time.time()
 json_file = open('{}/{}.model.json'.format(output_dir, model_name), 'r')
 loaded_model_json = json_file.read()
 json_file.close()
@@ -100,9 +104,12 @@ loaded_model_json = model_from_json(loaded_model_json)
 print (str(datetime.now()),  " loading weights")
 loaded_model_json.load_weights('{}/{}.weights.h5'.format(output_dir, model_name))
 print("Loaded json model from disk")
+end = time.time()
+print ('loading model elapsed time in seconds: ', end - start)
 
 # load the test dataA
 print (str(datetime.now()),  " loading data")
+start = time.time()
 file_train = gParameters['train_data']
 file_test = gParameters['test_data']
 url = gParameters['data_url']
@@ -112,27 +119,27 @@ test_file = data_utils.get_file(file_test, url+file_test, cache_subdir='Pilot1')
 
 X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
-# evaluate json loaded model on test data
-print (str(datetime.now()),  " evaluating model")
-print('evaluating on X_test, y_test')
-print('X_test shape:', X_test.shape)
-print('Y_test shape:', Y_test.shape)
+# perform predictions on merged train and test data
+X = np.concatenate((X_train, X_test), axis=0)
+print ('X shape: ', X.shape)
+print (str(datetime.now()),  " done loading data")
+end = time.time()
+print ('loading data elapsed time in seconds: ', end - start)
 
 # this reshaping is critical for the Conv1D to work
+X = np.expand_dims(X, axis=2)
+print('X shape" ', X.shape)
 
-X_train = np.expand_dims(X_train, axis=2)
-X_test = np.expand_dims(X_test, axis=2)
-
-print('X_train shape:', X_train.shape)
-print('X_test shape:', X_test.shape)
-
+# do prediction
+print (str(datetime.now()),  " performing inference")
+start = time.time()
 loaded_model_json.compile(loss=gParameters['loss'],
     optimizer=gParameters['optimizer'],
     metrics=[gParameters['metrics']])
-score_json = loaded_model_json.evaluate(X_test, Y_test, verbose=0)
-
-print('json Test score:', score_json[0])
-print('json Test accuracy:', score_json[1])
-print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1]*100))
+prediction = loaded_model_json.predict(X, verbose=0)
+print (str(datetime.now()),  " done performing inferendce")
+end = time.time()
+print('prediction on ', X.shape[0], ' samples elapsed time in seconds: ', end - start)
+print( prediction )
 
 print (str(datetime.now()),  " done")
