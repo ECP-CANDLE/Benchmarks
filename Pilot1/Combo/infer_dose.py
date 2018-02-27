@@ -62,6 +62,17 @@ def get_parser(description=None):
                         help='the first n entries of drugs to subsample')
     parser.add_argument("--use_landmark_genes", action="store_true",
                         help="use the 978 landmark genes from LINCS (L1000) as expression features")
+    parser.add_argument("--skip_single_prediction_cleanup", action="store_true",
+                        help="skip removing single drug predictions with two different concentrations")
+    parser.add_argument('--min_pconc', type=float,
+                        default=4.0,
+                        help='min negative common log concentration of drugs')
+    parser.add_argument('--max_pconc', type=float,
+                        default=6.0,
+                        help='max negative common log concentration of drugs')
+    parser.add_argument('--pconc_step', type=float,
+                        default=1.0,
+                        help='concentration step size')
 
     return parser
 
@@ -135,12 +146,15 @@ def main():
         df_drug_ids = df_desc[['Drug']].copy()
 
     df_sum = cross_join3(df_sample_ids, df_drug_ids, df_drug_ids, suffixes=('1', '2'))
+    df_pconc = pd.DataFrame({'pCONC': np.arange(args.min_pconc, args.max_pconc+0.1, args.pconc_step)})
+    df_sum = cross_join3(df_sum, df_pconc, df_pconc, suffixes=('1', '2'))
 
     n_samples = df_sample_ids.shape[0]
     n_drugs = df_drug_ids.shape[0]
-    n_rows = n_samples * n_drugs * n_drugs
+    n_doses = df_pconc.shape[0]
+    n_rows = n_samples * n_drugs * n_drugs * n_doses * n_doses
 
-    print('Predicting drug response for {} combinations: {} samples x {} drugs x {} drugs'.format(n_rows, n_samples, n_drugs, n_drugs))
+    print('Predicting drug response for {} combinations: {} samples x {} drugs x {} drugs x {} doses x {} doses'.format(n_rows, n_samples, n_drugs, n_drugs, n_doses, n_doses))
 
     n = args.n_pred
     df_sum['N'] = n
@@ -160,6 +174,10 @@ def main():
             df_x_all = pd.merge(df_all[[drug]].iloc[i:j], df_desc, left_on=drug, right_on='Drug', how='left')
             x_all_list.append(df_x_all.drop([drug, 'Drug'], axis=1).values)
 
+        doses = ['pCONC1', 'pCONC2']
+        for dose in doses:
+            x_all_list.append(df_all[dose].values)
+
         preds = []
         for k in range(n):
             y_pred = model.predict(x_all_list, batch_size=args.batch_size, verbose=0).flatten()
@@ -178,11 +196,15 @@ def main():
     #                                                                    lookup(df, x['Sample'], x['Drug1'], value='PredGrowth'),
     #                                                                    lookup(df, x['Sample'], x['Drug2'], value='PredGrowth')), axis=1)
 
-    csv_all = 'comb_pred_{}_{}.all.tsv'.format(args.sample_set, args.drug_set)
+    if not args.skip_single_prediction_cleanup:
+        df_all = df_all[(df_all['Drug1'] != df_all['Drug2']) | (df_all['pCONC1'] == df_all['pCONC2'])]
+        df_sum = df_sum[(df_sum['Drug1'] != df_sum['Drug2']) | (df_sum['pCONC1'] == df_sum['pCONC2'])]
+
+    csv_all = 'comb_dose_pred_{}_{}.all.tsv'.format(args.sample_set, args.drug_set)
     df_all.to_csv(csv_all, index=False, sep='\t', float_format='%.4f')
 
     if n > 0:
-        csv = 'comb_pred_{}_{}.tsv'.format(args.sample_set, args.drug_set)
+        csv = 'comb_dose_pred_{}_{}.tsv'.format(args.sample_set, args.drug_set)
         df_sum.to_csv(csv, index=False, sep='\t', float_format='%.4f')
 
 

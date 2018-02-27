@@ -70,7 +70,7 @@ def combo_parser(parser):
                         default=argparse.SUPPRESS,
                         help='retrain if val_loss is greater than the threshold')
     parser.add_argument("--cv_partition",
-                        choices=['overlapping', 'disjoint'],
+                        choices=['overlapping', 'disjoint', 'disjoint_cells'],
                         default=argparse.SUPPRESS,
                         help="cross validation paritioning scheme: overlapping or disjoint")
     parser.add_argument("--cv", type=int,

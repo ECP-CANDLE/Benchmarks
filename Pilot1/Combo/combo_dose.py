@@ -178,7 +178,7 @@ class ComboDataLoader(object):
 
         np.random.seed(seed)
 
-        df = NCI60.load_combo_response(use_combo_score=use_combo_score, fraction=True)
+        df = NCI60.load_combo_dose_response(use_combo_score=use_combo_score, fraction=True)
         logger.info('Loaded {} unique (CL, D1, D2) response sets.'.format(df.shape[0]))
 
         if 'all' in cell_features:
@@ -306,6 +306,10 @@ class ComboDataLoader(object):
                 self.input_features[feature_name] = feature_type
                 self.feature_shapes[feature_type] = (df_drug.shape[1] - 1,)
 
+        self.feature_shapes['dose'] = (1,)
+        for dose in ['dose1', 'dose2']:
+            self.input_features[dose] = 'dose'
+
         logger.info('Input features shapes:')
         for k, v in self.input_features.items():
             logger.info('  {}: {}'.format(k, self.feature_shapes[v]))
@@ -356,14 +360,19 @@ class ComboDataLoader(object):
         #     df_x_all[:1000].to_csv('df.{}.1k.csv'.format(fea), index=False, float_format="%g")
 
         drugs = ['NSC1', 'NSC2']
+        doses = ['pCONC1', 'pCONC2']
         if switch_drugs:
             drugs = ['NSC2', 'NSC1']
+            doses = ['pCONC2', 'pCONC1']
 
         for drug in drugs:
             for fea in self.drug_features:
                 df_drug = getattr(self, self.drug_df_dict[fea])
                 df_x_all = pd.merge(df_all[[drug]], df_drug, left_on=drug, right_on='NSC', how='left')
                 x_all_list.append(df_x_all.drop([drug, 'NSC'], axis=1).values)
+
+        for dose in doses:
+            x_all_list.append(df_all[dose].values)
 
         # for drug in drugs:
         #     for fea in loader.drug_features:
