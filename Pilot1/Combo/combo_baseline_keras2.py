@@ -676,6 +676,7 @@ def run(params):
     args = Struct(**params)
     set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
+    verify_path(args.save)
     prefix = args.save + ext
     logfile = args.logfile if args.logfile else prefix+'.log'
     set_up_logger(logfile, args.verbose)
