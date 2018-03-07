@@ -815,11 +815,12 @@ def run(params):
         if K.backend() == 'tensorflow':
             K.clear_session()
 
-    pred_fname = prefix + '.predicted.growth.tsv'
-    if args.use_combo_score:
-        pred_fname = prefix + '.predicted.score.tsv'
-    df_pred = pd.concat(df_pred_list)
-    df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
+    if not args.gen:
+        pred_fname = prefix + '.predicted.growth.tsv'
+        if args.use_combo_score:
+            pred_fname = prefix + '.predicted.score.tsv'
+        df_pred = pd.concat(df_pred_list)
+        df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
 
     logger.handlers = []
 
