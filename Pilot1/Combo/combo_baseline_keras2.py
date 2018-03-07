@@ -763,6 +763,7 @@ def run(params):
                                           epochs=args.epochs,
                                           callbacks=callbacks,
                                           validation_data=val_gen, validation_steps=val_steps)
+            fold += 1
         else:
             if args.cv > 1:
                 x_train_list, y_train, x_val_list, y_val, df_train, df_val = loader.load_data_cv(fold)
@@ -801,9 +802,9 @@ def run(params):
             model_recorder.best_model.save(prefix+'.model.h5')
 
             # test reloadded model prediction
-            new_model = keras.models.load_model(prefix+'.model.h5')
-            new_model.load_weights(prefix+cv_ext+'.weights.h5')
-            new_pred = new_model.predict(x_val_list, batch_size=args.batch_size).flatten()
+            # new_model = keras.models.load_model(prefix+'.model.h5')
+            # new_model.load_weights(prefix+cv_ext+'.weights.h5')
+            # new_pred = new_model.predict(x_val_list, batch_size=args.batch_size).flatten()
             # print('y_val:', y_val[:10])
             # print('old_pred:', y_val_pred[:10])
             # print('new_pred:', new_pred[:10])

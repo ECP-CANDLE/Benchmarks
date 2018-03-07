@@ -198,7 +198,7 @@ def load_combo_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, f
                          dtype={'NSC1':object, 'NSC2':object, 'CONC1':object, 'CONC2':object, 'PERCENTGROWTH':str, 'SCORE':str},
                          engine='c', error_bad_lines=False, warn_bad_lines=True,
                          )
-                         # nrows=10000)
+                         # nrows=1000000)
         global_cache[path] = df
 
     df = df[df['VALID'] == 'Y']
