@@ -14,5 +14,6 @@ epochs=400
 batch_size=20
 drop=0.1
 classes=36
+feature_subsample=0
 pool=[1, 10]
 save='.'
