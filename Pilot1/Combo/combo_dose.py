@@ -178,7 +178,7 @@ class ComboDataLoader(object):
 
         np.random.seed(seed)
 
-        df = NCI60.load_combo_response(use_combo_score=use_combo_score, fraction=True)
+        df = NCI60.load_combo_dose_response(use_combo_score=use_combo_score, fraction=True)
         logger.info('Loaded {} unique (CL, D1, D2) response sets.'.format(df.shape[0]))
 
         if 'all' in cell_features:
@@ -306,6 +306,10 @@ class ComboDataLoader(object):
                 self.input_features[feature_name] = feature_type
                 self.feature_shapes[feature_type] = (df_drug.shape[1] - 1,)
 
+        self.feature_shapes['dose'] = (1,)
+        for dose in ['dose1', 'dose2']:
+            self.input_features[dose] = 'dose'
+
         logger.info('Input features shapes:')
         for k, v in self.input_features.items():
             logger.info('  {}: {}'.format(k, self.feature_shapes[v]))
@@ -356,14 +360,19 @@ class ComboDataLoader(object):
         #     df_x_all[:1000].to_csv('df.{}.1k.csv'.format(fea), index=False, float_format="%g")
 
         drugs = ['NSC1', 'NSC2']
+        doses = ['pCONC1', 'pCONC2']
         if switch_drugs:
             drugs = ['NSC2', 'NSC1']
+            doses = ['pCONC2', 'pCONC1']
 
         for drug in drugs:
             for fea in self.drug_features:
                 df_drug = getattr(self, self.drug_df_dict[fea])
                 df_x_all = pd.merge(df_all[[drug]], df_drug, left_on=drug, right_on='NSC', how='left')
                 x_all_list.append(df_x_all.drop([drug, 'NSC'], axis=1).values)
+
+        for dose in doses:
+            x_all_list.append(df_all[dose].values)
 
         # for drug in drugs:
         #     for fea in loader.drug_features:
@@ -676,7 +685,6 @@ def run(params):
     args = Struct(**params)
     set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
-    verify_path(args.save)
     prefix = args.save + ext
     logfile = args.logfile if args.logfile else prefix+'.log'
     set_up_logger(logfile, args.verbose)
@@ -763,7 +771,6 @@ def run(params):
                                           epochs=args.epochs,
                                           callbacks=callbacks,
                                           validation_data=val_gen, validation_steps=val_steps)
-            fold += 1
         else:
             if args.cv > 1:
                 x_train_list, y_train, x_val_list, y_val, df_train, df_val = loader.load_data_cv(fold)
@@ -802,9 +809,9 @@ def run(params):
             model_recorder.best_model.save(prefix+'.model.h5')
 
             # test reloadded model prediction
-            # new_model = keras.models.load_model(prefix+'.model.h5')
-            # new_model.load_weights(prefix+cv_ext+'.weights.h5')
-            # new_pred = new_model.predict(x_val_list, batch_size=args.batch_size).flatten()
+            new_model = keras.models.load_model(prefix+'.model.h5')
+            new_model.load_weights(prefix+cv_ext+'.weights.h5')
+            new_pred = new_model.predict(x_val_list, batch_size=args.batch_size).flatten()
             # print('y_val:', y_val[:10])
             # print('old_pred:', y_val_pred[:10])
             # print('new_pred:', new_pred[:10])
@@ -815,12 +822,11 @@ def run(params):
         if K.backend() == 'tensorflow':
             K.clear_session()
 
-    if not args.gen:
-        pred_fname = prefix + '.predicted.growth.tsv'
-        if args.use_combo_score:
-            pred_fname = prefix + '.predicted.score.tsv'
-        df_pred = pd.concat(df_pred_list)
-        df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
+    pred_fname = prefix + '.predicted.growth.tsv'
+    if args.use_combo_score:
+        pred_fname = prefix + '.predicted.score.tsv'
+    df_pred = pd.concat(df_pred_list)
+    df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
 
     logger.handlers = []
 

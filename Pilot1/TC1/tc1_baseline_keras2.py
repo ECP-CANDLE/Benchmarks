@@ -11,7 +11,7 @@ except ImportError:
 
 from keras import backend as K
 
-from keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
+from keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten, LocallyConnected1D
 from keras.optimizers import SGD, Adam, RMSprop
 from keras.models import Sequential, Model, model_from_json, model_from_yaml
 from keras.utils import np_utils
@@ -73,6 +73,7 @@ def read_config_file(file):
     fileParams['out_act']=eval(config.get(section[0],'out_act'))
     fileParams['loss']=eval(config.get(section[0],'loss'))
     fileParams['optimizer']=eval(config.get(section[0],'optimizer'))
+    fileParams['feature_subsample']=eval(config.get(section[0],'feature_subsample'))
     fileParams['metrics']=eval(config.get(section[0],'metrics'))
     fileParams['epochs']=eval(config.get(section[0],'epochs'))
     fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
@@ -99,8 +100,12 @@ def initialize_parameters():
 def load_data(train_path, test_path, gParameters):
 
     print('Loading data...')
-    df_train = (pd.read_csv(train_path,header=None).values).astype('float32')
-    df_test = (pd.read_csv(test_path,header=None).values).astype('float32')
+    if gParameters['feature_subsample'] > 0:
+        usecols = list(range(gParameters['feature_subsample']))
+    else:
+        usecols = None
+    df_train = (pd.read_csv(train_path, header=None, usecols=usecols).values).astype('float32')
+    df_test = (pd.read_csv(test_path, header=None, usecols=usecols).values).astype('float32')
     print('done')
 
     print('df_train shape:', df_train.shape)
@@ -163,7 +168,7 @@ def run(gParameters):
     print('X_test shape:', X_test.shape)
 
     model = Sequential()
-
+    dense_first = True
     layer_list = list(range(0, len(gParameters['conv']), 3))
     for l, i in enumerate(layer_list):
         filters = gParameters['conv'][i]
@@ -177,6 +182,7 @@ def run(gParameters):
 
         if filters <= 0 or filter_len <= 0 or stride <= 0:
                 break
+        dense_first = False
         if 'locally_connected' in gParameters:
                 model.add(LocallyConnected1D(filters, filter_len, strides=stride, padding='valid', input_shape=(x_train_len, 1)))
         else:
@@ -187,17 +193,26 @@ def run(gParameters):
                 model.add(Conv1D(filters=filters, kernel_size=filter_len, strides=stride, padding='valid'))
         model.add(Activation(gParameters['activation']))
         if gParameters['pool']:
-                model.add(MaxPooling1D(pool_size=pool_list[i/3]))
+                model.add(MaxPooling1D(pool_size=pool_list[i//3]))
 
-    model.add(Flatten())
+    if not dense_first:
+        model.add(Flatten())
 
-    for layer in gParameters['dense']:
+    for i, layer in enumerate(gParameters['dense']):
         if layer:
-            model.add(Dense(layer))
+            if i == 0 and dense_first:
+                model.add(Dense(layer, input_shape=(x_train_len, 1)))
+            else:
+                model.add(Dense(layer))
             model.add(Activation(gParameters['activation']))
             if gParameters['drop']:
                     model.add(Dropout(gParameters['drop']))
+
+    if dense_first:
+        model.add(Flatten())
+
     model.add(Dense(gParameters['classes']))
+
     model.add(Activation(gParameters['out_act']))
 
 #Reference case

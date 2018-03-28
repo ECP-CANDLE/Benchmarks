@@ -33,6 +33,15 @@ import p1_common, p1_common_keras
 from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
 
+
+''' Import Tensorflow Modules '''
+import tensorflow as tf
+from tensorflow.python.framework import graph_io
+from tensorflow.python.tools import freeze_graph
+from tensorflow.core.protobuf import saver_pb2
+from tensorflow.python.training import saver as saver_lib
+
+
 #url_nt3 = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/'
 #file_train = 'nt_train2.csv'
 #file_test = 'nt_test2.csv'
@@ -209,11 +218,12 @@ def run(gParameters):
         if layer:
             model.add(Dense(layer))
             model.add(Activation(gParameters['activation']))
-            if gParameters['drop']:
+            # This has to be disabled for tensorrt otherwise I am getting an error
+            if False and gParameters['drop']: 
                     model.add(Dropout(gParameters['drop']))
-    model.add(Dense(gParameters['classes']))
-    model.add(Activation(gParameters['out_act']))
-
+    #model.add(Dense(gParameters['classes']))
+    #model.add(Activation(gParameters['out_act']), name='activation_5')
+    model.add(Dense(gParameters['classes'], activation=gParameters['out_act'], name='activation_5'))
 #Reference case
 #model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
 #model.add(Activation('relu'))
@@ -239,6 +249,11 @@ def run(gParameters):
                                                 kerasDefaults)
 
     model.summary()
+    for layer in model.layers:
+        print(layer.name)
+
+    print([x.op.name for x in model.outputs])
+
     model.compile(loss=gParameters['loss'],
                   optimizer=optimizer,
                   metrics=[gParameters['metrics']])
@@ -261,12 +276,67 @@ def run(gParameters):
     timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
     history = model.fit(X_train, Y_train,
                     batch_size=gParameters['batch_size'],
-                    epochs=gParameters['epochs'],
+                    epochs=2, #gParameters['epochs'],
                     verbose=1,
                     validation_data=(X_test, Y_test),
                     callbacks = [csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
+    
+    #Begin tensorrt code
+    config = {
+    # Where to save models (Tensorflow + TensorRT)
+    "graphdef_file": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3/nt3.pb",
+    "frozen_model_file": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3/nt3_frozen_model.pb",
+    "snapshot_dir": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3/snapshot",
+    "engine_save_dir": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3",
+    
+    # Needed for TensorRT
+    "inference_batch_size": 1,  # inference batch size
+    "input_layer": "conv1d_1",  # name of the input tensor in the TF computational graph
+    "out_layer": "activation_5/Softmax",  # name of the output tensorf in the TF conputational graph
+    "output_size" : 2,  # number of classes in output (5)
+    "precision": "fp32"  # desired precision (fp32, fp16) "test_image_path" : "/home/data/val/roses"
+    }   
+
+    # Now, let's use the Tensorflow backend to get the TF graphdef and frozen graph
+    K.set_learning_phase(0)
+    sess = K.get_session()
+    saver = saver_lib.Saver(write_version=saver_pb2.SaverDef.V2)
+
+    # save model weights in TF checkpoint
+    checkpoint_path = saver.save(sess, config['snapshot_dir'], global_step=0, latest_filename='checkpoint_state')
+
+    # remove nodes not needed for inference from graph def
+    train_graph = sess.graph
+    inference_graph = tf.graph_util.remove_training_nodes(train_graph.as_graph_def())
+
+    #print(len([n.name for n in tf.get_default_graph().as_graph_def().node]))
+
+    # write the graph definition to a file. 
+    # You can view this file to see your network structure and 
+    # to determine the names of your network's input/output layers.
+    graph_io.write_graph(inference_graph, '.', config['graphdef_file'])
+
+    # specify which layer is the output layer for your graph. 
+    # In this case, we want to specify the softmax layer after our
+    # last dense (fully connected) layer. 
+    out_names = config['out_layer']
+
+    # freeze your inference graph and save it for later! (Tensorflow)
+    freeze_graph.freeze_graph(
+        config['graphdef_file'], 
+        '', 
+        False, 
+        checkpoint_path, 
+        out_names, 
+        "save/restore_all", 
+        "save/Const:0", 
+        config['frozen_model_file'], 
+        False, 
+        ""
+    )
+
 
     if False:
         print('Test score:', score[0])
