@@ -227,7 +227,8 @@ def run(GP):
                                            len_molecular_hidden_layers=len_molecular_hidden_layers,
                                            molecular_nbrs=molecular_nbrs,
                                            conv_bool=conv_bool,
-                                           type_bool=GP['type_bool'])
+                                           type_bool=GP['type_bool'],
+                                           sampling_density=GP['sampling_density'])
 #            ct=hf.Candle_Train(datagen,model,data_files,effec_epochs,case=GP['case'])
             frame_loss, frame_mse = ct.train_ac()
         else:

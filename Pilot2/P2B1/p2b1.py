@@ -29,6 +29,7 @@ except ImportError:
 import re,copy
 import os
 import sys
+import random
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
@@ -94,6 +95,8 @@ def read_config_file(File):
     Global_Params['optimizer']     =eval(config.get(section[0],'optimizer'))
     Global_Params['loss']          =eval(config.get(section[0],'loss'))
     Global_Params['activation']    =eval(config.get(section[0],'activation'))
+    Global_Params['set_sel']       =eval(config.get(section[0],'data_set'))
+    Global_Params['sampling_density']=eval(config.get(section[0],'sampling_density'))
     # note 'cool' is a boolean
     Global_Params['cool']          =config.get(section[0],'cool')
 
@@ -427,7 +430,7 @@ class Candle_Train():
 class Candle_Molecular_Train():
     def __init__(self, molecular_ammodel, molecular_encoder, numpylist, mnb_epochs, callbacks, save_path='.', batch_size=32, case='Full',
                  print_data=True, epsilon=.064, len_molecular_hidden_layers=1, molecular_nbrs=0,
-                 conv_bool=False, type_bool=False):
+                 conv_bool=False, type_bool=False, sampling_density=1.0):
         self.numpylist = numpylist
         self.molecular_model = molecular_ammodel
         self.molecular_encoder = molecular_encoder
@@ -442,6 +445,7 @@ class Candle_Molecular_Train():
         self.conv_net = conv_bool
         self.type_feature = type_bool
         self.save_path = save_path+'/'
+        self.sampling_density = sampling_density
 
     def format_data(self):
         X_all = np.array([])
@@ -563,7 +567,7 @@ class Candle_Molecular_Train():
             frame_loss = []
             frame_mse = []
             for curr_file, xt_all, yt_all in self.datagen(i):
-                for frame in range(len(xt_all)):
+                for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
 
                     history = self.molecular_model.fit(xt_all[frame], yt_all[frame], epochs=1,
                                                        batch_size=self.batch_size, callbacks=self.callbacks[:2],
@@ -571,7 +575,7 @@ class Candle_Molecular_Train():
                     frame_loss.append(history.history['loss'])
                     frame_mse.append(history.history['mean_squared_error'])
 
-                    if not frame % 20:
+                    if not frame % 20 or self.sampling_density != 1.0:
                         print ("Frame: {0:d}, Current history:\nLoss: {1:3.5f}\tMSE: {2:3.5f}\n"
                                .format(frame, history.history['loss'][0], history.history['mean_squared_error'][0]))
 
