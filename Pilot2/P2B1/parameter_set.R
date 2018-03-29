@@ -6,6 +6,7 @@ param.set <- makeParamSet(
   makeDiscreteParam("learning_rate", values = c(0.01, 0.005, 0.015, 0.02)),
   makeDiscreteParam("batch_size", values = c(32, 64, 128)),
   makeDiscreteParam("molecular_num_hidden", values = c("256 128 64 32 16 8", "256 128 64 32 16", "512 256 128 64", "512 256 128 64 32"),
+  makeDiscreteParam("sampling_density", values = c(0.1, 0.25, 0.5, 1.0)
 
   ## DEBUG PARAMETERS: DON'T USE THESE IN PRODUCTION RUN
 #  makeIntegerParam("feature_subsample", lower=500, upper=500),
