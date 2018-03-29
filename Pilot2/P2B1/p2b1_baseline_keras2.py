@@ -208,20 +208,23 @@ def run(GP):
 
 #### Save the Model to disk
     if GP['save_path'] != None:
-        if not os.path.exists(GP['save_path']):
-                os.makedirs(GP['save_path'])
+        save_path = GP['save_path']
+        if not os.path.exists(save_path):
+                os.makedirs(save_path)
+    else:
+        save_path = '.'
 
-        model_json = molecular_model.to_json()
-        with open(GP['save_path'] + '/model.json', "w") as json_file:
-            json_file.write(model_json) 
-        print('Saved model to disk')
+    model_json = molecular_model.to_json()
+    with open(save_path + '/model.json', "w") as json_file:
+        json_file.write(model_json) 
+    print('Saved model to disk')
 
 #### Train the Model
     if GP['train_bool']:
         if not str2bool(GP['cool']):
             effec_epochs = GP['epochs']
             ct = hf.Candle_Molecular_Train(molecular_model, molecular_encoder, data_files, mb_epochs, callbacks,
-                                           batch_size=32, case=GP['case'], save_path=GP['save_path'],
+                                           batch_size=32, case=GP['case'], save_path=save_path,
                                            len_molecular_hidden_layers=len_molecular_hidden_layers,
                                            molecular_nbrs=molecular_nbrs,
                                            conv_bool=conv_bool,
