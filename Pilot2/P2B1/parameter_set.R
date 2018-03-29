@@ -3,6 +3,7 @@
 # the parameter names should match names of the arguments expected by
 # the benchmark
 param.set <- makeParamSet(
+  makeDiscreteParam("learning_rate", values = c(0.01, 0.005, 0.015, 0.02)),
   makeDiscreteParam("batch_size", values = c(32, 64, 128)),
   makeDiscreteParam("molecular_num_hidden", values = c("256 128 64 32 16 8", "256 128 64 32 16", "512 256 128 64", "512 256 128 64 32"),
 
