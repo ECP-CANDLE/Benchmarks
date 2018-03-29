@@ -65,7 +65,7 @@ def initialize_parameters():
 #"th" format means that the convolutional kernels will have the shape (depth, input_depth, rows, cols)
 
 #"tf" format means that the convolutional kernels will have the shape (rows, cols, input_depth, depth)
-    print "Image data format: ", K.image_data_format()
+    print ("Image data format: ", K.image_data_format())
 #    print "Image ordering: ", K.image_dim_ordering()
     return GP
 
