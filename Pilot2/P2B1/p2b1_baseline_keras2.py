@@ -106,11 +106,10 @@ def run(GP):
     kerasDefaults = p2c.keras_default_config()
 
 ##### Read Data ########
-    #(data_files, fields)=p2c.get_list_of_data_files(GP)
-
-    # Read from local directoy
     import helper
-    (data_files, fields) = helper.get_local_files('/p/gscratchr/brainusr/datasets/cancer/pilot2/3k_run16_10us.35fs-DPPC.20-DIPC.60-CHOL.20.dir/')
+    (data_files, fields)=p2c.get_list_of_data_files(GP)
+    # Read from local directoy
+    #(data_files, fields) = helper.get_local_files('/p/gscratchr/brainusr/datasets/cancer/pilot2/3k_run16_10us.35fs-DPPC.20-DIPC.60-CHOL.20.dir/')
 
     # Define datagenerator
     datagen = hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])

@@ -4,8 +4,7 @@
 # the benchmark
 param.set <- makeParamSet(
   makeDiscreteParam("batch_size", values = c(32, 64, 128)),
-  makeDiscreteParam("num_hidden", values = c("512 256 128 64 32 16", "512 64")),
-  makeDiscreteParam("molecular_num_hidden", values = c("54 12", "32 16 8"),
+  makeDiscreteParam("molecular_num_hidden", values = c("256 128 64 32 16 8", "256 128 64 32 16", "512 256 128 64", "512 256 128 64 32"),
 
   ## DEBUG PARAMETERS: DON'T USE THESE IN PRODUCTION RUN
 #  makeIntegerParam("feature_subsample", lower=500, upper=500),
@@ -16,6 +15,7 @@ param.set <- makeParamSet(
   ## END DEBUG PARAMS
 )
 
+#  makeDiscreteParam("num_hidden", values = c("512 256 128 64 32 16", "512 64")),
 #  makeDiscreteParam("dense", values = c("500 100 50", "1000 500 100 50", "2000 1000 500 100 50")),
 #  makeDiscreteParam("activation", values = c("relu", "sigmoid", "tanh")),
 #  makeDiscreteParam("optimizer", values = c("adam", "sgd", "rmsprop")),
