@@ -508,7 +508,7 @@ class Candle_Molecular_Train():
         nbrs_all = np.array([])
         resnums_all = np.array([])
         files = self.numpylist
-        order = range(len(files))
+        order = range(13, 17) # Temporarily train on only a few files range(len(files))
         # Randomize files after first training epoch
         if epoch:
             order = np.random.permutation(order)
