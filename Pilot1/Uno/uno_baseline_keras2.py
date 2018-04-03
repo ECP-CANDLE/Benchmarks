@@ -321,7 +321,7 @@ def run(params):
                 train_sources=args.train_sources,
                 # test_sources=args.test_sources,
                 embed_feature_source=not args.no_feature_source,
-                encode_response_source=args.encode_source,
+                encode_response_source=not args.no_response_source,
                 )
 
     loader.partition_data(cv_folds=args.cv, by_cell=args.by_cell, by_drug=args.by_drug)

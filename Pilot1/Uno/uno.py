@@ -62,10 +62,10 @@ def uno_parser(parser):
                         default=argparse.SUPPRESS,
                         choices=['descriptors', 'fingerprints', 'none'],
                         help="use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or one-hot encoded drugs, or random features; 'descriptors','latent', 'all', 'categorical', 'noise'")
-    parser.add_argument("--encode_source", action="store_true",
-                        help="encode response data source as an input feature")
     parser.add_argument("--no_feature_source", action="store_true",
                         help="do not embed cell or drug feature source as part of input")
+    parser.add_argument("--no_response_source", action="store_true",
+                        help="do not encode response data source as an input feature")
     parser.add_argument('--dense_feature_layers', nargs='+', type=int,
                         default=argparse.SUPPRESS,
                         help='number of neurons in intermediate dense layers in the feature encoding submodels')
