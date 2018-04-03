@@ -8,6 +8,7 @@ import sys
 import gzip
 import argparse
 import glob
+from importlib import reload
 
 from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
