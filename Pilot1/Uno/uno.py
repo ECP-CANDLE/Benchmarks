@@ -56,12 +56,16 @@ def uno_parser(parser):
                         help="use one or more sources of drug response data for testing")
     parser.add_argument("--cell_features", nargs='+',
                         default=argparse.SUPPRESS,
-                        choices=['expression', 'mirna', 'proteome', 'all', 'expression_5platform', 'expression_u133p2', 'rnaseq', 'categorical'],
+                        choices=['rnaseq', 'none'],
                         help="use one or more cell line feature sets: 'expression', 'mirna', 'proteome', 'all'; use all for ['expression', 'mirna', 'proteome']; use 'categorical' for one-hot encoded cell lines")
     parser.add_argument("--drug_features", nargs='+',
                         default=argparse.SUPPRESS,
-                        choices=['descriptors', 'latent', 'all', 'categorical', 'noise'],
+                        choices=['descriptors', 'fingerprints', 'none'],
                         help="use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or one-hot encoded drugs, or random features; 'descriptors','latent', 'all', 'categorical', 'noise'")
+    parser.add_argument("--encode_source", action="store_true",
+                        help="encode response data source as an input feature")
+    parser.add_argument("--no_feature_source", action="store_true",
+                        help="do not embed cell or drug feature source as part of input")
     parser.add_argument('--dense_feature_layers', nargs='+', type=int,
                         default=argparse.SUPPRESS,
                         help='number of neurons in intermediate dense layers in the feature encoding submodels')
@@ -90,8 +94,8 @@ def uno_parser(parser):
     parser.add_argument("--cv", type=int,
                         default=argparse.SUPPRESS,
                         help="cross validation folds")
-    parser.add_argument("--gen", action="store_true",
-                        help="use generator for training and validation data")
+    parser.add_argument("--no_gen", action="store_true",
+                        help="do not use generator for training and validation data")
     parser.add_argument("--cache",
                         default=None,
                         help="prefix of data cache files to use")

@@ -413,7 +413,7 @@ def encode_sources(sources):
 
 def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True,
                      use_landmark_genes=False, use_filtered_genes=False,
-                     embed_source=False, sample_set=None):
+                     embed_feature_source=False, sample_set=None):
 
     if use_landmark_genes:
         filename =  'combined_rnaseq_data_lincs1000'
@@ -440,7 +440,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
     df_source = pd.concat([sources, df_source], axis=1)
 
     df1 = df['Sample']
-    if embed_source:
+    if embed_feature_source:
         df_sample_source = pd.concat([df1, prefixes], axis=1)
         df1 = df_sample_source.merge(df_source, on='Source', how='left').drop('Source', axis=1)
         logger.info('Embedding RNAseq data source into features: %d additional columns', df1.shape[1]-1)
@@ -511,6 +511,15 @@ def dict_compare(d1, d2, ignore=[], expand=False):
         return equal, added | removed | modified
 
 
+def values_or_dataframe(df, contiguous=False, dataframe=False):
+    if dataframe:
+        return df
+    mat = df.values
+    if contiguous:
+        mat = np.ascontiguousarray(mat)
+    return mat
+
+
 class CombinedDataLoader(object):
     def __init__(self, seed=SEED):
         self.seed = seed
@@ -553,7 +562,7 @@ class CombinedDataLoader(object):
             json.dump(params, param_file, sort_keys=True)
         fname = '{}.pkl'.format(cache)
         with open(fname, 'wb') as f:
-            pickle.dump(self, f)
+            pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
         logger.info('Saved data to cache: %s', fname)
 
 
@@ -620,7 +629,8 @@ class CombinedDataLoader(object):
             logger.info('  {}: {}'.format(k, self.feature_shapes[v]))
         logger.info('Total input dimensions: {}'.format(self.input_dim))
 
-    def load(self, cache=None, ncols=None, scaling='std', dropna=None, embed_source=True,
+    def load(self, cache=None, ncols=None, scaling='std', dropna=None,
+             embed_feature_source=True, encode_response_source=True,
              cell_features=['rnaseq'], drug_features=['descriptors', 'fingerprints'],
              # train_sources=['GDSC', 'CTRP', 'ALMANAC', 'NCI60'],
              train_sources=['GDSC', 'CTRP', 'ALMANAC'],
@@ -647,7 +657,7 @@ class CombinedDataLoader(object):
 
         # ncols=None
         # scaling='std'
-        # embed_source=True
+        # embed_feature_source=True
         # dropna=None
         # cell_features=['rnaseq']
         # drug_features=['descriptors', 'fingerprints']
@@ -703,7 +713,7 @@ class CombinedDataLoader(object):
         for fea in cell_features:
             fea = fea.lower()
             if fea == 'rnaseq' or fea == 'expression':
-                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, embed_source=embed_source)
+                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, embed_feature_source=embed_feature_source)
 
         for fea in drug_features:
             fea = fea.lower()
@@ -757,7 +767,7 @@ class CombinedDataLoader(object):
         input_features = collections.OrderedDict()
         feature_shapes = {}
 
-        if embed_source:
+        if encode_response_source:
             input_features['response.source'] = 'response.source'
             feature_shapes['response.source'] = (df_source.shape[1] - 1,)
 
@@ -791,7 +801,7 @@ class CombinedDataLoader(object):
         self.input_dim = input_dim
         self.df_source = df_source
         self.df_response = df_response
-        self.embed_source = embed_source
+        self.embed_feature_source = embed_feature_source
         self.all_sources = all_sources
         self.train_sources = train_sources
         self.test_sources = test_sources
@@ -800,7 +810,9 @@ class CombinedDataLoader(object):
         self.partition_by = partition_by
 
         for var in (list(drug_df_dict.values()) +  list(cell_df_dict.values())):
-            setattr(self, var, locals()[var])
+            value = locals().get(var)
+            if value:
+                setattr(self, var, value)
 
         self.log_features()
 
@@ -824,11 +836,19 @@ class CombinedDataGenerator(object):
         if shuffle:
             index = np.random.permutation(index)
 
+        self.index = index
         self.index_cycle = cycle(index)
         self.size = len(index)
-        self.steps = int(self.size / batch_size)
+        self.steps = np.ceil(self.size / batch_size)
 
-    def get_slice(self, size=None, return_values=True):
+    def reset(self):
+        self.index_cycle = cycle(self.index)
+
+    def get_response(self, copy=False):
+        df = self.data.df_response.iloc[self.index, :].drop(['Group'], axis=1)
+        return df.copy() if copy else df
+
+    def get_slice(self, size=None, contiguous=True, dataframe=False):
         size = size or self.size
 
         index = list(islice(self.index_cycle, size))
@@ -849,27 +869,34 @@ class CombinedDataGenerator(object):
         df.loc[split, 'Dose1'] = df_orig.loc[split, 'Dose1'] - np.log10(df.loc[split, 'DoseSplit'])
         df.loc[split, 'Dose2'] = df_orig.loc[split, 'Dose1'] - np.log10(1 - df.loc[split, 'DoseSplit'])
 
-        y = df['Growth'].values
+        y = values_or_dataframe(df['Growth'], contiguous, dataframe)
 
         x_list = []
 
-        if self.data.embed_source:
+        if self.data.encode_response_source:
             df_x = pd.merge(df[['Source']], self.data.df_source, on='Source', how='left')
-            x_list.append(df_x.drop(['Source'], axis=1).values)
+            df_x.drop(['Source'], axis=1, inplace=True)
+            x = values_or_dataframe(df_x, contiguous, dataframe)
+            x_list.append(x)
 
         for fea in self.data.cell_features:
             df_cell = getattr(self.data, self.data.cell_df_dict[fea])
             df_x = pd.merge(df[['Sample']], df_cell, on='Sample', how='left')
-            x_list.append(df_x.drop(['Sample'], axis=1).values)
+            df_x.drop(['Sample'], axis=1, inplace=True)
+            x = values_or_dataframe(df_x, contiguous, dataframe)
+            x_list.append(x)
 
         for drug in ['Drug1', 'Drug2']:
             for fea in self.data.drug_features:
                 df_drug = getattr(self.data, self.data.drug_df_dict[fea])
                 df_x = pd.merge(df[[drug]], df_drug, left_on=drug, right_on='Drug', how='left')
-                x_list.append(df_x.drop([drug, 'Drug'], axis=1).values)
+                df_x.drop([drug, 'Drug'], axis=1, inplace=True)
+                x = values_or_dataframe(df_x, contiguous, dataframe)
+                x_list.append(x)
 
         for dose in ['Dose1', 'Dose2']:
-            x_list.append(df[[dose]].values)
+            x = values_or_dataframe(df[[dose]], contiguous, dataframe)
+            x_list.append(x)
 
         return x_list, y
 

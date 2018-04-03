@@ -107,8 +107,8 @@ def extension_from_parameters(args):
         ext += '.res'
     if args.use_landmark_genes:
         ext += '.L1000'
-    if args.gen:
-        ext += '.gen'
+    if args.no_gen:
+        ext += '.ng'
     if args.use_combo_score:
         ext += '.scr'
     for i, n in enumerate(args.dense):
@@ -319,24 +319,12 @@ def run(params):
                 cell_features=args.cell_features,
                 drug_features=args.drug_features,
                 train_sources=args.train_sources,
-                # test_sources=args.test_sources
+                # test_sources=args.test_sources,
+                embed_feature_source=not args.no_feature_source,
+                encode_response_source=args.encode_source,
                 )
 
     loader.partition_data(cv_folds=args.cv, by_cell=args.by_cell, by_drug=args.by_drug)
-
-    # loader = CombinedDataLoader(seed=args.rng_seed,
-    #                             val_split=args.validation_split,
-    #                             cell_features=args.cell_features,
-    #                             drug_features=args.drug_features,
-    #                             use_landmark_genes=args.use_landmark_genes,
-    #                             cv_partition=args.cv_partition, cv=args.cv)
-    # test_loader(loader)
-    # test_generator(loader)
-
-    args.gen = True
-
-    train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size)
-    val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size)
 
     model = build_model(loader, args)
     logger.info('Combined model:')
@@ -360,8 +348,7 @@ def run(params):
     cv_ext = ''
     cv = args.cv if args.cv > 1 else 1
 
-    fold = 0
-    while fold < cv:
+    for fold in range(cv):
         if args.cv > 1:
             logger.info('Cross validation fold {}/{}:'.format(fold+1, cv))
             cv_ext = '.cv{}'.format(fold+1)
@@ -399,7 +386,24 @@ def run(params):
         if args.tb:
             callbacks.append(tensorboard)
 
-        if args.gen:
+        train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
+        val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
+
+        df_val = val_gen.get_response(copy=True)
+        y_val = df_val['Growth'].values
+        y_shuf = np.random.permutation(y_val)
+        log_evaluation(evaluate_prediction(y_val, y_shuf),
+                       description='Between random pairs in y_val:')
+
+        if args.no_gen:
+            x_train_list, y_train = train_gen.get_slice(size=train_gen.size)
+            x_val_list, y_val = val_gen.get_slice(size=val_gen.size)
+            history = model.fit(x_train_list, y_train,
+                                batch_size=args.batch_size,
+                                epochs=args.epochs,
+                                callbacks=callbacks,
+                                validation_data=(x_val_list, y_val))
+        else:
             logger.info('Data points per epoch: train = %d, val = %d',train_gen.size, val_gen.size)
             logger.info('Steps per epoch: train = %d, val = %d',train_gen.steps, val_gen.steps)
             history = model.fit_generator(train_gen.flow(), train_gen.steps,
@@ -407,64 +411,40 @@ def run(params):
                                           callbacks=callbacks,
                                           validation_data=val_gen.flow(),
                                           validation_steps=val_gen.steps)
-            fold += 1
-        else:
-            if args.cv > 1:
-                x_train_list, y_train, x_val_list, y_val, df_train, df_val = loader.load_data_cv(fold)
-            else:
-                x_train_list, y_train, x_val_list, y_val, df_train, df_val = loader.load_data()
-
-            y_shuf = np.random.permutation(y_val)
-            log_evaluation(evaluate_prediction(y_val, y_shuf),
-                           description='Between random pairs in y_val:')
-            history = model.fit(x_train_list, y_train,
-                                batch_size=args.batch_size,
-                                shuffle=args.shuffle,
-                                epochs=args.epochs,
-                                callbacks=callbacks,
-                                validation_data=(x_val_list, y_val))
 
         if args.cp:
             model.load_weights(prefix+cv_ext+'.weights.h5')
+        # model = model_recorder.best_model
 
-        if not args.gen:
-            y_val_pred = model.predict(x_val_list, batch_size=args.batch_size).flatten()
-            scores = evaluate_prediction(y_val, y_val_pred)
-            if args.cv > 1 and scores[args.loss] > args.max_val_loss:
-                logger.warn('Best val_loss {} is greater than {}; retrain the model...'.format(scores[args.loss], args.max_val_loss))
-                continue
-            else:
-                fold += 1
-            log_evaluation(scores)
-            df_val.is_copy = False
-            df_val['GROWTH_PRED'] = y_val_pred
-            df_val['GROWTH_ERROR'] = y_val_pred - y_val
-            df_pred_list.append(df_val)
-
-        if args.cp:
-            # model.save(prefix+'.model.h5')
-            model_recorder.best_model.save(prefix+'.model.h5')
-
-            # test reloadded model prediction
-            # new_model = keras.models.load_model(prefix+'.model.h5')
-            # new_model.load_weights(prefix+cv_ext+'.weights.h5')
-            # new_pred = new_model.predict(x_val_list, batch_size=args.batch_size).flatten()
-            # print('y_val:', y_val[:10])
-            # print('old_pred:', y_val_pred[:10])
-            # print('new_pred:', new_pred[:10])
-
-        plot_history(prefix, history, 'loss')
-        plot_history(prefix, history, 'r2')
+        if args.no_gen:
+            y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
+        else:
+            val_gen.reset()
+            y_val_pred = model.predict_generator(val_gen.flow(), val_gen.steps)
+            y_val_pred = y_val_pred[:val_gen.size]
 
         if K.backend() == 'tensorflow':
             K.clear_session()
 
-    if not args.gen:
-        pred_fname = prefix + '.predicted.growth.tsv'
-        if args.use_combo_score:
-            pred_fname = prefix + '.predicted.score.tsv'
-        df_pred = pd.concat(df_pred_list)
-        df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
+        y_val_pred = y_val_pred.flatten()
+
+        scores = evaluate_prediction(y_val, y_val_pred)
+        log_evaluation(scores)
+
+        df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred-y_val)
+        df_pred_list.append(df_val)
+
+        plot_history(prefix, history, 'loss')
+        plot_history(prefix, history, 'r2')
+
+    pred_fname = prefix + '.predicted.tsv'
+    df_pred = pd.concat(df_pred_list)
+    df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
+    df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
+
+    if args.cv > 1:
+        scores = evaluate_prediction(df_pred['Growth'], df_pred['PredictedGrowth'])
+        log_evaluation(scores, description='Combining cross validation folds:')
 
     logger.handlers = []
 
