@@ -802,6 +802,7 @@ class CombinedDataLoader(object):
         self.df_source = df_source
         self.df_response = df_response
         self.embed_feature_source = embed_feature_source
+        self.encode_response_source = encode_response_source
         self.all_sources = all_sources
         self.train_sources = train_sources
         self.test_sources = test_sources
@@ -811,7 +812,7 @@ class CombinedDataLoader(object):
 
         for var in (list(drug_df_dict.values()) +  list(cell_df_dict.values())):
             value = locals().get(var)
-            if value:
+            if value is not None:
                 setattr(self, var, value)
 
         self.log_features()
