@@ -4,8 +4,14 @@ import pickle
 import sys,os
 import argparse
 import h5py
-from importlib import reload
-
+try:
+    reload  # Python 2.7
+except NameError:
+    try:
+        from importlib import reload  # Python 3.4+
+    except ImportError:
+        from imp import reload  # Python 3.0 - 3.3
+        
 TIMEOUT=3600 # in sec; set this to -1 for no timeout
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
