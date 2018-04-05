@@ -4,6 +4,7 @@ import pickle
 import sys,os
 import argparse
 import h5py
+from importlib import reload
 
 TIMEOUT=3600 # in sec; set this to -1 for no timeout
 file_path = os.path.dirname(os.path.realpath(__file__))
