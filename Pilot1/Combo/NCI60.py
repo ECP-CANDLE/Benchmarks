@@ -105,18 +105,12 @@ def load_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, fractio
     return df
 
 
-def load_combo_response(min_logconc=-4., max_logconc=-4., subsample=None, fraction=False, use_combo_score=False):
+def load_combo_response(fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
     """Load cell line response to pairs of drugs, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
     Parameters
     ----------
-    min_logconc : -3, -4, -5, -6, -7, optional (default -4)
-        min log concentration of drug to return cell line growth
-    max_logconc : -3, -4, -5, -6, -7, optional (default -4)
-        max log concentration of drug to return cell line growth
-    subsample: None, 'naive_balancing' (default None)
-        subsampling strategy to use to balance the data based on growth
     fraction: bool (default False)
         divide growth percentage by 100
     use_combo_score: bool (default False)
@@ -136,6 +130,11 @@ def load_combo_response(min_logconc=-4., max_logconc=-4., subsample=None, fracti
     df = df[df['VALID'] == 'Y']
 
     df = df[['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2', 'PERCENTGROWTH', 'SCORE']]
+
+    exclude_cells = [x.split('.')[-1] for x in exclude_cells]
+    exclude_drugs = [x.split('.')[-1] for x in exclude_drugs]
+    df = df[~df['CELLNAME'].isin(exclude_cells) & ~df['NSC1'].isin(exclude_drugs) & ~df['NSC2'].isin(exclude_drugs)]
+
     df['PERCENTGROWTH'] = df['PERCENTGROWTH'].astype(np.float32)
     df['SCORE'] = df['SCORE'].astype(np.float32)
     df['NSC2'] = df['NSC2'].fillna(df['NSC1'])
@@ -172,18 +171,12 @@ def load_combo_response(min_logconc=-4., max_logconc=-4., subsample=None, fracti
     return df
 
 
-def load_combo_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, fraction=False, use_combo_score=False):
+def load_combo_dose_response(fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
     """Load cell line response to pairs of drugs, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
     Parameters
     ----------
-    min_logconc : -3, -4, -5, -6, -7, optional (default -4)
-        min log concentration of drug to return cell line growth
-    max_logconc : -3, -4, -5, -6, -7, optional (default -4)
-        max log concentration of drug to return cell line growth
-    subsample: None, 'naive_balancing' (default None)
-        subsampling strategy to use to balance the data based on growth
     fraction: bool (default False)
         divide growth percentage by 100
     use_combo_score: bool (default False)
@@ -204,6 +197,11 @@ def load_combo_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, f
     df = df[df['VALID'] == 'Y']
 
     df = df[['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2', 'PERCENTGROWTH', 'SCORE']]
+
+    exclude_cells = [x.split('.')[-1] for x in exclude_cells]
+    exclude_drugs = [x.split('.')[-1] for x in exclude_drugs]
+    df = df[~df['CELLNAME'].isin(exclude_cells) & ~df['NSC1'].isin(exclude_drugs) & ~df['NSC2'].isin(exclude_drugs)]
+
     df['PERCENTGROWTH'] = df['PERCENTGROWTH'].astype(np.float32)
     df['SCORE'] = df['SCORE'].astype(np.float32)
     df['NSC2'] = df['NSC2'].fillna(df['NSC1'])

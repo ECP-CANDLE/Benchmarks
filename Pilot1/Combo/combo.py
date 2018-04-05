@@ -78,6 +78,13 @@ def combo_parser(parser):
                         help="cross validation folds")
     parser.add_argument("--gen", action="store_true",
                         help="use generator for training and validation data")
+    parser.add_argument("--exclude_cells", nargs='+',
+                        default=[],
+                        help="cell line IDs to exclude")
+    parser.add_argument("--exclude_drugs", nargs='+',
+                        default=[],
+                        help="drug line IDs to exclude")
+
     return parser
 
 

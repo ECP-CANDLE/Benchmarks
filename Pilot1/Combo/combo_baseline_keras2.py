@@ -141,6 +141,7 @@ class ComboDataLoader(object):
     def __init__(self, seed, val_split=0.2, shuffle=True,
                  cell_features=['expression'], drug_features=['descriptors'],
                  use_landmark_genes=False, use_combo_score=False,
+                 exclude_cells=[], exclude_drugs=[],
                  feature_subsample=None, scaling='std', scramble=False,
                  cv_partition='overlapping', cv=0):
         """Initialize data merging drug response, drug descriptors and cell line essay.
@@ -178,7 +179,7 @@ class ComboDataLoader(object):
 
         np.random.seed(seed)
 
-        df = NCI60.load_combo_response(use_combo_score=use_combo_score, fraction=True)
+        df = NCI60.load_combo_response(use_combo_score=use_combo_score, fraction=True, exclude_cells=exclude_cells, exclude_drugs=exclude_drugs)
         logger.info('Loaded {} unique (CL, D1, D2) response sets.'.format(df.shape[0]))
 
         if 'all' in cell_features:
@@ -687,6 +688,8 @@ def run(params):
                              cell_features=args.cell_features,
                              drug_features=args.drug_features,
                              use_landmark_genes=args.use_landmark_genes,
+                             exclude_cells=args.exclude_cells,
+                             exclude_drugs=args.exclude_drugs,
                              use_combo_score=args.use_combo_score,
                              cv_partition=args.cv_partition, cv=args.cv)
     # test_loader(loader)
