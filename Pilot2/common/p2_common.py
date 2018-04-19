@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import numpy as np
-import pandas as pd
+#import pandas as pd
 
 import os
 import sys
@@ -209,7 +209,7 @@ def args_overwrite_config(args, config):
 
 
     if 'datatype' not in params:
-        params['datatype'] = DEFAULT_DATATYPE
+        params['datatype'] = str(DEFAULT_DATATYPE)
     else:
         if params['datatype'] in set(['f16', 'f32', 'f64']):
             params['datatype'] = get_choice(params['datatype'])
@@ -522,7 +522,7 @@ def get_list_of_data_files(GP):
     data_file = get_file(data_set, origin='http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, md5_hash=data_hash)
     data_dir = os.path.join(os.path.dirname(data_file), data_set)
     ## Make a list of all of the data files in the data set
-    data_files=glob.glob('%s/*.npz'%data_dir)
+    data_files=glob.glob('%s/*.npy'%data_dir)
 
     fields = p2.gen_data_set_dict()
 
