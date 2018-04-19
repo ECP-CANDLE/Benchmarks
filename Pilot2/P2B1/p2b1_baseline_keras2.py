@@ -15,7 +15,7 @@ from keras import backend as K
 
 from data_utils import get_file
 
-import p2b1_mol_AE as p2b1
+import p2b1
 import p2_common as p2c
 import p2_common_keras as p2ck
 from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
@@ -81,7 +81,7 @@ def run(GP):
         sys.exit(0)
     sys.path.append(GP['home_dir'])
 
-    import p2b1_mol_AE as hf
+    import p2b1 as hf
     reload(hf)
 
     import keras_model_utils as KEU

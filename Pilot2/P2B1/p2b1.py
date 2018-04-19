@@ -53,7 +53,7 @@ def p2b1_parser(parser):
 
     parser.add_argument("--save-dir", help="Save Directory", dest="save_path", type=str, default=None)
     parser.add_argument("--config-file", help="Config File", dest="config_file", type=str,
-                        default=os.path.join(file_path, 'p2b1_small_model.txt'))
+                        default=os.path.join(file_path, 'p2b1p2b1_default_model.txt'))
 
     parser.add_argument("--model-file", help="Trained Model Pickle File", dest="weight_path", type=str, default=None)
     parser.add_argument("--memo", help="Memo", dest="base_memo", type=str, default=None)
