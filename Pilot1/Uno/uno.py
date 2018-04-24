@@ -71,6 +71,8 @@ def uno_parser(parser):
                         help='number of neurons in intermediate dense layers in the feature encoding submodels')
     parser.add_argument("--use_landmark_genes", action="store_true",
                         help="use the 978 landmark genes from LINCS (L1000) as expression features")
+    parser.add_argument("--use_filtered_genes", action="store_true",
+                        help="use the variance filtered genes as expression features")
     parser.add_argument("--residual", action="store_true",
                         help="add skip connections to the layers")
     parser.add_argument('--reduce_lr', action='store_true',

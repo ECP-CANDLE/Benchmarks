@@ -117,7 +117,8 @@ def load_combined_dose_response(rename=True):
 
 
 def load_single_dose_response(combo_format=False, fraction=True):
-    path = get_file(DATA_URL + 'combined_single_drug_growth')
+    # path = get_file(DATA_URL + 'combined_single_drug_growth')
+    path = get_file(DATA_URL + 'rescaled_combined_single_drug_growth')
 
     df = global_cache.get(path)
     if df is None:
@@ -571,6 +572,7 @@ class CombinedDataLoader(object):
 
         seed = self.seed
         train_sep_sources = self.train_sep_sources
+        test_sep_sources = self.test_sep_sources
         df_response = self.df_response
 
         if not partition_by:
@@ -585,14 +587,17 @@ class CombinedDataLoader(object):
             df_response = df_response.assign(Group = assign_partition_groups(df_response, partition_by))
 
         mask = df_response['Source'].isin(train_sep_sources)
+        test_mask = df_response['Source'].isin(test_sep_sources)
         if by_drug:
             drug_ids = drug_name_to_ids(by_drug)
             logger.info('Mapped drug IDs for %s: %s', by_drug, drug_ids)
             mask &= (df_response['Drug1'].isin(drug_ids)) & (df_response['Drug2'].isnull())
+            test_mask &= (df_response['Drug1'].isin(drug_ids)) & (df_response['Drug2'].isnull())
         if by_cell:
             cell_ids = cell_name_to_ids(by_cell)
             logger.info('Mapped sample IDs for %s: %s', by_cell, cell_ids)
             mask &= (df_response['Sample'].isin(cell_ids))
+            test_mask &= (df_response['Sample'].isin(cell_ids))
 
         df_group = df_response[mask]['Group'].drop_duplicates().reset_index(drop=True)
 
@@ -605,23 +610,29 @@ class CombinedDataLoader(object):
 
         train_indexes = []
         val_indexes = []
+        test_indexes = []
 
         for index, (train_group_index, val_group_index) in enumerate(splits):
             train_groups = set(df_group.values[train_group_index])
             val_groups = set(df_group.values[val_group_index])
             train_index = df_response.index[df_response['Group'].isin(train_groups) & mask]
             val_index = df_response.index[df_response['Group'].isin(val_groups) & mask]
+            test_index = df_response.index[~df_response['Group'].isin(train_groups) & ~df_response['Group'].isin(val_groups) & test_mask]
+
             train_indexes.append(train_index)
             val_indexes.append(val_index)
+            test_indexes.append(test_index)
             if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('CV fold %d: train data = %s, val data = %s', index, train_index.shape[0], val_index.shape[0])
+                logger.debug('CV fold %d: train data = %s, val data = %s, test data = %s', index, train_index.shape[0], val_index.shape[0], test_index.shape[0])
                 logger.debug('  train groups (%d): %s', df_response.loc[train_index]['Group'].nunique(), df_response.loc[train_index]['Group'].unique())
                 logger.debug('  val groups ({%d}): %s', df_response.loc[val_index]['Group'].nunique(), df_response.loc[val_index]['Group'].unique())
+                logger.debug('  test groups ({%d}): %s', df_response.loc[test_index]['Group'].nunique(), df_response.loc[test_index]['Group'].unique())
 
         self.partition_by = partition_by
         self.cv_folds = cv_folds
         self.train_indexes = train_indexes
         self.val_indexes = val_indexes
+        self.test_indexes = test_indexes
 
     def log_features(self):
         logger.info('Input features shapes:')
@@ -632,6 +643,7 @@ class CombinedDataLoader(object):
     def load(self, cache=None, ncols=None, scaling='std', dropna=None,
              embed_feature_source=True, encode_response_source=True,
              cell_features=['rnaseq'], drug_features=['descriptors', 'fingerprints'],
+             use_landmark_genes=False, use_filtered_genes=False,
              # train_sources=['GDSC', 'CTRP', 'ALMANAC', 'NCI60'],
              train_sources=['GDSC', 'CTRP', 'ALMANAC'],
              # val_sources='train',
@@ -709,11 +721,10 @@ class CombinedDataLoader(object):
         df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response)
         logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
 
-
         for fea in cell_features:
             fea = fea.lower()
             if fea == 'rnaseq' or fea == 'expression':
-                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, embed_feature_source=embed_feature_source)
+                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, embed_feature_source=embed_feature_source)
 
         for fea in drug_features:
             fea = fea.lower()
@@ -751,8 +762,7 @@ class CombinedDataLoader(object):
 
         df_response = df_response[df_response['Sample'].isin(df_cell_ids['Sample']) &
                                   df_response['Drug1'].isin(df_drug_ids['Drug']) &
-                                  (df_response['Drug2'].isin(df_drug_ids['Drug']) |
-                                   df_response['Drug2'].isnull())]
+                                  (df_response['Drug2'].isin(df_drug_ids['Drug']) | df_response['Drug2'].isnull())]
 
         df_response = df_response[df_response['Source'].isin(train_sep_sources + test_sep_sources)]
 
@@ -824,7 +834,7 @@ class CombinedDataLoader(object):
 class CombinedDataGenerator(object):
     """Generate training, validation or testing batches from loaded data
     """
-    def __init__(self, data, partition='train', fold=0, batch_size=32, shuffle=True):
+    def __init__(self, data, partition='train', fold=0, source=None, batch_size=32, shuffle=True):
         self.data = data
         self.partition = partition
         self.batch_size = batch_size
@@ -833,9 +843,16 @@ class CombinedDataGenerator(object):
             index = data.train_indexes[fold]
         elif partition == 'val':
             index = data.val_indexes[fold]
+        else:
+            index = data.test_indexes[fold]
+
+        if source:
+            df = data.df_response[['Source']].iloc[index, :]
+            index = df.index[df['Source'] == source]
 
         if shuffle:
             index = np.random.permutation(index)
+        # index = index[:len(index)//10]
 
         self.index = index
         self.index_cycle = cycle(index)
