@@ -316,6 +316,8 @@ def run(params):
                 ncols=args.feature_subsample,
                 cell_features=args.cell_features,
                 drug_features=args.drug_features,
+                drug_median_response_min=args.drug_median_response_min,
+                drug_median_response_max=args.drug_median_response_max,
                 use_landmark_genes=args.use_landmark_genes,
                 use_filtered_genes=args.use_filtered_genes,
                 train_sources=args.train_sources,
@@ -324,7 +326,27 @@ def run(params):
                 encode_response_source=not args.no_response_source,
                 )
 
-    loader.partition_data(cv_folds=args.cv, by_cell=args.by_cell, by_drug=args.by_drug)
+    val_split = args.validation_split
+    train_split = 1 - val_split
+
+    if args.export_data:
+        fname = args.export_data
+        loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
+                              cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug)
+        train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
+        val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
+        x_train_list, y_train = train_gen.get_slice(size=train_gen.size, dataframe=True)
+        x_val_list, y_val = val_gen.get_slice(size=val_gen.size, dataframe=True)
+        df_train = pd.concat([y_train] + x_train_list, axis=1)
+        df_val = pd.concat([y_val] + x_val_list, axis=1)
+        df = pd.concat([df_train, df_val]).reset_index(drop=True)
+        if args.growth_bins > 1:
+            df = uno_data.discretize(df, 'Growth', bins=args.growth_bins)
+        df.to_csv(fname, sep='\t', index=False, float_format="%.3g")
+        return
+
+    loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
+                          cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug)
 
     model = build_model(loader, args)
     logger.info('Combined model:')

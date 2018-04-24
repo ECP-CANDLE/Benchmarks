@@ -54,6 +54,9 @@ def uno_parser(parser):
                         default=argparse.SUPPRESS,
                         choices=['train', 'all', 'CCLE', 'CTRP', 'gCSI', 'GDSC', 'NCI60', 'SCL', 'SCLC', 'ALMANAC'],
                         help="use one or more sources of drug response data for testing")
+    parser.add_argument("--cell_types", nargs='+',
+                        default=argparse.SUPPRESS,
+                        help="limit training and test data to one or more tissue types")
     parser.add_argument("--cell_features", nargs='+',
                         default=argparse.SUPPRESS,
                         choices=['rnaseq', 'none'],
@@ -62,6 +65,12 @@ def uno_parser(parser):
                         default=argparse.SUPPRESS,
                         choices=['descriptors', 'fingerprints', 'none'],
                         help="use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or one-hot encoded drugs, or random features; 'descriptors','latent', 'all', 'categorical', 'noise'")
+    parser.add_argument('--drug_median_response_min', type=float,
+                        default=None,
+                        help='keep drugs whose median response is greater than the threshold')
+    parser.add_argument('--drug_median_response_max', type=float,
+                        default=None,
+                        help='keep drugs whose median response is less than the threshold')
     parser.add_argument("--no_feature_source", action="store_true",
                         help="do not embed cell or drug feature source as part of input")
     parser.add_argument("--no_response_source", action="store_true",
@@ -101,6 +110,12 @@ def uno_parser(parser):
     parser.add_argument("--cache",
                         default=None,
                         help="prefix of data cache files to use")
+    parser.add_argument("--export_data",
+                        default=None,
+                        help="output dataframe file name")
+    parser.add_argument("--growth_bins", type=int,
+                        default=0,
+                        help="number of bins to use when discretizing growth response")
     return parser
 
 

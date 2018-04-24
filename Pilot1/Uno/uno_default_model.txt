@@ -1,6 +1,7 @@
 [Global_Params]
 train_sources=['GDSC', 'CTRP', 'ALMANAC']
 test_sources=['train']
+cell_types=None
 cell_features=['rnaseq']
 drug_features=['descriptors', 'fingerprints']
 dense=[1000, 1000, 1000]

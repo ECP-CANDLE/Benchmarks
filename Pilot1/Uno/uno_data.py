@@ -91,6 +91,17 @@ def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):
     return df
 
 
+def discretize(df, col, bins=2, cutoffs=None):
+    y = df[col]
+    thresholds = cutoffs
+    if thresholds is None:
+        percentiles = [100 / bins * (i + 1) for i in range(bins - 1)]
+        thresholds = [np.percentile(y, x) for x in percentiles]
+    classes = np.digitize(y, thresholds)
+    df[col] = classes
+    return df
+
+
 def save_combined_dose_response():
     df1 = load_single_dose_response(combo_format=True, fraction=False)
     df2 = load_combo_dose_response(fraction=False)
@@ -289,6 +300,12 @@ def lookup(df, query, ret, keys, match='match'):
     return list(set(df[mask][ret].values.flatten().tolist()))
 
 
+def load_cell_metadata():
+    path = get_file(DATA_URL + 'cl_metadata')
+    df = pd.read_table(path)
+    return df
+
+
 def cell_name_to_ids(name, source=None):
     path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.txt')
     df1 = pd.read_table(path)
@@ -464,11 +481,16 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
     return df
 
 
-def select_drugs_with_response_range(df_response, lower=0, upper=0, span=0):
+def select_drugs_with_response_range(df_response, lower=0, upper=0, span=0, lower_median=None, upper_median=None):
     df = df_response.groupby(['Drug1', 'Sample'])['Growth'].agg(['min', 'max', 'median'])
     df['span'] = df['max'].clip(lower=-1, upper=1) - df['min'].clip(lower=-1, upper=1)
     df = df.groupby('Drug1').mean().reset_index().rename(columns={'Drug1': 'Drug'})
-    df_sub = df[(df['min'] <= lower) & (df['max'] >= upper) & (df['span'] >= span)]
+    mask = (df['min'] <= lower) & (df['max'] >= upper) & (df['span'] >= span)
+    if lower_median:
+        mask &= (df['median'] >= lower_median)
+    if upper_median:
+        mask &= (df['median'] <= upper_median)
+    df_sub = df[mask]
     return df_sub
 
 
@@ -568,7 +590,7 @@ class CombinedDataLoader(object):
 
 
     def partition_data(self, partition_by=None, cv_folds=1, train_split=0.7, val_split=0.2,
-                       by_cell=None, by_drug=None):
+                       cell_types=None, by_cell=None, by_drug=None):
 
         seed = self.seed
         train_sep_sources = self.train_sep_sources
@@ -588,14 +610,26 @@ class CombinedDataLoader(object):
 
         mask = df_response['Source'].isin(train_sep_sources)
         test_mask = df_response['Source'].isin(test_sep_sources)
+
         if by_drug:
             drug_ids = drug_name_to_ids(by_drug)
             logger.info('Mapped drug IDs for %s: %s', by_drug, drug_ids)
             mask &= (df_response['Drug1'].isin(drug_ids)) & (df_response['Drug2'].isnull())
             test_mask &= (df_response['Drug1'].isin(drug_ids)) & (df_response['Drug2'].isnull())
+
         if by_cell:
             cell_ids = cell_name_to_ids(by_cell)
             logger.info('Mapped sample IDs for %s: %s', by_cell, cell_ids)
+            mask &= (df_response['Sample'].isin(cell_ids))
+            test_mask &= (df_response['Sample'].isin(cell_ids))
+
+        if cell_types:
+            df_type = load_cell_metadata()
+            cell_ids = set()
+            for cell_type in cell_types:
+                cells = df_type[~df_type['TUMOR_TYPE'].isnull() & df_type['TUMOR_TYPE'].str.contains(cell_type, case=False)]
+                cell_ids |= set(cells['ANL_ID'].tolist())
+                logger.info('Mapped sample tissue types for %s: %s', cell_type, set(cells['TUMOR_TYPE'].tolist()))
             mask &= (df_response['Sample'].isin(cell_ids))
             test_mask &= (df_response['Sample'].isin(cell_ids))
 
@@ -643,13 +677,13 @@ class CombinedDataLoader(object):
     def load(self, cache=None, ncols=None, scaling='std', dropna=None,
              embed_feature_source=True, encode_response_source=True,
              cell_features=['rnaseq'], drug_features=['descriptors', 'fingerprints'],
+             drug_median_response_min=None, drug_median_response_max=None,
              use_landmark_genes=False, use_filtered_genes=False,
              # train_sources=['GDSC', 'CTRP', 'ALMANAC', 'NCI60'],
              train_sources=['GDSC', 'CTRP', 'ALMANAC'],
              # val_sources='train',
              # test_sources=['CCLE', 'gCSI'],
              test_sources=['train'],
-             train_split=0.7, val_split=0.2,
              partition_by='drug_pair'):
 
         params = locals().copy()
@@ -717,8 +751,8 @@ class CombinedDataLoader(object):
         df_cells_with_response = df_response[['Sample']].drop_duplicates().reset_index(drop=True)
         logger.info('Combined raw dose response data has %d unique samples and %d unique drugs', df_cells_with_response.shape[0], df_drugs_with_response.shape[0])
 
-        logger.info('Limiting drugs to those with response mean low <= %g, mean high >= %g, and span >= %g ...', drug_lower_response, drug_upper_response, drug_response_span)
-        df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response)
+        logger.info('Limiting drugs to those with response min <= %g, max >= %g, span >= %g, median_min <= %g, median_max >= %g ...', drug_lower_response, drug_upper_response, drug_response_span, drug_median_response_min, drug_median_response_max)
+        df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response, lower_median=drug_median_response_min, upper_median=drug_median_response_max)
         logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
 
         for fea in cell_features:
@@ -887,7 +921,7 @@ class CombinedDataGenerator(object):
         df.loc[split, 'Dose1'] = df_orig.loc[split, 'Dose1'] - np.log10(df.loc[split, 'DoseSplit'])
         df.loc[split, 'Dose2'] = df_orig.loc[split, 'Dose1'] - np.log10(1 - df.loc[split, 'DoseSplit'])
 
-        y = values_or_dataframe(df['Growth'], contiguous, dataframe)
+        y = values_or_dataframe(df[['Growth']].reset_index(drop=True), contiguous, dataframe)
 
         x_list = []
 
@@ -913,7 +947,7 @@ class CombinedDataGenerator(object):
                 x_list.append(x)
 
         for dose in ['Dose1', 'Dose2']:
-            x = values_or_dataframe(df[[dose]], contiguous, dataframe)
+            x = values_or_dataframe(df[[dose]].reset_index(drop=True), contiguous, dataframe)
             x_list.append(x)
 
         return x_list, y
