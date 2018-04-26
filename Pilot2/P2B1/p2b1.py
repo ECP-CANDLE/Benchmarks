@@ -49,6 +49,7 @@ def common_parser(parser):
 
 
 def p2b1_parser(parser):
+<<<<<<< HEAD
     # Hyperparameters and model save path
 
     parser.add_argument("--save-dir", help="Save Directory", dest="save_path", type=str, default=None)
@@ -77,6 +78,26 @@ def p2b1_parser(parser):
 
     parser.add_argument("--backend", help="Keras Backend", dest="backend", type=str, default='theano')
 
+=======
+    ### Hyperparameters and model save path
+
+#    parser.add_argument("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
+#    parser.add_argument("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
+#    parser.add_argument("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
+    parser.add_argument("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
+    parser.add_argument("--config-file",help="Config File",dest="config_file",type=str,default=os.path.join(file_path, 'p2b1_default_model.txt'))
+    parser.add_argument("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
+    parser.add_argument("--memo",help="Memo",dest="base_memo",type=str,default=None)
+    parser.add_argument("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
+    parser.add_argument("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='Full')
+    parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
+    parser.add_argument("--data-set",  help="[3k_run16, 3k_run10, 3k_run32]", dest="set_sel", type=str, default="3k_run16")
+    parser.add_argument("--conv-AE", action="store_true", dest="conv_bool", default=False, help="Invoke training using 1D Convs for inner AE")
+    parser.add_argument("--include-type", action="store_true", dest="type_bool", default=False, help="Include molecule type information in desining AE")
+    parser.add_argument("--nbr-type", type=str, dest="nbr_type", default='relative', help="Defines the type of neighborhood data to use. [relative, invariant]")
+    parser.add_argument("--backend", help="Keras Backend", dest="backend", type=str, default='theano')
+    #(opts,args)=parser.parse_args()
+>>>>>>> working_branch
     return parser
 
 
@@ -99,6 +120,7 @@ def read_config_file(File):
     # note 'cool' is a boolean
     Global_Params['cool']          = config.get(section[0], 'cool')
 
+<<<<<<< HEAD
     Global_Params['molecular_epochs']       = eval(config.get(section[0], 'molecular_epochs'))
     Global_Params['molecular_num_hidden']   = eval(config.get(section[0], 'molecular_num_hidden'))
     Global_Params['molecular_nonlinearity'] = config.get(section[0], 'molecular_nonlinearity')
@@ -108,6 +130,18 @@ def read_config_file(File):
     # parse the remaining values
     for k, v in config.items(section[0]):
         if not k in Global_Params:
+=======
+    Global_Params['molecular_epochs']       =eval(config.get(section[0],'molecular_epochs'))
+    Global_Params['molecular_num_hidden']   =eval(config.get(section[0],'molecular_num_hidden'))
+    Global_Params['molecular_nonlinearity'] =config.get(section[0],'molecular_nonlinearity')
+    Global_Params['molecular_nbrs']         =config.get(section[0],'molecular_nbrs')
+    Global_Params['drop_prob']              = config.get(section[0], 'drop_prob')
+    Global_Params['l2_reg']                 = eval(config.get(section[0], 'l2_reg'))
+
+    # parse the remaining values
+    for k,v in config.items(section[0]):
+        if k not in Global_Params:
+>>>>>>> working_branch
             Global_Params[k] = eval(v)
 
     return Global_Params
@@ -193,8 +227,13 @@ class ImageNoiseDataGenerator(object):
         # for python 3.x
         return self.next()
 
+<<<<<<< HEAD
     def insertnoise(self, x, corruption_level=0.5):
         return np.random.binomial(1, 1-corruption_level, x.shape)*x
+=======
+    def insertnoise(self,x,corruption_level=0.5):
+        return np.random.binomial(1,1-corruption_level,x.shape)*x
+>>>>>>> working_branch
 
 
 class autoencoder_preprocess():
@@ -216,11 +255,24 @@ class autoencoder_preprocess():
         X_train = X_train.astype("float32")
         return X_train
 
+<<<<<<< HEAD
+=======
+## get activations for hidden layers of the model
+def get_activations(model, layer, X_batch):
+    get_activations = K.function([model.layers[0].input, K.learning_phase()], [model.layers[layer].output])
+    activations = get_activations([X_batch,0])
+    return activations
+
+>>>>>>> working_branch
 
 class Candle_Molecular_Train():
     def __init__(self, molecular_model, molecular_encoder, files, mb_epochs, callbacks, save_path='.', batch_size=32,
                  nbr_type='relative', len_molecular_hidden_layers=1, molecular_nbrs=0,
+<<<<<<< HEAD
                  conv_bool=False, full_conv_bool=False, type_bool=False):
+=======
+                 conv_bool=False, full_conv_bool=False, type_bool=False, sampling_density=1.0):
+>>>>>>> working_branch
         self.files = files
         self.molecular_model = molecular_model
         self.molecular_encoder = molecular_encoder
@@ -234,6 +286,7 @@ class Candle_Molecular_Train():
         self.full_conv_net = full_conv_bool
         self.type_feature = type_bool
         self.save_path = save_path+'/'
+<<<<<<< HEAD
 
     def datagen(self, epoch=0, print_out=1, test=0):
         files = self.files
@@ -245,6 +298,25 @@ class Candle_Molecular_Train():
         # Randomize files after first training epoch
         if epoch:
             order = np.random.permutation(order)
+=======
+        self.sampling_density = sampling_density
+
+        self.test_ind = random.sample(range(len(self.files)), 1)
+        self.train_ind = np.setdiff1D(range(len(self.files)), self.test_ind)
+
+    def datagen(self, epoch=0, print_out=1, test=0):
+        files = self.files
+        # order = range(13, 17) # Temporarily train on only a few files range(len(files))
+        # Randomize files after first training epoch
+        # if epoch:
+        #    order = np.random.permutation(order)
+
+        # choose a random sample to train on
+        if not test:
+            order = random.sample(self.train_ind, int(self.sampling_density*len(self.train_ind)))
+        else:
+            order = self.test_ind
+>>>>>>> working_branch
 
         for f_ind in order:
             if (not epoch) and print_out:
@@ -341,6 +413,10 @@ class Candle_Molecular_Train():
             np.save(current_path+'/mse.npy', frame_mse)
 
             # Update weights file
+<<<<<<< HEAD
+=======
+            print ("\nSaving weights after current epoch... \n")
+>>>>>>> working_branch
             self.molecular_model.save_weights(model_weight_file)
             self.molecular_encoder.save_weights(encoder_weight_file)
 
