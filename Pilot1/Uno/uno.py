@@ -82,6 +82,9 @@ def uno_parser(parser):
                         help="use the 978 landmark genes from LINCS (L1000) as expression features")
     parser.add_argument("--use_filtered_genes", action="store_true",
                         help="use the variance filtered genes as expression features")
+    parser.add_argument("--preprocess_rnaseq",
+                        choices=['scale_per_source', 'combat', 'none'],
+                        help="preprocessing method for RNAseq data; none for global normalization")
     parser.add_argument("--residual", action="store_true",
                         help="add skip connections to the layers")
     parser.add_argument('--reduce_lr', action='store_true',

@@ -320,6 +320,7 @@ def run(params):
                 drug_median_response_max=args.drug_median_response_max,
                 use_landmark_genes=args.use_landmark_genes,
                 use_filtered_genes=args.use_filtered_genes,
+                preprocess_rnaseq=args.preprocess_rnaseq,
                 train_sources=args.train_sources,
                 test_sources=args.test_sources,
                 embed_feature_source=not args.no_feature_source,

@@ -430,7 +430,7 @@ def encode_sources(sources):
 
 
 def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True,
-                     use_landmark_genes=False, use_filtered_genes=False,
+                     use_landmark_genes=False, use_filtered_genes=False, preprocess_rnaseq=None,
                      embed_feature_source=False, sample_set=None):
 
     if use_landmark_genes:
@@ -439,6 +439,10 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         filename = 'combined_rnaseq_data_filtered'
     else:
         filename = 'combined_rnaseq_data'
+
+    if preprocess_rnaseq and preprocess_rnaseq != 'none':
+        scaling = None
+        filename += ('_' + preprocess_rnaseq)  # 'scale_per_source' or 'combat'
 
     path = get_file(DATA_URL + filename)
     df_cols = pd.read_table(path, engine='c', nrows=0)
@@ -680,6 +684,7 @@ class CombinedDataLoader(object):
              drug_lower_response=1, drug_upper_response=-1, drug_response_span=0,
              drug_median_response_min=-1, drug_median_response_max=1,
              use_landmark_genes=False, use_filtered_genes=False,
+             preprocess_rnaseq=None,
              # train_sources=['GDSC', 'CTRP', 'ALMANAC', 'NCI60'],
              train_sources=['GDSC', 'CTRP', 'ALMANAC'],
              # val_sources='train',
@@ -759,7 +764,7 @@ class CombinedDataLoader(object):
         for fea in cell_features:
             fea = fea.lower()
             if fea == 'rnaseq' or fea == 'expression':
-                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, embed_feature_source=embed_feature_source)
+                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, preprocess_rnaseq=preprocess_rnaseq, embed_feature_source=embed_feature_source)
 
         for fea in drug_features:
             fea = fea.lower()
