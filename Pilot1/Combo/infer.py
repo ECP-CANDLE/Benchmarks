@@ -80,6 +80,9 @@ def get_parser(description=None):
                          help='the index of the first cell sample to subsample')
     parser.add_argument("--use_landmark_genes", action="store_true",
                         help="use the 978 landmark genes from LINCS (L1000) as expression features")
+    parser.add_argument("--preprocess_rnaseq",
+                        choices=['scale_per_source', 'combat', 'none'],
+                        help="preprocessing method for RNAseq data; none for global normalization")
 
     return parser
 
@@ -124,8 +127,8 @@ def cross_join3(df1, df2, df3, **kwargs):
     return cross_join(cross_join(df1, df2), df3, **kwargs)
 
 
-def prepare_data(sample_set='NCI60', drug_set='ALMANAC', use_landmark_genes=False):
-    df_expr = NCI60.load_sample_rnaseq(use_landmark_genes=use_landmark_genes, sample_set=sample_set)
+def prepare_data(sample_set='NCI60', drug_set='ALMANAC', use_landmark_genes=False, preprocess_rnaseq=None):
+    df_expr = NCI60.load_sample_rnaseq(use_landmark_genes=use_landmark_genes, preprocess_rnaseq=preprocess_rnaseq, sample_set=sample_set)
     # df_old = NCI60.load_cell_expression_rnaseq(use_landmark_genes=True)
     # df_desc = NCI60.load_drug_descriptors_new()
     df_desc = NCI60.load_drug_set_descriptors(drug_set=drug_set)

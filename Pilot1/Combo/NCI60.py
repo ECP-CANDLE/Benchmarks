@@ -105,7 +105,7 @@ def load_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, fractio
     return df
 
 
-def load_combo_response(fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
+def load_combo_response(response_url=None, fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
     """Load cell line response to pairs of drugs, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
@@ -116,7 +116,8 @@ def load_combo_response(fraction=False, use_combo_score=False, exclude_cells=[],
     use_combo_score: bool (default False)
         return combination score in place of percent growth (stored in 'GROWTH' column)
     """
-    path = get_file(DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
+    response_url = response_url or (DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
+    path = get_file(response_url)
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path,
@@ -171,7 +172,7 @@ def load_combo_response(fraction=False, use_combo_score=False, exclude_cells=[],
     return df
 
 
-def load_combo_dose_response(fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
+def load_combo_dose_response(response_url=None, fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
     """Load cell line response to pairs of drugs, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
@@ -182,7 +183,8 @@ def load_combo_dose_response(fraction=False, use_combo_score=False, exclude_cell
     use_combo_score: bool (default False)
         return combination score in place of percent growth (stored in 'GROWTH' column)
     """
-    path = get_file(DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
+    response_url = response_url or (DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
+    path = get_file(response_url)
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path,
@@ -434,11 +436,17 @@ def load_drug_smiles():
     return df
 
 
-def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False, sample_set='NCI60'):
+def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False, preprocess_rnaseq=None, sample_set='NCI60'):
     if use_landmark_genes:
-        path = get_file(DATA_URL + 'combined_rnaseq_data_lincs1000')
+        filename = 'combined_rnaseq_data_lincs1000'
     else:
-        path = get_file(DATA_URL + 'combined_rnaseq_data')
+        filename = 'combined_rnaseq_data'
+
+    if preprocess_rnaseq and preprocess_rnaseq != 'none':
+        scaling = None
+        filename += ('_' + preprocess_rnaseq)  # 'scale_per_source' or 'combat'
+
+    path = get_file(DATA_URL + filename)
 
     df = global_cache.get(path)
     if df is None:
@@ -473,11 +481,17 @@ def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_
     return df
 
 
-def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False):
+def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False, preprocess_rnaseq=None):
     if use_landmark_genes:
-        path = get_file(DATA_URL + 'combined_rnaseq_data_lincs1000')
+        filename = 'combined_rnaseq_data_lincs1000'
     else:
-        path = get_file(DATA_URL + 'combined_rnaseq_data')
+        filename = 'combined_rnaseq_data'
+
+    if preprocess_rnaseq and preprocess_rnaseq != 'none':
+        scaling = None
+        filename += ('_' + preprocess_rnaseq)  # 'scale_per_source' or 'combat'
+
+    path = get_file(DATA_URL + filename)
 
     df = global_cache.get(path)
     if df is None:
