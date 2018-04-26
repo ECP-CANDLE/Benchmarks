@@ -2,22 +2,26 @@
 # ------------------------------
 
 # Download the Anaconda installer
-curl -o Anaconda2-4.3.1-Linux-x86_64.sh https://repo.continuum.io/archive/Anaconda2-4.3.1-Linux-x86_64.sh
+# curl -o Anaconda2-4.3.1-Linux-x86_64.sh https://repo.continuum.io/archive/Anaconda2-4.3.1-Linux-x86_64.sh
+curl -o  Anaconda3-5.1.0-Linux-x86_64.sh https://repo.anaconda.com/archive/Anaconda3-5.1.0-Linux-x86_64.sh
 
 # Make the installer executable
-chmod u+x ./Anaconda2-4.3.1-Linux-x86_64.sh
+chmod u+x ./Anaconda3-5.1.0-Linux-x86_64.sh
 
 # Run the installer, accepting the defaults.
-./Anaconda2-4.3.1-Linux-x86_64.sh
+./Anaconda3-5.1.0-Linux-x86_64.sh
 
 # Add anaconda2/bin to your path (assumes default install location)
-export PATH=$HOME/anaconda2/bin:$PATH
+export PATH=$HOME/anaconda3/bin:$PATH
 
 # Install additonal modules not shipped with Anaconda
 conda install -c conda-forge tensorflow
 conda install -c anaconda hdf5=1.8.17
 conda install -c anaconda theano
 conda install -c conda-forge keras=2
+conda install -c anaconda pandas
+conda install -c anaconda scikit-learn 
+conda install -c anaconda matplotlib
 
 # Install additional modules for Pilot2 benchmarks
 conda install -c conda-forge opencv

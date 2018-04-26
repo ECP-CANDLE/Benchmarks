@@ -140,7 +140,8 @@ class ComboDataLoader(object):
 
     def __init__(self, seed, val_split=0.2, shuffle=True,
                  cell_features=['expression'], drug_features=['descriptors'],
-                 use_landmark_genes=False, use_combo_score=False,
+                 response_url=None, use_landmark_genes=False, use_combo_score=False,
+                 preprocess_rnaseq=None, exclude_cells=[], exclude_drugs=[],
                  feature_subsample=None, scaling='std', scramble=False,
                  cv_partition='overlapping', cv=0):
         """Initialize data merging drug response, drug descriptors and cell line essay.
@@ -178,7 +179,7 @@ class ComboDataLoader(object):
 
         np.random.seed(seed)
 
-        df = NCI60.load_combo_response(use_combo_score=use_combo_score, fraction=True)
+        df = NCI60.load_combo_response(response_url=response_url, use_combo_score=use_combo_score, fraction=True, exclude_cells=exclude_cells, exclude_drugs=exclude_drugs)
         logger.info('Loaded {} unique (CL, D1, D2) response sets.'.format(df.shape[0]))
 
         if 'all' in cell_features:
@@ -193,7 +194,7 @@ class ComboDataLoader(object):
 
         for fea in self.cell_features:
             if fea == 'expression' or fea == 'rnaseq':
-                self.df_cell_expr = NCI60.load_cell_expression_rnaseq(ncols=feature_subsample, scaling=scaling, use_landmark_genes=use_landmark_genes)
+                self.df_cell_expr = NCI60.load_cell_expression_rnaseq(ncols=feature_subsample, scaling=scaling, use_landmark_genes=use_landmark_genes, preprocess_rnaseq=preprocess_rnaseq)
                 df = df.merge(self.df_cell_expr[['CELLNAME']], on='CELLNAME')
             elif fea == 'expression_u133p2':
                 self.df_cell_expr = NCI60.load_cell_expression_u133p2(ncols=feature_subsample, scaling=scaling, use_landmark_genes=use_landmark_genes)
@@ -686,7 +687,11 @@ def run(params):
                              val_split=args.validation_split,
                              cell_features=args.cell_features,
                              drug_features=args.drug_features,
+                             response_url=args.response_url,
                              use_landmark_genes=args.use_landmark_genes,
+                             preprocess_rnaseq=args.preprocess_rnaseq,
+                             exclude_cells=args.exclude_cells,
+                             exclude_drugs=args.exclude_drugs,
                              use_combo_score=args.use_combo_score,
                              cv_partition=args.cv_partition, cv=args.cv)
     # test_loader(loader)
