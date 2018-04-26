@@ -446,15 +446,17 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
 
     path = get_file(DATA_URL + filename)
     df_cols = pd.read_table(path, engine='c', nrows=0)
-    total = df_cols.shape[1] - 1
+    total = df_cols.shape[1] - 2  # remove 2 columns: Sample & Cancer_type_id
     usecols = None
     if ncols and ncols < total:
         usecols = np.random.choice(total, size=ncols, replace=False)
-        usecols = np.append([0], np.add(sorted(usecols), 1))
+        usecols = np.append([0], np.add(sorted(usecols), 2))
         df_cols = df_cols.iloc[:, usecols]
 
     dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
     df = pd.read_table(path, engine='c', usecols=usecols, dtype=dtype_dict)
+    if 'Cancer_type_id' in df.columns:
+        df.drop('Cancer_type_id', axis=1, inplace=True)
 
     prefixes = df['Sample'].str.extract('^([^.]*)', expand=False).rename('Source')
     sources = prefixes.drop_duplicates().reset_index(drop=True)
@@ -562,7 +564,7 @@ class CombinedDataLoader(object):
             except json.JSONDecodeError as e:
                 logger.warning('Could not decode parameter file %s: %s', param_fname, e)
                 return False
-        ignore_keys = ['cache', 'partition_by']
+        ignore_keys = ['cache', 'partition_by', 'single']
         equal, diffs = dict_compare(params, cached_params, ignore_keys)
         if not equal:
             logger.warning('Cache parameter mismatch: %s\nSaved: %s\nAttemptd to load: %s', diffs, cached_params, params)
@@ -581,7 +583,7 @@ class CombinedDataLoader(object):
         return False
 
     def save_to_cache(self, cache, params):
-        for k in ['self', 'cache']:
+        for k in ['self', 'cache', 'single']:
             if k in params:
                 del params[k]
         param_fname = '{}.params.json'.format(cache)
@@ -591,7 +593,6 @@ class CombinedDataLoader(object):
         with open(fname, 'wb') as f:
             pickle.dump(self, f, pickle.HIGHEST_PROTOCOL)
         logger.info('Saved data to cache: %s', fname)
-
 
     def partition_data(self, partition_by=None, cv_folds=1, train_split=0.7, val_split=0.2,
                        cell_types=None, by_cell=None, by_drug=None):
@@ -672,7 +673,41 @@ class CombinedDataLoader(object):
         self.val_indexes = val_indexes
         self.test_indexes = test_indexes
 
-    def log_features(self):
+    def build_feature_list(self, single=False):
+        input_features = collections.OrderedDict()
+        feature_shapes = {}
+
+        doses = ['dose1', 'dose2'] if not single else ['dose1']
+        for dose in doses:
+            input_features[dose] = 'dose'
+            feature_shapes['dose'] = (1,)
+
+        if self.encode_response_source:
+            input_features['response.source'] = 'response.source'
+            feature_shapes['response.source'] = (self.df_source.shape[1] - 1,)
+
+        for fea in self.cell_features:
+            feature_type = 'cell.' + fea
+            feature_name = 'cell.' + fea
+            df_cell = getattr(self, self.cell_df_dict[fea])
+            input_features[feature_name] = feature_type
+            feature_shapes[feature_type] = (df_cell.shape[1] - 1,)
+
+        drugs = ['drug1', 'drug2'] if not single else ['drug1']
+        for drug in drugs:
+            for fea in self.drug_features:
+                feature_type = 'drug.' + fea
+                feature_name = drug + '.' + fea
+                df_drug = getattr(self, self.drug_df_dict[fea])
+                input_features[feature_name] = feature_type
+                feature_shapes[feature_type] = (df_drug.shape[1] - 1,)
+
+        input_dim = sum([np.prod(feature_shapes[x]) for x in input_features.values()])
+
+        self.input_features = input_features
+        self.feature_shapes = feature_shapes
+        self.input_dim = input_dim
+
         logger.info('Input features shapes:')
         for k, v in self.input_features.items():
             logger.info('  {}: {}'.format(k, self.feature_shapes[v]))
@@ -684,7 +719,7 @@ class CombinedDataLoader(object):
              drug_lower_response=1, drug_upper_response=-1, drug_response_span=0,
              drug_median_response_min=-1, drug_median_response_max=1,
              use_landmark_genes=False, use_filtered_genes=False,
-             preprocess_rnaseq=None,
+             preprocess_rnaseq=None, single=False,
              # train_sources=['GDSC', 'CTRP', 'ALMANAC', 'NCI60'],
              train_sources=['GDSC', 'CTRP', 'ALMANAC'],
              # val_sources='train',
@@ -702,7 +737,7 @@ class CombinedDataLoader(object):
             drug_features = []
 
         if cache and self.load_from_cache(cache, params):
-            self.log_features()
+            self.build_feature_list(single=single)
             return
 
         logger.info('Loading data from scratch ...')
@@ -814,41 +849,10 @@ class CombinedDataLoader(object):
 
         df_response = df_response.assign(Group = assign_partition_groups(df_response, partition_by))
 
-        input_features = collections.OrderedDict()
-        feature_shapes = {}
-
-        for dose in ['dose1', 'dose2']:
-            input_features[dose] = 'dose'
-            feature_shapes['dose'] = (1,)
-
-        if encode_response_source:
-            input_features['response.source'] = 'response.source'
-            feature_shapes['response.source'] = (df_source.shape[1] - 1,)
-
-        for fea in cell_features:
-            feature_type = 'cell.' + fea
-            feature_name = 'cell.' + fea
-            df_cell = locals()[cell_df_dict[fea]]
-            input_features[feature_name] = feature_type
-            feature_shapes[feature_type] = (df_cell.shape[1] - 1,)
-
-        for drug in ['drug1', 'drug2']:
-            for fea in drug_features:
-                feature_type = 'drug.' + fea
-                feature_name = drug + '.' + fea
-                df_drug = locals()[drug_df_dict[fea]]
-                input_features[feature_name] = feature_type
-                feature_shapes[feature_type] = (df_drug.shape[1] - 1,)
-
-        input_dim = sum([np.prod(feature_shapes[x]) for x in input_features.values()])
-
         self.cell_features = cell_features
         self.drug_features = drug_features
         self.cell_df_dict = cell_df_dict
         self.drug_df_dict = drug_df_dict
-        self.input_features = input_features
-        self.feature_shapes = feature_shapes
-        self.input_dim = input_dim
         self.df_source = df_source
         self.df_response = df_response
         self.embed_feature_source = embed_feature_source
@@ -865,7 +869,7 @@ class CombinedDataLoader(object):
             if value is not None:
                 setattr(self, var, value)
 
-        self.log_features()
+        self.build_feature_list(single=single)
 
         if cache:
             self.save_to_cache(cache, params)
@@ -968,9 +972,9 @@ class CombinedDataGenerator(object):
         # print(x_list, y)
         return x_list, y
 
-    def flow(self):
+    def flow(self, single=False):
         while 1:
-            x_list, y = self.get_slice(self.batch_size)
+            x_list, y = self.get_slice(self.batch_size, single=single)
             yield x_list, y
 
 

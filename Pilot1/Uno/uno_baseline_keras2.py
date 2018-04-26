@@ -321,6 +321,7 @@ def run(params):
                 use_landmark_genes=args.use_landmark_genes,
                 use_filtered_genes=args.use_filtered_genes,
                 preprocess_rnaseq=args.preprocess_rnaseq,
+                single=args.single,
                 train_sources=args.train_sources,
                 test_sources=args.test_sources,
                 embed_feature_source=not args.no_feature_source,
@@ -420,8 +421,8 @@ def run(params):
                        description='Between random pairs in y_val:')
 
         if args.no_gen:
-            x_train_list, y_train = train_gen.get_slice(size=train_gen.size)
-            x_val_list, y_val = val_gen.get_slice(size=val_gen.size)
+            x_train_list, y_train = train_gen.get_slice(size=train_gen.size, single=args.single)
+            x_val_list, y_val = val_gen.get_slice(size=val_gen.size, single=args.single)
             history = model.fit(x_train_list, y_train,
                                 batch_size=args.batch_size,
                                 epochs=args.epochs,
@@ -430,10 +431,10 @@ def run(params):
         else:
             logger.info('Data points per epoch: train = %d, val = %d',train_gen.size, val_gen.size)
             logger.info('Steps per epoch: train = %d, val = %d',train_gen.steps, val_gen.steps)
-            history = model.fit_generator(train_gen.flow(), train_gen.steps,
+            history = model.fit_generator(train_gen.flow(single=args.single), train_gen.steps,
                                           epochs=args.epochs,
                                           callbacks=callbacks,
-                                          validation_data=val_gen.flow(),
+                                          validation_data=val_gen.flow(single=args.single),
                                           validation_steps=val_gen.steps)
 
         if args.cp:
@@ -444,7 +445,7 @@ def run(params):
             y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
         else:
             val_gen.reset()
-            y_val_pred = model.predict_generator(val_gen.flow(), val_gen.steps)
+            y_val_pred = model.predict_generator(val_gen.flow(single=args.single), val_gen.steps)
             y_val_pred = y_val_pred[:val_gen.size]
 
         y_val_pred = y_val_pred.flatten()
@@ -475,10 +476,10 @@ def run(params):
         if n_test == 0:
             continue
         if args.no_gen:
-            x_test_list, y_test = test_gen.get_slice(size=test_gen.size)
+            x_test_list, y_test = test_gen.get_slice(size=test_gen.size, single=args.single)
             y_test_pred = model.predict(x_test_list, batch_size=args.batch_size)
         else:
-            y_test_pred = model.predict_generator(test_gen.flow(), test_gen.steps)
+            y_test_pred = model.predict_generator(test_gen.flow(single=args.single), test_gen.steps)
             y_test_pred = y_test_pred[:test_gen.size]
         y_test_pred = y_test_pred.flatten()
         scores = evaluate_prediction(y_test, y_test_pred)
