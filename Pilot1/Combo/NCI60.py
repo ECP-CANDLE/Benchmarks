@@ -105,24 +105,19 @@ def load_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, fractio
     return df
 
 
-def load_combo_response(min_logconc=-4., max_logconc=-4., subsample=None, fraction=False, use_combo_score=False):
+def load_combo_response(response_url=None, fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
     """Load cell line response to pairs of drugs, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
     Parameters
     ----------
-    min_logconc : -3, -4, -5, -6, -7, optional (default -4)
-        min log concentration of drug to return cell line growth
-    max_logconc : -3, -4, -5, -6, -7, optional (default -4)
-        max log concentration of drug to return cell line growth
-    subsample: None, 'naive_balancing' (default None)
-        subsampling strategy to use to balance the data based on growth
     fraction: bool (default False)
         divide growth percentage by 100
     use_combo_score: bool (default False)
         return combination score in place of percent growth (stored in 'GROWTH' column)
     """
-    path = get_file(DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
+    response_url = response_url or (DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
+    path = get_file(response_url)
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path,
@@ -136,6 +131,11 @@ def load_combo_response(min_logconc=-4., max_logconc=-4., subsample=None, fracti
     df = df[df['VALID'] == 'Y']
 
     df = df[['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2', 'PERCENTGROWTH', 'SCORE']]
+
+    exclude_cells = [x.split('.')[-1] for x in exclude_cells]
+    exclude_drugs = [x.split('.')[-1] for x in exclude_drugs]
+    df = df[~df['CELLNAME'].isin(exclude_cells) & ~df['NSC1'].isin(exclude_drugs) & ~df['NSC2'].isin(exclude_drugs)]
+
     df['PERCENTGROWTH'] = df['PERCENTGROWTH'].astype(np.float32)
     df['SCORE'] = df['SCORE'].astype(np.float32)
     df['NSC2'] = df['NSC2'].fillna(df['NSC1'])
@@ -172,24 +172,19 @@ def load_combo_response(min_logconc=-4., max_logconc=-4., subsample=None, fracti
     return df
 
 
-def load_combo_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, fraction=False, use_combo_score=False):
+def load_combo_dose_response(response_url=None, fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
     """Load cell line response to pairs of drugs, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
     Parameters
     ----------
-    min_logconc : -3, -4, -5, -6, -7, optional (default -4)
-        min log concentration of drug to return cell line growth
-    max_logconc : -3, -4, -5, -6, -7, optional (default -4)
-        max log concentration of drug to return cell line growth
-    subsample: None, 'naive_balancing' (default None)
-        subsampling strategy to use to balance the data based on growth
     fraction: bool (default False)
         divide growth percentage by 100
     use_combo_score: bool (default False)
         return combination score in place of percent growth (stored in 'GROWTH' column)
     """
-    path = get_file(DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
+    response_url = response_url or (DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
+    path = get_file(response_url)
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path,
@@ -204,6 +199,11 @@ def load_combo_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, f
     df = df[df['VALID'] == 'Y']
 
     df = df[['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2', 'PERCENTGROWTH', 'SCORE']]
+
+    exclude_cells = [x.split('.')[-1] for x in exclude_cells]
+    exclude_drugs = [x.split('.')[-1] for x in exclude_drugs]
+    df = df[~df['CELLNAME'].isin(exclude_cells) & ~df['NSC1'].isin(exclude_drugs) & ~df['NSC2'].isin(exclude_drugs)]
+
     df['PERCENTGROWTH'] = df['PERCENTGROWTH'].astype(np.float32)
     df['SCORE'] = df['SCORE'].astype(np.float32)
     df['NSC2'] = df['NSC2'].fillna(df['NSC1'])
@@ -436,11 +436,17 @@ def load_drug_smiles():
     return df
 
 
-def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False, sample_set='NCI60'):
+def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False, preprocess_rnaseq=None, sample_set='NCI60'):
     if use_landmark_genes:
-        path = get_file(DATA_URL + 'combined_rnaseq_data_lincs1000')
+        filename = 'combined_rnaseq_data_lincs1000'
     else:
-        path = get_file(DATA_URL + 'combined_rnaseq_data')
+        filename = 'combined_rnaseq_data'
+
+    if preprocess_rnaseq and preprocess_rnaseq != 'none':
+        scaling = None
+        filename += ('_' + preprocess_rnaseq)  # 'scale_per_source' or 'combat'
+
+    path = get_file(DATA_URL + filename)
 
     df = global_cache.get(path)
     if df is None:
@@ -475,11 +481,17 @@ def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_
     return df
 
 
-def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False):
+def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False, preprocess_rnaseq=None):
     if use_landmark_genes:
-        path = get_file(DATA_URL + 'combined_rnaseq_data_lincs1000')
+        filename = 'combined_rnaseq_data_lincs1000'
     else:
-        path = get_file(DATA_URL + 'combined_rnaseq_data')
+        filename = 'combined_rnaseq_data'
+
+    if preprocess_rnaseq and preprocess_rnaseq != 'none':
+        scaling = None
+        filename += ('_' + preprocess_rnaseq)  # 'scale_per_source' or 'combat'
+
+    path = get_file(DATA_URL + filename)
 
     df = global_cache.get(path)
     if df is None:
