@@ -677,7 +677,8 @@ class CombinedDataLoader(object):
     def load(self, cache=None, ncols=None, scaling='std', dropna=None,
              embed_feature_source=True, encode_response_source=True,
              cell_features=['rnaseq'], drug_features=['descriptors', 'fingerprints'],
-             drug_median_response_min=None, drug_median_response_max=None,
+             drug_lower_response=1, drug_upper_response=-1, drug_response_span=0,
+             drug_median_response_min=-1, drug_median_response_max=1,
              use_landmark_genes=False, use_filtered_genes=False,
              # train_sources=['GDSC', 'CTRP', 'ALMANAC', 'NCI60'],
              train_sources=['GDSC', 'CTRP', 'ALMANAC'],
@@ -713,7 +714,7 @@ class CombinedDataLoader(object):
         # test_sources=['CCLE', 'gCSI']
         # val_sources='train'
 
-        use_landmark_genes=True
+        # use_landmark_genes=True
 
         # drug_lower_response=-0.4
         # drug_upper_response=0.4
@@ -723,9 +724,9 @@ class CombinedDataLoader(object):
         # drug_upper_response=0
         # drug_response_span=1
 
-        drug_lower_response=1
-        drug_upper_response=-1
-        drug_response_span=0
+        # drug_lower_response=1
+        # drug_upper_response=-1
+        # drug_response_span=0
 
         df_response = load_combined_dose_response()
         if logger.isEnabledFor(logging.INFO):
@@ -811,6 +812,10 @@ class CombinedDataLoader(object):
         input_features = collections.OrderedDict()
         feature_shapes = {}
 
+        for dose in ['dose1', 'dose2']:
+            input_features[dose] = 'dose'
+            feature_shapes['dose'] = (1,)
+
         if encode_response_source:
             input_features['response.source'] = 'response.source'
             feature_shapes['response.source'] = (df_source.shape[1] - 1,)
@@ -829,10 +834,6 @@ class CombinedDataLoader(object):
                 df_drug = locals()[drug_df_dict[fea]]
                 input_features[feature_name] = feature_type
                 feature_shapes[feature_type] = (df_drug.shape[1] - 1,)
-
-        for dose in ['dose1', 'dose2']:
-            input_features[dose] = 'dose'
-            feature_shapes['dose'] = (1,)
 
         input_dim = sum([np.prod(feature_shapes[x]) for x in input_features.values()])
 
@@ -900,7 +901,7 @@ class CombinedDataGenerator(object):
         df = self.data.df_response.iloc[self.index, :].drop(['Group'], axis=1)
         return df.copy() if copy else df
 
-    def get_slice(self, size=None, contiguous=True, dataframe=False):
+    def get_slice(self, size=None, contiguous=True, single=False, dataframe=False):
         size = size or self.size
 
         index = list(islice(self.index_cycle, size))
@@ -917,13 +918,23 @@ class CombinedDataGenerator(object):
         df.loc[swap, 'Dose2'] = df_orig.loc[swap, 'Dose1']
 
         split = df_orig['Drug2'].isnull()
-        df.loc[split, 'Drug2'] = df_orig.loc[split, 'Drug1']
-        df.loc[split, 'Dose1'] = df_orig.loc[split, 'Dose1'] - np.log10(df.loc[split, 'DoseSplit'])
-        df.loc[split, 'Dose2'] = df_orig.loc[split, 'Dose1'] - np.log10(1 - df.loc[split, 'DoseSplit'])
+        if not single:
+            df.loc[split, 'Drug2'] = df_orig.loc[split, 'Drug1']
+            df.loc[split, 'Dose1'] = df_orig.loc[split, 'Dose1'] - np.log10(df.loc[split, 'DoseSplit'])
+            df.loc[split, 'Dose2'] = df_orig.loc[split, 'Dose1'] - np.log10(1 - df.loc[split, 'DoseSplit'])
 
-        y = values_or_dataframe(df[['Growth']].reset_index(drop=True), contiguous, dataframe)
+        if dataframe:
+            cols = ['Growth', 'Sample', 'Drug1', 'Drug2'] if not single else ['Growth', 'Sample', 'Drug1']
+            y = df[cols].reset_index(drop=True)
+        else:
+            y = values_or_dataframe(df['Growth'], contiguous, dataframe)
 
         x_list = []
+
+        doses = ['Dose1', 'Dose2'] if not single else ['Dose1']
+        for dose in doses:
+            x = values_or_dataframe(df[[dose]].reset_index(drop=True), contiguous, dataframe)
+            x_list.append(x)
 
         if self.data.encode_response_source:
             df_x = pd.merge(df[['Source']], self.data.df_source, on='Source', how='left')
@@ -938,18 +949,18 @@ class CombinedDataGenerator(object):
             x = values_or_dataframe(df_x, contiguous, dataframe)
             x_list.append(x)
 
-        for drug in ['Drug1', 'Drug2']:
+        drugs = ['Drug1', 'Drug2'] if not single else ['Drug1']
+        for drug in drugs:
             for fea in self.data.drug_features:
                 df_drug = getattr(self.data, self.data.drug_df_dict[fea])
                 df_x = pd.merge(df[[drug]], df_drug, left_on=drug, right_on='Drug', how='left')
                 df_x.drop([drug, 'Drug'], axis=1, inplace=True)
+                if dataframe and not single:
+                    df_x = df_x.add_prefix(drug + '.')
                 x = values_or_dataframe(df_x, contiguous, dataframe)
                 x_list.append(x)
 
-        for dose in ['Dose1', 'Dose2']:
-            x = values_or_dataframe(df[[dose]].reset_index(drop=True), contiguous, dataframe)
-            x_list.append(x)
-
+        # print(x_list, y)
         return x_list, y
 
     def flow(self):

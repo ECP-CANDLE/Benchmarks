@@ -335,13 +335,14 @@ def run(params):
                               cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug)
         train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
-        x_train_list, y_train = train_gen.get_slice(size=train_gen.size, dataframe=True)
-        x_val_list, y_val = val_gen.get_slice(size=val_gen.size, dataframe=True)
+        x_train_list, y_train = train_gen.get_slice(size=train_gen.size, dataframe=True, single=args.single)
+        x_val_list, y_val = val_gen.get_slice(size=val_gen.size, dataframe=True, single=args.single)
         df_train = pd.concat([y_train] + x_train_list, axis=1)
         df_val = pd.concat([y_val] + x_val_list, axis=1)
         df = pd.concat([df_train, df_val]).reset_index(drop=True)
         if args.growth_bins > 1:
             df = uno_data.discretize(df, 'Growth', bins=args.growth_bins)
+        print(df.head())
         df.to_csv(fname, sep='\t', index=False, float_format="%.3g")
         return
 
