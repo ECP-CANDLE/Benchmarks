@@ -29,7 +29,7 @@ sys.path.append(lib_path2)
 
 import p2_common
 import helper
-
+import random
 
 def common_parser(parser):
 
@@ -49,38 +49,6 @@ def common_parser(parser):
 
 
 def p2b1_parser(parser):
-<<<<<<< HEAD
-    # Hyperparameters and model save path
-
-    parser.add_argument("--save-dir", help="Save Directory", dest="save_path", type=str, default=None)
-    parser.add_argument("--config-file", help="Config File", dest="config_file", type=str,
-                        default=os.path.join(file_path, 'p2b1p2b1_default_model.txt'))
-
-    parser.add_argument("--model-file", help="Trained Model Pickle File", dest="weight_path", type=str, default=None)
-    parser.add_argument("--memo", help="Memo", dest="base_memo", type=str, default=None)
-    parser.add_argument("--seed", action="store_true", dest="seed", default=False, help="Random Seed")
-    parser.add_argument("--case", help="[Full, Center, CenterZ]", dest="case", type=str, default='CenterZ')
-    parser.add_argument("--fig", action="store_true", dest="fig_bool", default=False, help="Generate Prediction Figure")
-    parser.add_argument("--data-set",  help="[3k_run16, 3k_run10, 3k_run32]", dest="set_sel",
-                        type=str, default="3k_run16")
-
-    parser.add_argument("--conv-AE", action="store_true", dest="conv_bool", default=False,
-                        help="Invoke training using 1D Convs for inner AE")
-
-    parser.add_argument("--full-conv-AE", action="store_true", dest="full_conv_bool", default=False,
-                        help="Invoke training using fully convolutional NN for inner AE")
-
-    parser.add_argument("--include-type", action="store_true", dest="type_bool", default=False,
-                        help="Include molecule type information in desining AE")
-
-    parser.add_argument("--nbr-type", type=str, dest="nbr_type", default='relative',
-                        help="Defines the type of neighborhood data to use. [relative, invariant]")
-
-    parser.add_argument("--backend", help="Keras Backend", dest="backend", type=str, default='theano')
-
-=======
-    ### Hyperparameters and model save path
-
 #    parser.add_argument("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
 #    parser.add_argument("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
 #    parser.add_argument("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
@@ -93,11 +61,11 @@ def p2b1_parser(parser):
     parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
     parser.add_argument("--data-set",  help="[3k_run16, 3k_run10, 3k_run32]", dest="set_sel", type=str, default="3k_run16")
     parser.add_argument("--conv-AE", action="store_true", dest="conv_bool", default=False, help="Invoke training using 1D Convs for inner AE")
+    parser.add_argument("--full-conv-AE", action="store_true", dest="full_conv_bool", default=False, help="Invoke training using fully convolutional NN for inner AE")
     parser.add_argument("--include-type", action="store_true", dest="type_bool", default=False, help="Include molecule type information in desining AE")
     parser.add_argument("--nbr-type", type=str, dest="nbr_type", default='relative', help="Defines the type of neighborhood data to use. [relative, invariant]")
     parser.add_argument("--backend", help="Keras Backend", dest="backend", type=str, default='theano')
     #(opts,args)=parser.parse_args()
->>>>>>> working_branch
     return parser
 
 
@@ -120,17 +88,6 @@ def read_config_file(File):
     # note 'cool' is a boolean
     Global_Params['cool']          = config.get(section[0], 'cool')
 
-<<<<<<< HEAD
-    Global_Params['molecular_epochs']       = eval(config.get(section[0], 'molecular_epochs'))
-    Global_Params['molecular_num_hidden']   = eval(config.get(section[0], 'molecular_num_hidden'))
-    Global_Params['molecular_nonlinearity'] = config.get(section[0], 'molecular_nonlinearity')
-    Global_Params['molecular_nbrs'] = config.get(section[0], 'molecular_nbrs')
-    Global_Params['drop_prob'] = config.get(section[0], 'drop_prob')
-
-    # parse the remaining values
-    for k, v in config.items(section[0]):
-        if not k in Global_Params:
-=======
     Global_Params['molecular_epochs']       =eval(config.get(section[0],'molecular_epochs'))
     Global_Params['molecular_num_hidden']   =eval(config.get(section[0],'molecular_num_hidden'))
     Global_Params['molecular_nonlinearity'] =config.get(section[0],'molecular_nonlinearity')
@@ -141,7 +98,6 @@ def read_config_file(File):
     # parse the remaining values
     for k,v in config.items(section[0]):
         if k not in Global_Params:
->>>>>>> working_branch
             Global_Params[k] = eval(v)
 
     return Global_Params
@@ -227,13 +183,8 @@ class ImageNoiseDataGenerator(object):
         # for python 3.x
         return self.next()
 
-<<<<<<< HEAD
-    def insertnoise(self, x, corruption_level=0.5):
-        return np.random.binomial(1, 1-corruption_level, x.shape)*x
-=======
     def insertnoise(self,x,corruption_level=0.5):
         return np.random.binomial(1,1-corruption_level,x.shape)*x
->>>>>>> working_branch
 
 
 class autoencoder_preprocess():
@@ -255,24 +206,17 @@ class autoencoder_preprocess():
         X_train = X_train.astype("float32")
         return X_train
 
-<<<<<<< HEAD
-=======
 ## get activations for hidden layers of the model
 def get_activations(model, layer, X_batch):
     get_activations = K.function([model.layers[0].input, K.learning_phase()], [model.layers[layer].output])
     activations = get_activations([X_batch,0])
     return activations
 
->>>>>>> working_branch
 
 class Candle_Molecular_Train():
     def __init__(self, molecular_model, molecular_encoder, files, mb_epochs, callbacks, save_path='.', batch_size=32,
                  nbr_type='relative', len_molecular_hidden_layers=1, molecular_nbrs=0,
-<<<<<<< HEAD
-                 conv_bool=False, full_conv_bool=False, type_bool=False):
-=======
                  conv_bool=False, full_conv_bool=False, type_bool=False, sampling_density=1.0):
->>>>>>> working_branch
         self.files = files
         self.molecular_model = molecular_model
         self.molecular_encoder = molecular_encoder
@@ -286,23 +230,10 @@ class Candle_Molecular_Train():
         self.full_conv_net = full_conv_bool
         self.type_feature = type_bool
         self.save_path = save_path+'/'
-<<<<<<< HEAD
-
-    def datagen(self, epoch=0, print_out=1, test=0):
-        files = self.files
-        # Training only on few files
-        if not test:
-            order = [13, 15, 16]
-        else:
-            order = [14]
-        # Randomize files after first training epoch
-        if epoch:
-            order = np.random.permutation(order)
-=======
         self.sampling_density = sampling_density
 
         self.test_ind = random.sample(range(len(self.files)), 1)
-        self.train_ind = np.setdiff1D(range(len(self.files)), self.test_ind)
+        self.train_ind = np.setdiff1d(range(len(self.files)), self.test_ind)
 
     def datagen(self, epoch=0, print_out=1, test=0):
         files = self.files
@@ -316,11 +247,10 @@ class Candle_Molecular_Train():
             order = random.sample(self.train_ind, int(self.sampling_density*len(self.train_ind)))
         else:
             order = self.test_ind
->>>>>>> working_branch
 
         for f_ind in order:
-            if (not epoch) and print_out:
-                print (files[f_ind])
+            if print_out:
+                print (files[f_ind], '\n')
 
             (X, nbrs, resnums) = helper.get_data_arrays(files[f_ind])
 
@@ -385,13 +315,15 @@ class Candle_Molecular_Train():
             frame_loss = []
             frame_mse = []
 
-            os.makedirs(self.save_path+'/epoch_'+str(i))
             current_path = self.save_path+'epoch_'+str(i)
+            if not os.path.exists(current_path):
+                os.makedirs(self.save_path+'/epoch_'+str(i))
+
             model_weight_file = '%s/%s.hdf5' % (current_path, 'model_weights')
             encoder_weight_file = '%s/%s.hdf5' % (current_path, 'encoder_weights')
 
             for curr_file, xt_all, yt_all in self.datagen(i):
-                for frame in range(len(xt_all)):
+                for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
 
                     history = self.molecular_model.fit(xt_all[frame], yt_all[frame], epochs=1,
                                                        batch_size=self.batch_size, callbacks=self.callbacks[:2],
@@ -399,7 +331,7 @@ class Candle_Molecular_Train():
                     frame_loss.append(history.history['loss'])
                     frame_mse.append(history.history['mean_squared_error'])
 
-                    if not frame % 20:
+                    if not frame % 20 or self.sampling_density != 1.0:
                         print ("Frame: {0:d}, Current history:\nLoss: {1:3.5f}\tMSE: {2:3.5f}\n"
                                .format(frame, history.history['loss'][0], history.history['mean_squared_error'][0]))
 
@@ -408,19 +340,16 @@ class Candle_Molecular_Train():
                         self.molecular_encoder.save_weights(encoder_weight_file)
 
             # save Loss and mse
-            print ("\nSaving loss and mse after current epoch... \n")
+            print ("Saving loss and mse after current epoch... \n")
             np.save(current_path+'/loss.npy', frame_loss)
             np.save(current_path+'/mse.npy', frame_mse)
 
             # Update weights file
-<<<<<<< HEAD
-=======
-            print ("\nSaving weights after current epoch... \n")
->>>>>>> working_branch
+            print ("Saving weights after current epoch... \n")
             self.molecular_model.save_weights(model_weight_file)
             self.molecular_encoder.save_weights(encoder_weight_file)
 
-            print ("\nSaving latent space output for current epoch... \n")
+            print ("Saving latent space output for current epoch... \n")
             for curr_file, xt_all, yt_all in self.datagen(0, 0, test=1):
                 XP = []
                 for frame in range(len(xt_all)):
