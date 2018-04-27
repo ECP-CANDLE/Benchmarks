@@ -72,6 +72,7 @@ def p2b1_parser(parser):
     parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
     parser.add_argument("--data-set",  help="[3k_run16, 3k_run10, 3k_run32]", dest="set_sel", type=str, default="3k_run16")
     parser.add_argument("--conv-AE", action="store_true", dest="conv_bool", default=False, help="Invoke training using 1D Convs for inner AE")
+    parser.add_argument("--full-conv-AE", action="store_true", dest="full_conv_bool", default=False, help="Invoke training using fully convolutional NN for inner AE")
     parser.add_argument("--include-type", action="store_true", dest="type_bool", default=False, help="Include molecule type information in desining AE")
     parser.add_argument("--nbr-type", type=str, dest="nbr_type", default='relative', help="Defines the type of neighborhood data to use. [relative, invariant]")
     parser.add_argument("--backend", help="Keras Backend", dest="backend", type=str, default='theano')
@@ -252,7 +253,7 @@ class Candle_Molecular_Train():
         self.sampling_density = sampling_density
 
         self.test_ind = random.sample(range(len(self.files)), 1)
-        self.train_ind = np.setdiff1D(range(len(self.files)), self.test_ind)
+        self.train_ind = np.setdiff1d(range(len(self.files)), self.test_ind)
 
     def datagen(self, epoch=0, print_out=1, test=0):
         files = self.files
@@ -268,8 +269,8 @@ class Candle_Molecular_Train():
             order = self.test_ind
 
         for f_ind in order:
-            if (not epoch) and print_out:
-                print (files[f_ind])
+            if print_out:
+                print (files[f_ind], '\n')
 
             (X, nbrs, resnums) = helper.get_data_arrays(files[f_ind])
 
@@ -322,8 +323,10 @@ class Candle_Molecular_Train():
             frame_loss = []
             frame_mse = []
 
-            os.makedirs(self.save_path+'/epoch_'+str(i))
             current_path = self.save_path+'epoch_'+str(i)
+            if not os.path.exists(current_path):
+                os.makedirs(self.save_path+'/epoch_'+str(i))
+
             model_weight_file = '%s/%s.hdf5' % (current_path, 'model_weights')
             encoder_weight_file = '%s/%s.hdf5' % (current_path, 'encoder_weights')
 
@@ -345,16 +348,16 @@ class Candle_Molecular_Train():
                         self.molecular_encoder.save_weights(encoder_weight_file)
 
             # save Loss and mse
-            print ("\nSaving loss and mse after current epoch... \n")
+            print ("Saving loss and mse after current epoch... \n")
             np.save(current_path+'/loss.npy', frame_loss)
             np.save(current_path+'/mse.npy', frame_mse)
 
             # Update weights file
-            print ("\nSaving weights after current epoch... \n")
+            print ("Saving weights after current epoch... \n")
             self.molecular_model.save_weights(model_weight_file)
             self.molecular_encoder.save_weights(encoder_weight_file)
 
-            print ("\nSaving latent space output for current epoch... \n")
+            print ("Saving latent space output for current epoch... \n")
             for curr_file, xt_all, yt_all in self.datagen(0, 0, test=1):
                 XP = []
                 for frame in range(len(xt_all)):

@@ -4,7 +4,7 @@ import pickle
 import sys, os, json
 import argparse
 import h5py
-from importlib import reload
+# from importlib import reload
 
 TIMEOUT=3600 # in sec; set this to -1 for no timeout
 file_path = os.path.dirname(os.path.realpath(__file__))
@@ -22,7 +22,7 @@ import p2_common as p2c
 import p2_common_keras as p2ck
 from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
-import p2b1p2b1_AE_models as AE_models
+import p2b1_AE_models as AE_models
 
 HOME = os.environ['HOME']
 
@@ -54,7 +54,10 @@ def initialize_parameters():
     GP = p2c.args_overwrite_config(args, GP)
 
     print '\nTraining parameters:'
-    print json.dumps(GP, indent=4, skipkeys=True, sort_keys=True)
+    for key in sorted(GP):
+        print "\t%s: %s" % (key, GP[key])
+        
+    # print json.dumps(GP, indent=4, skipkeys=True, sort_keys=True)
 
     if GP['backend'] != 'theano' and GP['backend'] != 'tensorflow':
         sys.exit('Invalid backend selected: %s' % GP['backend'])
@@ -274,6 +277,7 @@ def run(GP):
                                        full_conv_bool=full_conv_bool,
                                        type_bool=GP['type_bool'],
                                        sampling_density=GP['sampling_density'])
+        frame_loss, frame_mse = ct.train_ac()
     else:
         frame_mse = []
         frame_loss = []
