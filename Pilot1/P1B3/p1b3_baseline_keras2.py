@@ -167,7 +167,7 @@ class MyProgbarLogger(ProgbarLogger):
             self.log_values.append((k, v))
             epoch_log += ' - {}: {:.4f}'.format(k, float(v))
         if self.verbose:
-            self.progbar.update(self.seen, self.log_values, force=True)
+            self.progbar.update(self.seen, self.log_values)
         p1b3.logger.debug(epoch_log)
 
 
