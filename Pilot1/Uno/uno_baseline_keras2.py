@@ -344,7 +344,6 @@ def run(params):
         df = pd.concat([df_train, df_val]).reset_index(drop=True)
         if args.growth_bins > 1:
             df = uno_data.discretize(df, 'Growth', bins=args.growth_bins)
-        print(df.head())
         df.to_csv(fname, sep='\t', index=False, float_format="%.3g")
         return
 
