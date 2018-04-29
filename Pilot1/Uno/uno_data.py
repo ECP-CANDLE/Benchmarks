@@ -446,7 +446,9 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
 
     path = get_file(DATA_URL + filename)
     df_cols = pd.read_table(path, engine='c', nrows=0)
-    total = df_cols.shape[1] - 2  # remove 2 columns: Sample & Cancer_type_id
+    total = df_cols.shape[1] - 1  # remove Sample column
+    if 'Cancer_type_id' in df_cols.columns:
+        total -= 1
     usecols = None
     if ncols and ncols < total:
         usecols = np.random.choice(total, size=ncols, replace=False)

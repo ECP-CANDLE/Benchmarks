@@ -2,8 +2,9 @@
 
 import argparse
 import os
+import numpy as np
 import pandas as pd
-from skwrapper import regress, classify, summarize
+from skwrapper import regress, classify, train, split_data
 
 
 MODELS = ['LightGBM', 'RandomForest', 'XGB.1k']
@@ -15,7 +16,7 @@ CUTOFFS = None
 FEATURE_SUBSAMPLE = 0
 
 
-def get_parser(description=None):
+def get_parser(description='Run machine learning training algorithms implemented in scikit-learn'):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-b", "--bins", type=int, default=BINS,
                         help="number of evenly distributed bins to make when classification mode is turned on")
@@ -41,6 +42,8 @@ def get_parser(description=None):
                         help="cross validation folds")
     parser.add_argument("--feature_subsample", type=int, default=FEATURE_SUBSAMPLE,
                         help="number of features to randomly sample from each category, 0 means using all features")
+    parser.add_argument("-C", "--ignore_categoricals", action='store_true',
+                        help="ignore categorical feature columns")
     return parser
 
 
@@ -48,26 +51,40 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    df = pd.read_table(args.data, engine='c')
-    cat_cols = df.select_dtypes(['object']).columns
-    df[cat_cols] = df[cat_cols].apply(lambda x: x.astype('category').cat.codes)
-
-    good_bins = summarize(df, ycol=args.ycol, classify=args.classify, bins=args.bins, cutoffs=args.cutoffs, min_count=args.cv)
-    if args.classify and good_bins < 2:
-        print('Not enough classes\n')
-        return
-
     prefix = args.prefix or os.path.basename(args.data)
     prefix = os.path.join(args.out_dir, prefix)
 
+    df = pd.read_table(args.data, engine='c')
+    cat_cols = df.select_dtypes(['object']).columns
+    if args.ignore_categoricals:
+        df[cat_cols] = 0
+    else:
+        df[cat_cols] = df[cat_cols].apply(lambda x: x.astype('category').cat.codes)
+
+    x, y, splits, features = split_data(df, ycol=args.ycol, classify=args.classify,
+                                        cv=args.cv, bins=args.bins, cutoffs=args.cutoffs,
+                                        groupcols=args.groupcols, verbose=True)
+
+    if args.classify and len(np.unique(y)) < 2:
+        print('Not enough classes\n')
+        return
+
+    best_score, best_model = 0, None
     for model in args.models:
         if args.classify:
-            classify(df, model, ycol=args.ycol, cv=args.cv,
-                     bins=args.bins, cutoffs=args.cutoffs,
-                     groupcols=args.groupcols, threads=args.threads, prefix=prefix)
+            score = classify(model, x, y, splits, features, threads=args.threads, prefix=prefix)
         else:
-            regress(df, model, ycol=args.ycol, cv=args.cv,
-                    groupcols=args.groupcols, threads=args.threads, prefix=prefix)
+            score = regress(model, x, y, splits, features, threads=args.threads, prefix=prefix)
+        if score >= best_score:
+            best_score = score
+            best_model = model
+
+    print(best_model)
+    print('Training the best model ({}) on the entire dataset...'.format(best_model))
+    name = 'best.classifier' if args.classify else 'best.regressor'
+    fname = train(best_model, x, y, features, classify=args.classify,
+                  threads=args.threads, prefix=prefix, name=name, save=True)
+    print('Model saved in {}\n'.format(fname))
 
 
 if __name__ == '__main__':

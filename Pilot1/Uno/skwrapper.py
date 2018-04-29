@@ -3,6 +3,7 @@ from __future__ import division
 
 import operator
 import os
+import pickle
 import re
 import warnings
 import numpy as np
@@ -25,7 +26,7 @@ from lightgbm import LGBMRegressor
 warnings.filterwarnings(action="ignore", category=DeprecationWarning)
 
 
-def get_model(model_or_name, threads=-1, classification=False):
+def get_model(model_or_name, threads=-1, classify=False):
     regression_models = {
         'xgboost': (XGBRegressor(max_depth=6, n_jobs=threads), 'XGBRegressor'),
         'lightgbm': (LGBMRegressor(n_jobs=threads), 'LGBMRegressor'),
@@ -64,7 +65,7 @@ def get_model(model_or_name, threads=-1, classification=False):
     }
 
     if isinstance(model_or_name, str):
-        if classification:
+        if classify:
             model_and_name = classification_models.get(model_or_name.lower())
         else:
             model_and_name = regression_models.get(model_or_name.lower())
@@ -87,13 +88,6 @@ def score_format(metric, score, signed=False, eol=''):
 
 
 def top_important_features(model, feature_names, n_top=1000):
-    # if hasattr(model, "abooster"): # XGB
-    #     print(model)
-    #     fscore = model.booster().get_fscore()
-    #     fscore = sorted(fscore.items(), key=operator.itemgetter(1), reverse=True)
-    #     features = [(v, feature_names[int(k[1:])]) for k,v in fscore]
-    #     top = features[:n_top]
-    # else:
     if hasattr(model, "feature_importances_"):
         fi = model.feature_importances_
     else:
@@ -115,7 +109,7 @@ def sprint_features(top_features, n_top=1000):
     return str
 
 
-def discretize(y, bins=5, cutoffs=None, min_count=0, verbose=False):
+def discretize(y, bins=5, cutoffs=None, min_count=0, verbose=False, return_bins=False):
     thresholds = cutoffs
     if thresholds is None:
         if verbose:
@@ -141,14 +135,17 @@ def discretize(y, bins=5, cutoffs=None, min_count=0, verbose=False):
             print('  Class {}: {:7d} ({:.4f}) - between {:+.2f} and {:+.2f}{}'.
                   format(i, count, count/len(y), lower, upper, removed))
         # print('  Total: {:9d}'.format(len(y)))
-    return classes, thresholds, good_bins
+    if return_bins:
+        return classes, thresholds, good_bins
+    else:
+        return classes
 
 
 def categorize_dataframe(df, ycol='0', bins=5, cutoffs=None, verbose=False):
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
     y = df.loc[:, ycol].as_matrix()
-    classes, _, _ = discretize(y, bins, cutoffs, verbose)
+    classes = discretize(y, bins, cutoffs, verbose)
     df.iloc[:, 0] = classes
     return df
 
@@ -178,102 +175,90 @@ def summarize(df, ycol='0', classify=False, bins=0, cutoffs=None, min_count=0):
     return good_bins
 
 
-def regress(df, model, ycol='0', cv=5, groupcols=None, threads=-1, prefix=''):
-    out_dir = os.path.dirname(prefix)
-    if out_dir and not os.path.exists(out_dir):
-        os.makedirs(out_dir)
-
-    model, name = get_model(model, threads)
-
+def split_data(df, ycol='0', classify=False, cv=5, bins=0, cutoffs=None, groupcols=None, verbose=True):
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
 
     y = df.loc[:, ycol].as_matrix()
     x = df.drop(ycol, axis=1).as_matrix()
-    feature_labels = df.drop(ycol, axis=1).columns.tolist()
+    features = df.drop(ycol, axis=1).columns.tolist()
 
-    train_scores, test_scores = [], []
-    tests, preds = None, None
-    best_model = None
-    best_score = -np.Inf
+    if verbose:
+        print('Target column: {}'.format(ycol))
+        print('  count = {}, uniq = {}, mean = {:.3g}, std = {:.3g}'.format(len(y), len(np.unique(y)), np.mean(y), np.std(y)))
+        print('  min = {:.3g}, q1 = {:.3g}, median = {:.3g}, q3 = {:.3g}, max = {:.3g}'.format(np.min(y), np.percentile(y, 25), np.median(y), np.percentile(y, 75), np.max(y)))
 
-    y_even, _, _ = discretize(y)
+    if not classify:
+        y_even = discretize(y, bins=5, verbose=False)
+    elif bins >= 2:
+        y = discretize(y, bins=bins, min_count=cv, verbose=verbose)
+    elif cutoffs:
+        y = discretize(y, cutoffs=cutoffs, min_count=cv, verbose=verbose)
+    elif df[ycol].dtype in [np.dtype('float64'), np.dtype('float32')]:
+        warnings.warn('Warning: classification target is float; consider using --bins or --cutoffs')
+        y = y.astype(int)
+
+    if classify:
+        mask = np.ones(len(y), dtype=bool)
+        unique, counts = np.unique(y, return_counts=True)
+        for v, c in zip(unique, counts):
+            if c < cv:
+                mask[y == v] = False
+        x = x[mask]
+        y = y[mask]
+        removed = len(mask) - np.sum(mask)
+        if removed and verbose:
+            print('Removed {} rows in small classes: count < {}'.format(removed, cv))
 
     if groupcols is None:
+        if classify:
+            y_even = y
         skf = StratifiedKFold(n_splits=cv, shuffle=True)
         splits = skf.split(x, y_even)
     else:
         groups = make_group_from_columns(df, groupcols)
+        if classify:
+            groups = groups[mask]
         gkf = GroupKFold(n_splits=cv)
         splits = gkf.split(x, y, groups)
 
-    print('>', name)
-    print('Cross validation:')
+    if verbose:
+        print()
 
-    for i, (train_index, test_index) in enumerate(splits):
-        x_train, x_test = x[train_index], x[test_index]
-        y_train, y_test = y[train_index], y[test_index]
-        model.fit(x_train, y_train)
-        train_score = model.score(x_train, y_train)
-        test_score = model.score(x_test, y_test)
-        train_scores.append(train_score)
-        test_scores.append(test_score)
-        print("  fold {}/{}: score = {:.3f}".format(i+1, cv, test_score))
-        if test_score > best_score:
-            best_model = model
-        y_pred = model.predict(x_test)
-        preds = np.concatenate((preds, y_pred)) if preds is not None else y_pred
-        tests = np.concatenate((tests, y_test)) if tests is not None else y_test
-
-    print('Average validation metrics:')
-    scores_fname = "{}.{}.scores".format(prefix, name)
-    metric_names = 'r2_score explained_variance_score mean_absolute_error mean_squared_error'.split()
-    with open(scores_fname, "w") as scores_file:
-        for m in metric_names:
-            try:
-                s = getattr(metrics, m)(tests, preds)
-                print(' ', score_format(m, s))
-                scores_file.write(score_format(m, s, eol='\n'))
-            except Exception:
-                pass
-        scores_file.write('\nModel:\n{}\n\n'.format(model))
-
-    print()
-    top_features = top_important_features(best_model, feature_labels)
-    if top_features is not None:
-        fea_fname = "{}.{}.features".format(prefix, name)
-        with open(fea_fname, "w") as fea_file:
-            fea_file.write(sprint_features(top_features))
+    return x, y, list(splits), features
 
 
-def classify(df, model, ycol='0', cv=5, bins=0, cutoffs=None, groupcols=None, threads=-1, prefix=''):
-    out_dir = os.path.dirname(prefix)
-    if out_dir and not os.path.exists(out_dir):
-        os.makedirs(out_dir)
+def verify_path(path):
+    folder = os.path.dirname(path)
+    if folder and not os.path.exists(folder):
+        os.makedirs(folder)
 
-    model, name = get_model(model, threads, classification=True)
 
-    if ycol.isdigit():
-        ycol = df.columns[int(ycol)]
+def train(model, x, y, features=None, classify=False, threads=-1, prefix='', name=None, save=False):
+    verify_path(prefix)
+    model, model_name = get_model(model, threads, classify=classify)
+    model.fit(x, y)
+    name = name or model_name
+    if save:
+        model_desc_fname = "{}.{}.description".format(prefix, name)
+        with open(model_desc_fname, "w") as f:
+            f.write('{}\n'.format(model))
+        if features:
+            top_features = top_important_features(model, features)
+            if top_features is not None:
+                fea_fname = "{}.{}.features".format(prefix, name)
+                with open(fea_fname, "w") as fea_file:
+                    fea_file.write(sprint_features(top_features))
+        model_fname = "{}.{}.model.pkl".format(prefix, name)
+        with open(model_fname, 'wb') as f:
+            pickle.dump(model, f)
+        return model_fname
 
-    y = df.loc[:, ycol].as_matrix()
-    x = df.drop(ycol, axis=1).as_matrix()
-    feature_labels = df.drop(ycol, axis=1).columns.tolist()
 
-    if bins >= 2:
-        y, cutoffs, _ = discretize(y, bins=bins, min_count=cv)
-    elif cutoffs:
-        y, _, _ = discretize(y, cutoffs=cutoffs)
-    else:
-        y = y.astype(int)
 
-    mask = np.ones(len(y), dtype=bool)
-    bc = np.bincount(y)
-    for i, count in enumerate(bc):
-        if count < cv:
-            mask[y == i] = False
-    x = x[mask]
-    y = y[mask]
+def classify(model, x, y, splits, features, threads=-1, prefix=''):
+    verify_path(prefix)
+    model, name = get_model(model, threads, classify=True)
 
     train_scores, test_scores = [], []
     tests, preds = None, None
@@ -281,17 +266,8 @@ def classify(df, model, ycol='0', cv=5, bins=0, cutoffs=None, groupcols=None, th
     best_model = None
     best_score = -np.Inf
 
-    if groupcols is None:
-        skf = StratifiedKFold(n_splits=cv, shuffle=True)
-        splits = skf.split(x, y)
-    else:
-        groups = make_group_from_columns(df, groupcols)
-        gkf = GroupKFold(n_splits=cv)
-        splits = gkf.split(x, y, groups)
-
     print('>', name)
     print('Cross validation:')
-
     for i, (train_index, test_index) in enumerate(splits):
         x_train, x_test = x[train_index], x[test_index]
         y_train, y_test = y[train_index], y[test_index]
@@ -300,9 +276,10 @@ def classify(df, model, ycol='0', cv=5, bins=0, cutoffs=None, groupcols=None, th
         test_score = model.score(x_test, y_test)
         train_scores.append(train_score)
         test_scores.append(test_score)
-        print("  fold {}/{}: score = {:.3f}".format(i+1, cv, test_score))
+        print("  fold {}/{}: score = {:.3f}".format(i+1, len(splits), test_score))
         if test_score > best_score:
             best_model = model
+            best_score = test_score
         y_pred = model.predict(x_test)
         preds = np.concatenate((preds, y_pred)) if preds is not None else y_pred
         tests = np.concatenate((tests, y_test)) if tests is not None else y_test
@@ -322,17 +299,19 @@ def classify(df, model, ycol='0', cv=5, bins=0, cutoffs=None, groupcols=None, th
                     roc_file.write('\t'.join("{0:.5f}".format(x) for x in list(ent))+'\n')
 
     print('Average validation metrics:')
-    naive_accuracy = max(np.bincount(tests)) / len(tests)
+    uniques, counts = np.unique(tests, return_counts=True)
+    naive_accuracy = max(counts) / len(tests)
     accuracy = np.sum(preds == tests) / len(tests)
     accuracy_gain = accuracy - naive_accuracy
     print(' ', score_format('accuracy_gain', accuracy_gain, signed=True))
     scores_fname = "{}.{}.scores".format(prefix, name)
     metric_names = 'accuracy_score f1_score precision_score recall_score log_loss'.split()
+    average = 'binary' if len(uniques) <= 2 else 'weighted'
     with open(scores_fname, "w") as scores_file:
         scores_file.write(score_format('accuracy_gain', accuracy_gain, signed=True, eol='\n'))
         for m in metric_names:
             try:
-                s = getattr(metrics, m)(tests, preds)
+                s = getattr(metrics, m)(tests, preds, average=average)
                 print(' ', score_format(m, s))
                 scores_file.write(score_format(m, s, eol='\n'))
             except Exception:
@@ -343,8 +322,62 @@ def classify(df, model, ycol='0', cv=5, bins=0, cutoffs=None, groupcols=None, th
         scores_file.write('\nModel:\n{}\n\n'.format(model))
 
     print()
-    top_features = top_important_features(best_model, feature_labels)
+    top_features = top_important_features(best_model, features)
     if top_features is not None:
         fea_fname = "{}.{}.features".format(prefix, name)
         with open(fea_fname, "w") as fea_file:
             fea_file.write(sprint_features(top_features))
+
+    score = metrics.f1_score(tests, preds, average=average)
+    return score
+
+
+def regress(model, x, y, splits, features, threads=-1, prefix=''):
+    verify_path(prefix)
+    model, name = get_model(model, threads)
+
+    train_scores, test_scores = [], []
+    tests, preds = None, None
+    best_model = None
+    best_score = -np.Inf
+
+    print('>', name)
+    print('Cross validation:')
+    for i, (train_index, test_index) in enumerate(splits):
+        x_train, x_test = x[train_index], x[test_index]
+        y_train, y_test = y[train_index], y[test_index]
+        model.fit(x_train, y_train)
+        train_score = model.score(x_train, y_train)
+        test_score = model.score(x_test, y_test)
+        train_scores.append(train_score)
+        test_scores.append(test_score)
+        print("  fold {}/{}: score = {:.3f}".format(i+1, len(splits), test_score))
+        if test_score > best_score:
+            best_model = model
+            best_score = test_score
+        y_pred = model.predict(x_test)
+        preds = np.concatenate((preds, y_pred)) if preds is not None else y_pred
+        tests = np.concatenate((tests, y_test)) if tests is not None else y_test
+
+    print('Average validation metrics:')
+    scores_fname = "{}.{}.scores".format(prefix, name)
+    metric_names = 'r2_score explained_variance_score mean_absolute_error mean_squared_error'.split()
+    with open(scores_fname, "w") as scores_file:
+        for m in metric_names:
+            try:
+                s = getattr(metrics, m)(tests, preds)
+                print(' ', score_format(m, s))
+                scores_file.write(score_format(m, s, eol='\n'))
+            except Exception:
+                pass
+        scores_file.write('\nModel:\n{}\n\n'.format(model))
+
+    print()
+    top_features = top_important_features(best_model, features)
+    if top_features is not None:
+        fea_fname = "{}.{}.features".format(prefix, name)
+        with open(fea_fname, "w") as fea_file:
+            fea_file.write(sprint_features(top_features))
+
+    score = metrics.r2_score(tests, preds)
+    return score
