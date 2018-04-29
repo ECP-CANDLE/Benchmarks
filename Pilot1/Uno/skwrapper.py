@@ -26,10 +26,10 @@ from lightgbm import LGBMRegressor
 warnings.filterwarnings(action="ignore", category=DeprecationWarning)
 
 
-def get_model(model_or_name, threads=-1, classify=False):
+def get_model(model_or_name, threads=-1, classify=False, seed=0):
     regression_models = {
-        'xgboost': (XGBRegressor(max_depth=6, n_jobs=threads), 'XGBRegressor'),
-        'lightgbm': (LGBMRegressor(n_jobs=threads), 'LGBMRegressor'),
+        'xgboost': (XGBRegressor(max_depth=6, n_jobs=threads, random_state=seed), 'XGBRegressor'),
+        'lightgbm': (LGBMRegressor(n_jobs=threads, random_state=seed), 'LGBMRegressor'),
         'randomforest': (RandomForestRegressor(n_estimators=100, n_jobs=threads), 'RandomForestRegressor'),
         'adaboost': (AdaBoostRegressor(), 'AdaBoostRegressor'),
         'linear': (LinearRegression(), 'LinearRegression'),
@@ -37,17 +37,17 @@ def get_model(model_or_name, threads=-1, classify=False):
         'lasso': (LassoCV(positive=True), 'LassoCV'),
         'ridge': (Ridge(), 'Ridge'),
 
-        'xgb.1k': (XGBRegressor(max_depth=6, n_estimators=1000, n_jobs=threads), 'XGBRegressor.1K'),
-        'xgb.10k': (XGBRegressor(max_depth=6, n_estimators=10000, n_jobs=threads), 'XGBRegressor.10K'),
-        'lgbm.1k': (LGBMRegressor(n_estimators=1000, n_jobs=threads), 'LGBMRegressor.1K'),
-        'lgbm.10k': (LGBMRegressor(n_estimators=10000, n_jobs=threads), 'LGBMRegressor.10K'),
+        'xgb.1k': (XGBRegressor(max_depth=6, n_estimators=1000, n_jobs=threads, random_state=seed), 'XGBRegressor.1K'),
+        'xgb.10k': (XGBRegressor(max_depth=6, n_estimators=10000, n_jobs=threads, random_state=seed), 'XGBRegressor.10K'),
+        'lgbm.1k': (LGBMRegressor(n_estimators=1000, n_jobs=threads, random_state=seed), 'LGBMRegressor.1K'),
+        'lgbm.10k': (LGBMRegressor(n_estimators=10000, n_jobs=threads, random_state=seed), 'LGBMRegressor.10K'),
         'rf.1k': (RandomForestRegressor(n_estimators=1000, n_jobs=threads), 'RandomForestRegressor.1K'),
         'rf.10k': (RandomForestRegressor(n_estimators=10000, n_jobs=threads), 'RandomForestRegressor.10K')
     }
 
     classification_models = {
-        'xgboost': (XGBClassifier(n_jobs=threads), 'XGBClassifier'),
-        'lightgbm': (LGBMClassifier(n_jobs=threads), 'LGBMClassifier'),
+        'xgboost': (XGBClassifier(max_depth=6, n_jobs=threads, random_state=seed), 'XGBClassifier'),
+        'lightgbm': (LGBMClassifier(n_jobs=threads, random_state=seed), 'LGBMClassifier'),
         'randomforest': (RandomForestClassifier(n_estimators=100, n_jobs=threads), 'RandomForestClassifier'),
         'adaboost': (AdaBoostClassifier(), 'AdaBoostClassifier'),
         'logistic': (LogisticRegression(), 'LogisticRegression'),
@@ -56,10 +56,10 @@ def get_model(model_or_name, threads=-1, classify=False):
         'bayes': (GaussianNB(), 'GaussianNB'),
         'svm': (SVC(), 'SVC'),
 
-        'xgb.1k': (XGBClassifier(n_estimators=1000, n_jobs=threads), 'XGBClassifier.1K'),
-        'xgb.10k': (XGBClassifier(n_estimators=10000, n_jobs=threads), 'XGBClassifier.10K'),
-        'lgbm.1k': (LGBMClassifier(n_estimators=1000, n_jobs=threads), 'LGBMClassifier.1K'),
-        'lgbm.10k': (LGBMClassifier(n_estimators=1000, n_jobs=threads), 'LGBMClassifier.10K'),
+        'xgb.1k': (XGBClassifier(max_depth=6, n_estimators=1000, n_jobs=threads, random_state=seed), 'XGBClassifier.1K'),
+        'xgb.10k': (XGBClassifier(max_depth=6, n_estimators=10000, n_jobs=threads, random_state=seed), 'XGBClassifier.10K'),
+        'lgbm.1k': (LGBMClassifier(n_estimators=1000, n_jobs=threads, random_state=seed), 'LGBMClassifier.1K'),
+        'lgbm.10k': (LGBMClassifier(n_estimators=1000, n_jobs=threads, random_state=seed), 'LGBMClassifier.10K'),
         'rf.1k': (RandomForestClassifier(n_estimators=1000, n_jobs=threads), 'RandomForestClassifier.1K'),
         'rf.10k': (RandomForestClassifier(n_estimators=10000, n_jobs=threads), 'RandomForestClassifier.10K')
     }
@@ -256,9 +256,9 @@ def train(model, x, y, features=None, classify=False, threads=-1, prefix='', nam
 
 
 
-def classify(model, x, y, splits, features, threads=-1, prefix=''):
+def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0):
     verify_path(prefix)
-    model, name = get_model(model, threads, classify=True)
+    model, name = get_model(model, threads, classify=True, seed=seed)
 
     train_scores, test_scores = [], []
     tests, preds = None, None
@@ -332,9 +332,9 @@ def classify(model, x, y, splits, features, threads=-1, prefix=''):
     return score
 
 
-def regress(model, x, y, splits, features, threads=-1, prefix=''):
+def regress(model, x, y, splits, features, threads=-1, prefix='', seed=0):
     verify_path(prefix)
-    model, name = get_model(model, threads)
+    model, name = get_model(model, threads, seed=seed)
 
     train_scores, test_scores = [], []
     tests, preds = None, None

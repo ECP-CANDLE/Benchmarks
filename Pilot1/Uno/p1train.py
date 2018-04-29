@@ -4,16 +4,18 @@ import argparse
 import os
 import numpy as np
 import pandas as pd
+import random
 from skwrapper import regress, classify, train, split_data
 
 
-MODELS = ['LightGBM', 'RandomForest', 'XGB.1k']
+MODELS = ['LightGBM', 'RandomForest', 'XGBoost']
 CV = 3
 THREADS = 4
 OUT_DIR = 'p1save'
 BINS = 0
 CUTOFFS = None
 FEATURE_SUBSAMPLE = 0
+SEED = 2018
 
 
 def get_parser(description='Run machine learning training algorithms implemented in scikit-learn'):
@@ -44,12 +46,21 @@ def get_parser(description='Run machine learning training algorithms implemented
                         help="number of features to randomly sample from each category, 0 means using all features")
     parser.add_argument("-C", "--ignore_categoricals", action='store_true',
                         help="ignore categorical feature columns")
+    parser.add_argument("--seed", type=int, default=SEED,
+                        help="specify random seed")
     return parser
+
+
+def set_seed(seed):
+    os.environ['PYTHONHASHSEED'] = '0'
+    np.random.seed(seed)
+    random.seed(seed)
 
 
 def main():
     parser = get_parser()
     args = parser.parse_args()
+    set_seed(args.seed)
 
     prefix = args.prefix or os.path.basename(args.data)
     prefix = os.path.join(args.out_dir, prefix)
@@ -72,15 +83,15 @@ def main():
     best_score, best_model = 0, None
     for model in args.models:
         if args.classify:
-            score = classify(model, x, y, splits, features, threads=args.threads, prefix=prefix)
+            score = classify(model, x, y, splits, features, threads=args.threads, prefix=prefix, seed=args.seed)
         else:
-            score = regress(model, x, y, splits, features, threads=args.threads, prefix=prefix)
+            score = regress(model, x, y, splits, features, threads=args.threads, prefix=prefix, seed=args.seed)
         if score >= best_score:
             best_score = score
             best_model = model
 
     print(best_model)
-    print('Training the best model ({}) on the entire dataset...'.format(best_model))
+    print('Training the best model ({}={:.3g}) on the entire dataset...'.format(best_model, best_score))
     name = 'best.classifier' if args.classify else 'best.regressor'
     fname = train(best_model, x, y, features, classify=args.classify,
                   threads=args.threads, prefix=prefix, name=name, save=True)

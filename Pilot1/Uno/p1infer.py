@@ -34,6 +34,8 @@ def main():
 
     prefix = args.prefix or os.path.basename(args.data)
     prefix = os.path.join(args.out_dir, prefix)
+    if not os.path.exists(args.out_dir):
+        os.makedirs(args.out_dir)
 
     df = pd.read_table(args.data, engine='c')
     df_x = df.copy()
