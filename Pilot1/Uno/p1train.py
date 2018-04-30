@@ -8,7 +8,7 @@ import random
 from skwrapper import regress, classify, train, split_data
 
 
-MODELS = ['LightGBM', 'RandomForest', 'XGBoost']
+MODELS = ['LightGBM', 'XGBoost', 'RandomForest']
 CV = 3
 THREADS = 4
 OUT_DIR = 'p1save'
@@ -90,7 +90,6 @@ def main():
             best_score = score
             best_model = model
 
-    print(best_model)
     print('Training the best model ({}={:.3g}) on the entire dataset...'.format(best_model, best_score))
     name = 'best.classifier' if args.classify else 'best.regressor'
     fname = train(best_model, x, y, features, classify=args.classify,
