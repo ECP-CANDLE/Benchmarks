@@ -175,7 +175,16 @@ def summarize(df, ycol='0', classify=False, bins=0, cutoffs=None, min_count=0):
     return good_bins
 
 
-def split_data(df, ycol='0', classify=False, cv=5, bins=0, cutoffs=None, groupcols=None, verbose=True):
+def split_data(df, ycol='0', classify=False, cv=5, bins=0, cutoffs=None, groupcols=None, ignore_categoricals=False, verbose=True):
+    if groupcols is not None:
+        groups = make_group_from_columns(df, groupcols)
+
+    cat_cols = df.select_dtypes(['object']).columns
+    if ignore_categoricals:
+        df[cat_cols] = 0
+    else:
+        df[cat_cols] = df[cat_cols].apply(lambda x: x.astype('category').cat.codes)
+
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
 
@@ -216,7 +225,6 @@ def split_data(df, ycol='0', classify=False, cv=5, bins=0, cutoffs=None, groupco
         skf = StratifiedKFold(n_splits=cv, shuffle=True)
         splits = skf.split(x, y_even)
     else:
-        groups = make_group_from_columns(df, groupcols)
         if classify:
             groups = groups[mask]
         gkf = GroupKFold(n_splits=cv)
@@ -287,10 +295,13 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0):
             probas_ = model.predict_proba(x_test)
             probas = np.concatenate((probas, probas_)) if probas is not None else probas_
 
+    uniques, counts = np.unique(tests, return_counts=True)
+    average = 'binary' if len(uniques) <= 2 else 'weighted'
+
     roc_auc_score = None
     if probas is not None:
         fpr, tpr, thresholds = metrics.roc_curve(tests, probas[:, 1], pos_label=0)
-        roc_auc_score = metrics.auc(fpr, tpr)
+        roc_auc_score = 1 - metrics.auc(fpr, tpr)
         roc_fname = "{}.{}.ROC".format(prefix, name)
         if roc_auc_score:
             with open(roc_fname, "w") as roc_file:
@@ -299,14 +310,12 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0):
                     roc_file.write('\t'.join("{0:.5f}".format(x) for x in list(ent))+'\n')
 
     print('Average validation metrics:')
-    uniques, counts = np.unique(tests, return_counts=True)
     naive_accuracy = max(counts) / len(tests)
     accuracy = np.sum(preds == tests) / len(tests)
     accuracy_gain = accuracy - naive_accuracy
     print(' ', score_format('accuracy_gain', accuracy_gain, signed=True))
     scores_fname = "{}.{}.scores".format(prefix, name)
     metric_names = 'accuracy_score f1_score precision_score recall_score log_loss'.split()
-    average = 'binary' if len(uniques) <= 2 else 'weighted'
     with open(scores_fname, "w") as scores_file:
         scores_file.write(score_format('accuracy_gain', accuracy_gain, signed=True, eol='\n'))
         for m in metric_names:

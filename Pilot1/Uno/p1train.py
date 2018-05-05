@@ -66,21 +66,15 @@ def main():
     prefix = os.path.join(args.out_dir, prefix)
 
     df = pd.read_table(args.data, engine='c')
-    cat_cols = df.select_dtypes(['object']).columns
-    if args.ignore_categoricals:
-        df[cat_cols] = 0
-    else:
-        df[cat_cols] = df[cat_cols].apply(lambda x: x.astype('category').cat.codes)
-
-    x, y, splits, features = split_data(df, ycol=args.ycol, classify=args.classify,
-                                        cv=args.cv, bins=args.bins, cutoffs=args.cutoffs,
-                                        groupcols=args.groupcols, verbose=True)
+    x, y, splits, features = split_data(df, ycol=args.ycol, classify=args.classify, cv=args.cv,
+                                        bins=args.bins, cutoffs=args.cutoffs, groupcols=args.groupcols,
+                                        ignore_categoricals=args.ignore_categoricals, verbose=True)
 
     if args.classify and len(np.unique(y)) < 2:
         print('Not enough classes\n')
         return
 
-    best_score, best_model = 0, None
+    best_score, best_model = -np.Inf, None
     for model in args.models:
         if args.classify:
             score = classify(model, x, y, splits, features, threads=args.threads, prefix=prefix, seed=args.seed)
