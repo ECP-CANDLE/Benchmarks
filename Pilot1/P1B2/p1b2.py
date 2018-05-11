@@ -21,57 +21,50 @@ sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-import p1_common
+import candle_keras as candle
 
-url_p1b2 = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B2/'
-file_train = 'P1B2.train.csv'
-file_test = 'P1B2.test.csv'
+#url_p1b2 = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B2/'
+#file_train = 'P1B2.train.csv'
+#file_test = 'P1B2.test.csv'
 
 logger = logging.getLogger(__name__)
 
+additional_definitions = []
 
-def common_parser(parser):
+required = [
+    'data_url',
+    'train_data',
+    'test_data',
+    'activation',
+    'batch_size',
+    'dense',
+    'drop',
+    'epochs',
+    'feature_subsample',
+    'initialization',
+    'learning_rate',
+    'loss',
+    'optimizer',
+    'penalty',
+    'rng_seed',
+    'scaling',
+    'validation_split',
+    'shuffle'
+]
 
-    parser.add_argument("--config_file", dest='config_file', type=str,
-                        default=os.path.join(file_path, 'p1b2_default_model.txt'),
-                        help="specify model configuration file")
+class BenchmarkP1B2(candle.Benchmark):
 
-    # Parse has been split between arguments that are common with the default neon parser
-    # and all the other options
-    parser = p1_common.get_default_neon_parse(parser)
-    parser = p1_common.get_p1_common_parser(parser)
+    def set_locals(self):
+        """Functionality to set variables specific for the benchmark
+        - required: set of required parameters for the benchmark.
+        - additional_definitions: list of dictionaries describing the additional parameters for the
+        benchmark.
+        """
 
-    return parser
-
-
-def read_config_file(file):
-    config=configparser.ConfigParser()
-    config.read(file)
-    section=config.sections()
-    fileParams={}
-
-    fileParams['activation']=eval(config.get(section[0],'activation'))
-    fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
-    fileParams['dense']=eval(config.get(section[0],'dense'))
-    fileParams['drop']=eval(config.get(section[0],'drop'))
-    fileParams['epochs']=eval(config.get(section[0],'epochs'))
-    fileParams['feature_subsample']=eval(config.get(section[0],'feature_subsample'))
-    fileParams['initialization']=eval(config.get(section[0],'initialization'))
-    fileParams['learning_rate']=eval(config.get(section[0], 'learning_rate'))
-    fileParams['loss']=eval(config.get(section[0],'loss'))
-    fileParams['optimizer']=eval(config.get(section[0],'optimizer'))
-    fileParams['penalty']=eval(config.get(section[0],'penalty'))
-    fileParams['rng_seed']=eval(config.get(section[0],'rng_seed'))
-    fileParams['scaling']=eval(config.get(section[0],'scaling'))
-    fileParams['validation_split']=eval(config.get(section[0],'validation_split'))
-
-    # parse the remaining values
-    for k, v in config.items(section[0]):
-        if not k in fileParams:
-            fileParams[k] = eval(v)
-
-    return fileParams
-
+        if required is not None:
+            self.required = set(required)
+        if additional_definitions is not None:
+            self.additional_definitions = additional_definitions
 
 def extension_from_parameters(params, framework):
     """Construct string for saving model with annotation of parameters"""
@@ -91,7 +84,11 @@ def extension_from_parameters(params, framework):
 
 
 def load_data_one_hot(params, seed):
-    return p1_common.load_Xy_one_hot_data2(url_p1b2, file_train, file_test, class_col=['cancer_type'],
+   # fetch data
+    file_train = candle.fetch_file(params['data_url'] + params['train_data'],subdir='Pilot1')
+    file_test = candle.fetch_file(params['data_url'] + params['test_data'],subdir='Pilot1')
+
+    return candle.load_Xy_one_hot_data2(file_train, file_test, class_col=['cancer_type'],
                                            drop_cols=['case_id', 'cancer_type'],
                                            n_cols=params['feature_subsample'],
                                            shuffle=params['shuffle'],
@@ -102,7 +99,11 @@ def load_data_one_hot(params, seed):
 
 
 def load_data(params, seed):
-    return p1_common.load_Xy_data2(url_p1b2, file_train, file_test, class_col=['cancer_type'],
+   # fetch data
+    file_train = candle.fetch_file(params['data_url'] + params['train_data'],subdir='Pilot1')
+    file_test = candle.fetch_file(params['data_url'] + params['test_data'],subdir='Pilot1')
+
+    return candle.load_Xy_data2(file_train, file_test, class_col=['cancer_type'],
                                   drop_cols=['case_id', 'cancer_type'],
                                   n_cols=params['feature_subsample'],
                                   shuffle=params['shuffle'],

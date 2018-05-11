@@ -15,40 +15,30 @@ from keras.regularizers import l2
 #import sys,os
 
 import p1b2
-import p1_common
-import p1_common_keras
+import candle_keras as candle
+
+def initialize_parameters():
+
+    # Build benchmark object
+    p1b2Bmk = p1b2.BenchmarkP1B2(p1b2.file_path, 'p1b2_default_model.txt', 'keras',
+    prog='p1b2_baseline', desc='Train Classifier - Pilot 1 Benchmark 2')
+
+    # Initialize parameters
+    gParameters = candle.initialize_parameters(p1b2Bmk)
+    #p1b2.logger.info('Params: {}'.format(gParameters))
+
+    return gParameters
 
 
-
-def get_p1b2_parser():
-
-	parser = argparse.ArgumentParser(prog='p1b2_baseline',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        description='Train Classifier - Pilot 1 Benchmark 2')
-
-	return p1b2.common_parser(parser)
-
-
-def main():
+def run(gParameters):
     
-    # Get command-line parameters
-    parser = get_p1b2_parser()
-    args = parser.parse_args()
-    #print('Args:', args)
-    # Get parameters from configuration file
-    fileParameters = p1b2.read_config_file(args.config_file)
-    #print ('Params:', fileParameters)
-    # Consolidate parameter set. Command-line parameters overwrite file configuration
-    gParameters = p1_common.args_overwrite_config(args, fileParameters)
-    print ('Params:', gParameters)
-
     # Construct extension to save model
     ext = p1b2.extension_from_parameters(gParameters, '.keras')
-    logfile = args.logfile if args.logfile else args.save+ext+'.log'
+    logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['output_dir']+ext+'.log'
     p1b2.logger.info('Params: {}'.format(gParameters))
 
     # Get default parameters for initialization and optimizer functions
-    kerasDefaults = p1_common.keras_default_config()
+    kerasDefaults = candle.keras_default_config()
     seed = gParameters['rng_seed']
     
     # Load dataset
@@ -74,8 +64,8 @@ def main():
     output_dim = y_train.shape[1]
 
     # Initialize weights and learning rule
-    initializer_weights = p1_common_keras.build_initializer(gParameters['initialization'], kerasDefaults, seed)
-    initializer_bias = p1_common_keras.build_initializer('constant', kerasDefaults, 0.)
+    initializer_weights = candle.build_initializer(gParameters['initialization'], kerasDefaults, seed)
+    initializer_bias = candle.build_initializer('constant', kerasDefaults, 0.)
     
     activation = gParameters['activation']
     
@@ -113,7 +103,7 @@ def main():
     p1b2.logger.debug('Model: {}'.format(mlp.to_json()))
 
     # Define optimizer
-    optimizer = p1_common_keras.build_optimizer(gParameters['optimizer'],
+    optimizer = candle.build_optimizer(gParameters['optimizer'],
                                                 gParameters['learning_rate'],
                                                 kerasDefaults)
 
@@ -139,6 +129,9 @@ def main():
     scores = p1b2.evaluate_accuracy_one_hot(y_pred, y_test)
     print('Evaluation on test data:', scores)
 
+def main():
+   params = initialize_parameters()
+   run(params)
 
 if __name__ == '__main__':
     main()

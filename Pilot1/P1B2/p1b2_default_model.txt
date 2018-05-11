@@ -1,4 +1,7 @@
 [Global_Params]
+data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B2/'
+train_data = 'P1B2.train.csv'
+test_data = 'P1B2.test.csv'
 dense=[1024, 512, 256]
 batch_size=60
 epochs=1
@@ -13,4 +16,5 @@ penalty=0.00001
 validation_split=0.1
 rng_seed=2017
 initialization='glorot_uniform'
-save='save'
+output_dir='save'
+shuffle = True
