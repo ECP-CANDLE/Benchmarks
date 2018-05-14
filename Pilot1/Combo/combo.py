@@ -54,7 +54,7 @@ def combo_parser(parser):
     parser.add_argument("--use_landmark_genes", action="store_true",
                         help="use the 978 landmark genes from LINCS (L1000) as expression features")
     parser.add_argument("--preprocess_rnaseq",
-                        choices=['scale_per_source', 'combat', 'none'],
+                        choices=['source_scale', 'combat', 'none'],
                         help="preprocessing method for RNAseq data; none for global normalization")
     parser.add_argument("--response_url",
                         help="URL to combo dose response file")

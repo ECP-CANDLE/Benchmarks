@@ -442,7 +442,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
 
     if preprocess_rnaseq and preprocess_rnaseq != 'none':
         scaling = None
-        filename += ('_' + preprocess_rnaseq)  # 'scale_per_source' or 'combat'
+        filename += ('_' + preprocess_rnaseq)  # 'source_scale' or 'combat'
 
     path = get_file(DATA_URL + filename)
     df_cols = pd.read_table(path, engine='c', nrows=0)
