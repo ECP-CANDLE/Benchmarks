@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 def common_parser(parser):
     parser.add_argument("--config-file", dest='config_file', type=str,
-                        default=os.path.join(file_path, 'combo_default_model.txt'),
+                        default=os.path.join(file_path, 'uno_default_model.txt'),
                         help="specify model configuration file")
 
     # Parse has been split between arguments that are common with the default neon parser
@@ -33,31 +33,58 @@ def common_parser(parser):
     parser = p1_common.get_default_neon_parse(parser)
     parser = p1_common.get_p1_common_parser(parser)
 
-    # Arguments that are applicable just to combo
-    parser = combo_parser(parser)
+    # Arguments that are applicable just to uno
+    parser = uno_parser(parser)
 
     return parser
 
 
-def combo_parser(parser):
+def uno_parser(parser):
+    parser.add_argument('--by_cell',
+                        default=None,
+                        help='sample ID for building a by-cell model')
+    parser.add_argument('--by_drug',
+                        default=None,
+                        help='drug ID or name for building a by-drug model')
+    parser.add_argument("--train_sources", nargs='+',
+                        default=argparse.SUPPRESS,
+                        choices=['all', 'CCLE', 'CTRP', 'gCSI', 'GDSC', 'NCI60', 'SCL', 'SCLC', 'ALMANAC'],
+                        help="use one or more sources of drug response data for training")
+    parser.add_argument("--test_sources", nargs='+',
+                        default=argparse.SUPPRESS,
+                        choices=['train', 'all', 'CCLE', 'CTRP', 'gCSI', 'GDSC', 'NCI60', 'SCL', 'SCLC', 'ALMANAC'],
+                        help="use one or more sources of drug response data for testing")
+    parser.add_argument("--cell_types", nargs='+',
+                        default=argparse.SUPPRESS,
+                        help="limit training and test data to one or more tissue types")
     parser.add_argument("--cell_features", nargs='+',
                         default=argparse.SUPPRESS,
-                        choices=['expression', 'mirna', 'proteome', 'all', 'expression_5platform', 'expression_u133p2', 'rnaseq', 'categorical'],
+                        choices=['rnaseq', 'none'],
                         help="use one or more cell line feature sets: 'expression', 'mirna', 'proteome', 'all'; use all for ['expression', 'mirna', 'proteome']; use 'categorical' for one-hot encoded cell lines")
     parser.add_argument("--drug_features", nargs='+',
                         default=argparse.SUPPRESS,
-                        choices=['descriptors', 'latent', 'all', 'categorical', 'noise'],
+                        choices=['descriptors', 'fingerprints', 'none'],
                         help="use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or one-hot encoded drugs, or random features; 'descriptors','latent', 'all', 'categorical', 'noise'")
+    parser.add_argument('--drug_median_response_min', type=float,
+                        default=-1,
+                        help='keep drugs whose median response is greater than the threshold')
+    parser.add_argument('--drug_median_response_max', type=float,
+                        default=1,
+                        help='keep drugs whose median response is less than the threshold')
+    parser.add_argument("--no_feature_source", action="store_true",
+                        help="do not embed cell or drug feature source as part of input")
+    parser.add_argument("--no_response_source", action="store_true",
+                        help="do not encode response data source as an input feature")
     parser.add_argument('--dense_feature_layers', nargs='+', type=int,
                         default=argparse.SUPPRESS,
                         help='number of neurons in intermediate dense layers in the feature encoding submodels')
     parser.add_argument("--use_landmark_genes", action="store_true",
                         help="use the 978 landmark genes from LINCS (L1000) as expression features")
+    parser.add_argument("--use_filtered_genes", action="store_true",
+                        help="use the variance filtered genes as expression features")
     parser.add_argument("--preprocess_rnaseq",
                         choices=['source_scale', 'combat', 'none'],
                         help="preprocessing method for RNAseq data; none for global normalization")
-    parser.add_argument("--response_url",
-                        help="URL to combo dose response file")
     parser.add_argument("--residual", action="store_true",
                         help="add skip connections to the layers")
     parser.add_argument('--reduce_lr', action='store_true',
@@ -74,22 +101,26 @@ def combo_parser(parser):
     parser.add_argument('--max_val_loss', type=float,
                         default=argparse.SUPPRESS,
                         help='retrain if val_loss is greater than the threshold')
-    parser.add_argument("--cv_partition",
-                        choices=['overlapping', 'disjoint', 'disjoint_cells'],
-                        default=argparse.SUPPRESS,
-                        help="cross validation paritioning scheme: overlapping or disjoint")
+    parser.add_argument("--partition_by",
+                        choices=['index', 'drug_pair', 'cell'],
+                        default=None,
+                        help="cross validation paritioning scheme")
     parser.add_argument("--cv", type=int,
                         default=argparse.SUPPRESS,
                         help="cross validation folds")
-    parser.add_argument("--gen", action="store_true",
-                        help="use generator for training and validation data")
-    parser.add_argument("--exclude_cells", nargs='+',
-                        default=[],
-                        help="cell line IDs to exclude")
-    parser.add_argument("--exclude_drugs", nargs='+',
-                        default=[],
-                        help="drug line IDs to exclude")
-
+    parser.add_argument("--no_gen", action="store_true",
+                        help="do not use generator for training and validation data")
+    parser.add_argument("--cache",
+                        default=None,
+                        help="prefix of data cache files to use")
+    parser.add_argument("--single", action="store_true",
+                        help="do not use drug pair representation")
+    parser.add_argument("--export_data",
+                        default=None,
+                        help="output dataframe file name")
+    parser.add_argument("--growth_bins", type=int,
+                        default=0,
+                        help="number of bins to use when discretizing growth response")
     return parser
 
 
