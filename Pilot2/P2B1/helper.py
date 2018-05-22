@@ -78,16 +78,16 @@ def get_angles(x0, com, orientation, dimensions):
     return angle / (2*np.pi)
 
 
-def get_local_files(data_tag="3k_run16"):
+def get_local_files(data_tag="3k_run16", data_dir_prefix="/p/gscratchr/brainusr/datasets/cancer/pilot2"):
     '''
     Load data files from local directory
     '''
     if data_tag == '3k_run16':
-        data_dir = '/p/gscratchr/brainusr/datasets/cancer/pilot2/3k_run16_10us.35fs-DPPC.20-DIPC.60-CHOL.20.dir/'
+        data_dir = data_dir_prefix + '/3k_run16_10us.35fs-DPPC.20-DIPC.60-CHOL.20.dir/'
     elif data_tag == '3k_run10':
-        data_dir = '/p/gscratchr/brainusr/datasets/cancer/pilot2/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/'
+        data_dir = data_dir_prefix + '/3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir/'
     elif data_tag == '3k_run32':
-        data_dir = '/p/gscratchr/brainusr/datasets/cancer/pilot2/3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir/'
+        data_dir = data_dir_prefix + '/3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir/'
 
     data_files = glob.glob('%s/*.npz' % data_dir)
     filelist = [d for d in data_files if 'AE' not in d]
@@ -229,7 +229,7 @@ def append_nbrs(x, nbrs, num_nbrs):
     for i in range(len(x)):
         nb_indices = nbrs[i, :num_nbrs+1].astype(int)
         if not i:
-            print 'nbrs indices: ', nb_indices
+            print ('nbrs indices: ', nb_indices)
         nb_indices = nb_indices[nb_indices != -1]
 
         temp_mols = x[nb_indices]

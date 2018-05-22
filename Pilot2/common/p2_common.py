@@ -52,7 +52,7 @@ def get_default_neon_parse(parser):
 
     # Logging utilities
     parser.add_argument("-s", "--save_path", dest='save_path',
-                        default=argparse.SUPPRESS, type=str,
+                        default=argparse.SUPPRESS, type=str, 
                         help="file path to save model snapshots")
 
     # General behavior

@@ -52,14 +52,14 @@ def p2b1_parser(parser):
 #    parser.add_argument("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
 #    parser.add_argument("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
 #    parser.add_argument("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
-    parser.add_argument("--save-dir",help="Save Directory",dest="save_path",type=str,default=None)
     parser.add_argument("--config-file",help="Config File",dest="config_file",type=str,default=os.path.join(file_path, 'p2b1_default_model.txt'))
     parser.add_argument("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
     parser.add_argument("--memo",help="Memo",dest="base_memo",type=str,default=None)
     parser.add_argument("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
     parser.add_argument("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='Full')
     parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
-    parser.add_argument("--data-set",  help="[3k_run16, 3k_run10, 3k_run32]", dest="set_sel", type=str, default="3k_run16")
+    parser.add_argument("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
+        type=str,default="3k_Disordered")
     parser.add_argument("--conv-AE", action="store_true", dest="conv_bool", default=False, help="Invoke training using 1D Convs for inner AE")
     parser.add_argument("--full-conv-AE", action="store_true", dest="full_conv_bool", default=False, help="Invoke training using fully convolutional NN for inner AE")
     parser.add_argument("--include-type", action="store_true", dest="type_bool", default=False, help="Include molecule type information in desining AE")
@@ -94,6 +94,8 @@ def read_config_file(File):
     Global_Params['molecular_nbrs']         =config.get(section[0],'molecular_nbrs')
     Global_Params['drop_prob']              = config.get(section[0], 'drop_prob')
     Global_Params['l2_reg']                 = eval(config.get(section[0], 'l2_reg'))
+    Global_Params['sampling_density']       = eval(config.get(section[0], 'sampling_density'))
+    Global_Params['save_path']              = eval(config.get(section[0], 'save_path'))
 
     # parse the remaining values
     for k,v in config.items(section[0]):
@@ -244,7 +246,7 @@ class Candle_Molecular_Train():
 
         # choose a random sample to train on
         if not test:
-            order = random.sample(self.train_ind, int(self.sampling_density*len(self.train_ind)))
+            order = random.sample(list(self.train_ind), int(self.sampling_density*len(self.train_ind)))
         else:
             order = self.test_ind
 

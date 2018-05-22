@@ -16,4 +16,5 @@ molecular_epochs=10
 base_memo='p2b1'
 drop_prob = 0.5
 data_set='3k_Ordered'
-sampling_density = 0.1
+sampling_density = 0.01
+save_path='.'
