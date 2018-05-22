@@ -238,7 +238,6 @@ class Candle_Molecular_Train():
         self.train_ind = np.setdiff1d(range(len(self.files)), self.test_ind)
 
     def datagen(self, epoch=0, print_out=1, test=0):
-        print("DATAGEN")
         files = self.files
         # order = range(13, 17) # Temporarily train on only a few files range(len(files))
         # Randomize files after first training epoch
@@ -256,7 +255,7 @@ class Candle_Molecular_Train():
                 print (files[f_ind], '\n')
 
             (X, nbrs, resnums) = helper.get_data_arrays(files[f_ind])
-            print("SHAPE", X.shape[0])
+            
             # normalizing the location coordinates and bond lengths and scale type encoding
             # Changed the xyz normalization from 255 to 350
             if self.type_feature:
