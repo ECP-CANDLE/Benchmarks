@@ -60,7 +60,7 @@ def p2b1_parser(parser):
     parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
     parser.add_argument("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
         type=str,default="3k_Disordered")
-    parser.add_argument("--conv-AE", action="store_true", dest="conv_bool", default=False, help="Invoke training using 1D Convs for inner AE")
+    parser.add_argument("--conv-AE", action="store_true", dest="conv_bool", default=True, help="Invoke training using 1D Convs for inner AE")
     parser.add_argument("--full-conv-AE", action="store_true", dest="full_conv_bool", default=False, help="Invoke training using fully convolutional NN for inner AE")
     parser.add_argument("--include-type", action="store_true", dest="type_bool", default=False, help="Include molecule type information in desining AE")
     parser.add_argument("--nbr-type", type=str, dest="nbr_type", default='relative', help="Defines the type of neighborhood data to use. [relative, invariant]")
@@ -238,6 +238,7 @@ class Candle_Molecular_Train():
         self.train_ind = np.setdiff1d(range(len(self.files)), self.test_ind)
 
     def datagen(self, epoch=0, print_out=1, test=0):
+        print("DATAGEN")
         files = self.files
         # order = range(13, 17) # Temporarily train on only a few files range(len(files))
         # Randomize files after first training epoch
@@ -255,7 +256,7 @@ class Candle_Molecular_Train():
                 print (files[f_ind], '\n')
 
             (X, nbrs, resnums) = helper.get_data_arrays(files[f_ind])
-
+            print("SHAPE", X.shape[0])
             # normalizing the location coordinates and bond lengths and scale type encoding
             # Changed the xyz normalization from 255 to 350
             if self.type_feature:
