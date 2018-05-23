@@ -62,7 +62,7 @@ def p2b1_parser(parser):
         type=str,default="3k_Disordered")
     parser.add_argument("--conv-AE", action="store_true", dest="conv_bool", default=True, help="Invoke training using 1D Convs for inner AE")
     parser.add_argument("--full-conv-AE", action="store_true", dest="full_conv_bool", default=False, help="Invoke training using fully convolutional NN for inner AE")
-    parser.add_argument("--include-type", action="store_true", dest="type_bool", default=False, help="Include molecule type information in desining AE")
+    parser.add_argument("--include-type", action="store_true", dest="type_bool", default=True, help="Include molecule type information in desining AE")
     parser.add_argument("--nbr-type", type=str, dest="nbr_type", default='relative', help="Defines the type of neighborhood data to use. [relative, invariant]")
     parser.add_argument("--backend", help="Keras Backend", dest="backend", type=str, default='theano')
     #(opts,args)=parser.parse_args()
@@ -79,7 +79,6 @@ def read_config_file(File):
     Global_Params['num_hidden']    = eval(config.get(section[0], 'num_hidden'))
     Global_Params['batch_size']    = eval(config.get(section[0], 'batch_size'))
     Global_Params['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
-    Global_Params['epochs']        = eval(config.get(section[0], 'epochs'))
     Global_Params['l2_reg']        = eval(config.get(section[0], 'l2_reg'))
     Global_Params['noise_factor']  = eval(config.get(section[0], 'noise_factor'))
     Global_Params['optimizer']     = eval(config.get(section[0], 'optimizer'))
@@ -316,7 +315,7 @@ class Candle_Molecular_Train():
 
     def train_ac(self):
 
-        for i in range(self.mb_epochs):
+        for i in range(1, self.mb_epochs+1):
             print ("\nTraining epoch: {:d}\n".format(i))
 
             frame_loss = []
