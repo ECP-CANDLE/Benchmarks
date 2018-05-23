@@ -255,7 +255,7 @@ class Candle_Molecular_Train():
                 print (files[f_ind], '\n')
 
             (X, nbrs, resnums) = helper.get_data_arrays(files[f_ind])
-            
+
             # normalizing the location coordinates and bond lengths and scale type encoding
             # Changed the xyz normalization from 255 to 350
             if self.type_feature:
@@ -270,7 +270,13 @@ class Candle_Molecular_Train():
             xt_all = np.array([])
             yt_all = np.array([])
 
-            for i in range(num_frames):
+            #for i in range(num_frames):
+            num_active_frames = random.sample(range(num_frames), int(self.sampling_density*num_frames))
+
+            print('Formatting on the following frames', num_active_frames)
+            print('Datagen on the following frames', num_active_frames)
+
+            for i in range(num_active_frames):
 
                 if self.conv_net:
                     xt = Xnorm[i]
@@ -325,8 +331,8 @@ class Candle_Molecular_Train():
             encoder_weight_file = '%s/%s.hdf5' % (current_path, 'encoder_weights')
 
             for curr_file, xt_all, yt_all in self.datagen(i):
-                for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
-
+                #for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
+                for frame in range(len(xt_all)):
                     history = self.molecular_model.fit(xt_all[frame], yt_all[frame], epochs=1,
                                                        batch_size=self.batch_size, callbacks=self.callbacks[:2],
                                                        verbose=0)
