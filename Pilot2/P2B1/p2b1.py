@@ -275,7 +275,7 @@ class Candle_Molecular_Train():
 
             print('Datagen on the following frames', num_active_frames)
 
-            for i in range(len(num_active_frames)):
+            for i in num_active_frames:
 
                 if self.conv_net:
                     xt = Xnorm[i]
