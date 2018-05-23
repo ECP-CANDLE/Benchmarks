@@ -273,10 +273,9 @@ class Candle_Molecular_Train():
             #for i in range(num_frames):
             num_active_frames = random.sample(range(num_frames), int(self.sampling_density*num_frames))
 
-            print('Formatting on the following frames', num_active_frames)
             print('Datagen on the following frames', num_active_frames)
 
-            for i in range(num_active_frames):
+            for i in range(len(num_active_frames)):
 
                 if self.conv_net:
                     xt = Xnorm[i]
