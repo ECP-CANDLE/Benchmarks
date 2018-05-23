@@ -10,7 +10,8 @@ from __future__ import print_function
 # from PIL import Image
 # import cv2
 # from tqdm import *
-
+import multiprocessing as mp
+from multiprocessing import Process, Manager
 import numpy as np
 import keras.backend as K
 import threading
@@ -214,6 +215,40 @@ def get_activations(model, layer, X_batch):
     return activations
 
 
+def datagen_helper(Xnorm, frame, xt, yt):
+    if self.conv_net:
+        xt = Xnorm[frame]
+        if self.nbr_type == 'relative':
+            xt = helper.append_nbrs_relative(xt, nbrs[frame], self.molecular_nbrs)
+        elif self.nbr_type == 'invariant':
+            xt = helper.append_nbrs_invariant(xt, nbrs[frame], self.molecular_nbrs)
+        else:
+            print ('Invalid nbr_type')
+            exit()
+
+        yt = xt.copy()
+        xt = xt.reshape(xt.shape[0], 1, xt.shape[1], 1)
+        if self.full_conv_net:
+            yt = xt.copy()
+
+    else:
+        xt = Xnorm[frame]
+        if self.nbr_type == 'relative':
+            xt = helper.append_nbrs_relative(xt, nbrs[frame], self.molecular_nbrs)
+        elif self.nbr_type == 'invariant':
+            xt = helper.append_nbrs_invariant(xt, nbrs[frame], self.molecular_nbrs)
+        else:
+            print ('Invalid nbr_type')
+            exit()
+        yt = xt.copy()
+
+    if not len(xt_all):
+        xt_all = np.expand_dims(xt, axis=0)
+        yt_all = np.expand_dims(yt, axis=0)
+    else:
+        xt_all = np.append(xt_all, np.expand_dims(xt, axis=0), axis=0)
+        yt_all = np.append(yt_all, np.expand_dims(yt, axis=0), axis=0)
+
 class Candle_Molecular_Train():
     def __init__(self, molecular_model, molecular_encoder, files, mb_epochs, callbacks, save_path='.', batch_size=32,
                  nbr_type='relative', len_molecular_hidden_layers=1, molecular_nbrs=0,
@@ -236,7 +271,43 @@ class Candle_Molecular_Train():
         self.test_ind = random.sample(range(len(self.files)), 1)
         self.train_ind = np.setdiff1d(range(len(self.files)), self.test_ind)
 
+
+    def datagen_helper(self, Xnorm, frame, xt_all, yt_all, nbrs):
+        if self.conv_net:
+            xt = Xnorm[frame]
+            if self.nbr_type == 'relative':
+                xt = helper.append_nbrs_relative(xt, nbrs[frame], self.molecular_nbrs)
+            elif self.nbr_type == 'invariant':
+                xt = helper.append_nbrs_invariant(xt, nbrs[frame], self.molecular_nbrs)
+            else:
+                print ('Invalid nbr_type')
+                exit()
+
+            yt = xt.copy()
+            xt = xt.reshape(xt.shape[0], 1, xt.shape[1], 1)
+            if self.full_conv_net:
+                yt = xt.copy()
+
+        else:
+            xt = Xnorm[frame]
+            if self.nbr_type == 'relative':
+                xt = helper.append_nbrs_relative(xt, nbrs[frame], self.molecular_nbrs)
+            elif self.nbr_type == 'invariant':
+                xt = helper.append_nbrs_invariant(xt, nbrs[frame], self.molecular_nbrs)
+            else:
+                print ('Invalid nbr_type')
+                exit()
+            yt = xt.copy()
+
+        if not len(xt_all):
+            xt_all.expand_dims(xt, axis=0)
+            yt_all.expand_dims(yt, axis=0)
+        else:
+            xt_all.append(xt_all, np.expand_dims(xt, axis=0), axis=0)
+            yt_all.append(yt_all, np.expand_dims(yt, axis=0), axis=0)
+
     def datagen(self, epoch=0, print_out=1, test=0):
+        print("Cpu count", mp.cpu_count())
         files = self.files
         # order = range(13, 17) # Temporarily train on only a few files range(len(files))
         # Randomize files after first training epoch
@@ -266,14 +337,20 @@ class Candle_Molecular_Train():
 
             num_frames = X.shape[0]
 
-            xt_all = np.array([])
-            yt_all = np.array([])
+            # these lists can be shared across porcesses. Array has to be sized,
+            # and cannot be appended to. Need to find a way to deal with the shared array size
+            xt_all = Manager().list()
+            yt_all = Manager().list()
 
             #for i in range(num_frames):
             num_active_frames = random.sample(range(num_frames), int(self.sampling_density*num_frames))
 
             print('Datagen on the following frames', num_active_frames)
 
+            #f = lambda x: return datagen_helper(a, b, c, d, x)
+
+            #np.array(Pool.map(f, num_active_frames)) look into this in the morning
+            processes = []
             for i in num_active_frames:
 
                 if self.conv_net:
@@ -308,6 +385,20 @@ class Candle_Molecular_Train():
                 else:
                     xt_all = np.append(xt_all, np.expand_dims(xt, axis=0), axis=0)
                     yt_all = np.append(yt_all, np.expand_dims(yt, axis=0), axis=0)
+            """
+                process = Process(target=self.datagen_helper, args=(Xnorm, i, xt_all, yt_all, nbrs))
+                processes.append(process)
+
+            print("proceses:", len(processes))
+
+            for i in range(len(processes)):
+                print('Starting process', i)
+                processes[i].start()
+
+            for i in range(len(processes)):
+                processes[i].join()
+            """
+            print('xt_all: ', len(xt_all))
 
             yield files[f_ind], xt_all, yt_all
 
