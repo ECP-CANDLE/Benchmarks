@@ -11,11 +11,10 @@ from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
+lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
-import p1_common
-
+import candle_keras as candle
 
 global_cache = {}
 
@@ -25,7 +24,7 @@ DATA_URL = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/'
 
 
 def get_file(url):
-    return p1_common.get_p1_file(url)
+    return candle.fetch_file(url, 'Pilot1')
 
 
 def impute_and_scale(df, scaling='std'):
@@ -444,7 +443,7 @@ def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_
 
     if preprocess_rnaseq and preprocess_rnaseq != 'none':
         scaling = None
-        filename += ('_' + preprocess_rnaseq)  # 'scale_per_source' or 'combat'
+        filename += ('_' + preprocess_rnaseq)  # 'source_scale' or 'combat'
 
     path = get_file(DATA_URL + filename)
 
@@ -489,7 +488,7 @@ def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_
 
     if preprocess_rnaseq and preprocess_rnaseq != 'none':
         scaling = None
-        filename += ('_' + preprocess_rnaseq)  # 'scale_per_source' or 'combat'
+        filename += ('_' + preprocess_rnaseq)  # 'source_scale' or 'combat'
 
     path = get_file(DATA_URL + filename)
 

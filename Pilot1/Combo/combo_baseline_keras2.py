@@ -30,22 +30,14 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-
 import combo
-import p1_common
-# import p1_common_keras
-from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
-
-# import argparser
-# from datasets import NCI60
 
 import NCI60
 import combo
-
+import candle_keras as candle
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
 
 def set_seed(seed):
     os.environ['PYTHONHASHSEED'] = '0'
@@ -647,26 +639,18 @@ def build_model(loader, args, verbose=False):
 
     return Model(inputs, output)
 
-
-
-def get_combo_parser():
-    description = 'Build neural network based models to predict tumor response to drug pairs.'
-    parser = argparse.ArgumentParser(prog='combo_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description=description)
-    return combo.common_parser(parser)
-
-
 def initialize_parameters():
-    # Get command-line parameters
-    parser = get_combo_parser()
-    args = parser.parse_args()
-    # Get parameters from configuration file
-    file_params = combo.read_config_file(args.config_file)
-    # Consolidate parameter set. Command-line parameters overwrite file configuration
-    params = p1_common.args_overwrite_config(args, file_params)
-    # print(params)
-    return params
 
+    # Build benchmark object
+    comboBmk = combo.BenchmarkCombo(combo.file_path, 'combo_default_model.txt', 'keras',
+        prog='combo_baseline', 
+        desc = 'Build neural network based models to predict tumor response to drug pairs.')
+
+    # Initialize parameters
+    gParameters = candle.initialize_parameters(comboBmk)
+    #combo.logger.info('Params: {}'.format(gParameters))
+
+    return gParameters
 
 class Struct:
     def __init__(self, **entries):
@@ -740,10 +724,10 @@ def run(params):
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 
         # calculate trainable and non-trainable params
-        params.update(compute_trainable_params(model))
+        params.update(candle.compute_trainable_params(model))
 
-        candle_monitor = CandleRemoteMonitor(params=params)
-        timeout_monitor = TerminateOnTimeOut(params['timeout'])
+        candle_monitor = candle.CandleRemoteMonitor(params=params)
+        timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
 
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
