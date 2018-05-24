@@ -21,4 +21,4 @@ drug_features=['descriptors']
 subsample='naive_balancing'
 batch_normalization=False
 cell_noise_sigma=0.
-save='save'
+output_dir='save'
