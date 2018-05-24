@@ -3,11 +3,6 @@ from __future__ import print_function
 import os
 import sys
 import logging
-import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 import pandas as pd
 import numpy as np
@@ -17,101 +12,100 @@ from sklearn.metrics import r2_score
 from scipy.stats.stats import pearsonr
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
-sys.path.append(lib_path)
+#lib_path = os.path.abspath(os.path.join(file_path, '..'))
+#sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-import p1_common
-
-url_p1b1 = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/'
-file_train = 'P1B1.dev.train.csv'
-file_test = 'P1B1.dev.test.csv'
+import candle_keras as candle
 
 logger = logging.getLogger(__name__)
 
-def common_parser(parser):
+additional_definitions = [ 
+{'name':'latent_dim', 
+    'action':'store',
+    'type': int, 
+    'help':'latent dimensions'},
+{'name':'model', 
+    'default':'ae',
+    'choices':['ae', 'vae', 'cvae'],
+    'help':'model to use: ae, vae, cvae'},
+{'name':'use_landmark_genes', 
+    'type': candle.str2bool,
+    'default': False,
+    'help':'use the 978 landmark genes from LINCS (L1000) as expression features'},
+{'name':'residual', 
+    'type': candle.str2bool,
+    'default': False,
+    'help':'add skip connections to the layers'},
+{'name':'reduce_lr', 
+    'type': candle.str2bool,
+    'default': False,
+    'help':'reduce learning rate on plateau'},
+{'name':'warmup_lr', 
+    'type': candle.str2bool,
+    'default': False,
+    'help':'gradually increase learning rate on start'},
+{'name':'base_lr', 
+    'type': float,
+    'help':'base learning rate'},
+{'name':'epsilon_std', 
+    'type': float,
+    'help':'epsilon std for sampling latent noise'},
+{'name':'cp', 
+    'type': candle.str2bool,
+    'default': False, 
+    'help':'checkpoint models with best val_loss'},
+#{'name':'shuffle', 
+    #'type': candle.str2bool,
+    #'default': False, 
+    #'help':'shuffle data'},
+{'name':'tb', 
+    'type': candle.str2bool,
+    'default': False, 
+    'help':'use tensorboard'},
+{'name':'tsne', 
+    'type': candle.str2bool,
+    'default': False, 
+    'help':'generate tsne plot of the latent representation'}
+]
 
-    parser.add_argument("--config-file", dest='config_file', type=str,
-                        default=os.path.join(file_path, 'p1b1_default_model.txt'),
-                        help="specify model configuration file")
+required = [
+    'activation',
+    'batch_size',
+    'dense',
+    'drop',
+    'epochs',
+    'initialization',
+    'learning_rate',
+    'loss',
+    'noise_factor',
+    'optimizer',
+    'rng_seed',
+    'model',
+    'scaling',
+    'validation_split',
+    'latent_dim',
+    'feature_subsample',
+    'batch_normalization',
+    'epsilon_std',
+    'solr_root',
+    'timeout'
+    ]
 
-    # Parse has been split between arguments that are common with the default neon parser
-    # and all the other options
-    parser = p1_common.get_default_neon_parse(parser)
-    parser = p1_common.get_p1_common_parser(parser)
+class BenchmarkP1B1(candle.Benchmark):
 
-    # Arguments that are applicable just to p1b1
-    parser = p1b1_parser(parser)
+    def set_locals(self):
+        """Functionality to set variables specific for the benchmark
+        - required: set of required parameters for the benchmark.
+        - additional_definitions: list of dictionaries describing the additional parameters for the
+        benchmark.
+        """
 
-    return parser
-
-
-def p1b1_parser(parser):
-    parser.add_argument("--latent_dim", type=int,
-                        default=argparse.SUPPRESS,
-                        help="latent dimensions")
-    parser.add_argument('-m', '--model',
-                        default=argparse.SUPPRESS,
-                        help='model to use: ae, vae, cvae')
-    parser.add_argument("--use_landmark_genes", action="store_true",
-                        help="use the 978 landmark genes from LINCS (L1000) as expression features")
-    parser.add_argument("--residual", action="store_true",
-                        help="add skip connections to the layers")
-    parser.add_argument('--reduce_lr', action='store_true',
-                        help='reduce learning rate on plateau')
-    parser.add_argument('--warmup_lr', action='store_true',
-                        help='gradually increase learning rate on start')
-    parser.add_argument('--base_lr', type=float,
-                        default=None,
-                        help='base learning rate')
-    parser.add_argument("--epsilon_std", type=float,
-                        default=argparse.SUPPRESS,
-                        help="epsilon std for sampling latent noise")
-    parser.add_argument('--cp', action='store_true',
-                        help='checkpoint models with best val_loss')
-    parser.add_argument('--tb', action='store_true',
-                        help='use tensorboard')
-    parser.add_argument('--tsne', action='store_true',
-                        help='generate tsne plot of the latent representation')
-
-    return parser
-
-
-def read_config_file(file):
-    config = configparser.ConfigParser()
-    config.read(file)
-    section = config.sections()
-    file_params = {}
-    file_params['activation'] = eval(config.get(section[0], 'activation'))
-    file_params['batch_size'] = eval(config.get(section[0], 'batch_size'))
-    file_params['dense'] = eval(config.get(section[0], 'dense'))
-    file_params['drop'] = eval(config.get(section[0], 'drop'))
-    file_params['epochs'] = eval(config.get(section[0], 'epochs'))
-    file_params['initialization'] = eval(config.get(section[0], 'initialization'))
-    file_params['learning_rate'] = eval(config.get(section[0],  'learning_rate'))
-    file_params['loss'] = eval(config.get(section[0], 'loss'))
-    file_params['noise_factor'] = eval(config.get(section[0], 'noise_factor'))
-    file_params['optimizer'] = eval(config.get(section[0], 'optimizer'))
-    file_params['rng_seed'] = eval(config.get(section[0], 'rng_seed'))
-    file_params['model'] = eval(config.get(section[0], 'model'))
-    file_params['scaling'] = eval(config.get(section[0], 'scaling'))
-    file_params['validation_split'] = eval(config.get(section[0], 'validation_split'))
-    file_params['latent_dim'] = eval(config.get(section[0], 'latent_dim'))
-    file_params['feature_subsample'] = eval(config.get(section[0], 'feature_subsample'))
-    file_params['batch_normalization'] = eval(config.get(section[0], 'batch_normalization'))
-    file_params['epsilon_std'] = eval(config.get(section[0], 'epsilon_std'))
-
-    file_params['solr_root'] = eval(config.get(section[1], 'solr_root'))
-    file_params['timeout'] = eval(config.get(section[1], 'timeout'))
-
-    # parse the remaining values
-    for k, v in config.items(section[0]):
-        if not k in file_params:
-            file_params[k] = eval(v)
-
-    return file_params
-
+        if required is not None:
+            self.required = set(required)
+        if additional_definitions is not None:
+            self.additional_definitions = additional_definitions
 
 def extension_from_parameters(params, framework=''):
     """Construct string for saving model with annotation of parameters"""
@@ -155,17 +149,17 @@ def load_data(params, seed):
 
     if params['use_landmark_genes']:
         lincs_file = 'lincs1000.tsv'
-        lincs_path = p1_common.get_p1_file(url_p1b1 + lincs_file)
+        lincs_path = candle.fetch_file(params['url_p1b1'] + lincs_file, 'Pilot1')
         df_l1000 = pd.read_csv(lincs_path, sep='\t')
         x_cols = df_l1000['gdc'].tolist()
         drop_cols = None
     else:
         x_cols = None
 
-    train_path = p1_common.get_p1_file(url_p1b1 + file_train)
-    test_path = p1_common.get_p1_file(url_p1b1 + file_test)
+    train_path = candle.fetch_file(params['url_p1b1'] + params['file_train'], 'Pilot1')
+    test_path = candle.fetch_file(params['url_p1b1'] + params['file_test'], 'Pilot1')
 
-    return p1_common.load_csv_data(train_path, test_path,
+    return candle.load_csv_data(train_path, test_path,
                                    x_cols=x_cols,
                                    y_cols=y_cols,
                                    drop_cols=drop_cols,
@@ -190,14 +184,14 @@ def load_data_orig(params, seed):
 
     if params['use_landmark_genes']:
         lincs_file = 'lincs1000.tsv'
-        lincs_path = p1_common.get_p1_file(url_p1b1 + lincs_file)
+        lincs_path = candle.fetch_file(url_p1b1 + lincs_file)
         df_l1000 = pd.read_csv(lincs_path, sep='\t')
         usecols = df_l1000['gdc']
         drop_cols = None
     else:
         usecols = None
 
-    return p1_common.load_X_data(url_p1b1, file_train, file_test,
+    return candle.load_X_data(params['url_p1b1'], params['file_train'], params['file_test'],
                                  drop_cols=drop_cols,
                                  onehot_cols=onehot_cols,
                                  usecols=usecols,

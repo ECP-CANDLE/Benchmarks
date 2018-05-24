@@ -1,4 +1,7 @@
 [Global_Params]
+url_p1b1 = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B1/'
+file_train = 'P1B1.dev.train.csv'
+file_test = 'P1B1.dev.test.csv'
 model_name='p1b1'
 dense=[2000, 600]
 batch_size=100
@@ -19,6 +22,7 @@ initialization='glorot_uniform'
 latent_dim=2
 feature_subsample=0
 batch_normalization=False
+alpha_dropout=False
 save='save'
 
 [Monitor_Params]

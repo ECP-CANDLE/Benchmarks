@@ -1,10 +1,5 @@
 from __future__ import print_function
 
-import argparse
-import h5py
-import logging
-import os
-
 import numpy as np
 
 import keras
@@ -27,20 +22,10 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-import p1b1
-import p1_common
-import p1_common_keras
-from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
-
+import p1b1 
+import candle_keras as candle
 
 np.set_printoptions(precision=4)
-
-
-def get_p1b1_parser():
-    parser = argparse.ArgumentParser(prog='p1b1_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description='Train Autoencoder - Pilot 1 Benchmark 1')
-    return p1b1.common_parser(parser)
-
 
 def covariance(x, y):
     return K.mean(x * y) - K.mean(x) * K.mean(y)
@@ -119,55 +104,17 @@ def build_type_classifier(x_train, y_train, x_test, y_test):
     print(acc)
     return clf
 
-
 def initialize_parameters():
-    # Get command-line parameters
-    parser = get_p1b1_parser()
-    args = parser.parse_args()
-    # Get parameters from configuration file
-    file_params = p1b1.read_config_file(args.config_file)
-    # Consolidate parameter set. Command-line parameters overwrite file configuration
-    params = p1_common.args_overwrite_config(args, file_params)
-    # print(params)
-    return params
 
+    # Build benchmark object
+    p1b1Bmk = p1b1.BenchmarkP1B1(p1b1.file_path, 'p1b1_default_model.txt', 'keras',
+    prog='p1b1_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
 
-def set_seed(seed):
-    os.environ['PYTHONHASHSEED'] = '0'
-    np.random.seed(seed)
+    # Initialize parameters
+    gParameters = candle.initialize_parameters(p1b1Bmk)
+    #p1b1.logger.info('Params: {}'.format(gParameters))
 
-    import random
-    random.seed(seed)
-
-    if K.backend() == 'tensorflow':
-        import tensorflow as tf
-        session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
-        tf.set_random_seed(seed)
-        sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        K.set_session(sess)
-
-
-def verify_path(path):
-    folder = os.path.dirname(path)
-    if folder and not os.path.exists(folder):
-        os.makedirs(folder)
-
-
-def set_up_logger(logfile, verbose):
-    verify_path(logfile)
-    fh = logging.FileHandler(logfile)
-    fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
-    fh.setLevel(logging.DEBUG)
-
-    sh = logging.StreamHandler()
-    sh.setFormatter(logging.Formatter(''))
-    sh.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-    p1b1.logger.setLevel(logging.DEBUG)
-    p1b1.logger.addHandler(fh)
-    p1b1.logger.addHandler(sh)
-    return p1b1.logger
-
+    return gParameters
 
 def save_cache(cache_file, x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels):
     with h5py.File(cache_file, 'w') as hf:
@@ -195,20 +142,21 @@ def load_cache(cache_file):
 
 
 def run(params):
+
+    args = candle.ArgumentStruct(**params)
+    seed = args.rng_seed
+    candle.set_seed(seed)
+    
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(params, '.keras')
+    candle.verify_path(params['save'])
     prefix = '{}{}'.format(params['save'], ext)
     logfile = params['logfile'] if params['logfile'] else prefix+'.log'
-
-    verify_path(logfile)
-    logger = set_up_logger(logfile, params['verbose'])
-
-    logger.info('Params: {}'.format(params))
+    candle.set_up_logger(logfile, p1b1.logger, params['verbose'])
+    p1b1.logger.info('Params: {}'.format(params))
 
     # Get default parameters for initialization and optimizer functions
-    keras_defaults = p1_common.keras_default_config()
-    seed = params['rng_seed']
-    set_seed(seed)
+    keras_defaults = candle.keras_default_config()
 
     # Load dataset
     x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = p1b1.load_data(params, seed)
@@ -217,17 +165,17 @@ def run(params):
     # save_cache(cache_file, x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels)
     # x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = load_cache(cache_file)
 
-    logger.info("Shape x_train: {}".format(x_train.shape))
-    logger.info("Shape x_val:   {}".format(x_val.shape))
-    logger.info("Shape x_test:  {}".format(x_test.shape))
+    p1b1.logger.info("Shape x_train: {}".format(x_train.shape))
+    p1b1.logger.info("Shape x_val:   {}".format(x_val.shape))
+    p1b1.logger.info("Shape x_test:  {}".format(x_test.shape))
 
-    logger.info("Range x_train: [{:.3g}, {:.3g}]".format(np.min(x_train), np.max(x_train)))
-    logger.info("Range x_val:   [{:.3g}, {:.3g}]".format(np.min(x_val), np.max(x_val)))
-    logger.info("Range x_test:  [{:.3g}, {:.3g}]".format(np.min(x_test), np.max(x_test)))
+    p1b1.logger.info("Range x_train: [{:.3g}, {:.3g}]".format(np.min(x_train), np.max(x_train)))
+    p1b1.logger.info("Range x_val:   [{:.3g}, {:.3g}]".format(np.min(x_val), np.max(x_val)))
+    p1b1.logger.info("Range x_test:  [{:.3g}, {:.3g}]".format(np.min(x_test), np.max(x_test)))
 
-    logger.debug('Class labels')
+    p1b1.logger.debug('Class labels')
     for i, label in enumerate(y_labels):
-        logger.debug('  {}: {}'.format(i, label))
+        p1b1.logger.debug('  {}: {}'.format(i, label))
 
     # clf = build_type_classifier(x_train, y_train, x_val, y_val)
 
@@ -246,8 +194,8 @@ def run(params):
     dropout_layer = keras.layers.noise.AlphaDropout if params['alpha_dropout'] else Dropout
 
     # Initialize weights and learning rule
-    initializer_weights = p1_common_keras.build_initializer(params['initialization'], keras_defaults, seed)
-    initializer_bias = p1_common_keras.build_initializer('constant', keras_defaults, 0.)
+    initializer_weights = candle.build_initializer(params['initialization'], keras_defaults, seed)
+    initializer_bias = candle.build_initializer('constant', keras_defaults, 0.)
 
     if dense_layers is not None:
         if type(dense_layers) != list:
@@ -359,7 +307,7 @@ def run(params):
             print(model_json, file=f)
 
     # Define optimizer
-    # optimizer = p1_common_keras.build_optimizer(params['optimizer'],
+    # optimizer = candle.build_optimizer(params['optimizer'],
     #                                             params['learning_rate'],
     #                                             keras_defaults)
     optimizer = optimizers.deserialize({'class_name': params['optimizer'], 'config': {}})
@@ -370,22 +318,22 @@ def run(params):
     model.compile(loss=loss, optimizer=optimizer, metrics=metrics)
 
     # calculate trainable and non-trainable params
-    params.update(compute_trainable_params(model))
+    params.update(candle.compute_trainable_params(model))
 
     def warmup_scheduler(epoch):
         lr = params['learning_rate'] or base_lr * params['batch_size']/100
         if epoch <= 5:
             K.set_value(model.optimizer.lr, (base_lr * (5-epoch) + lr * epoch) / 5)
-        logger.debug('Epoch {}: lr={}'.format(epoch, K.get_value(model.optimizer.lr)))
+        p1b1.logger.debug('Epoch {}: lr={}'.format(epoch, K.get_value(model.optimizer.lr)))
         return K.get_value(model.optimizer.lr)
 
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
     warmup_lr = LearningRateScheduler(warmup_scheduler)
     checkpointer = ModelCheckpoint(params['save']+ext+'.weights.h5', save_best_only=True, save_weights_only=True)
     tensorboard = TensorBoard(log_dir="tb/tb{}".format(ext))
-    candle_monitor = CandleRemoteMonitor(params=params)
-    timeout_monitor = TerminateOnTimeOut(params['timeout'])
-    history_logger = LoggingCallback(logger.debug)
+    candle_monitor = candle.CandleRemoteMonitor(params=params)
+    timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
+    history_logger = LoggingCallback(p1b1.logger.debug)
 
     callbacks = [candle_monitor, timeout_monitor, history_logger]
     if params['reduce_lr']:
@@ -400,7 +348,7 @@ def run(params):
     x_val2 = np.copy(x_val)
     np.random.shuffle(x_val2)
     start_scores = p1b1.evaluate_autoencoder(x_val, x_val2)
-    logger.info('\nBetween random pairs of validation samples: {}'.format(start_scores))
+    p1b1.logger.info('\nBetween random pairs of validation samples: {}'.format(start_scores))
 
     if params['model'] == 'cvae':
         inputs = [x_train, cond_train]
@@ -432,7 +380,7 @@ def run(params):
     # Evalute model on test set
     x_pred = model.predict(test_inputs)
     scores = p1b1.evaluate_autoencoder(x_pred, x_test)
-    logger.info('\nEvaluation on test data: {}'.format(scores))
+    p1b1.logger.info('\nEvaluation on test data: {}'.format(scores))
 
     x_test_encoded = encoder.predict(test_inputs, batch_size=params['batch_size'])
     y_test_classes = np.argmax(y_test, axis=1)
@@ -454,7 +402,7 @@ def run(params):
     #     z_sample = np.random.normal(size=(1, 2)) * epsilon_std
     #     x_decoded = decoder.predict(z_sample)
 
-    logger.handlers = []
+    p1b1.logger.handlers = []
 
     return history
 
