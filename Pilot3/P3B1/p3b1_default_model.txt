@@ -1,13 +1,22 @@
 [Global_Params]
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P3B1/'
+train_data = 'P3B1_data.tar.gz'
+model_name = 'p3b1'
 learning_rate = 0.01
 batch_size = 10
 epochs = 10
-dropout = 0.0
+drop = 0.0
 activation = 'relu'
-out_act = 'softmax'
+out_activation = 'softmax'
 loss = 'categorical_crossentropy'
 optimizer = 'sgd'
+metrics = 'accuracy'
 n_fold = 1
-shared_nnet_spec = '1200'
-ind_nnet_spec = '1200, 1200:1200, 1200:1200, 1200'
+shared_nnet_spec = [1200]
+ind_nnet_spec = '1200,1200:1200,1200:1200,1200'
 feature_names = 'Primary site:Tumor laterality:Histological grade'
+timeout=1800
+scaling = 'none'
+output_dir = '.'
+initialization='glorot_uniform'
+shuffle = True
