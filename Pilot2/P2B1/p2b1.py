@@ -14,96 +14,93 @@ from __future__ import print_function
 import numpy as np
 import keras.backend as K
 import threading
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 import os
 import sys
+import glob
+from importlib import reload
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
-sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-import p2_common
 import helper
 import random
+import candle_keras as candle
 
-def common_parser(parser):
+additional_definitions = [
+{'name':'train_bool', 'type':candle.str2bool,'default':True,'help':'Invoke training'},
+{'name':'eval_bool', 'type':candle.str2bool,'default':False,'help':'Use model for inference'},
+{'name':'home_dir','help':'Home Directory','type':str,'default':'.'},
+{'name':'config_file','help':'Config File','type':str,'default':os.path.join(file_path, 'p2b1_default_model.txt')},
+{'name':'weight_path','help':'Trained Model Pickle File','type':str,'default':None},
+{'name':'base_memo','help':'Memo','type':str,'default':None},
+{'name':'seed', 'type':candle.str2bool,'default':False,'help':'Random Seed'},
+{'name':'case','help':'[Full, Center, CenterZ]','type':str,'default':'Full'},
+{'name':'fig_bool', 'type':candle.str2bool,'default':False,'help':'Generate Prediction Figure'},
+{'name':'set_sel','help':'[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]','type':str,'default':'3k_Disordered'},
+{'name':'conv_bool', 'type':candle.str2bool, 'default':True, 'help':'Invoke training using 1D Convs for inner AE'},
+{'name':'full_conv_bool', 'type':candle.str2bool, 'default':False, 'help':'Invoke training using fully convolutional NN for inner AE'},
+{'name':'type_bool', 'type':candle.str2bool, 'default':False, 'help':'Include molecule type information in desining AE'},
+{'name':'nbr_type', 'type':str, 'default':'relative', 'help':'Defines the type of neighborhood data to use. [relative, invariant]'},
+{'name':'backend', 'help':'Keras Backend', 'type':str, 'default':'theano'}
+]
 
-    parser.add_argument("--config_file", dest='config_file', type=str,
-                        default=os.path.join(file_path, 'p2b1_default_model.txt'),
-                        help="specify model configuration file")
-
-    # Parse has been split between arguments that are common with the default neon parser
-    # and all the other options
-    parser = p2_common.get_default_neon_parse(parser)
-    parser = p2_common.get_p2_common_parser(parser)
-
-    # Arguments that are applicable just to p2b1
-    parser = p2b1_parser(parser)
-
-    return parser
-
-
-def p2b1_parser(parser):
-#    parser.add_argument("--train", action="store_true",dest="train_bool",default=True,help="Invoke training")
-#    parser.add_argument("--evaluate", action="store_true",dest="eval_bool",default=False,help="Use model for inference")
-#    parser.add_argument("--home-dir",help="Home Directory",dest="home_dir",type=str,default='.')
-    parser.add_argument("--config-file",help="Config File",dest="config_file",type=str,default=os.path.join(file_path, 'p2b1_default_model.txt'))
-    parser.add_argument("--model-file",help="Trained Model Pickle File",dest="weight_path",type=str,default=None)
-    parser.add_argument("--memo",help="Memo",dest="base_memo",type=str,default=None)
-    parser.add_argument("--seed", action="store_true",dest="seed",default=False,help="Random Seed")
-    parser.add_argument("--case",help="[Full, Center, CenterZ]",dest="case",type=str,default='Full')
-    parser.add_argument("--fig", action="store_true",dest="fig_bool",default=False,help="Generate Prediction Figure")
-    parser.add_argument("--data-set",help="[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]",dest="set_sel",
-        type=str,default="3k_Disordered")
-    parser.add_argument("--conv-AE", action="store_true", dest="conv_bool", default=True, help="Invoke training using 1D Convs for inner AE")
-    parser.add_argument("--full-conv-AE", action="store_true", dest="full_conv_bool", default=False, help="Invoke training using fully convolutional NN for inner AE")
-    parser.add_argument("--include-type", action="store_true", dest="type_bool", default=False, help="Include molecule type information in desining AE")
-    parser.add_argument("--nbr-type", type=str, dest="nbr_type", default='relative', help="Defines the type of neighborhood data to use. [relative, invariant]")
-    parser.add_argument("--backend", help="Keras Backend", dest="backend", type=str, default='theano')
-    #(opts,args)=parser.parse_args()
-    return parser
-
-
-#### Read Config File
-def read_config_file(File):
-    config = configparser.ConfigParser()
-    config.read(File)
-    section = config.sections()
-    Global_Params = {}
-
-    Global_Params['num_hidden']    = eval(config.get(section[0], 'num_hidden'))
-    Global_Params['batch_size']    = eval(config.get(section[0], 'batch_size'))
-    Global_Params['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
-    Global_Params['epochs']        = eval(config.get(section[0], 'epochs'))
-    Global_Params['l2_reg']        = eval(config.get(section[0], 'l2_reg'))
-    Global_Params['noise_factor']  = eval(config.get(section[0], 'noise_factor'))
-    Global_Params['optimizer']     = eval(config.get(section[0], 'optimizer'))
-    Global_Params['loss']          = eval(config.get(section[0], 'loss'))
-    Global_Params['activation']    = eval(config.get(section[0], 'activation'))
+required = [
+    'num_hidden',
+    'batch_size',
+    'learning_rate',
+    'epochs',
+    'l2_reg',
+    'noise_factor',
+    'optimizer',
+    'loss',
+    'activation',
     # note 'cool' is a boolean
-    Global_Params['cool']          = config.get(section[0], 'cool')
+    'cool',
 
-    Global_Params['molecular_epochs']       =eval(config.get(section[0],'molecular_epochs'))
-    Global_Params['molecular_num_hidden']   =eval(config.get(section[0],'molecular_num_hidden'))
-    Global_Params['molecular_nonlinearity'] =config.get(section[0],'molecular_nonlinearity')
-    Global_Params['molecular_nbrs']         =config.get(section[0],'molecular_nbrs')
-    Global_Params['drop_prob']              = config.get(section[0], 'drop_prob')
-    Global_Params['l2_reg']                 = eval(config.get(section[0], 'l2_reg'))
-    Global_Params['sampling_density']       = eval(config.get(section[0], 'sampling_density'))
-    Global_Params['save_path']              = eval(config.get(section[0], 'save_path'))
+    'molecular_epochs',
+    'molecular_num_hidden',
+    'molecular_nonlinearity',
+    'molecular_nbrs',
+    'drop_prob',
+    'l2_reg',
+    'sampling_density',
+    'save_path'
+]
 
-    # parse the remaining values
-    for k,v in config.items(section[0]):
-        if k not in Global_Params:
-            Global_Params[k] = eval(v)
+class BenchmarkP2B1(candle.Benchmark):
 
-    return Global_Params
+    def set_locals(self):
+        """Functionality to set variables specific for the benchmark
+        - required: set of required parameters for the benchmark.
+        - additional_definitions: list of dictionaries describing the additional parameters for the
+        benchmark.
+        """
 
+        if required is not None:
+            self.required = set(required)
+        if additional_definitions is not None:
+            self.additional_definitions = additional_definitions
+
+def get_list_of_data_files(GP):
+
+    import pilot2_datasets as p2
+    reload(p2)
+    print ('Reading Data...')
+    ## Identify the data set selected
+    data_set=p2.data_sets[GP['set_sel']][0]
+    ## Get the MD5 hash for the proper data set
+    data_hash=p2.data_sets[GP['set_sel']][1]
+    print ('Reading Data Files... %s->%s' % (GP['set_sel'], data_set))
+    ## Check if the data files are in the data director, otherwise fetch from FTP
+    data_file = candle.fetch_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, subdir='Pilot2')
+    data_dir = os.path.join(os.path.dirname(data_file), data_set)
+    ## Make a list of all of the data files in the data set
+    data_files=glob.glob('%s/*.npz'%data_dir)
+
+    fields = p2.gen_data_set_dict()
+
+    return (data_files, fields)
 
 # get activations for hidden layers of the model
 def get_activations(model, layer, X_batch):

@@ -14,19 +14,15 @@ except NameError:
         
 TIMEOUT=3600 # in sec; set this to -1 for no timeout
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
-sys.path.append(lib_path)
+#lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
+#sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..','..', 'common'))
 sys.path.append(lib_path2)
 
 from keras import backend as K
 
-from data_utils import get_file
-
-import p2b1 as p2b1
-import p2_common as p2c
-import p2_common_keras as p2ck
-from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
+import p2b1 
+import candle_keras as candle
 
 import p2b1_AE_models as AE_models
 
@@ -41,23 +37,15 @@ def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
 
 
-def get_p2b1_parser():
-        parser = argparse.ArgumentParser(prog='p2b1_baseline',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            description='Train Molecular Frame Autoencoder - Pilot 2 Benchmark 1')
-
-        return p2b1.common_parser(parser)
-
 def initialize_parameters():
 
-    parser = get_p2b1_parser()
-    args = parser.parse_args()
-    # print('Args', args)
+    # Build benchmark object
+    p2b1Bmk = p2b1.BenchmarkP2B1(p2b1.file_path, 'p2b1_default_model.txt', 'keras',
+    prog='p2b1_baseline', desc='Train Molecular Frame Autoencoder - Pilot 2 Benchmark 1')
 
-    GP = p2b1.read_config_file(args.config_file)
-    # print (GP)
-
-    GP = p2c.args_overwrite_config(args, GP)
+    # Initialize parameters
+    GP = candle.initialize_parameters(p2b1Bmk)
+    #p2b1.logger.info('Params: {}'.format(gParameters))
 
     print ('\nTraining parameters:')
     for key in sorted(GP):
@@ -102,10 +90,10 @@ def run(GP):
     import p2b1 as hf
     reload(hf)
 
-    import keras_model_utils as KEU
-    reload(KEU)
-    reload(p2ck)
-    reload(p2ck.optimizers)
+    #import keras_model_utils as KEU
+    #reload(KEU)
+    #reload(p2ck)
+    #reload(p2ck.optimizers)
     maps = hf.autoencoder_preprocess()
 
     from keras.optimizers import SGD, RMSprop, Adam
@@ -118,11 +106,11 @@ def run(GP):
 #    GP=hf.ReadConfig(opts.config_file)
     batch_size = GP['batch_size']
     learning_rate = GP['learning_rate']
-    kerasDefaults = p2c.keras_default_config()
+    kerasDefaults = candle.keras_default_config()
 
 ##### Read Data ########
     import helper
-    (data_files, fields)=p2c.get_list_of_data_files(GP)
+    (data_files, fields)=p2b1.get_list_of_data_files(GP)
     # Read from local directoy
     #(data_files, fields) = helper.get_local_files('/p/gscratchr/brainusr/datasets/cancer/pilot2/3k_run16_10us.35fs-DPPC.20-DIPC.60-CHOL.20.dir/')
     #(data_files, fields) = helper.get_local_files('3k_run16', '/p/lscratchf/brainusr/datasets/cancer/pilot2/')
@@ -192,7 +180,7 @@ def run(GP):
 
 ### Define Model, Solver and Compile ##########
     print ('\nDefine the model and compile')
-    opt = p2ck.build_optimizer(GP['optimizer'], learning_rate, kerasDefaults)
+    opt = candle.build_optimizer(GP['optimizer'], learning_rate, kerasDefaults)
     model_type = 'mlp'
     memo = '%s_%s' % (GP['base_memo'], model_type)
 
@@ -251,8 +239,8 @@ def run(GP):
     history = callbacks.History()
     # callbacks=[history,lr_scheduler]
 
-    candleRemoteMonitor = CandleRemoteMonitor(params=GP)
-    timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
+    candleRemoteMonitor = candle.CandleRemoteMonitor(params=GP)
+    timeoutMonitor = candle.TerminateOnTimeOut(TIMEOUT)
     callbacks = [history, candleRemoteMonitor, timeoutMonitor]
     loss = 0.
 
