@@ -87,7 +87,7 @@ def read_config_file(File):
     # note 'cool' is a boolean
     Global_Params['cool']          = config.get(section[0], 'cool')
 
-    Global_Params['molecular_epochs']       =eval(config.get(section[0],'molecular_epochs'))
+    Global_Params['epochs']       =eval(config.get(section[0],'epochs'))
     Global_Params['molecular_num_hidden']   =eval(config.get(section[0],'molecular_num_hidden'))
     Global_Params['molecular_nonlinearity'] =config.get(section[0],'molecular_nonlinearity')
     Global_Params['molecular_nbrs']         =config.get(section[0],'molecular_nbrs')

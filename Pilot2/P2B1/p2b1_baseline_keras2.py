@@ -11,7 +11,7 @@ except NameError:
         from importlib import reload  # Python 3.4+
     except ImportError:
         from imp import reload  # Python 3.0 - 3.3
-        
+
 TIMEOUT=3600 # in sec; set this to -1 for no timeout
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
@@ -62,7 +62,7 @@ def initialize_parameters():
     print ('\nTraining parameters:')
     for key in sorted(GP):
         print ("\t%s: %s" % (key, GP[key]))
-        
+
     # print json.dumps(GP, indent=4, skipkeys=True, sort_keys=True)
 
     if GP['backend'] != 'theano' and GP['backend'] != 'tensorflow':
@@ -238,7 +238,7 @@ def run(GP):
     molecular_model.summary()
     ##### set up callbacks and cooling for the molecular_model ##########
     drop = 0.5
-    mb_epochs = GP['molecular_epochs']
+    mb_epochs = GP['epochs']
     initial_lrate = GP['learning_rate']
     epochs_drop = 1+int(np.floor(mb_epochs/3))
 
