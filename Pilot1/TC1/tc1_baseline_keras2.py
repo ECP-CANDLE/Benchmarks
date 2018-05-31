@@ -28,6 +28,7 @@ sys.path.append(lib_path2)
 
 import data_utils
 import p1_common
+from solr_keras import CandleRemoteMonitor, TerminateOnTimeOut
 
 #EPOCH = 400
 #BATCH = 20
@@ -245,16 +246,19 @@ def run(gParameters):
 
     model_name = gParameters['model_name']
     path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
-    checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
+    # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
+    candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
+    timeout = gParameters['timeout']
+    timeoutMonitor = TerminateOnTimeOut(timeout)
 
     history = model.fit(X_train, Y_train,
                     batch_size=gParameters['batch_size'],
                     epochs=gParameters['epochs'],
                     verbose=1,
                     validation_data=(X_test, Y_test),
-                    callbacks = [checkpointer, csv_logger, reduce_lr])
+                    callbacks = [csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
