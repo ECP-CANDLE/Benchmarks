@@ -32,6 +32,7 @@ sys.path.append(lib_path2)
 import p2_common
 import helper
 import random
+import theano
 
 def common_parser(parser):
 
@@ -251,7 +252,7 @@ def datagen_helper(frame, Xnorm, nbrs, conv_net, nbr_type, molecular_nbrs, full_
     else:
         xt_all = np.append(xt_all, np.expand_dims(xt, axis=0), axis=0)
         yt_all = np.append(yt_all, np.expand_dims(yt, axis=0), axis=0)
-
+    print("Finished Process")
     return xt_all, yt_all
 
 class Candle_Molecular_Train():
@@ -312,6 +313,7 @@ class Candle_Molecular_Train():
         else:
             xt_all.append(xt_all, np.expand_dims(xt, axis=0), axis=0)
             yt_all.append(yt_all, np.expand_dims(yt, axis=0), axis=0)
+
 
         return xt_all, yt_all
 
