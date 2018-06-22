@@ -252,7 +252,7 @@ def datagen_helper(frame, Xnorm, nbrs, conv_net, nbr_type, molecular_nbrs, full_
     else:
         xt_all = np.append(xt_all, np.expand_dims(xt, axis=0), axis=0)
         yt_all = np.append(yt_all, np.expand_dims(yt, axis=0), axis=0)
-    print("Finished Process")
+
     return xt_all, yt_all
 
 class Candle_Molecular_Train():
@@ -363,55 +363,6 @@ class Candle_Molecular_Train():
 
             xt_all = np.concatenate([x[0] for x in results])
             yt_all = np.concatenate([x[1] for x in results])
-            """
-            for i in num_active_frames:
-
-                if self.conv_net:
-                    xt = Xnorm[i]
-                    if self.nbr_type == 'relative':
-                        xt = helper.append_nbrs_relative(xt, nbrs[i], self.molecular_nbrs)
-                    elif self.nbr_type == 'invariant':
-                        xt = helper.append_nbrs_invariant(xt, nbrs[i], self.molecular_nbrs)
-                    else:
-                        print ('Invalid nbr_type')
-                        exit()
-
-                    yt = xt.copy()
-                    xt = xt.reshape(xt.shape[0], 1, xt.shape[1], 1)
-                    if self.full_conv_net:
-                        yt = xt.copy()
-
-                else:
-                    xt = Xnorm[i]
-                    if self.nbr_type == 'relative':
-                        xt = helper.append_nbrs_relative(xt, nbrs[i], self.molecular_nbrs)
-                    elif self.nbr_type == 'invariant':
-                        xt = helper.append_nbrs_invariant(xt, nbrs[i], self.molecular_nbrs)
-                    else:
-                        print ('Invalid nbr_type')
-                        exit()
-                    yt = xt.copy()
-
-                if not len(xt_all):
-                    xt_all = np.expand_dims(xt, axis=0)
-                    yt_all = np.expand_dims(yt, axis=0)
-                else:
-                    xt_all = np.append(xt_all, np.expand_dims(xt, axis=0), axis=0)
-                    yt_all = np.append(yt_all, np.expand_dims(yt, axis=0), axis=0)
-
-                process = Process(target=self.datagen_helper, args=(Xnorm, i, xt_all, yt_all, nbrs))
-                processes.append(process)
-
-            print("proceses:", len(processes))
-
-            for i in range(len(processes)):
-                print('Starting process', i)
-                processes[i].start()
-
-            for i in range(len(processes)):
-                processes[i].join()
-            """
-            #print('xt_all: ', len(xt_all))
 
             yield files[f_ind], xt_all, yt_all
 
