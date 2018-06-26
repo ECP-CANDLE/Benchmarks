@@ -27,7 +27,7 @@ Output dimensions: 1 (growth percentage)
 * Proposed network architecture: two-stage neural network that is jointly trained for feature encoding and response prediction; shared submodel for each drug in the pair
 * Number of layers: 3-4 layers for feature encoding submodels and response prediction submodels, respectively
 
-![Combo model architecture](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/frameworks/Pilot1/Combo/figs/network.png "Combo model network architecture")<!-- .element height="50%" width="50%" -->
+![Combo model architecture](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/frameworks/Pilot1/Combo/figs/network.png "Combo model network architecture")
 
 ### Running the baseline implementation
 
