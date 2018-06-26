@@ -179,7 +179,7 @@ class ComboDataLoader(object):
 
         np.random.seed(seed)
 
-        df = NCI60.load_combo_dose_response(response_url=response_url, use_combo_score=use_combo_score, fraction=True, exclude_cells=exclude_cells, exclude_drugs=exclude_drugs)
+        df = NCI60.load_combo_dose_response(use_combo_score=use_combo_score, fraction=True, exclude_cells=exclude_cells, exclude_drugs=exclude_drugs)
         logger.info('Loaded {} unique (CL, D1, D2) response sets.'.format(df.shape[0]))
 
         if 'all' in cell_features:
@@ -695,7 +695,6 @@ def run(params):
                              val_split=args.validation_split,
                              cell_features=args.cell_features,
                              drug_features=args.drug_features,
-                             response_url=args.response_url,
                              use_landmark_genes=args.use_landmark_genes,
                              preprocess_rnaseq=args.preprocess_rnaseq,
                              exclude_cells=args.exclude_cells,

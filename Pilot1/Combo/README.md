@@ -158,10 +158,11 @@ Comparing y_true and y_pred:
   corr: 0.9554
 ```
 
-#### Train a model that can be used for inference with UQ
+#### Training a model that can be used for inference with UQ
 ```
-$ python combo_baseline_keras2.py --use_landmark_genes --drug_features descriptors --cell_features rnaseq --preprocess_rna source_scale --residual --warmup_lr --reduce_lr --residual --lr 0.0003 -z 128 --drop 0.2 --cp --epochs 100
+$ python combo_baseline_keras2.py --use_landmark_genes --drug_features descriptors --cell_features rnaseq --preprocess_rna source_scale --residual --warmup_lr --reduce_lr --residual --lr 0.0003 -z 128 --drop 0.2 --cp --epochs 100 --gen
 ```
+The `--gen` option uses data generator to prepare training data instead of loading them into memory. Switching to the generator mode slows down training by about 2X. 
 
 #### Inference
 
@@ -192,3 +193,13 @@ GDSC.22RV1      NSC.105014      NSC.102816      100     0.1627  0.1060  -0.0531 
 ```
 
 A version of trained model files with dropout are available here: [saved.uq.model.h5](http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/saved.uq.model.h5) and [saved.uq.weights.h5](http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/saved.uq.weights.h5).
+
+#### Training the extended model with dose input: Combo-dose
+```
+$ python combo_dose.py --use_landmark_genes --drug_features descriptors --cell_features rnaseq --preprocess_rna source_scale --residual --warmup_lr --reduce_lr --residual --lr 0.0003 -z 128 --drop 0.2 --cp
+```
+This trains at about 5m40s / epoch on V100.
+
+
+
+
