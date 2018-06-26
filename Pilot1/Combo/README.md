@@ -198,7 +198,7 @@ A version of trained model files with dropout are available here: [saved.uq.mode
 ```
 $ python combo_dose.py --use_landmark_genes --drug_features descriptors --cell_features rnaseq --preprocess_rna source_scale --residual --warmup_lr --reduce_lr --residual --lr 0.0003 -z 128 --drop 0.2 --cp
 ```
-This trains at about 5m40s / epoch on V100.
+After incorporating drug dose information into the input features, joined training data volume increases by roughly 9X (3 doses for each drug). This extended model trains at about 5m40s / epoch on V100.
 
 
 
