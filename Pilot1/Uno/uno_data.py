@@ -431,7 +431,7 @@ def encode_sources(sources):
 
 def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True,
                      use_landmark_genes=False, use_filtered_genes=False, preprocess_rnaseq=None,
-                     embed_feature_source=False, sample_set=None):
+                     embed_feature_source=False, sample_set=None, index_by_sample=False):
 
     if use_landmark_genes:
         filename =  'combined_rnaseq_data_lincs1000'
@@ -483,6 +483,9 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
     if sample_set:
         chosen = df['Sample'].str.startswith(sample_set)
         df = df[chosen].reset_index(drop=True)
+
+    if index_by_sample:
+        df = df.set_index('Sample')
 
     logger.info('Loaded combined RNAseq data: %s', df.shape)
 
@@ -903,7 +906,8 @@ class CombinedDataGenerator(object):
         self.index = index
         self.index_cycle = cycle(index)
         self.size = len(index)
-        self.steps = np.ceil(self.size / batch_size)
+        # self.steps = np.ceil(self.size / batch_size)
+        self.steps = np.ceil(self.size / batch_size / 100)
 
     def reset(self):
         self.index_cycle = cycle(self.index)
