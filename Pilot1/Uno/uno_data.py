@@ -906,8 +906,8 @@ class CombinedDataGenerator(object):
         self.index = index
         self.index_cycle = cycle(index)
         self.size = len(index)
-        # self.steps = np.ceil(self.size / batch_size)
-        self.steps = np.ceil(self.size / batch_size / 100)
+        self.steps = np.ceil(self.size / batch_size)
+        # self.steps = np.ceil(self.size / batch_size / 100)
 
     def reset(self):
         self.index_cycle = cycle(self.index)
