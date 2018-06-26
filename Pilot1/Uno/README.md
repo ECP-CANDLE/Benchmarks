@@ -118,5 +118,5 @@ Between random pairs in y_val:
 Data points per epoch: train = 20158325, val = 5144721
 Steps per epoch: train = 629948, val = 160773
 Epoch 1/10
-  3232/629948 [..............................] - ETA: 61:42:44 - loss: 0.2478 - mae: 0.3341 - r2: 0.1337
+  8078/629948 [..............................] - ETA: 50:20:54 - loss: 0.1955 - mae: 0.2982 - r2: 0.2964
 ```
