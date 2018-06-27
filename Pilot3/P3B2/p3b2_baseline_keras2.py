@@ -7,7 +7,7 @@ import numpy as np
 import os
 
 import datetime
-import cPickle
+import pickle
 
 import argparse
 import sys
@@ -28,7 +28,7 @@ LENGTH = 1000
 
 
 def get_parser():
-    parser = argparse.ArgumentParser(prog='p3b1_baseline',
+    parser = argparse.ArgumentParser(prog='p3b2_baseline',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument("-v", "--verbose", action="store_true",
@@ -119,18 +119,30 @@ def char_rnn(
              ):
 
         # load data from pickle
-        f = open( data_train, 'r' )
+        f = open( data_train, 'rb' )
 
-        classes = cPickle.load( f )
-        chars = cPickle.load( f )
-        char_indices = cPickle.load( f )
-        indices_char = cPickle.load( f )
+        if ( sys.version_info > ( 3, 0 ) ):
+            classes = pickle.load( f, encoding= 'latin1' )
+            chars = pickle.load( f, encoding= 'latin1' )
+            char_indices = pickle.load( f, encoding= 'latin1' )
+            indices_char = pickle.load( f, encoding= 'latin1' )
 
-        maxlen = cPickle.load( f )
-        step = cPickle.load( f )
+            maxlen = pickle.load( f, encoding= 'latin1' )
+            step = pickle.load( f, encoding= 'latin1' )
 
-        X_ind = cPickle.load( f )
-        y_ind = cPickle.load( f )
+            X_ind = pickle.load( f, encoding= 'latin1' )
+            y_ind = pickle.load( f, encoding= 'latin1' )
+        else:
+            classes = pickle.load( f )
+            chars = pickle.load( f )
+            char_indices = pickle.load( f )
+            indices_char = pickle.load( f )
+
+            maxlen = pickle.load( f )
+            step = pickle.load( f )
+
+            X_ind = pickle.load( f )
+            y_ind = pickle.load( f )
 
         f.close()
 
@@ -273,7 +285,7 @@ if __name__  == "__main__":
 
     ## Read files
     file_path = os.path.dirname(os.path.realpath(__file__))
-    print file_path
+    print( file_path )
     lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
     sys.path.append(lib_path)
 
@@ -281,9 +293,9 @@ if __name__  == "__main__":
     origin = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P3B2/P3B2_data.tgz'
     data_loc = get_file('P3B2_data.tgz', origin, untar=True, md5_hash=None, cache_subdir='P3B2')
 
-    print 'Data downloaded and stored at: ' + data_loc
+    print( 'Data downloaded and stored at: ' + data_loc )
     data_path = os.path.dirname(data_loc)
-    print data_path
+    print( data_path )
 
     char_rnn(
         rnn_size= args.rnn_size,
