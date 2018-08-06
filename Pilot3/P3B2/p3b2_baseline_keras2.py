@@ -57,7 +57,7 @@ def get_parser():
                         help="output directory")
 
     parser.add_argument("--rnn_size", action="store",
-                        default= RNN_SIZE,
+                        default= RNN_SIZE, type= int,
                         help='size of LSTM internal state')
     parser.add_argument("--n_layers", action="store",
                         default= N_LAYERS,
@@ -189,7 +189,7 @@ def char_rnn(
             model.summary()
 
 
-        for iteration in range( 1, n_epochs ):
+        for iteration in range( 1, n_epochs + 1 ):
             if verbose:
                 print()
                 print('-' * 50)
@@ -212,17 +212,17 @@ def char_rnn(
 
             # serialize model to JSON
             model_json = model.to_json()
-            with open( dirname + "/model_" + str( iteration ) + "_" + str( round( loss, 6 ) ) + ".json", "w" ) as json_file:
+            with open( dirname + "/model_" + str( iteration ) + "_" + "{:f}".format( loss ) + ".json", "w" ) as json_file:
                 json_file.write( model_json )
 
             # serialize weights to HDF5
-            model.save_weights( dirname + "/model_" + str( iteration ) + "_" + str( round( loss, 6 ) ) + ".h5" )
+            model.save_weights( dirname + "/model_" + str( iteration ) + "_" + "{:f}".format( loss ) + ".h5" )
 
             if verbose:
                 print( "Checkpoint saved." )
 
             if do_sample:
-                outtext = open( dirname + "/example_" + str( iteration ) + "_" + str( round( loss, 6 ) ) + ".txt", "w" )
+                outtext = open( dirname + "/example_" + str( iteration ) + "_" + "{:f}".format( loss ) + ".txt", "w" )
 
                 diversity = temperature
 
@@ -235,10 +235,6 @@ def char_rnn(
 
                 sentence = " " * maxlen
 
-                # class_index = 0
-                generated += sentence
-                outtext.write( generated )
-
                 for c in seedstr:
                     sentence = sentence[1:] + c
                     x = np.zeros( ( 1, maxlen, len( chars ) ) )
@@ -250,8 +246,6 @@ def char_rnn(
                     next_char = indices_char[ next_index ]
 
                     generated += c
-
-                    outtext.write( c )
 
 
                 for i in range( length ):
@@ -266,11 +260,11 @@ def char_rnn(
                     generated += next_char
                     sentence = sentence[ 1 : ] + next_char
 
-                    outtext.write( next_char )
-
-                outtext.write( "\n" )
-
-            outtext.close()
+                if (sys.version_info > (3, 0)):
+                    outtext.write( generated + '\n' )
+                else:
+                    outtext.write( generated.decode('utf-8').encode('utf-8') + '\n' )
+                outtext.close()
 
 
 if __name__  == "__main__":
