@@ -1,0 +1,18 @@
+[Global_Params]
+data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P3B2/'
+train_data = 'P3B2_data.tgz'
+model_name = 'p3b2'
+rnn_size = 256
+epochs = 10
+n_layers = 1
+learning_rate = 0.01
+drop = 0.0
+recurrent_dropout = 0.0
+loss = 'categorical_crossentropy'
+activation = 'softmax'
+optimizer = 'rmsprop'
+temperature = 1.0
+primetext = 'Diagnosis'
+length = 1000
+do_sample = True
+verbose = True
