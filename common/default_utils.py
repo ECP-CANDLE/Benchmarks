@@ -254,6 +254,7 @@ def get_default_neon_parser(parser):
     """
     # Logging Level
     parser.add_argument("-v", "--verbose", type=str2bool,
+			default=argparse.SUPPRESS,
                         help="increase output verbosity")
     parser.add_argument("-l", "--log", dest='logfile',
                         default=None,
