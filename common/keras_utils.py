@@ -16,6 +16,17 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from sklearn.metrics import r2_score
 
+import os
+def set_parallelism_threads():
+    if K.backend() == 'tensorflow' and 'NUM_INTRA_THREADS' in os.environ and 'NUM_INTER_THREADS' in os.environ:
+        import tensorflow as tf
+        # print('Using Thread Parallelism: {} NUM_INTRA_THREADS, {} NUM_INTER_THREADS'.format(os.environ['NUM_INTRA_THREADS'], os.environ['NUM_INTER_THREADS']))
+        session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']),
+            intra_op_parallelism_threads=int(os.environ['NUM_INTRA_THREADS']))
+        sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+        K.set_session(sess)
+
+
 
 def set_seed(seed):
     set_seed_defaultUtils(seed)
@@ -23,16 +34,6 @@ def set_seed(seed):
     if K.backend() == 'tensorflow':
         import tensorflow as tf
         tf.set_random_seed(seed)
-        # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
-        # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        # K.set_session(sess)
-
-        # Uncommit when running on an optimized tensorflow where NUM_INTER_THREADS and
-        # NUM_INTRA_THREADS env vars are set.
-        # session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']),
-        #	intra_op_parallelism_threads=int(os.environ['NUM_INTRA_THREADS']))
-        # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        # K.set_session(sess)
 
 
 def get_function(name):
