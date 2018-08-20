@@ -28,7 +28,6 @@ import p2b1_AE_models as AE_models
 
 HOME = os.environ['HOME']
 
-
 def parse_list(option, opt, value, parser):
     setattr(parser.values, option.dest, value.split(','))
 
@@ -163,7 +162,7 @@ def run(GP):
         type_feat_vect = []
     else:
         num_type_features = 5
-        type_feat_vect = fields.keys()[3:8]
+        type_feat_vect = list(fields.keys())[3:8]
 
     num_features = num_loc_features + num_type_features + num_beads
     dim = np.prod([num_beads, num_features, molecular_nbrs+1])
@@ -226,7 +225,7 @@ def run(GP):
     molecular_model.summary()
     ##### set up callbacks and cooling for the molecular_model ##########
     drop = 0.5
-    mb_epochs = GP['molecular_epochs']
+    mb_epochs = GP['epochs']
     initial_lrate = GP['learning_rate']
     epochs_drop = 1+int(np.floor(mb_epochs/3))
 
