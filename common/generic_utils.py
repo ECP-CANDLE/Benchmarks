@@ -194,26 +194,6 @@ def display_table(rows, positions):
     for objects in rows:
         display_row(objects, positions)
 
-
-def verify_path(path):
-    folder = os.path.dirname(path)
-    if folder and not os.path.exists(folder):
-        os.makedirs(folder)
-
-def set_up_logger(logger, logfile, verbose):
-    verify_path(logfile)
-    fh = logging.FileHandler(logfile)
-    fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
-    fh.setLevel(logging.DEBUG)
-
-    sh = logging.StreamHandler()
-    sh.setFormatter(logging.Formatter(''))
-    sh.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(fh)
-    logger.addHandler(sh)
-
 class LoggingCallback(Callback):
     def __init__(self, print_fcn=print):
         Callback.__init__(self)

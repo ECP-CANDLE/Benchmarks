@@ -97,7 +97,7 @@ def run(GP):
     candle.verify_path(args.save_path)
     prefix = args.save_path # + ext
     logfile = args.logfile if args.logfile else prefix+'.log'
-    candle.set_up_logger(logger, logfile, False) #args.verbose
+    candle.set_up_logger(logfile, logger, False) #args.verbose
     logger.info('Params: {}'.format(GP))
 
     import p2b1 as hf
