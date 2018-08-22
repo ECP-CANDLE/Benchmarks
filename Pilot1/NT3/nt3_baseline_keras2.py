@@ -185,9 +185,8 @@ def run(gParameters):
         stride = gParameters['conv'][i+2]
         print(int(i/3), filters, filter_len, stride)
         if gParameters['pool']:
-            pool_list=gParameters['pool']
-            if type(pool_list) != list:
-                pool_list=list(pool_list)
+            pool_list = gParameters['pool']
+            pool_list = pool_list if isinstance(pool_list, list) else [pool_list]
 
         if filters <= 0 or filter_len <= 0 or stride <= 0:
                 break
