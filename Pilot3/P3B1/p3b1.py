@@ -14,6 +14,7 @@ sys.path.append(lib_path2)
 
 import candle_keras as candle
 
+'''
 additional_definitions = [
 {'name':'train_features',
     'action':'store',
@@ -57,16 +58,17 @@ additional_definitions = [
     'action':'store',
     'type':int}
 ]
+'''
 
 
-required = ['learning_rate', 'batch_size', 'epochs', 'drop', \
-    'activation', 'out_activation', 'loss', 'optimizer', 'metrics', \
-    'n_fold', 'scaling', 'initialization', 'shared_nnet_spec', \
-    'ind_nnet_spec', 'feature_names']
+required = [
+    'learning_rate', 'batch_size', 'epochs', 'dropout', \
+    'optimizer', 'wv_len', \
+    'filter_sizes', 'filter_sets', 'num_filters', 'emb_l2', 'w_l2']
 
 
 
-class BenchmarkP3B1(candle.Benchmark):
+class BenchmarkP3B3(candle.Benchmark):
 
     def set_locals(self):
         """Functionality to set variables specific for the benchmark
@@ -77,29 +79,7 @@ class BenchmarkP3B1(candle.Benchmark):
 
         if required is not None:
             self.required = set(required)
-        if additional_definitions is not None:
-            self.additional_definitions = additional_definitions
+        # if additional_definitions is not None:
+            # self.additional_definitions = additional_definitions
 
-
-def build_data(nnet_spec_len, fold, data_path):
-    """ Build feature sets to match the network topology
-    """
-    X_train = []
-    Y_train = []
-
-    X_test = []
-    Y_test = []
-
-    for i in range( nnet_spec_len ):
-        feature_train = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_train_feature.csv', delimiter= ',' )
-        label_train = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_train_label.csv', delimiter= ',' )
-        X_train.append( feature_train )
-        Y_train.append( label_train )
-
-        feature_test = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_test_feature.csv', delimiter= ',' )
-        label_test = np.genfromtxt(data_path + '/task'+str(i)+'_'+str(fold)+'_test_label.csv', delimiter= ',' )
-        X_test.append( feature_test )
-        Y_test.append( label_test )
-
-    return X_train, Y_train, X_test, Y_test
 
