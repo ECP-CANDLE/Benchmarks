@@ -80,7 +80,7 @@ def run(GP):
 
     # set the seed
     if GP['seed']:
-        np.random.seed(7)
+        np.random.seed(GP['seed'])
     else:
         np.random.seed(np.random.randint(10000))
 
@@ -279,7 +279,7 @@ def run(GP):
 #### Train the Model
     if GP['train_bool']:
         ct = hf.Candle_Molecular_Train(molecular_model, molecular_encoder, data_files, mb_epochs, callbacks,
-                                       batch_size=32, nbr_type=GP['nbr_type'], save_path=GP['save_path'],
+                                       batch_size=batch_size, nbr_type=GP['nbr_type'], save_path=GP['save_path'],
                                        len_molecular_hidden_layers=len_molecular_hidden_layers,
                                        molecular_nbrs=molecular_nbrs,
                                        conv_bool=conv_bool,
