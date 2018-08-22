@@ -328,15 +328,11 @@ class Candle_Molecular_Train():
                 #for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
                 for frame in range(len(xt_all)):
                     history = self.molecular_model.fit(xt_all[frame], yt_all[frame], epochs=1,
-                                                       batch_size=self.batch_size, callbacks=self.callbacks[:2],
-                                                       verbose=0)
+                                                       batch_size=self.batch_size, callbacks=self.callbacks[:2])
                     frame_loss.append(history.history['loss'])
                     frame_mse.append(history.history['mean_squared_error'])
 
                     if not frame % 20 or self.sampling_density != 1.0:
-                        print ("Frame: {0:d}, Current history:\nLoss: {1:3.5f}\tMSE: {2:3.5f}\n"
-                               .format(frame, history.history['loss'][0], history.history['mean_squared_error'][0]))
-
                         # Update weights filed every few frames
                         self.molecular_model.save_weights(model_weight_file)
                         self.molecular_encoder.save_weights(encoder_weight_file)
