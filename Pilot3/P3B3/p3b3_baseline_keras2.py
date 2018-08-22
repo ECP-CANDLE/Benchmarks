@@ -1,8 +1,23 @@
 from __future__ import print_function
+
 import numpy as np
+
+from keras import backend as K
+
+'''
+from keras.layers import Input, Dense, Dropout, Activation
+from keras.optimizers import SGD, Adam, RMSprop
+from keras.models import Model
+from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
+
+from sklearn.metrics import f1_score
+'''
+
+import p3b3 as bmk
+import candle_keras as candle
+
+
 import os, sys, gzip
-import urllib, zipfile
-TIMEOUT=1800 # in sec; set this to -1 for no timeout
 
 import keras
 from keras import backend as K
@@ -13,37 +28,35 @@ from keras import optimizers
 from keras.layers import Input
 from keras.models import Model
 
-from sklearn.metrics import f1_score
+import keras_mt_shared_cnn
 
 import argparse
 
-import p3b3
-import p3_common as p3c
-import p3_common_keras as p3ck
-from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 
-import keras_mt_shared_cnn
-
-
-
-def get_p3b3_parser():
-        parser = argparse.ArgumentParser(prog='p3b3_baseline',
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-            description='Multi-task CNN for data extraction from clinical reports - Pilot 3 Benchmark 3')
-
-        return p3b3.common_parser(parser)
 
 def initialize_parameters():
-    parser = get_p3b3_parser()
-    args = parser.parse_args()
-    print('Args', args)
 
-    GP=p3b3.read_config_file(args.config_file)
-    print(GP)
+    # Build benchmark object
+    p3b3Bmk = bmk.BenchmarkP3B3(bmk.file_path, 'p3b3_default_model.txt', 'keras',
+    prog='p3b3_baseline', desc='Multi-task CNN for data extraction from clinical reports - Pilot 3 Benchmark 3')
+    
+    # Initialize parameters
+    gParameters = candle.initialize_parameters(p3b3Bmk)
+    #bmk.logger.info('Params: {}'.format(gParameters))
 
-    GP = p3c.args_overwrite_config(args, GP)
-    return GP
+    return gParameters
 
+
+def fetch_data(gParameters):
+    """ Downloads and decompresses the data if not locally available.
+        Since the training data depends on the model definition it is not loaded,
+        instead the local path where the raw data resides is returned
+    """
+
+    path = gParameters['data_url']
+    fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', untar=True)
+    
+    return fpath
 
 
 def run_cnn( GP, train_x, train_y, test_x, test_y,
@@ -73,8 +86,8 @@ def run_cnn( GP, train_x, train_y, test_x, test_y,
     num_classes.append( np.max( train_y[ :, 3 ] ) + 1 )
 
 
-    kerasDefaults = p3c.keras_default_config()
-    optimizer = p3ck.build_optimizer( optimizer, learning_rate, kerasDefaults )
+    kerasDefaults = candle.keras_default_config()
+    optimizer_run = candle.build_optimizer( optimizer, learning_rate, kerasDefaults )
 
 
     cnn = keras_mt_shared_cnn.init_export_network(
@@ -87,7 +100,7 @@ def run_cnn( GP, train_x, train_y, test_x, test_y,
         concat_dropout_prob = dropout,
         emb_l2= emb_l2,
         w_l2= w_l2,
-        optimizer= optimizer )
+        optimizer= optimizer_run )
 
     print( cnn.summary() )
 
@@ -97,8 +110,11 @@ def run_cnn( GP, train_x, train_y, test_x, test_y,
           'Dense2': test_y[ :, 2 ],
           'Dense3': test_y[ :, 3 ] } )
 
-    candleRemoteMonitor = CandleRemoteMonitor(params= GP)
-    timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
+    # candleRemoteMonitor = CandleRemoteMonitor(params= GP)
+    # timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
+
+    candleRemoteMonitor = candle.CandleRemoteMonitor( params= GP )
+    timeoutMonitor = candle.TerminateOnTimeOut( GP[ 'timeout' ] )
 
     history = cnn.fit(
         x= np.array( train_x ),
@@ -116,53 +132,40 @@ def run_cnn( GP, train_x, train_y, test_x, test_y,
     return history
 
 
-def run( GP ):
-    filter_sizes = []
-    num_filters = []
 
-    start = GP[ 'filter_sizes' ]
-    end = start + GP[ 'filter_sets' ] 
-    n_filters = GP[ 'num_filters' ]
-    for k in range( start, end ):
-        filter_sizes.append( k )
-        num_filters.append( n_filters )
+def run(gParameters, fpath):
 
-    learning_rate = GP[ 'learning_rate' ]
-    batch_size = GP[ 'batch_size' ]
-    epochs = GP[ 'epochs' ]
-    dropout = GP[ 'dropout' ]
-    optimizer = GP[ 'optimizer' ]
+    # Get default parameters for initialization and optimizer functions
+    kerasDefaults = candle.keras_default_config()
 
-    wv_len = GP[ 'wv_len' ]
-    emb_l2 = GP[ 'emb_l2' ]
-    w_l2 = GP[ 'w_l2' ]
+    learning_rate = gParameters[ 'learning_rate' ]
+    batch_size = gParameters[ 'batch_size' ]
+    epochs = gParameters[ 'epochs' ]
+    dropout = gParameters[ 'dropout' ]
+    optimizer = gParameters[ 'optimizer' ]
+    wv_len = gParameters[ 'wv_len' ]
+    filter_sizes = gParameters[ 'filter_sizes' ]
+    filter_sets = gParameters[ 'filter_sets' ]
+    num_filters = gParameters[ 'num_filters' ]
+    emb_l2 = gParameters[ 'emb_l2' ]
+    w_l2 = gParameters[ 'w_l2' ]
 
-    
-    '''
-    ## Read files
-    file_path = os.path.dirname(os.path.realpath(__file__))
-    print(file_path)
-    lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-    sys.path.append(lib_path)
 
-    from data_utils import get_file
-    origin = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P3B1/P3B1_data.tar.gz'
-    data_set = 'P3B1_data'
-    data_path = get_file(data_set, origin, untar=True, md5_hash=None, cache_subdir='P3B1')
+    train_x = np.load( fpath + '/train_X.npy' )
+    train_y = np.load( fpath + '/train_Y.npy' )
+    test_x = np.load( fpath + '/test_X.npy' )
+    test_y = np.load( fpath + '/test_Y.npy' )
 
-    print('Data downloaded and stored at: ' + os.path.dirname(data_path))
-    print('Data path:' + data_path)
-    '''
-    data_path = '/lustre/atlas/proj-shared/csc249/yoonh/Benchmarks/Data/Pilot3'
 
-    train_x = np.load( data_path + '/train_X.npy' )
-    train_y = np.load( data_path + '/train_Y.npy' )
-    test_x = np.load( data_path + '/test_X.npy' )
-    test_y = np.load( data_path + '/test_Y.npy' )
+    run_filter_sizes = []
+    run_num_filters = []
 
+    for k in range( filter_sets ):
+        run_filter_sizes.append( filter_sizes + k )
+        run_num_filters.append( num_filters )
 
     ret = run_cnn(
-        GP, 
+        gParameters, 
         train_x, train_y, test_x, test_y,
         learning_rate = learning_rate,
         batch_size = batch_size,
@@ -170,17 +173,31 @@ def run( GP ):
         dropout = dropout,
         optimizer = optimizer,
         wv_len = wv_len,
-        filter_sizes = filter_sizes,
-        num_filters = num_filters,
+        filter_sizes = run_filter_sizes,
+        num_filters = run_num_filters,
         emb_l2 = emb_l2,
         w_l2 = w_l2       
     )
 
-    print( 'Average loss:', str( ret.history['val_loss'] ) )
     return ret
 
 
-if __name__  == "__main__":
-    gParameters=initialize_parameters()
-    avg_loss = run(gParameters)
+
+def main():
+
+    gParameters = initialize_parameters()
+    fpath = fetch_data(gParameters)
+    avg_loss = run(gParameters, fpath)
+    print( "Return: ", avg_loss )
+
+
+
+if __name__ == '__main__':
+    main()
+    try:
+        K.clear_session()
+    except AttributeError:      # theano does not have this function
+        pass
+
+
 
