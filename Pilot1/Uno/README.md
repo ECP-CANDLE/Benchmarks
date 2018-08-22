@@ -4,7 +4,7 @@
 Uno can be trained with a subset of dose response data sources. Here is an command line example of training with all 6 sources: CCLE, CTRP, gCSI, GDSC, NCI60 single drug response, ALMANAC drug pair response.
 
 ```
-uno_baseline_keras2.py --train_sources all --cache cache/all --use_landmark_genes --preprocess_rnaseq source_scale --no_feature_source --no_response_source
+uno_baseline_keras2.py --train_sources all --cache cache/all --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True
 Using TensorFlow backend.
 Params: {'activation': 'relu', 'batch_size': 32, 'dense': [1000, 1000, 1000], 'dense_feature_layers': [1000, 1000, 1000], 'drop': 0, 'epochs': 10, 'learning_rate': None, 'loss':
 'mse', 'optimizer': 'adam', 'residual': False, 'rng_seed': 2018, 'save': 'save/uno', 'scaling': 'std', 'feature_subsample': 0, 'validation_split': 0.2, 'solr_root': '', 'timeout'
@@ -118,5 +118,43 @@ Between random pairs in y_val:
 Data points per epoch: train = 20158325, val = 5144721
 Steps per epoch: train = 629948, val = 160773
 Epoch 1/10
-  8078/629948 [..............................] - ETA: 50:20:54 - loss: 0.1955 - mae: 0.2982 - r2: 0.2964
+629948/629948 [==============================] - 196053s 311ms/step - loss: 0.0993 - mae: 0.2029 - r2: 0.6316 - val_loss: 0.1473 - val_mae: 0.2404 - val_r2: 0.4770
+Current time ....196052.671
+Epoch 2/10
+629948/629948 [==============================] - 194858s 309ms/step - loss: 0.0872 - mae: 0.1890 - r2: 0.6755 - val_loss: 0.1469 - val_mae: 0.2393 - val_r2: 0.4771
+Current time ....390911.212
+Epoch 3/10
+629948/629948 [==============================] - 192603s 306ms/step - loss: 0.0848 - mae: 0.1861 - r2: 0.6840 - val_loss: 0.1486 - val_mae: 0.2409 - val_r2: 0.4720
+Current time ....583514.913
+Epoch 4/10
+629948/629948 [==============================] - 192734s 306ms/step - loss: 0.0836 - mae: 0.1846 - r2: 0.6885 - val_loss: 0.1500 - val_mae: 0.2417 - val_r2: 0.4657
+Current time ....776248.738
+Epoch 5/10
+629948/629948 [==============================] - 190948s 303ms/step - loss: 0.0829 - mae: 0.1836 - r2: 0.6912 - val_loss: 0.1498 - val_mae: 0.2412 - val_r2: 0.4678
+Current time ....967196.253
+Epoch 6/10
+629948/629948 [==============================] - 191344s 304ms/step - loss: 0.0824 - mae: 0.1829 - r2: 0.6931 - val_loss: 0.1506 - val_mae: 0.2417 - val_r2: 0.4631
+Current time ....1158540.613
+Epoch 7/10
+629948/629948 [==============================] - 195056s 310ms/step - loss: 0.0820 - mae: 0.1824 - r2: 0.6945 - val_loss: 0.1518 - val_mae: 0.2431 - val_r2: 0.4596
+Current time ....1353596.930
+Epoch 8/10
+629948/629948 [==============================] - 193873s 308ms/step - loss: 0.0817 - mae: 0.1820 - r2: 0.6956 - val_loss: 0.1525 - val_mae: 0.2428 - val_r2: 0.4570
+Current time ....1547470.041
+Epoch 9/10
+629948/629948 [==============================] - 191701s 304ms/step - loss: 0.0815 - mae: 0.1818 - r2: 0.6963 - val_loss: 0.1525 - val_mae: 0.2434 - val_r2: 0.4593
+Current time ....1739170.656
+Epoch 10/10
+629948/629948 [==============================] - 194420s 309ms/step - loss: 0.0813 - mae: 0.1815 - r2: 0.6971 - val_loss: 0.1528 - val_mae: 0.2432 - val_r2: 0.4600
+Current time ....1933590.940
+Comparing y_true and y_pred:
+  mse: 0.1528
+  mae: 0.2432
+  r2: 0.4966
+  corr: 0.7077
+```
+
+Training Uno on all data sources is slow. The `--train_sources` parameter can be used to test the code with a smaller set of training data. An example command line is the following.
+```
+uno_baseline_keras2.py --train_sources CCLE --cache cache/CCLE --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True
 ```

@@ -2,8 +2,8 @@
 data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P3B2/'
 train_data = 'P3B2_data.tgz'
 model_name = 'p3b2'
-rnn_size = 256
-epochs = 10
+rnn_size = 64
+epochs = 2
 n_layers = 1
 learning_rate = 0.01
 drop = 0.0
