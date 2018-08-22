@@ -26,6 +26,10 @@ from default_utils import set_up_logger
 from keras_utils import build_initializer
 from keras_utils import build_optimizer
 from keras_utils import set_seed
+from keras_utils import set_parallelism_threads
+
+from generic_utils import Progbar
+from generic_utils import LoggingCallback
 
 from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
 

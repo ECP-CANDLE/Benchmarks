@@ -1,0 +1,16 @@
+[Global_Params]
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/'
+train_data = 'P3B3_data.tar.gz'
+model_name = 'p3b3'
+learning_rate = 0.01
+batch_size = 10
+epochs = 10
+dropout = 0.5
+optimizer = 'adam'
+wv_len = 300
+filter_sizes = 3
+filter_sets = 3
+num_filters = 100
+emb_l2 = 0.001
+w_l2 = 0.01
+

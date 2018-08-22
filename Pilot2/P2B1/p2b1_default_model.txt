@@ -1,6 +1,6 @@
 [Global_Params]
 num_hidden=[512,32]
-batch_size=32
+batch_size=64
 learning_rate=0.01
 epochs=2
 cool=False
@@ -11,10 +11,9 @@ loss='custom'
 activation='relu'
 molecular_nonlinearity='elu'
 molecular_num_hidden=[256, 128, 64, 32, 16, 8]
-molecular_nbrs = 10
-molecular_epochs=1
+molecular_nbrs = 200
 base_memo='p2b1'
 drop_prob = 0.5
 data_set='3k_Ordered'
-sampling_density = 0.01
+sampling_density = 0.15
 save_path='.'
