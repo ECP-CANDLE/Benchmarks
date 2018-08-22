@@ -153,3 +153,8 @@ Comparing y_true and y_pred:
   r2: 0.4966
   corr: 0.7077
 ```
+
+Training Uno on all data sources is slow. The `--train_sources` parameter can be used to test the code with a smaller set of training data. An example command line is the following.
+```
+uno_baseline_keras2.py --train_sources CCLE --cache cache/CCLE --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True
+```
