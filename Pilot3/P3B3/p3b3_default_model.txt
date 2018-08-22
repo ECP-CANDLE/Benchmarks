@@ -7,10 +7,10 @@ batch_size = 10
 epochs = 10
 dropout = 0.5
 optimizer = 'adam'
-wv_len = 100
+wv_len = 300
 filter_sizes = 3
 filter_sets = 3
-num_filters = 300
+num_filters = 100
 emb_l2 = 0.001
 w_l2 = 0.01
 
