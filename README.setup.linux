@@ -22,6 +22,7 @@ conda install -c conda-forge keras=2
 conda install -c anaconda pandas
 conda install -c anaconda scikit-learn 
 conda install -c anaconda matplotlib
+---conda install -c conda-forge pygpu
 
 # Install additional modules for Pilot2 benchmarks
 conda install -c conda-forge opencv

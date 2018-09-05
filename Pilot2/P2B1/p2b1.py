@@ -40,9 +40,9 @@ additional_definitions = [
 {'name':'set_sel','help':'[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]','type':str,'default':'3k_Disordered'},
 {'name':'conv_bool', 'type':candle.str2bool, 'default':True, 'help':'Invoke training using 1D Convs for inner AE'},
 {'name':'full_conv_bool', 'type':candle.str2bool, 'default':False, 'help':'Invoke training using fully convolutional NN for inner AE'},
-{'name':'type_bool', 'type':candle.str2bool, 'default':False, 'help':'Include molecule type information in desining AE'},
+{'name':'type_bool', 'type':candle.str2bool, 'default':True, 'help':'Include molecule type information in desining AE'},
 {'name':'nbr_type', 'type':str, 'default':'relative', 'help':'Defines the type of neighborhood data to use. [relative, invariant]'},
-{'name':'backend', 'help':'Keras Backend', 'type':str, 'default':'theano'}
+{'name':'backend', 'help':'Keras Backend', 'type':str, 'default':'tensorflow'}
 ]
 
 required = [
@@ -58,7 +58,6 @@ required = [
     # note 'cool' is a boolean
     'cool',
 
-    'molecular_epochs',
     'molecular_num_hidden',
     'molecular_nonlinearity',
     'molecular_nbrs',
@@ -267,7 +266,11 @@ class Candle_Molecular_Train():
             xt_all = np.array([])
             yt_all = np.array([])
 
-            for i in range(num_frames):
+            num_active_frames = random.sample(range(num_frames), int(self.sampling_density*num_frames))
+
+            print('Datagen on the following frames', num_active_frames)
+
+            for i in num_active_frames:
 
                 if self.conv_net:
                     xt = Xnorm[i]
@@ -308,7 +311,7 @@ class Candle_Molecular_Train():
 
     def train_ac(self):
 
-        for i in range(self.mb_epochs):
+        for i in range(1, self.mb_epochs+1):
             print ("\nTraining epoch: {:d}\n".format(i))
 
             frame_loss = []
@@ -322,8 +325,8 @@ class Candle_Molecular_Train():
             encoder_weight_file = '%s/%s.hdf5' % (current_path, 'encoder_weights')
 
             for curr_file, xt_all, yt_all in self.datagen(i):
-                for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
-
+                #for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
+                for frame in range(len(xt_all)):
                     history = self.molecular_model.fit(xt_all[frame], yt_all[frame], epochs=1,
                                                        batch_size=self.batch_size, callbacks=self.callbacks[:2],
                                                        verbose=0)
