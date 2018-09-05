@@ -227,9 +227,19 @@ def initialize_parameters(bmk):
 
     #print('Args:', args)
     # Get parameters from configuration file
-    aux = bmk.parser.parse_args(['conffile'])
-    #print(aux.config_file)
-    fileParameters = bmk.read_config_file(aux.config_file)#args.config_file)
+    # Reads parameter subset, just checking if a config_file has been set
+    # by comand line (the parse_known_args() function allows a partial
+    # parsing)
+    aux = bmk.parser.parse_known_args()
+    try : # Try to get the 'config_file' option
+        conffile_txt = aux[0].config_file
+    except AttributeError: # The 'config_file' option was not set by command-line
+        conffile = bmk.conffile # use default file
+    else: # a 'config_file' has been set --> use this file
+        conffile = os.path.join(bmk.file_path, conffile_txt)
+
+    print("Configuration file: ", conffile)
+    fileParameters = bmk.read_config_file(conffile)#aux.config_file)#args.config_file)
     # Get command-line parameters
     args = bmk.parser.parse_args()
     #print ('Params:', fileParameters)
@@ -254,7 +264,6 @@ def get_default_neon_parser(parser):
     """
     # Logging Level
     parser.add_argument("-v", "--verbose", type=str2bool,
-			default=argparse.SUPPRESS,
                         help="increase output verbosity")
     parser.add_argument("-l", "--log", dest='logfile',
                         default=None,
@@ -307,6 +316,10 @@ def get_common_parser(parser):
         parser : python argparse
             parser for command-line options
     """
+    
+    # Configuration file
+    parser.add_argument("--config_file", dest='config_file', default=argparse.SUPPRESS,
+        help="specify model configuration file")
     
     # General behavior
     parser.add_argument("--train_bool", dest='train_bool', type=str2bool,
@@ -585,20 +598,9 @@ class Benchmark:
     
         self.parser = parser
 
-        subparsers = self.parser.add_subparsers()
-        self.parser_a = subparsers.add_parser('conffile', help='a help')
-        #parser_a.add_argument('bar', type=int, help='bar help')
-
         # Set default configuration file
-        #self.parser.add_argument("--config_file", dest='config_file', type=str,
-        #                default=os.path.join(self.file_path, self.default_model),
-        #                help="specify model configuration file")
+        self.conffile = os.path.join(self.file_path, self.default_model)
 
-        self.parser_a.add_argument("--config_file", dest='config_file', type=str,
-                        default=os.path.join(self.file_path, self.default_model),
-                        help="specify model configuration file")
- 
- 
 
     def parse_from_benchmark(self):
         """Functionality to parse options specific

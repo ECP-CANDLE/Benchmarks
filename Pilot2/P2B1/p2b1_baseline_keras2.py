@@ -4,6 +4,7 @@ import pickle
 import sys, os, json
 import argparse
 import h5py
+import logging
 try:
     reload  # Python 2.7
 except NameError:
@@ -27,6 +28,9 @@ import candle_keras as candle
 import p2b1_AE_models as AE_models
 
 HOME = os.environ['HOME']
+
+logger = logging.getLogger(__name__)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 def parse_list(option, opt, value, parser):
     setattr(parser.values, option.dest, value.split(','))
@@ -76,7 +80,7 @@ def run(GP):
 
     # set the seed
     if GP['seed']:
-        np.random.seed(7)
+        np.random.seed(GP['seed'])
     else:
         np.random.seed(np.random.randint(10000))
 
@@ -85,6 +89,16 @@ def run(GP):
         print ('Keras home directory not set')
         sys.exit(0)
     sys.path.append(GP['home_dir'])
+
+    # Setup loggin
+    args = candle.ArgumentStruct(**GP)
+#    set_seed(args.rng_seed)
+#    ext = extension_from_parameters(args)
+    candle.verify_path(args.save_path)
+    prefix = args.save_path # + ext
+    logfile = args.logfile if args.logfile else prefix+'.log'
+    candle.set_up_logger(logfile, logger, False) #args.verbose
+    logger.info('Params: {}'.format(GP))
 
     import p2b1 as hf
     reload(hf)
@@ -238,9 +252,10 @@ def run(GP):
     history = callbacks.History()
     # callbacks=[history,lr_scheduler]
 
+    history_logger = candle.LoggingCallback(logger.debug)
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=GP)
     timeoutMonitor = candle.TerminateOnTimeOut(TIMEOUT)
-    callbacks = [history, candleRemoteMonitor, timeoutMonitor]
+    callbacks = [history, history_logger, candleRemoteMonitor, timeoutMonitor]
     loss = 0.
 
 #### Save the Model to disk
@@ -264,7 +279,7 @@ def run(GP):
 #### Train the Model
     if GP['train_bool']:
         ct = hf.Candle_Molecular_Train(molecular_model, molecular_encoder, data_files, mb_epochs, callbacks,
-                                       batch_size=32, nbr_type=GP['nbr_type'], save_path=GP['save_path'],
+                                       batch_size=batch_size, nbr_type=GP['nbr_type'], save_path=GP['save_path'],
                                        len_molecular_hidden_layers=len_molecular_hidden_layers,
                                        molecular_nbrs=molecular_nbrs,
                                        conv_bool=conv_bool,
