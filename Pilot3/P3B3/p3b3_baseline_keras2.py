@@ -156,6 +156,11 @@ def run(gParameters, fpath):
     test_x = np.load( fpath + '/test_X.npy' )
     test_y = np.load( fpath + '/test_Y.npy' )
 
+    
+    for task in range( len( train_y[ 0, : ] ) ):
+        cat = np.unique( train_y[ :, task ] )
+        train_y[ :, task ] = [ np.where( cat == x )[ 0 ][ 0 ] for x in train_y[ :, task ] ]
+        test_y[ :, task ] = [ np.where( cat == x )[ 0 ][ 0 ] for x in test_y[ :, task ] ]
 
     run_filter_sizes = []
     run_num_filters = []
