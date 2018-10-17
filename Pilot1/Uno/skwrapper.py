@@ -151,7 +151,7 @@ def categorize_dataframe(df, ycol='0', bins=5, cutoffs=None, verbose=False):
 
 
 def make_group_from_columns(df, groupcols):
-    return df[groupcols].astype(str).sum(axis=1).as_matrix()
+    return df[groupcols].astype(str).sum(axis=1).values
 
 
 def summarize(df, ycol='0', classify=False, bins=0, cutoffs=None, min_count=0):
@@ -188,8 +188,8 @@ def split_data(df, ycol='0', classify=False, cv=5, bins=0, cutoffs=None, groupco
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
 
-    y = df.loc[:, ycol].as_matrix()
-    x = df.drop(ycol, axis=1).as_matrix()
+    y = df.loc[:, ycol].values
+    x = df.drop(ycol, axis=1).values
     features = df.drop(ycol, axis=1).columns.tolist()
 
     if verbose:
@@ -242,10 +242,13 @@ def verify_path(path):
         os.makedirs(folder)
 
 
-def train(model, x, y, features=None, classify=False, threads=-1, prefix='', name=None, save=False):
+def train(model, x, y, features=None, classify=False, threads=-1, prefix='', name=None, save=False, verbose=True):
     verify_path(prefix)
     model, model_name = get_model(model, threads, classify=classify)
     model.fit(x, y)
+    if verbose:
+        train_score = model.score(x, y)
+        print('Train score = {:.3f}'.format(train_score))
     name = name or model_name
     if save:
         model_desc_fname = "{}.{}.description".format(prefix, name)
@@ -284,7 +287,7 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0):
         test_score = model.score(x_test, y_test)
         train_scores.append(train_score)
         test_scores.append(test_score)
-        print("  fold {}/{}: score = {:.3f}".format(i+1, len(splits), test_score))
+        print("  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(i+1, len(splits), test_score, train_score))
         if test_score > best_score:
             best_model = model
             best_score = test_score
@@ -360,7 +363,7 @@ def regress(model, x, y, splits, features, threads=-1, prefix='', seed=0):
         test_score = model.score(x_test, y_test)
         train_scores.append(train_score)
         test_scores.append(test_score)
-        print("  fold {}/{}: score = {:.3f}".format(i+1, len(splits), test_score))
+        print("  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(i+1, len(splits), test_score, train_score))
         if test_score > best_score:
             best_model = model
             best_score = test_score
