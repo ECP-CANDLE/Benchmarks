@@ -31,5 +31,7 @@ from keras_utils import set_parallelism_threads
 from generic_utils import Progbar
 from generic_utils import LoggingCallback
 
-from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
+from solr_keras import CandleRemoteMonitor
+from solr_keras import compute_trainable_params
+from solr_keras import TerminateOnTimeOut
 
