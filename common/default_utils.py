@@ -33,16 +33,67 @@ DEFAULT_DATATYPE = np.float32
 #### IO UTILS
 
 def fetch_file(link, subdir, untar=False, md5_hash=None):
+    """Convert URL to file path and download the file
+        if it is not already present in spedified cache.
+
+        Parameters
+        ----------
+        link : link path
+            URL of the file to download
+        subdir : directory path
+            Local path to check for cached file.
+        untar : boolean
+            Flag to specify if the file to download should
+            be decompressed too.
+            (default: False, no decompression)
+        md5_hash : MD5 hash
+            Hash used as a checksum to verify data integrity.
+            Verification is carried out if a hash is provided.
+            (default: None, no verification)
+
+        Return
+        ----------
+        local path to the downloaded, or cached, file.
+    """
+
     fname = os.path.basename(link)
     return get_file(fname, origin=link, untar=untar, md5_hash=md5_hash, cache_subdir=subdir)
 
 def verify_path(path):
+    """Verify if a directory path exists locally. If the path
+        does not exist, but is a valid path, it recursivelly creates
+        the specified directory path structure.
+
+        Parameters
+        ----------
+        path : directory path
+            Description of local directory path
+    """
     folder = os.path.dirname(path)
     if folder and not os.path.exists(folder):
         os.makedirs(folder)
 
 
 def set_up_logger(logfile, logger, verbose):
+    """Set up the event logging system. Two handlers are created.
+       One to send log records to a specified file and 
+       one to send log records to the (defaulf) sys.stderr stream.
+       The logger and the file handler are set to DEBUG logging level.
+       The stream handler is set to INFO logging level, or to DEBUG
+       logging level if the verbose flag is specified.
+       Logging messages which are less severe than the level set will
+       be ignored.
+
+        Parameters
+        ----------
+        logfile : filename
+            File to store the log records
+        logger : logger object
+            Python object for the logging interface
+        verbose : boolean
+            Flag to increase the logging level from INFO to DEBUG. It 
+            only applies to the stream handler.
+    """
     verify_path(logfile)
     fh = logging.FileHandler(logfile)
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
@@ -66,15 +117,16 @@ def eval_string_as_list(str_read, separator, dtype):
         Parameters
         ----------
         str_read : string
-            string read (from configuration file or command line, for example)
+            String read (from configuration file or command line, for example)
         separator : character
-            character that specifies the separation between the lists
+            Character that specifies the separation between the lists
         dtype : data type
-            data type to decode the elements of the list
+            Data type to decode the elements of the list
             
         Return
         ----------
-        decoded_list : list extracted from string and with elements of the
+        decoded_list : list
+            List extracted from string and with elements of the
             specified type.
     """
 
@@ -101,18 +153,18 @@ def eval_string_as_list_of_lists(str_read, separator_out, separator_in, dtype):
         Parameters
         ----------
         str_read : string
-            string read (from configuration file or command line, for example)
+            String read (from configuration file or command line, for example)
         separator_out : character
-            character that specifies the separation between the outer level lists
+            Character that specifies the separation between the outer level lists
         separator_in : character
-            character that specifies the separation between the inner level lists
+            Character that specifies the separation between the inner level lists
         dtype : data type
-            data type to decode the elements of the lists
+            Data type to decode the elements of the lists
             
         Return
         ----------
-        decoded_list : list of lists extracted from string and with elements
-            of the specified type.
+        decoded_list : list
+            List of lists extracted from string and with elements of the specified type.
     """
 
     # Figure out desired type
@@ -136,10 +188,25 @@ def eval_string_as_list_of_lists(str_read, separator_out, separator_in, dtype):
 
 
 def str2bool(v):
-    """ This is taken from:
+    """This is taken from:
         https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
         Because type=bool is not interpreted as a bool and action='store_true' cannot be
         undone.
+
+        Parameters
+        ----------
+        v : string
+            String to interpret
+
+        Return
+        ----------
+        Boolean value. It raises and exception if the provided string cannot
+        be interpreted as a boolean type. 
+
+        Strings recognized as boolean True:
+        'yes', 'true', 't', 'y', '1' and uppercase versions (where applicable).
+        Strings recognized as boolean False:
+        'no', 'false', 'f', 'n', '0' and uppercase versions (where applicable).
     """
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -151,9 +218,12 @@ def str2bool(v):
 #### CLASS DEFINITIONS
 
 class ArgumentStruct:
-    """Structure to keep all the parameters from a 
-       dictionary (corresponding to problem parameters) 
-       under a unified object
+    """Class that converts a python dictionary into an object with
+       named entries given by the dictionary keys.
+       This structure simplifies the calling convention for accessing
+       the dictionary values (corresponding to problem parameters).
+       After the object instantiation both modes of access (dictionary
+       or object entries) can be used.
     """
     def __init__(self, **entries):
         self.__dict__.update(entries)
@@ -161,11 +231,27 @@ class ArgumentStruct:
 
 
 class ListOfListsAction(argparse.Action):
+    """This class extends the argparse.Action class by instantiating
+        an argparser that constructs a list-of-lists from an input
+        (command-line option or argument) given as a string.
+    """
     def __init__(self, option_strings, dest, type, **kwargs):
-        """This action allows to construct a parser from a string
-           to a list of lists.
-           If no type is specified, an integer is assumed by default
-           as the type for the elements of the list of lists.
+        """Initialize a ListOfListsAction object. If no type is specified,
+           an integer is assumed by default as the type for the elements
+           of the list-of-lists.
+ 
+           Parameters
+           ----------
+           option_strings : string
+               String to parse
+           dest : object
+               Object to store the output (in this case the parsed list-of-lists).
+           type : data type
+               Data type to decode the elements of the lists.
+               Defaults to np.int32.
+           kwargs : object
+               Python object containing other argparse.Action parameters.
+
         """
 
         super(ListOfListsAction, self).__init__(option_strings, dest, **kwargs)
@@ -176,10 +262,30 @@ class ListOfListsAction(argparse.Action):
 
 
     def __call__(self, parser, namespace, values, option_string=None):
-        """This parses a string and maps into a list of lists.
-           It assumes that the separator between lists is a colon ':'
-           and the separator inside the list is a comma ','.
-           The values of the list are casted to the type specified.
+        """This function overrides the __call__ method of the base
+           argparse.Action class.
+  
+           This function implements the action of the ListOfListAction
+           class by parsing an input string (command-line option or argument)
+           and maping it into a list-of-lists. The resulting list-of-lists is
+           added to the namespace of parsed arguments. The parsing assumes that
+           the separator between lists is a colon ':' and the separator inside
+           the list is a comma ','. The values of the list are casted to the
+           type specified at the object initialization.
+
+           Parameters
+           ----------
+           parser : ArgumentParser object
+               Object that contains this action
+           namespace : Namespace object
+               Namespace object that will be returned by the parse_args()
+               function.
+           values : string
+               The associated command-line arguments converted to string type
+               (i.e. input).
+           option_string : string
+               The option string that was used to invoke this action. (optional)
+
         """
 
         decoded_list = []
@@ -200,6 +306,13 @@ class ListOfListsAction(argparse.Action):
 
 
 def set_seed(seed):
+    """Set the seed of the pseudo-random generator to the specified value.
+
+        Parameters
+        ----------
+        seed : int
+            Value to intialize or re-seed the generator.
+    """
     os.environ['PYTHONHASHSEED'] = '0'
     np.random.seed(seed)
 
@@ -207,16 +320,18 @@ def set_seed(seed):
 
 
 def initialize_parameters(bmk):
-    """Parse parameters in common and particular to each benchmark.
-        
+    """Utility to parse parameters in common as well as parmeters
+        particular to each benchmark.
+
         Parameters
         ----------
         bmk : benchmark object
-            Object that has benchmark filepaths and especifications
+            Object that has benchmark filepaths and specifications
             
         Return
         ----------
-        gParameters : dictionary with all the parameters necessary to run the benchmark.
+        gParameters : python dictionary
+            Dictionary with all the parameters necessary to run the benchmark.
             Command line overwrites config file especifications
     """
 
@@ -259,8 +374,8 @@ def get_default_neon_parser(parser):
         
         Parameters
         ----------
-        parser : python argparse
-            parser for neon default command-line options
+        parser : ArgumentParser object
+            Parser for neon default command-line options
     """
     # Logging Level
     parser.add_argument("-v", "--verbose", type=str2bool,
@@ -275,10 +390,10 @@ def get_default_neon_parser(parser):
                         help="file path to save model snapshots")
 
     # General behavior
-    parser.add_argument("--model_file", dest='weight_path', type=str,
+    parser.add_argument("--model_file", dest='model_file', type=str,
                         default=argparse.SUPPRESS,
                         help="specify trained model Pickle file")
-    parser.add_argument("-d", "--data_type", dest='datatype',
+    parser.add_argument("-d", "--data_type", dest='data_type',
                         default=argparse.SUPPRESS,
                         choices=['f16', 'f32', 'f64'],
                         help="default floating point")
@@ -313,8 +428,8 @@ def get_common_parser(parser):
         
         Parameters
         ----------
-        parser : python argparse
-            parser for command-line options
+        parser : ArgumentParser object
+            Parser for command-line options
     """
     
     # Configuration file
@@ -467,10 +582,10 @@ def args_overwrite_config(args, config):
         
         Parameters
         ----------
-        args : python argparse
-            parameters specified via command-line
+        args : ArgumentParser object
+            Parameters specified via command-line
         config : python dictionary
-            parameters read from configuration file
+            Parameters read from configuration file
     """
     
     params = config
@@ -521,7 +636,15 @@ def get_choice(name):
 
 
 def directory_from_parameters(params, commonroot='Output'):
-    """Construct output directory path with unique IDs from parameters"""
+    """Construct output directory path with unique IDs from parameters
+        Parameters
+        ----------
+        params : python dictionary
+            Dictionary of parameters read
+        commonroot : string
+            String to specify the common folder to store results.
+
+    """
     
     if commonroot in set(['.', './']): # Same directory --> convert to absolute path
         outdir = os.path.abspath('.')
@@ -544,11 +667,18 @@ def directory_from_parameters(params, commonroot='Output'):
 
 
 class Benchmark:
-
+    """ Class that implements an interface to handle configuration options for the
+        different CANDLE benchmarks.
+        It provides access to all the common configuration
+        options and configuration options particular to each individual benchmark.
+        It describes what minimum requirements should be specified to instantiate
+        the corresponding benchmark.
+        It interacts with the argparser to extract command-line options and arguments
+        from the benchmark's configuration files.
+    """
     def __init__(self, filepath, defmodel, framework, prog=None, desc=None, parser=None):
-        """Initialize benchmark object. Object to group common and 
-        specific (to benchmark) configuration options.
-        
+        """Initialize Benchmark object.
+
             Parameters
             ----------
             filepath : ./
