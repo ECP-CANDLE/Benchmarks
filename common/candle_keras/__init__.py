@@ -27,6 +27,8 @@ from keras_utils import build_initializer
 from keras_utils import build_optimizer
 from keras_utils import set_seed
 from keras_utils import set_parallelism_threads
+from keras_utils import PermanentDropout
+from keras_utils import register_permanent_dropout
 
 from generic_utils import Progbar
 from generic_utils import LoggingCallback
