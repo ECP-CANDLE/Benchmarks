@@ -5,6 +5,8 @@ from keras import backend as K
 from keras import optimizers
 from keras import initializers
 
+from keras.layers import Dropout
+from keras.utils import get_custom_objects
 from keras.metrics import binary_crossentropy, mean_squared_error
 
 from scipy.stats.stats import pearsonr
@@ -38,11 +40,11 @@ def set_seed(seed):
 
 def get_function(name):
     mapping = {}
-    
+
     mapped = mapping.get(name)
     if not mapped:
         raise Exception('No keras function found for "{}"'.format(name))
-    
+
     return mapped
 
 
@@ -55,7 +57,7 @@ def build_optimizer(type, lr, kerasDefaults):
                               nesterov=kerasDefaults['nesterov_sgd'])#,
             #clipnorm=kerasDefaults['clipnorm'],
             #clipvalue=kerasDefaults['clipvalue'])
-    
+
     elif type == 'rmsprop':
         return optimizers.RMSprop(lr=lr, rho=kerasDefaults['rho'],
                                   epsilon=kerasDefaults['epsilon'],
@@ -101,10 +103,10 @@ def build_optimizer(type, lr, kerasDefaults):
 
 
 def build_initializer(type, kerasDefaults, seed=None, constant=0.):
-    
+
     if type == 'constant':
         return initializers.Constant(value=constant)
-    
+
     elif type == 'uniform':
         return initializers.RandomUniform(minval=kerasDefaults['minval_uniform'],
                                   maxval=kerasDefaults['maxval_uniform'],
@@ -155,3 +157,18 @@ def evaluate_autoencoder(y_pred, y_test):
     # print('Mean squared error: {}%'.format(mse))
     return {'mse': mse, 'r2_score': r2, 'correlation': corr}
 
+
+class PermanentDropout(Dropout):
+    def __init__(self, rate, **kwargs):
+        super(PermanentDropout, self).__init__(rate, **kwargs)
+        self.uses_learning_phase = False
+
+    def call(self, x, mask=None):
+        if 0. < self.rate < 1.:
+            noise_shape = self._get_noise_shape(x)
+            x = K.dropout(x, self.rate, noise_shape)
+        return x
+
+
+def register_permanent_dropout():
+    get_custom_objects()['PermanentDropout'] = PermanentDropout
