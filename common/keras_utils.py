@@ -60,14 +60,14 @@ def build_optimizer(type, lr, kerasDefaults):
         based on the input string and learning rate. Other required values 
         are set to the Keras default values
 
-        Parameters
+        # Parameters
         ----------
         type : string
             String to choose the optimizer
             Options recognized: 'sgd', 'rmsprop', 'adagrad', adadelta', 'adam'
             See the Keras documentation for a full description of the options
 
-        Return
+        # Return
         ----------
         Returns the appropriate Keras optimizer function
     """
@@ -128,7 +128,7 @@ def build_initializer(type, kerasDefaults, seed=None, constant=0.):
         based on the input string and learning rate. Other required values 
         are set to the Keras default values
 
-        Parameters
+        # Parameters
         ----------
         type : string
             String to choose the initializer
@@ -136,7 +136,7 @@ def build_initializer(type, kerasDefaults, seed=None, constant=0.):
                 'glorot_uniform', 'lecun_uniform', 'he_normal' 
             See the Keras documentation for a full description of the options
 
-        Return
+        # Return
         ----------
         Returns the appropriate Keras initializer function
     """
