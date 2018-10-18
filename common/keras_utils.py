@@ -20,6 +20,9 @@ with warnings.catch_warnings():
 
 import os
 def set_parallelism_threads():
+    """ Set the number of parallel threads according to the number available on the hardware
+    """
+
     if K.backend() == 'tensorflow' and 'NUM_INTRA_THREADS' in os.environ and 'NUM_INTER_THREADS' in os.environ:
         import tensorflow as tf
         # print('Using Thread Parallelism: {} NUM_INTRA_THREADS, {} NUM_INTER_THREADS'.format(os.environ['NUM_INTRA_THREADS'], os.environ['NUM_INTER_THREADS']))
@@ -31,6 +34,9 @@ def set_parallelism_threads():
 
 
 def set_seed(seed):
+    """ Set the random number seed to the desired value
+    """
+
     set_seed_defaultUtils(seed)
 
     if K.backend() == 'tensorflow':
@@ -50,6 +56,21 @@ def get_function(name):
 
 
 def build_optimizer(type, lr, kerasDefaults):
+    """ Set the optimizer to the appropriate Keras optimizer function 
+        based on the input string and learning rate. Other required values 
+        are set to the Keras default values
+
+        Parameters
+        ----------
+        type : string
+            String to choose the optimizer
+            Options recognized: 'sgd', 'rmsprop', 'adagrad', adadelta', 'adam'
+            See the Keras documentation for a full description of the options
+
+        Return
+        ----------
+        Returns the appropriate Keras optimizer function
+    """
 
     if type == 'sgd':
         return optimizers.SGD(lr=lr, decay=kerasDefaults['decay_lr'],
@@ -103,6 +124,22 @@ def build_optimizer(type, lr, kerasDefaults):
 
 
 def build_initializer(type, kerasDefaults, seed=None, constant=0.):
+    """ Set the initializer to the appropriate Keras initializer function 
+        based on the input string and learning rate. Other required values 
+        are set to the Keras default values
+
+        Parameters
+        ----------
+        type : string
+            String to choose the initializer
+            Options recognized: 'constant', 'uniform', 'normal', 
+                'glorot_uniform', 'lecun_uniform', 'he_normal' 
+            See the Keras documentation for a full description of the options
+
+        Return
+        ----------
+        Returns the appropriate Keras initializer function
+    """
 
     if type == 'constant':
         return initializers.Constant(value=constant)
