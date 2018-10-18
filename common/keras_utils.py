@@ -70,7 +70,7 @@ def build_optimizer(type, lr, kerasDefaults):
 
         Returns
         ----------
-        Returns the appropriate Keras optimizer function
+        The appropriate Keras optimizer function
     """
 
     if type == 'sgd':
@@ -141,7 +141,7 @@ def build_initializer(type, kerasDefaults, seed=None, constant=0.):
 
         Returns
         ----------
-        Returns the appropriate Keras initializer function
+        The appropriate Keras initializer function
     """
 
     if type == 'constant':
