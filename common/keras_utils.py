@@ -35,6 +35,11 @@ def set_parallelism_threads():
 
 def set_seed(seed):
     """ Set the random number seed to the desired value
+
+        Parameters
+        ----------
+        seed : integer
+            Random number seed. 
     """
 
     set_seed_defaultUtils(seed)
@@ -67,6 +72,12 @@ def build_optimizer(type, lr, kerasDefaults):
 
             Options recognized: 'sgd', 'rmsprop', 'adagrad', adadelta', 'adam'
             See the Keras documentation for a full description of the options
+
+        lr : float
+            Learning rate
+
+        kerasDefaults : list
+            List of default parameter values to ensure consistency between frameworks
 
         Returns
         ----------
@@ -139,7 +150,16 @@ def build_initializer(type, kerasDefaults, seed=None, constant=0.):
 
             See the Keras documentation for a full description of the options
 
-        Returns
+        kerasDefaults : list
+            List of default parameter values to ensure consistency between frameworks
+
+        seed : integer
+            Random number seed
+
+        constant : float
+            Constant value (for the constant initializer only)
+
+        Return
         ----------
         The appropriate Keras initializer function
     """
