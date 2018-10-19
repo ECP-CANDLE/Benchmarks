@@ -56,20 +56,21 @@ def get_function(name):
 
 
 def build_optimizer(type, lr, kerasDefaults):
-    """ Set the optimizer to the appropriate Keras optimizer function 
-        based on the input string and learning rate. Other required values 
+    """ Set the optimizer to the appropriate Keras optimizer function
+        based on the input string and learning rate. Other required values
         are set to the Keras default values
 
         Parameters
         ----------
         type : string
             String to choose the optimizer
+
             Options recognized: 'sgd', 'rmsprop', 'adagrad', adadelta', 'adam'
             See the Keras documentation for a full description of the options
 
-        Return
+        Returns
         ----------
-        Returns the appropriate Keras optimizer function
+        The appropriate Keras optimizer function
     """
 
     if type == 'sgd':
@@ -132,13 +133,15 @@ def build_initializer(type, kerasDefaults, seed=None, constant=0.):
         ----------
         type : string
             String to choose the initializer
+
             Options recognized: 'constant', 'uniform', 'normal', 
-                'glorot_uniform', 'lecun_uniform', 'he_normal' 
+            'glorot_uniform', 'lecun_uniform', 'he_normal'
+
             See the Keras documentation for a full description of the options
 
-        Return
+        Returns
         ----------
-        Returns the appropriate Keras initializer function
+        The appropriate Keras initializer function
     """
 
     if type == 'constant':
