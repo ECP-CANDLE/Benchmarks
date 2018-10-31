@@ -35,6 +35,11 @@ def set_parallelism_threads():
 
 def set_seed(seed):
     """ Set the random number seed to the desired value
+
+        Parameters
+        ----------
+        seed : integer
+            Random number seed. 
     """
 
     set_seed_defaultUtils(seed)
@@ -56,20 +61,27 @@ def get_function(name):
 
 
 def build_optimizer(type, lr, kerasDefaults):
-    """ Set the optimizer to the appropriate Keras optimizer function 
-        based on the input string and learning rate. Other required values 
+    """ Set the optimizer to the appropriate Keras optimizer function
+        based on the input string and learning rate. Other required values
         are set to the Keras default values
 
         Parameters
         ----------
         type : string
             String to choose the optimizer
+
             Options recognized: 'sgd', 'rmsprop', 'adagrad', adadelta', 'adam'
             See the Keras documentation for a full description of the options
 
-        Return
+        lr : float
+            Learning rate
+
+        kerasDefaults : list
+            List of default parameter values to ensure consistency between frameworks
+
+        Returns
         ----------
-        Returns the appropriate Keras optimizer function
+        The appropriate Keras optimizer function
     """
 
     if type == 'sgd':
@@ -132,13 +144,24 @@ def build_initializer(type, kerasDefaults, seed=None, constant=0.):
         ----------
         type : string
             String to choose the initializer
+
             Options recognized: 'constant', 'uniform', 'normal', 
-                'glorot_uniform', 'lecun_uniform', 'he_normal' 
+            'glorot_uniform', 'lecun_uniform', 'he_normal'
+
             See the Keras documentation for a full description of the options
+
+        kerasDefaults : list
+            List of default parameter values to ensure consistency between frameworks
+
+        seed : integer
+            Random number seed
+
+        constant : float
+            Constant value (for the constant initializer only)
 
         Return
         ----------
-        Returns the appropriate Keras initializer function
+        The appropriate Keras initializer function
     """
 
     if type == 'constant':

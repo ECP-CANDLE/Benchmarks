@@ -10,7 +10,16 @@ from keras.callbacks import Callback
 
 
 def compute_trainable_params(model):
+    """ Extract number of parameters from the given Keras model
 
+        Parameters
+        -----------
+        model : Keras model
+
+        Return
+        ----------
+        python dictionary that contains trainable_params, non_trainable_params and total_params
+    """
     trainable_count = int(
         np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
     non_trainable_count = int(
@@ -136,13 +145,32 @@ class CandleRemoteMonitor(Callback):
             file_run_json.write(json.dumps(self.log_messages, indent=4, separators=(',', ': ')))
 
 class TerminateOnTimeOut(Callback):
+    """ This class implements timeout on model training. When the script reaches timeout,
+       this class sets model.stop_training = True
+    """
     def __init__(self, timeout_in_sec = 10):
+        """Initialize TerminateOnTimeOut class.
+
+            Parameters
+            -----------
+            timeout_in_sec : int
+                seconds to timeout
+        """
+
         super(TerminateOnTimeOut, self).__init__()
         self.run_timestamp = None
         self.timeout_in_sec = timeout_in_sec
+
+
     def on_train_begin(self, logs={}):
+        """ Start clock to calculate timeout
+        """
         self.run_timestamp = datetime.now()
+
+
     def on_epoch_end(self, epoch, logs={}):
+        """ On every epoch end, check whether it exceeded timeout and terminate training if necessary
+        """
         run_end = datetime.now()
         run_duration = run_end - self.run_timestamp
         run_in_sec = run_duration.total_seconds() #/ (60 * 60)
