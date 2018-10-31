@@ -32,13 +32,20 @@ def compute_trainable_params(model):
 
 class CandleRemoteMonitor(Callback):
     """Capture Run level output and store/send for monitoring
+
+       Arguments:
+          params: the gParams global parameters dictionary
+          monitor: an array of strings specifying the metrics to be monitored
+                   For every string s, both s and 'val_'+s will be monitored
     """
 
     def __init__(self,
-                 params=None):
+                 params=None,
+                 monitor=None):
         super(CandleRemoteMonitor, self).__init__()
 
         self.global_params = params
+        self.monitor = monitor or []
         self.has_solr_config = False
         if 'solr_root' in params and params['solr_root'] != '':
             self.has_solr_config = True
@@ -86,13 +93,17 @@ class CandleRemoteMonitor(Callback):
         epoch_in_sec = epoch_duration.total_seconds()
         epoch_line = "epoch: {}/{}, duration: {}s, loss: {}, val_loss: {}".format(
             (epoch + 1), epoch_total, epoch_in_sec, loss, val_loss)
+        send = {}
+        for s in self.monitor:
+            send[s] = {'set': logs.get(s)}
+            send['val_'+s] = {'set': logs.get('val_' + s)}
 
-        send = {'run_id': self.run_id,
-                'status': {'set': 'Running'},
-                'training_loss': {'set': loss},
-                'validation_loss': {'set': val_loss},
-                'run_progress': {'add': [epoch_line]}
-               }
+        send.update({'run_id': self.run_id,
+                     'status': {'set': 'Running'},
+                     'training_loss': {'set': loss},
+                     'validation_loss': {'set': val_loss},
+                     'run_progress': {'add': [epoch_line]}
+                     })
         # print("on_epoch_end", send)
         self.log_messages.append(send)
         if self.has_solr_config:
