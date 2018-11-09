@@ -17,10 +17,11 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 from sklearn.model_selection import ShuffleSplit, KFold
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
+lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
-import candle_keras as candle
+# import candle_keras as candle
+import file_utils
 
 
 global_cache = {}
@@ -50,7 +51,7 @@ def set_seed(seed=SEED):
 
 def get_file(url):
     fname = os.path.basename(url)
-    return candle.get_file(fname, origin=url, cache_subdir='Pilot1')
+    return file_utils.get_file(fname, origin=url, cache_subdir='Pilot1')
 
 
 def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):

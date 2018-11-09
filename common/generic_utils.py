@@ -8,7 +8,7 @@ import six
 import marshal
 import types as python_types
 import logging
-from keras.callbacks import Callback
+
 
 def get_from_module(identifier, module_params, module_name,
                     instantiate=False, kwargs=None):
@@ -194,12 +194,3 @@ def display_table(rows, positions):
 
     for objects in rows:
         display_row(objects, positions)
-
-class LoggingCallback(Callback):
-    def __init__(self, print_fcn=print):
-        Callback.__init__(self)
-        self.print_fcn = print_fcn
-
-    def on_epoch_end(self, epoch, logs={}):
-        msg = "[Epoch: %i] %s" % (epoch, ", ".join("%s: %f" % (k, v) for k, v in sorted(logs.items())))
-        self.print_fcn(msg)
