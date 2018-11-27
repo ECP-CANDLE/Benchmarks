@@ -8,7 +8,8 @@ import random
 from skwrapper import regress, classify, train, split_data
 
 
-MODELS = ['LightGBM', 'XGBoost', 'RandomForest']
+# MODELS = ['LightGBM', 'XGBoost', 'RandomForest']
+MODELS = ['LightGBM']
 CV = 3
 THREADS = 4
 OUT_DIR = 'p1save'
