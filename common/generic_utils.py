@@ -39,7 +39,7 @@ def make_tuple(*args):
 
 
 def func_dump(func):
-    '''Serialize user defined function.'''
+    """ Serialize user defined function. """
     code = marshal.dumps(func.__code__).decode('raw_unicode_escape')
     defaults = func.__defaults__
     if func.__closure__:
@@ -50,7 +50,7 @@ def func_dump(func):
 
 
 def func_load(code, defaults=None, closure=None, globs=None):
-    '''Deserialize user defined function.'''
+    """ Deserialize user defined function. """
     if isinstance(code, (tuple, list)):  # unpack previous dump
         code, defaults, closure = code
     code = marshal.loads(code.encode('raw_unicode_escape'))
@@ -62,7 +62,7 @@ def func_load(code, defaults=None, closure=None, globs=None):
 
 
 def func_reconstruct_closure(values):
-    '''Deserialization helper that reconstructs a closure.'''
+    """ Deserialization helper that reconstructs a closure. """
     nums = range(len(values))
     src = ["def func(arg):"]
     src += ["  _%d = arg[%d]" % (n, n) for n in nums]
@@ -77,10 +77,14 @@ def func_reconstruct_closure(values):
 
 class Progbar(object):
     def __init__(self, target, width=30, verbose=1, interval=0.01):
-        '''
-            @param target: total number of steps expected
-            @param interval: minimum visual progress update interval (in seconds)
-        '''
+        """
+            Parameters
+            ------------
+            target: int
+                total number of steps expected
+            interval: float
+                minimum visual progress update interval (in seconds)
+        """
         self.width = width
         self.target = target
         self.sum_values = {}
@@ -93,12 +97,16 @@ class Progbar(object):
         self.verbose = verbose
 
     def update(self, current, values=[], force=False):
-        '''
-            @param current: index of current step
-            @param values: list of tuples (name, value_for_last_step).
-            The progress bar will display averages for these values.
-            @param force: force visual progress update
-        '''
+        """
+            Parameters
+            ------------
+            current : int
+                index of current step
+            values : list of tuples (name, value_for_last_step).
+                The progress bar will display averages for these values.
+            force : boolean
+                force visual progress update
+        """
         for k, v in values:
             if k not in self.sum_values:
                 self.sum_values[k] = [v * (current - self.seen_so_far), current - self.seen_so_far]
