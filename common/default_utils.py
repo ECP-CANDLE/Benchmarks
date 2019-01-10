@@ -33,7 +33,7 @@ DEFAULT_DATATYPE = np.float32
 #### IO UTILS
 
 def fetch_file(link, subdir, untar=False, md5_hash=None):
-    """Convert URL to file path and download the file
+    """ Convert URL to file path and download the file
         if it is not already present in spedified cache.
 
         Parameters
@@ -60,7 +60,7 @@ def fetch_file(link, subdir, untar=False, md5_hash=None):
     return get_file(fname, origin=link, untar=untar, md5_hash=md5_hash, cache_subdir=subdir)
 
 def verify_path(path):
-    """Verify if a directory path exists locally. If the path
+    """ Verify if a directory path exists locally. If the path
         does not exist, but is a valid path, it recursivelly creates
         the specified directory path structure.
 
@@ -75,14 +75,14 @@ def verify_path(path):
 
 
 def set_up_logger(logfile, logger, verbose):
-    """Set up the event logging system. Two handlers are created.
-       One to send log records to a specified file and 
-       one to send log records to the (defaulf) sys.stderr stream.
-       The logger and the file handler are set to DEBUG logging level.
-       The stream handler is set to INFO logging level, or to DEBUG
-       logging level if the verbose flag is specified.
-       Logging messages which are less severe than the level set will
-       be ignored.
+    """ Set up the event logging system. Two handlers are created.
+        One to send log records to a specified file and
+        one to send log records to the (defaulf) sys.stderr stream.
+        The logger and the file handler are set to DEBUG logging level.
+        The stream handler is set to INFO logging level, or to DEBUG
+        logging level if the verbose flag is specified.
+        Logging messages which are less severe than the level set will
+        be ignored.
 
         Parameters
         ----------
@@ -112,7 +112,7 @@ def set_up_logger(logfile, logger, verbose):
 
 
 def eval_string_as_list(str_read, separator, dtype):
-    """Parse a string and convert it into a list of lists.
+    """ Parse a string and convert it into a list of lists.
         
         Parameters
         ----------
@@ -148,7 +148,7 @@ def eval_string_as_list(str_read, separator, dtype):
 
 
 def eval_string_as_list_of_lists(str_read, separator_out, separator_in, dtype):
-    """Parse a string and convert it into a list of lists.
+    """ Parse a string and convert it into a list of lists.
         
         Parameters
         ----------
@@ -200,13 +200,12 @@ def str2bool(v):
 
         Return
         ----------
-        Boolean value. It raises and exception if the provided string cannot
-        be interpreted as a boolean type. 
-
-        Strings recognized as boolean True:
-        'yes', 'true', 't', 'y', '1' and uppercase versions (where applicable).
-        Strings recognized as boolean False:
-        'no', 'false', 'f', 'n', '0' and uppercase versions (where applicable).
+        Boolean value. It raises and exception if the provided string cannot \
+        be interpreted as a boolean type.
+        Strings recognized as boolean True : 
+            'yes', 'true', 't', 'y', '1' and uppercase versions (where applicable).
+        Strings recognized as boolean False : 
+            'no', 'false', 'f', 'n', '0' and uppercase versions (where applicable).
     """
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -636,7 +635,8 @@ def get_choice(name):
 
 
 def directory_from_parameters(params, commonroot='Output'):
-    """Construct output directory path with unique IDs from parameters
+    """ Construct output directory path with unique IDs from parameters
+
         Parameters
         ----------
         params : python dictionary
@@ -676,8 +676,9 @@ class Benchmark:
         It interacts with the argparser to extract command-line options and arguments
         from the benchmark's configuration files.
     """
+
     def __init__(self, filepath, defmodel, framework, prog=None, desc=None, parser=None):
-        """Initialize Benchmark object.
+        """ Initialize Benchmark object.
 
             Parameters
             ----------
@@ -766,8 +767,8 @@ class Benchmark:
 
 
     def format_benchmark_config_arguments(self, dictfileparam):
-        """Functionality to format the particular parameters of
-           the benchmark.
+        """ Functionality to format the particular parameters of
+            the benchmark.
            
             Parameters
             ----------
@@ -822,16 +823,16 @@ class Benchmark:
     
         fileParams = self.format_benchmark_config_arguments(fileParams)
         pprint(fileParams)
-    
+
         return fileParams
 
 
 
     def set_locals(self):
-        """Functionality to set variables specific for the benchmark
-        - required: set of required parameters for the benchmark.
-        - additional_definitions: list of dictionaries describing the additional parameters for the
-        benchmark.
+        """ Functionality to set variables specific for the benchmark
+            - required: set of required parameters for the benchmark.
+            - additional_definitions: list of dictionaries describing \
+                the additional parameters for the benchmark.
         """
     
         pass

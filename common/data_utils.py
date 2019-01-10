@@ -12,11 +12,11 @@ from default_utils import DEFAULT_SEED
 from default_utils import DEFAULT_DATATYPE
 
 def convert_to_class(y_one_hot, dtype=int):
-    """Converts a one-hot class encoding (array with as many positions as total
-       classes, with 1 in the corresponding class position, 0 in the other positions),
-       or soft-max class encoding (array with as many positions as total
-       classes, whose largest valued position is used as class membership)
-       to an integer class encoding.
+    """ Converts a one-hot class encoding (array with as many positions as total
+        classes, with 1 in the corresponding class position, 0 in the other positions),
+        or soft-max class encoding (array with as many positions as total
+        classes, whose largest valued position is used as class membership)
+        to an integer class encoding.
 
         Parameters
         ----------
@@ -38,7 +38,7 @@ def convert_to_class(y_one_hot, dtype=int):
 
 
 def scale_array(mat, scaling=None):
-    """Scale data included in numpy array.
+    """ Scale data included in numpy array.
         
         Parameters
         ----------
@@ -49,14 +49,13 @@ def scale_array(mat, scaling=None):
             Options recognized: 'maxabs', 'minmax', 'std'.
             'maxabs' : scales data to range [-1 to 1].
             'minmax' : scales data to range [-1 to 1].
-            'std'    : scales data to normal variable with
-                       mean 0 and standard deviation 1.
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
             (Default: None, no scaling).
 
         Return
         ----------
-        Returns the numpy array scaled by the method specified.
-        If no scaling method is specified, it returns the numpy
+        Returns the numpy array scaled by the method specified. \
+        If no scaling method is specified, it returns the numpy \
         array unmodified.
     """
     
@@ -79,8 +78,8 @@ def scale_array(mat, scaling=None):
 
 
 def impute_and_scale_array(mat, scaling=None):
-    """Impute missing values with mean and scale data included in numpy array.
-        
+    """ Impute missing values with mean and scale data included in numpy array.
+
         Parameters
         ----------
         mat : numpy array
@@ -90,14 +89,13 @@ def impute_and_scale_array(mat, scaling=None):
             Options recognized: 'maxabs', 'minmax', 'std'.
             'maxabs' : scales data to range [-1 to 1].
             'minmax' : scales data to range [-1 to 1].
-            'std'    : scales data to normal variable with
-                       mean 0 and standard deviation 1.
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
             (Default: None, no scaling).
 
         Return
         ----------
-        Returns the numpy array imputed with the mean value of the
-        column and scaled by the method specified. If no scaling method is specified,
+        Returns the numpy array imputed with the mean value of the \
+        column and scaled by the method specified. If no scaling method is specified, \
         it returns the imputed numpy array.
     """
     
@@ -112,13 +110,13 @@ def impute_and_scale_array(mat, scaling=None):
 def load_X_data(train_file, test_file,
                 drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                 dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
-    """Load training and testing unlabeleled data from the files specified
-       and construct corresponding training and testing pandas DataFrames.
-       Columns to load can be selected or dropped. Order of rows
-       can be shuffled. Data can be rescaled.
-       Training and testing partitions (coming from the respective files)
-       are preserved.
-       This function assumes that the files contain a header with column names.
+    """ Load training and testing unlabeleled data from the files specified
+        and construct corresponding training and testing pandas DataFrames.
+        Columns to load can be selected or dropped. Order of rows
+        can be shuffled. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved.
+        This function assumes that the files contain a header with column names.
 
         Parameters
         ----------
@@ -142,7 +140,7 @@ def load_X_data(train_file, test_file,
             Options recognized: 'maxabs', 'minmax', 'std'.
             'maxabs' : scales data to range [-1 to 1].
             'minmax' : scales data to range [-1 to 1].
-            'std'    : scales data to normal variable with
+            'std'    : scales data to normal variable with \
                        mean 0 and standard deviation 1.
             (Default: None, no scaling).
         dtype : data type
@@ -152,15 +150,12 @@ def load_X_data(train_file, test_file,
             Value to intialize or re-seed the generator.
             (Default: DEFAULT_SEED defined in default_utils).
 
-
         Return
         ----------
         X_train : pandas DataFrame
-            Data for training loaded in a pandas DataFrame and
-            pre-processed as specified.
+            Data for training loaded in a pandas DataFrame and pre-processed as specified.
         X_test : pandas DataFrame
-            Data for testing loaded in a pandas DataFrame and
-            pre-processed as specified.
+            Data for testing loaded in a pandas DataFrame and pre-processed as specified.
     """
 
     # compensates for the columns to drop if there is a feature subselection
@@ -196,14 +191,14 @@ def load_X_data(train_file, test_file,
 def load_X_data2(train_file, test_file,
                 drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                 validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
-    """Load training and testing unlabeleled data from the files specified.
-       Further split trainig data into training and validation partitions,
-       and construct corresponding training, validation and testing pandas DataFrames.
-       Columns to load can be selected or dropped. Order of rows
-       can be shuffled. Data can be rescaled.
-       Training and testing partitions (coming from the respective files)
-       are preserved, but training is split into training and validation partitions.
-       This function assumes that the files contain a header with column names.
+    """ Load training and testing unlabeleled data from the files specified.
+        Further split trainig data into training and validation partitions,
+        and construct corresponding training, validation and testing pandas DataFrames.
+        Columns to load can be selected or dropped. Order of rows
+        can be shuffled. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved, but training is split into training and validation partitions.
+        This function assumes that the files contain a header with column names.
 
         Parameters
         ----------
@@ -227,8 +222,7 @@ def load_X_data2(train_file, test_file,
             Options recognized: 'maxabs', 'minmax', 'std'.
             'maxabs' : scales data to range [-1 to 1].
             'minmax' : scales data to range [-1 to 1].
-            'std'    : scales data to normal variable with
-                       mean 0 and standard deviation 1.
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
             (Default: None, no scaling).
         validation_split : float
             Fraction of training data to set aside for validation.
@@ -292,14 +286,14 @@ def load_X_data2(train_file, test_file,
 def load_Xy_one_hot_data(train_file, test_file,
                         class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                         dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
-    """Load training and testing data from the files specified, with a column indicated to use as label.
-       Construct corresponding training and testing pandas DataFrames,
-       separated into data (i.e. features) and labels. Labels to output are one-hot encoded (categorical).
-       Columns to load can be selected or dropped. Order of rows
-       can be shuffled. Data can be rescaled.
-       Training and testing partitions (coming from the respective files)
-       are preserved.
-       This function assumes that the files contain a header with column names.
+    """ Load training and testing data from the files specified, with a column indicated to use as label.
+        Construct corresponding training and testing pandas DataFrames,
+        separated into data (i.e. features) and labels. Labels to output are one-hot encoded (categorical).
+        Columns to load can be selected or dropped. Order of rows
+        can be shuffled. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved.
+        This function assumes that the files contain a header with column names.
 
         Parameters
         ----------
@@ -327,8 +321,7 @@ def load_Xy_one_hot_data(train_file, test_file,
             Options recognized: 'maxabs', 'minmax', 'std'.
             'maxabs' : scales data to range [-1 to 1].
             'minmax' : scales data to range [-1 to 1].
-            'std'    : scales data to normal variable with
-                       mean 0 and standard deviation 1.
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
             (Default: None, no scaling).
         dtype : data type
             Data type to use for the output pandas DataFrames.
@@ -398,15 +391,15 @@ def load_Xy_one_hot_data(train_file, test_file,
 def load_Xy_one_hot_data2(train_file, test_file,
                     class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                     validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
-    """Load training and testing data from the files specified, with a column indicated to use as label.
-       Further split trainig data into training and validation partitions,
-       and construct corresponding training, validation and testing pandas DataFrames,
-       separated into data (i.e. features) and labels. Labels to output are one-hot encoded (categorical).
-       Columns to load can be selected or dropped. Order of rows
-       can be shuffled. Data can be rescaled.
-       Training and testing partitions (coming from the respective files)
-       are preserved, but training is split into training and validation partitions.
-       This function assumes that the files contain a header with column names.
+    """ Load training and testing data from the files specified, with a column indicated to use as label.
+        Further split trainig data into training and validation partitions,
+        and construct corresponding training, validation and testing pandas DataFrames,
+        separated into data (i.e. features) and labels. Labels to output are one-hot encoded (categorical).
+        Columns to load can be selected or dropped. Order of rows
+        can be shuffled. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved, but training is split into training and validation partitions.
+        This function assumes that the files contain a header with column names.
 
         Parameters
         ----------
@@ -434,8 +427,7 @@ def load_Xy_one_hot_data2(train_file, test_file,
             Options recognized: 'maxabs', 'minmax', 'std'.
             'maxabs' : scales data to range [-1 to 1].
             'minmax' : scales data to range [-1 to 1].
-            'std'    : scales data to normal variable with
-                       mean 0 and standard deviation 1.
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
             (Default: None, no scaling).
         validation_split : float
             Fraction of training data to set aside for validation.
@@ -517,17 +509,17 @@ def load_Xy_one_hot_data2(train_file, test_file,
 
 def load_Xy_data2(train_file, test_file, class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
                   validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
-    """Load training and testing data from the files specified, with a column indicated to use as label.
-       Further split trainig data into training and validation partitions,
-       and construct corresponding training, validation and testing pandas DataFrames,
-       separated into data (i.e. features) and labels.
-       Labels to output can be integer labels (for classification) or
-       continuous labels (for regression).
-       Columns to load can be selected or dropped. Order of rows
-       can be shuffled. Data can be rescaled.
-       Training and testing partitions (coming from the respective files)
-       are preserved, but training is split into training and validation partitions.
-       This function assumes that the files contain a header with column names.
+    """ Load training and testing data from the files specified, with a column indicated to use as label.
+        Further split trainig data into training and validation partitions,
+        and construct corresponding training, validation and testing pandas DataFrames,
+        separated into data (i.e. features) and labels.
+        Labels to output can be integer labels (for classification) or
+        continuous labels (for regression).
+        Columns to load can be selected or dropped. Order of rows
+        can be shuffled. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved, but training is split into training and validation partitions.
+        This function assumes that the files contain a header with column names.
 
         Parameters
         ----------
@@ -555,8 +547,7 @@ def load_Xy_data2(train_file, test_file, class_col=None, drop_cols=None, n_cols=
             Options recognized: 'maxabs', 'minmax', 'std'.
             'maxabs' : scales data to range [-1 to 1].
             'minmax' : scales data to range [-1 to 1].
-            'std'    : scales data to normal variable with
-                       mean 0 and standard deviation 1.
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
             (Default: None, no scaling).
         validation_split : float
             Fraction of training data to set aside for validation.
@@ -604,14 +595,14 @@ def load_Xy_data2(train_file, test_file, class_col=None, drop_cols=None, n_cols=
 
 
 def load_Xy_data_noheader(train_file, test_file, classes, usecols=None, scaling=None, dtype=DEFAULT_DATATYPE):
-    """Load training and testing data from the files specified, with the first column to use as label.
-       Construct corresponding training and testing pandas DataFrames,
-       separated into data (i.e. features) and labels.
-       Labels to output are one-hot encoded (categorical).
-       Columns to load can be selected. Data can be rescaled.
-       Training and testing partitions (coming from the respective files)
-       are preserved.
-       This function assumes that the files do not contain a header.
+    """ Load training and testing data from the files specified, with the first column to use as label.
+        Construct corresponding training and testing pandas DataFrames,
+        separated into data (i.e. features) and labels.
+        Labels to output are one-hot encoded (categorical).
+        Columns to load can be selected. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved.
+        This function assumes that the files do not contain a header.
 
         Parameters
         ----------
@@ -630,8 +621,7 @@ def load_Xy_data_noheader(train_file, test_file, classes, usecols=None, scaling=
             Options recognized: 'maxabs', 'minmax', 'std'.
             'maxabs' : scales data to range [-1 to 1].
             'minmax' : scales data to range [-1 to 1].
-            'std'    : scales data to normal variable with
-                       mean 0 and standard deviation 1.
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
             (Default: None, no scaling).
         dtype : data type
             Data type to use for the output pandas DataFrames.
@@ -695,18 +685,18 @@ def load_csv_data(train_path, test_path=None, sep=',', nrows=None,
                   validation_split=None, return_dataframe=True,
                   return_header=False, seed=DEFAULT_SEED):
 
-    """Load data from the files specified.
-       Columns corresponding to data features and labels can be specified. A one-hot
-       encoding can be used for either features or labels.
-       If validation_split is specified, trainig data is further split into training
-       and validation partitions.
-       pandas DataFrames are used to load and pre-process the data. If specified,
-       those DataFrames are returned. Otherwise just values are returned.
-       Labels to output can be integer labels (for classification) or
-       continuous labels (for regression).
-       Columns to load can be specified, randomly selected or a subset can be dropped.
-       Order of rows can be shuffled. Data can be rescaled.
-       This function assumes that the files contain a header with column names.
+    """ Load data from the files specified.
+        Columns corresponding to data features and labels can be specified. A one-hot
+        encoding can be used for either features or labels.
+        If validation_split is specified, trainig data is further split into training
+        and validation partitions.
+        pandas DataFrames are used to load and pre-process the data. If specified,
+        those DataFrames are returned. Otherwise just values are returned.
+        Labels to output can be integer labels (for classification) or
+        continuous labels (for regression).
+        Columns to load can be specified, randomly selected or a subset can be dropped.
+        Order of rows can be shuffled. Data can be rescaled.
+        This function assumes that the files contain a header with column names.
 
         Parameters
         ----------
@@ -750,8 +740,7 @@ def load_csv_data(train_path, test_path=None, sep=',', nrows=None,
             Options recognized: 'maxabs', 'minmax', 'std'.
             'maxabs' : scales data to range [-1 to 1].
             'minmax' : scales data to range [-1 to 1].
-            'std'    : scales data to normal variable with
-                       mean 0 and standard deviation 1.
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
             (Default: None, no scaling).
         dtype : data type
             Data type to use for the output pandas DataFrames.
@@ -774,9 +763,9 @@ def load_csv_data(train_path, test_path=None, sep=',', nrows=None,
 
         Return
         ----------
-        Tuples of data features and labels are returned, for
-        train, validation and testing partitions, together with the column
-        names (headers). The specific objects to return depend
+        Tuples of data features and labels are returned, for \
+        train, validation and testing partitions, together with the column \
+        names (headers). The specific objects to return depend \
         on the options selected.
     """
 

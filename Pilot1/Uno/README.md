@@ -158,3 +158,17 @@ Training Uno on all data sources is slow. The `--train_sources` parameter can be
 ```
 uno_baseline_keras2.py --train_sources CCLE --cache cache/CCLE --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True
 ```
+
+## Profile runs
+We have run the same configuration across multiple machines and compared the resource utilization. 
+```
+python uno_baseline_keras2.py --conf uno_perf_benchmark.txt
+```
+
+| Machine | Time to complete (HH:mm:ss) | Time per epoch (s) | Perf factor <sup>*</sup> | CPU % | Mem % | Mem GB | GPU % | GPU Mem % | Note |
+| ------- | --------------------------: | -----------------: | -----------------------: | ----: | ----: | -----: | ----: | --------: | ---- |
+| Theta   | 2:26:10 | 3268 | 0.20 | 1.1 | 5.9 | 9.6| | | |
+| Nucleus | 0:32:11 | 518 | 1.23 | 39.1 | 12.7 | 30.6 | 2.1 | 4.8 | |
+| Tesla (K20) | 0:43:21 | 638 | 1.00 | 35.5 | 31.8 | 9.6 | 8.9 | 6.5 | |
+| Titan | | | | | | | | |keras version 2.0.3 does not supprot model.clone_model() which is introduced in 2.0.7
+* Time per epoch on the machine divided by time per epoch of Titan (or Tesla)

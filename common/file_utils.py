@@ -40,20 +40,28 @@ else:
 
 def get_file(fname, origin, untar=False,
              md5_hash=None, cache_subdir='common'):
-    '''Downloads a file from a URL if it not already in the cache.
+    """ Downloads a file from a URL if it not already in the cache.
+        Passing the MD5 hash will verify the file after download as well
+        as if it is already present in the cache.
 
-    Passing the MD5 hash will verify the file after download as well as if it is already present in the cache.
+        Parameters
+        ----------
+        fname : string
+            name of the file
+        origin : string
+            original URL of the file
+        untar : boolean
+            whether the file should be decompressed
+        md5_hash : string
+            MD5 hash of the file for verification
+        cache_subdir : string
+            directory being used as the cache
 
-    # Arguments
-        fname: name of the file
-        origin: original URL of the file
-        untar: boolean, whether the file should be decompressed
-        md5_hash: MD5 hash of the file for verification
-        cache_subdir: directory being used as the cache
-
-    # Returns
+        Returns
+        ----------
         Path to the downloaded file
-    '''
+    """
+
     file_path = os.path.dirname(os.path.realpath(__file__))
     datadir_base = os.path.expanduser(os.path.join(file_path, '..', 'Data'))
     datadir = os.path.join(datadir_base, cache_subdir)
@@ -134,15 +142,20 @@ def get_file(fname, origin, untar=False,
 
 
 def validate_file(fpath, md5_hash):
-    '''Validates a file against a MD5 hash
+    """ Validates a file against a MD5 hash
 
-    # Arguments
-        fpath: path to the file being validated
-        md5_hash: the MD5 hash being validated against
+        Parameters
+        ----------
+        fpath : string
+            path to the file being validated
+        md5_hash : string
+            the MD5 hash being validated against
 
-    # Returns
-        Whether the file is valid
-    '''
+        Returns
+        ----------
+        boolean
+            Whether the file is valid
+    """
     hasher = hashlib.md5()
     with open(fpath, 'rb') as f:
         buf = f.read()
