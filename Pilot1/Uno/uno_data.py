@@ -434,14 +434,22 @@ def load_genemania_adj_matrix(fp="GraphCovTestPMDR/GeneMania_adj.hdf"):
     return df
 
 def align_features(df, adj, features_to_ensembl="/home/aclyde11/scratch-area/ensembl_name_rnaseq_dict.hdf"):
+    print("aligning genemania!")
     mapper = pd.read_hdf(features_to_ensembl, key="dict").to_dict()
     df.rename(mapper, axis=1)
+    print("from data")
+    print (df.columns)
+    print ("from gnee")
+    print (mapper.keys())
     data_features = set(df.columns)
     adj_features = set(adj.columns)
     common_features = data_features.intersection(adj_features)
+    print("There are %i common features" % len(common_features))
     df = df.drop(data_features.difference(common_features), axis=1)
     adj = adj.drop(adj_features.difference(common_features), axis=1).drop(adj_features.difference(common_features), axis=0)
     df = df[adj.columns]
+    print("Final Shapes: ")
+    print(df.shape, adj.shape)
     return df, adj
 
 def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True,
