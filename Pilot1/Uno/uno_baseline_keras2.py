@@ -23,6 +23,7 @@ from keras.utils.vis_utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
+import scipy.scipy.sparse.csgraph as csgraph
 
 # For non-interactive plotting
 import matplotlib as mpl
@@ -206,7 +207,35 @@ class ModelRecorder(Callback):
             self.best_val_loss = val_loss
 
 
-def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
+
+def build_feature_model_genes(input_shape, name='', dense_layers=[1000, 1000],
+                        activation='relu', residual=False,
+                        dropout_rate=0, permanent_dropout=True, regularize_genes=None):
+    x_input = Input(shape=input_shape)
+    h = x_input
+    to_reg = (regularize_genes is not None)
+    for i, layer in enumerate(dense_layers):
+        x = h
+        if to_reg:
+            h = Dense(layer, activation=activation, kernel_regularizer=regularize_genes)(h)
+            to_reg = False
+        else:
+            h = Dense(layer, activation=activation)(h)
+        if dropout_rate > 0:
+            if permanent_dropout:
+                h = PermanentDropout(dropout_rate)(h)
+            else:
+                h = Dropout(dropout_rate)(h)
+        if residual:
+            try:
+                h = keras.layers.add([h, x])
+            except ValueError:
+                pass
+    model = Model(x_input, h, name=name)
+    return model
+
+
+def build_feature_model_drugs(input_shape, name='', dense_layers=[1000, 1000],
                         activation='relu', residual=False,
                         dropout_rate=0, permanent_dropout=True):
     x_input = Input(shape=input_shape)
@@ -227,16 +256,28 @@ def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
     model = Model(x_input, h, name=name)
     return model
 
+def make_graph_regularize(adj_matrix=None, lam = 0.001):
+    return lambda weight_matrix : lam * np.abs(weight_matrix).T *  adj_matrix * np.abs(weight_matrix)
 
-def build_model(loader, args, permanent_dropout=True, silent=False):
+
+def build_model(loader, args, permanent_dropout=True, silent=False, adj=None):
     input_models = {}
     dropout_rate = args.drop
+    regularizers = None
+    if adj is not None:
+        regularizers =  make_graph_regularize(adj_matrix=adj, lam=args.genemania_regularizers_lam)
     for fea_type, shape in loader.feature_shapes.items():
+        print("Loaded data: shapes: %s %s" % (fea_type, shape))
         base_type = fea_type.split('.')[0]
         if base_type in ['cell', 'drug']:
-            box = build_feature_model(input_shape=shape, name=fea_type,
-                                      dense_layers=args.dense_feature_layers,
-                                      dropout_rate=dropout_rate, permanent_dropout=permanent_dropout)
+            if base_type == 'cell':
+                box = build_feature_model_genes(input_shape=shape, name=fea_type,
+                                          dense_layers=args.dense_feature_layers,
+                                          dropout_rate=dropout_rate, permanent_dropout=permanent_dropout, regularize_genes=regularizers)
+            else:
+                box = build_feature_model_drugs(input_shape=shape, name=fea_type,
+                                                dense_layers=args.dense_feature_layers,
+                                                dropout_rate=dropout_rate, permanent_dropout=permanent_dropout)
             if not silent:
                 logger.debug('Feature encoding submodel for %s:', fea_type)
                 box.summary(print_fn=logger.debug)
@@ -276,6 +317,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
     return Model(inputs, output)
 
 
+## to do figure out....
 def initialize_parameters():
 
     # Build benchmark object
@@ -319,6 +361,8 @@ def run(params):
                 test_sources=args.test_sources,
                 embed_feature_source=not args.no_feature_source,
                 encode_response_source=not args.no_response_source,
+                load_genemania_adj_matrix=args.genemania_regularizers,
+                genemania_file_path=args.genemania_filepath
                 )
 
     val_split = args.validation_split
@@ -342,8 +386,7 @@ def run(params):
 
     loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
                           cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug)
-
-    model = build_model(loader, args)
+    model = build_model(loader, args, loader.adj)
     logger.info('Combined model:')
     model.summary(print_fn=logger.info)
     # plot_model(model, to_file=prefix+'.model.png', show_shapes=True)
@@ -370,7 +413,7 @@ def run(params):
             logger.info('Cross validation fold {}/{}:'.format(fold+1, cv))
             cv_ext = '.cv{}'.format(fold+1)
 
-        model = build_model(loader, args, silent=True)
+        model = build_model(loader, args, silent=True, loader=loader.adj)
 
         optimizer = optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
         base_lr = args.base_lr or K.get_value(optimizer.lr)

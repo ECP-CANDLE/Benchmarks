@@ -63,6 +63,14 @@ additional_definitions = [
         'nargs':'+',
         'choices':['train', 'all', 'CCLE', 'CTRP', 'gCSI', 'GDSC', 'NCI60', 'SCL', 'SCLC', 'ALMANAC'],
         'help':'use one or more sources of drug response data for testing'},
+    {'name':'genemania_regularizers',
+        'type' : candle.str2bool,
+        'default': False,
+        'help': 'whether or not to load genemania matrix and splice features of genes to match.'
+     },
+    {'name':'genemania_filepath',
+        'type':str,
+        'help': 'file path to hdf file with _adj as key.'},
 # Sample selection        
     {'name':'cell_types',
         'nargs':'+', 

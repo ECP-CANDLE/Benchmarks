@@ -429,10 +429,24 @@ def encode_sources(sources):
     df = df.set_index('Source').reset_index()
     return df
 
+def load_genemania_adj_matrix(fp="GraphCovTestPMDR/GeneMania_adj.hdf"):
+    df = pd.read_hdf(fp, key="adj")
+    return df
+
+def align_features(df, adj, features_to_ensembl="/home/aclyde11/scratch-area/ensembl_name_rnaseq_dict.hdf"):
+    mapper = pd.read_hdf(features_to_ensembl, key="dict").to_dict()
+    df.rename(mapper, axis=1)
+    data_features = set(df.columns)
+    adj_features = set(adj.columns)
+    common_features = data_features.intersection(adj_features)
+    df = df.drop(data_features.difference(common_features), axis=1)
+    adj = adj.drop(adj_features.difference(common_features), axis=1).drop(adj_features.difference(common_features), axis=0)
+    df = df[adj.columns]
+    return df, adj
 
 def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True,
                      use_landmark_genes=False, use_filtered_genes=False, preprocess_rnaseq=None,
-                     embed_feature_source=False, sample_set=None, index_by_sample=False):
+                     embed_feature_source=False, sample_set=None, index_by_sample=False, adj_matrix=None):
 
     if use_landmark_genes:
         filename =  'combined_rnaseq_data_lincs1000'
@@ -478,6 +492,11 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
 
     df2 = impute_and_scale(df2, scaling, imputing)
 
+
+    adj = None
+    if adj_matrix is not None:
+        df2, adj = align_features(df2, adj_matrix)
+
     df = pd.concat([df1, df2], axis=1)
 
     # scaling needs to be done before subsampling
@@ -490,7 +509,9 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
 
     logger.info('Loaded combined RNAseq data: %s', df.shape)
 
-    return df
+    return df, adj
+
+
 
 
 def select_drugs_with_response_range(df_response, lower=0, upper=0, span=0, lower_median=None, upper_median=None):
@@ -731,7 +752,9 @@ class CombinedDataLoader(object):
              # val_sources='train',
              # test_sources=['CCLE', 'gCSI'],
              test_sources=['train'],
-             partition_by='drug_pair'):
+             partition_by='drug_pair',
+             use_genemania_adj_matrix=False,
+             genemania_file_path=None):
 
         params = locals().copy()
         del params['self']
@@ -802,10 +825,13 @@ class CombinedDataLoader(object):
         df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response, lower_median=drug_median_response_min, upper_median=drug_median_response_max)
         logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
 
+        self.adj = None
+        if use_genemania_adj_matrix:
+            self.adj = load_genemania_adj_matrix(genemania_file_path)
         for fea in cell_features:
             fea = fea.lower()
             if fea == 'rnaseq' or fea == 'expression':
-                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, preprocess_rnaseq=preprocess_rnaseq, embed_feature_source=embed_feature_source)
+                df_cell_rnaseq, self.adj = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, preprocess_rnaseq=preprocess_rnaseq, embed_feature_source=embed_feature_source, adj_matrix=self.adj)
 
         for fea in drug_features:
             fea = fea.lower()
