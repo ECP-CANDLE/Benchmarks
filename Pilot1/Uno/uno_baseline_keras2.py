@@ -362,7 +362,7 @@ def run(params):
                 test_sources=args.test_sources,
                 embed_feature_source=not args.no_feature_source,
                 encode_response_source=not args.no_response_source,
-                load_genemania_adj_matrix=args.genemania_regularizers,
+                use_genemania_adj_matrix=args.genemania_regularizers,
                 genemania_file_path=args.genemania_filepath
                 )
 
