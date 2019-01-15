@@ -23,7 +23,7 @@ from keras.utils.vis_utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
-import scipy.scipy.sparse.csgraph as csgraph
+import scipy.sparse.csgraph
 
 # For non-interactive plotting
 import matplotlib as mpl
@@ -257,8 +257,9 @@ def build_feature_model_drugs(input_shape, name='', dense_layers=[1000, 1000],
     return model
 
 def make_graph_regularize(adj_matrix=None, lam = 0.001):
-    return lambda weight_matrix : lam * np.abs(weight_matrix).T *  adj_matrix * np.abs(weight_matrix)
-
+    lapac = scipy.sparse.csgraph.csgraph_from_dense(adj_matrix)
+    lapac = scipy.sparse.csgraph.laplacian(lapac).todense()
+    return lambda weight_matrix : lam * np.abs(weight_matrix).T *  lapac * np.abs(weight_matrix)
 
 def build_model(loader, args, permanent_dropout=True, silent=False, adj=None):
     input_models = {}
