@@ -6,6 +6,8 @@ import logging
 import os
 import pickle
 import sys
+import mygene
+
 
 import numpy as np
 import pandas as pd
@@ -435,7 +437,11 @@ def load_genemania_adj_matrix(fp="GraphCovTestPMDR/GeneMania_adj.hdf"):
 
 def align_features(df, adj, features_to_ensembl="/home/aclyde11/scratch-area/ensembl_name_rnaseq_dict.hdf"):
     print("aligning genemania!")
-    mapper = pd.read_hdf(features_to_ensembl, key="dict").to_dict()
+
+    gene_names = df.columns
+    mg = mygene.MyGeneInfo()
+    qu = mg.querymany(gene_names, scopes='symbol', fields="ensembl.gene", as_dataframe=True, df_index=True)
+    mapper = qu[qu['ensembl.gene'].apply(lambda x: str(x)[:4]) == "ENSG"]['ensembl.gene'].to_dict()
     df.rename(mapper, axis=1)
     print("from data")
     print (df.columns)
