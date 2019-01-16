@@ -455,7 +455,7 @@ def align_features(df, adj, features_to_ensembl="/home/aclyde11/scratch-area/ens
     df = df.drop(data_features.difference(common_features), axis=1)
     adj = adj.drop(adj_features.difference(common_features), axis=1).drop(adj_features.difference(common_features), axis=0)
     df = df[adj.columns]
-    df.columns = df.columns.apply(lambda x : :"rnaseq." + x)
+    df.columns = df.columns.apply(lambda x :"rnaseq." + x)
     print("Final Shapes: ")
     print(df.shape, adj.shape)
     return df, adj
