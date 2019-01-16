@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-if [ "$1" != "-p" ]; then
+if [ "$0" != "-p" ]; then
     git pull origin master
 fi
 rm -r cache
