@@ -447,6 +447,7 @@ def run(params):
         if args.tb:
             callbacks.append(tensorboard)
 
+
         train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
 

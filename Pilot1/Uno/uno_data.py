@@ -437,13 +437,13 @@ def load_genemania_adj_matrix(fp="GraphCovTestPMDR/GeneMania_adj.hdf"):
 
 def align_features(df, adj, features_to_ensembl="/home/aclyde11/scratch-area/ensembl_name_rnaseq_dict.hdf"):
     print("aligning genemania!")
-    df_orig = df.columns
+    df_orig = df.columns.to_series()
     df.columns = df_orig.apply(lambda x : str(x)[7:])
     gene_names = df.columns
     mg = mygene.MyGeneInfo()
     qu = mg.querymany(gene_names, scopes='symbol', fields="ensembl.gene", as_dataframe=True, df_index=True)
     mapper = qu[qu['ensembl.gene'].apply(lambda x: str(x)[:4]) == "ENSG"]['ensembl.gene'].to_dict()
-    df.rename(mapper, axis=1)
+    df = df.rename(mapper, axis=1)
     print("from data")
     print (df.columns)
     print ("from gnee")
@@ -455,7 +455,7 @@ def align_features(df, adj, features_to_ensembl="/home/aclyde11/scratch-area/ens
     df = df.drop(data_features.difference(common_features), axis=1)
     adj = adj.drop(adj_features.difference(common_features), axis=1).drop(adj_features.difference(common_features), axis=0)
     df = df[adj.columns]
-    df.columns = df.columns.apply(lambda x :"rnaseq." + x)
+    df.columns = df.columns.to_series().apply(lambda x :"rnaseq." + x)
     print("Final Shapes: ")
     print(df.shape, adj.shape)
     return df, adj
