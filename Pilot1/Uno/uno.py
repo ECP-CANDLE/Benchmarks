@@ -68,6 +68,10 @@ additional_definitions = [
         'default': False,
         'help': 'whether or not to load genemania matrix and splice features of genes to match.'
      },
+    {'name':'genemania_regularizers_lam',
+     'type': float,
+     'default' : 0.001,
+     'help' : 'lambda for associated reuglarization layer.'},
     {'name':'genemania_filepath',
         'type':str,
         'help': 'file path to hdf file with _adj as key.'},

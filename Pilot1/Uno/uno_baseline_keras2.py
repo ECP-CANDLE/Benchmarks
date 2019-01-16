@@ -24,7 +24,7 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
 import scipy.sparse.csgraph
-
+import tensorflow as tf
 # For non-interactive plotting
 import matplotlib as mpl
 mpl.use('Agg')
@@ -259,7 +259,8 @@ def build_feature_model_drugs(input_shape, name='', dense_layers=[1000, 1000],
 def make_graph_regularize(adj_matrix=None, lam = 0.001):
     lapac = scipy.sparse.csgraph.csgraph_from_dense(adj_matrix)
     lapac = scipy.sparse.csgraph.laplacian(lapac).todense()
-    return lambda weight_matrix : lam * np.abs(weight_matrix).T *  lapac * np.abs(weight_matrix)
+    lapac = tf.constant(lapac)
+    return lambda weight_matrix : lam * tf.matmul(K.transpose(K.abs(weight_matrix)) , tf.matmul( lapac * K.abs(weight_matrix)))
 
 def build_model(loader, args, permanent_dropout=True, silent=False, adj=None):
     input_models = {}
@@ -414,7 +415,7 @@ def run(params):
             logger.info('Cross validation fold {}/{}:'.format(fold+1, cv))
             cv_ext = '.cv{}'.format(fold+1)
 
-        model = build_model(loader, args, silent=True, loader=loader.adj)
+        model = build_model(loader, args, silent=True, adj=loader.adj)
 
         optimizer = optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
         base_lr = args.base_lr or K.get_value(optimizer.lr)
