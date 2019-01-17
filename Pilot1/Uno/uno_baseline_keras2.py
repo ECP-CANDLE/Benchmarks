@@ -328,7 +328,8 @@ def run(params):
     if args.export_data:
         fname = args.export_data
         loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
-                              cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug)
+                              cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug,
+                              cell_subset_path=args.cell_subset_path, drug_subset_path=args.drug_subset_path)
         train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
         x_train_list, y_train = train_gen.get_slice(size=train_gen.size, dataframe=True, single=args.single)
@@ -342,7 +343,8 @@ def run(params):
         return
 
     loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
-                          cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug)
+                          cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug,
+                          cell_subset_path=args.cell_subset_path, drug_subset_path=args.drug_subset_path)
 
     model = build_model(loader, args)
     logger.info('Combined model:')

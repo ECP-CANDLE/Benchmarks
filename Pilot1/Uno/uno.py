@@ -66,9 +66,15 @@ additional_definitions = [
 # Sample selection
     {'name':'cell_types',
         'nargs':'+',
-        'type':str,
-        'default':'argparse.SUPPRESS',
         'help':'limit training and test data to one or more tissue types'},
+    {'name':'cell_subset_path',
+        'type': str,
+        'default': '',
+        'help':'path for file with space delimited molecular sample IDs to keep'},
+    {'name':'drug_subset_path',
+        'type': str,
+        'default': '',
+        'help':'path for file with space delimited drug IDs to keep'},
     {'name':'drug_median_response_min',
         'type':float,
         'default':-1,
@@ -77,6 +83,7 @@ additional_definitions = [
         'type':float,
         'default':1,
         'help':'keep drugs whose median response is less than the threshold'},
+# Training
     {'name':'no_feature_source',
         'type': candle.str2bool,
         'default': False,
@@ -110,7 +117,6 @@ additional_definitions = [
         'type': candle.str2bool,
         'default': False,
         'help':'add skip connections to the layers'},
-# Training
     {'name':'reduce_lr',
         'type': candle.str2bool,
         'default': False,

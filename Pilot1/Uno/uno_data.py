@@ -503,6 +503,16 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
     return df
 
 
+def read_set_from_file(path):
+    if path:
+        with open(path, 'r') as f:
+            text = f.read().strip()
+            subset = text.split()
+    else:
+        subset = None
+    return subset
+
+
 def select_drugs_with_response_range(df_response, lower=0, upper=0, span=0, lower_median=None, upper_median=None):
     df = df_response.groupby(['Drug1', 'Sample'])['Growth'].agg(['min', 'max', 'median'])
     df['span'] = df['max'].clip(lower=-1, upper=1) - df['min'].clip(lower=-1, upper=1)
@@ -611,7 +621,8 @@ class CombinedDataLoader(object):
         logger.info('Saved data to cache: %s', fname)
 
     def partition_data(self, partition_by=None, cv_folds=1, train_split=0.7, val_split=0.2,
-                       cell_types=None, by_cell=None, by_drug=None):
+                       cell_types=None, by_cell=None, by_drug=None,
+                       cell_subset_path=None, drug_subset_path=None):
 
         seed = self.seed
         train_sep_sources = self.train_sep_sources
@@ -643,6 +654,16 @@ class CombinedDataLoader(object):
             logger.info('Mapped sample IDs for %s: %s', by_cell, cell_ids)
             mask &= (df_response['Sample'].isin(cell_ids))
             test_mask &= (df_response['Sample'].isin(cell_ids))
+
+        if cell_subset_path:
+            cell_subset = read_set_from_file(cell_subset_path)
+            mask &= (df_response['Sample'].isin(cell_subset))
+            test_mask &= (df_response['Sample'].isin(cell_subset))
+
+        if drug_subset_path:
+            drug_subset = read_set_from_file(drug_subset_path)
+            mask &= (df_response['Drug1'].isin(drug_subset)) & ((df_response['Drug2'].isnull()) | (df_response['Drug2'].isin(drug_subset)))
+            test_mask &= (df_response['Drug1'].isin(drug_subset)) & ((df_response['Drug2'].isnull()) | (df_response['Drug2'].isin(drug_subset)))
 
         if cell_types:
             df_type = load_cell_metadata()
@@ -787,12 +808,7 @@ class CombinedDataLoader(object):
         df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response, lower_median=drug_median_response_min, upper_median=drug_median_response_max)
         logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
 
-        if feature_subset_path:
-            with open(feature_subset_path, 'r') as f:
-                text = f.read().strip()
-            feature_subset = text.split()
-        else:
-            feature_subset = None
+        feature_subset = read_set_from_file(feature_subset_path)
 
         for fea in cell_features:
             fea = fea.lower()
@@ -822,7 +838,6 @@ class CombinedDataLoader(object):
         for fea in cell_features:
             df_cell = locals()[cell_df_dict[fea]]
             df_cell_ids = df_cell_ids.merge(df_cell[['Sample']]).drop_duplicates()
-
         logger.info('  %d molecular samples with feature and response data', df_cell_ids.shape[0])
 
         df_drug_ids = df_drugs_with_response
