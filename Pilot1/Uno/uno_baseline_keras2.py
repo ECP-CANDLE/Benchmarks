@@ -281,7 +281,7 @@ def initialize_parameters():
     # Build benchmark object
     unoBmk = benchmark.BenchmarkUno(benchmark.file_path, 'uno_default_model.txt', 'keras',
     prog='uno_baseline', desc='Build neural network based models to predict tumor response to single and paired drugs.')
-    
+
     # Initialize parameters
     gParameters = candle.initialize_parameters(unoBmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
@@ -313,6 +313,7 @@ def run(params):
                 drug_median_response_max=args.drug_median_response_max,
                 use_landmark_genes=args.use_landmark_genes,
                 use_filtered_genes=args.use_filtered_genes,
+                feature_subset_path=args.feature_subset_path,
                 preprocess_rnaseq=args.preprocess_rnaseq,
                 single=args.single,
                 train_sources=args.train_sources,

@@ -241,7 +241,7 @@ def load_drug_data(ncols=None, scaling='std', imputing='mean', dropna=None, add_
     return df_desc, df_fp
 
 
-def load_drug_descriptors(ncols=None, scaling='std', imputing='mean', dropna=None, add_prefix=True):
+def load_drug_descriptors(ncols=None, scaling='std', imputing='mean', dropna=None, add_prefix=True, feature_subset=None):
     df_info = load_drug_info()
     df_info['Drug'] = df_info['PUBCHEM']
 
@@ -253,9 +253,11 @@ def load_drug_descriptors(ncols=None, scaling='std', imputing='mean', dropna=Non
     df_desc = pd.concat([df_desc, df_desc2]).reset_index(drop=True)
     df1 = pd.DataFrame(df_desc.loc[:, 'Drug'])
     df2 = df_desc.drop('Drug', 1)
-    df2 = impute_and_scale(df2, scaling=scaling, imputing=imputing, dropna=dropna)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
+    if feature_subset:
+        df2 = df2[[x for x in df2.columns if x in feature_subset]]
+    df2 = impute_and_scale(df2, scaling=scaling, imputing=imputing, dropna=dropna)
     df_desc = pd.concat([df1, df2], axis=1)
 
     logger.info('Loaded combined dragon7 drug descriptors: %s', df_desc.shape)
@@ -263,7 +265,7 @@ def load_drug_descriptors(ncols=None, scaling='std', imputing='mean', dropna=Non
     return df_desc
 
 
-def load_drug_fingerprints(ncols=None, scaling='std', imputing='mean', dropna=None, add_prefix=True):
+def load_drug_fingerprints(ncols=None, scaling='std', imputing='mean', dropna=None, add_prefix=True, feature_subset=None):
     df_info = load_drug_info()
     df_info['Drug'] = df_info['PUBCHEM']
 
@@ -275,9 +277,11 @@ def load_drug_fingerprints(ncols=None, scaling='std', imputing='mean', dropna=No
     df_fp = pd.concat([df_fp, df_fp2]).reset_index(drop=True)
     df1 = pd.DataFrame(df_fp.loc[:, 'Drug'])
     df2 = df_fp.drop('Drug', 1)
-    df2 = impute_and_scale(df2, scaling=None, imputing=imputing, dropna=dropna)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
+    if feature_subset:
+        df2 = df2[[x for x in df2.columns if x in feature_subset]]
+    df2 = impute_and_scale(df2, scaling=None, imputing=imputing, dropna=dropna)
     df_fp = pd.concat([df1, df2], axis=1)
 
     logger.info('Loaded combined dragon7 drug fingerprints: %s', df_fp.shape)
@@ -432,7 +436,8 @@ def encode_sources(sources):
 
 
 def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True,
-                     use_landmark_genes=False, use_filtered_genes=False, preprocess_rnaseq=None,
+                     use_landmark_genes=False, use_filtered_genes=False,
+                     feature_subset=None, preprocess_rnaseq=None,
                      embed_feature_source=False, sample_set=None, index_by_sample=False):
 
     if use_landmark_genes:
@@ -455,6 +460,10 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
     if ncols and ncols < total:
         usecols = np.random.choice(total, size=ncols, replace=False)
         usecols = np.append([0], np.add(sorted(usecols), 2))
+        df_cols = df_cols.iloc[:, usecols]
+    if feature_subset:
+        with_prefix = lambda x: 'rnaseq.'+x if add_prefix else x
+        usecols = [0] + [i for i, c in enumerate(df_cols.columns) if with_prefix(c) in feature_subset]
         df_cols = df_cols.iloc[:, usecols]
 
     dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
@@ -723,6 +732,7 @@ class CombinedDataLoader(object):
     def load(self, cache=None, ncols=None, scaling='std', dropna=None,
              embed_feature_source=True, encode_response_source=True,
              cell_features=['rnaseq'], drug_features=['descriptors', 'fingerprints'],
+             feature_subset_path=None,
              drug_lower_response=1, drug_upper_response=-1, drug_response_span=0,
              drug_median_response_min=-1, drug_median_response_max=1,
              use_landmark_genes=False, use_filtered_genes=False,
@@ -748,32 +758,6 @@ class CombinedDataLoader(object):
             return
 
         logger.info('Loading data from scratch ...')
-
-        # ncols=None
-        # scaling='std'
-        # embed_feature_source=True
-        # dropna=None
-        # cell_features=['rnaseq']
-        # drug_features=['descriptors', 'fingerprints']
-        # # train_sources=['CTRP']
-        # train_sources=['GDSC', 'CTRP', 'ALMANAC']
-        # # train_sources=['GDSC', 'CTRP', 'ALMANAC', 'NCI60']
-        # test_sources=['CCLE', 'gCSI']
-        # val_sources='train'
-
-        # use_landmark_genes=True
-
-        # drug_lower_response=-0.4
-        # drug_upper_response=0.4
-        # drug_response_span=1.2
-
-        # drug_lower_response=0
-        # drug_upper_response=0
-        # drug_response_span=1
-
-        # drug_lower_response=1
-        # drug_upper_response=-1
-        # drug_response_span=0
 
         df_response = load_combined_dose_response()
         if logger.isEnabledFor(logging.INFO):
@@ -803,17 +787,24 @@ class CombinedDataLoader(object):
         df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response, lower_median=drug_median_response_min, upper_median=drug_median_response_max)
         logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
 
+        if feature_subset_path:
+            with open(feature_subset_path, 'r') as f:
+                text = f.read().strip()
+            feature_subset = text.split()
+        else:
+            feature_subset = None
+
         for fea in cell_features:
             fea = fea.lower()
             if fea == 'rnaseq' or fea == 'expression':
-                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, preprocess_rnaseq=preprocess_rnaseq, embed_feature_source=embed_feature_source)
+                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, feature_subset=feature_subset, preprocess_rnaseq=preprocess_rnaseq, embed_feature_source=embed_feature_source)
 
         for fea in drug_features:
             fea = fea.lower()
             if fea == 'descriptors':
-                df_drug_desc = load_drug_descriptors(ncols=ncols, scaling=scaling, dropna=dropna)
+                df_drug_desc = load_drug_descriptors(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=feature_subset)
             elif fea == 'fingerprints':
-                df_drug_fp = load_drug_fingerprints(ncols=ncols, scaling=scaling, dropna=dropna)
+                df_drug_fp = load_drug_fingerprints(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=feature_subset)
 
         # df_drug_desc, df_drug_fp = load_drug_data(ncols=ncols, scaling=scaling, dropna=dropna)
 
