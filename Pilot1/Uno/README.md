@@ -159,6 +159,11 @@ Training Uno on all data sources is slow. The `--train_sources` parameter can be
 uno_baseline_keras2.py --train_sources CCLE --cache cache/CCLE --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True
 ```
 
+A faster example is given in the `uno_by_drug_example.txt` configuration file. This example focuses on a single drug (paclitaxel) and trains at 15s/epoch on a single P100.
+```
+py0 uno_baseline_keras2.py --config_file uno_by_drug_example.txt
+```
+
 ## Profile runs
 We have run the same configuration across multiple machines and compared the resource utilization. 
 ```
