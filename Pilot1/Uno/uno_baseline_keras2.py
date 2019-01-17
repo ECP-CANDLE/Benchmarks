@@ -19,6 +19,8 @@ from keras.models import Model
 from keras.layers import Input, Dense, Dropout
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from keras.utils import get_custom_objects
+from keras.utils import multi_gpu_model
+
 from keras.utils.vis_utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
@@ -259,8 +261,8 @@ def build_feature_model_drugs(input_shape, name='', dense_layers=[1000, 1000],
 def make_graph_regularize(adj_matrix=None, lam = 0.001):
     lapac = scipy.sparse.csgraph.csgraph_from_dense(adj_matrix)
     lapac = scipy.sparse.csgraph.laplacian(lapac).todense()
-    lapac = tf.constant(lapac)
-    return lambda weight_matrix : lam * tf.matmul(K.transpose(K.abs(weight_matrix)) , tf.matmul( lapac * K.abs(weight_matrix)))
+    lapac = tf.constant(lapac, dtype=tf.float32)
+    return lambda weight_matrix : lam * tf.matmul(K.transpose(K.abs(weight_matrix)) , tf.matmul( lapac , K.abs(weight_matrix)))
 
 def build_model(loader, args, permanent_dropout=True, silent=False, adj=None):
     input_models = {}
@@ -414,8 +416,13 @@ def run(params):
         if args.cv > 1:
             logger.info('Cross validation fold {}/{}:'.format(fold+1, cv))
             cv_ext = '.cv{}'.format(fold+1)
-
         model = build_model(loader, args, silent=True, adj=loader.adj)
+
+        try:
+            model = multi_gpu_model(model, gpus=2)
+        except:
+            pass
+
 
         optimizer = optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
         base_lr = args.base_lr or K.get_value(optimizer.lr)

@@ -512,7 +512,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
     adj = None
     if adj_matrix is not None:
         df2, adj = align_features(df2, adj_matrix)
-
+    df2.to_hdf("df2_test_needtobe_data.hdf", key="data")
     df = pd.concat([df1, df2], axis=1)
 
     # scaling needs to be done before subsampling
@@ -824,6 +824,9 @@ class CombinedDataLoader(object):
             logger.info(summarize_response_data(df_response))
 
         all_sources = df_response['Source'].unique()
+        print("Want to use %s" % train_sources )
+        print ("SOURCES:")
+        print (np.unique(df_response['Source'], return_counts=True))
         df_source = encode_sources(all_sources)
 
         if 'all' in train_sources:
