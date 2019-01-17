@@ -161,7 +161,7 @@ uno_baseline_keras2.py --train_sources CCLE --cache cache/CCLE --use_landmark_ge
 
 A faster example is given in the `uno_by_drug_example.txt` configuration file. This example focuses on a single drug (paclitaxel) and trains at 15s/epoch on a single P100.
 ```
-py0 uno_baseline_keras2.py --config_file uno_by_drug_example.txt
+uno_baseline_keras2.py --config_file uno_by_drug_example.txt
 ```
 
 ## Profile runs
