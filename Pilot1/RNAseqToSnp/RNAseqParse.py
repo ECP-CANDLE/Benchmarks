@@ -52,7 +52,7 @@ class DataLoader:
             return self.snps
         if os.path.exists(self.cache_path + file + ".hdf"):
             print "loading from cache..."
-            self.snps = self.load_hdf(self.data_path + file + ".hdf")
+            self.snps = self.load_hdf(self.cache_path + file + ".hdf")
             return self.snps
         print "Reading snp data....could take awhile."
         df = pd.read_table(self.data_path + file).astype(np.int, errors='ignore')
