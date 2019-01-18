@@ -1,6 +1,6 @@
 from RNAseqParse import DataLoader
 import argparse
-
+import logging
 import keras
 from keras import backend as K
 from keras import optimizers
@@ -96,4 +96,5 @@ def main(args):
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level="debug")
     main(arg_setup())

@@ -73,6 +73,7 @@ class DataLoader:
     # reduces snps by a given function along ensembl id
     #
     def reduce_snps_by_ensembl(self, snps, reduce_func = np.sum):
+        logging.log("Logging reduce snps by ensbl.")
         df = snps.transpose()
         df = df.reset_index()
         df['index'] = [this.split(":")[0] for this in df['index']]
@@ -88,6 +89,7 @@ class DataLoader:
                 df[i] = pd.to_numeric(df[i])
 
         gb = df.groupby("index", sort=False).sum().transpose()
+        logging.log("Loaded reduced snps.")
         gb['Sample'] = samples
         return gb
 
@@ -117,7 +119,7 @@ class DataLoader:
         return df
 
     def load_aligned_snps_rnaseq(self, file_rnaseq=None, file_snp=None, cached_file=("combined_aligned_rnaseq_snp.hdf", "aligned_snp", "aligned_rnaseq"), name_mapping="ensembl2genes", use_reduced=False, align_by='name'):
-
+        logging.info("Loading aligned snp rna seq.")
         if os.path.exists(self.data_path + cached_file[0]):
             snps =  self.load_hdf(self.data_path + cached_file[0], key=cached_file[1])
             rnaseq = self.load_hdf(self.data_path + cached_file[0], key=cached_file[2])
@@ -134,6 +136,7 @@ class DataLoader:
 
         #now I have snps aligned to ensembl id's..... I want to align them and get the stride based on position on the chromosome
         # aligned by chromosome position here.
+        logging.debug("Loaded all files. Aligning by %s", align_by)
         if align_by == 'pos':
             print "Position aligned by not support yet"
             exit(1)
@@ -150,7 +153,7 @@ class DataLoader:
 
         snps.to_hdf(self.cache_path + cached_file[0], key=cached_file[1])
         rnaseq.to_hdf(self.cache_path + cached_file[0], key=cached_file[2])
-
+        logging.debug("Cached files.")
         return snps, rnaseq
 
 
