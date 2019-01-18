@@ -89,6 +89,9 @@ class DataLoader:
         logging.debug("Logging reduce snps by ensbl.")
         df = snps.transpose()
         df = df.apply(pd.to_numeric, axis=1)
+        print df
+        print df.dtypes
+        df = df.apply(lambda x : x.astype(int), axis=1)
         df = df.reset_index()
         df['index'] = [this.split(":")[0] for this in df['index']]
         samples = df.iloc[0]
