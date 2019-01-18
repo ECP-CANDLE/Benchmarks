@@ -4,6 +4,20 @@ import logging
 import pandas as pd
 import numpy as np
 from functools import partial
+from multiprocessing import cpu_count, Pool
+
+
+cores = cpu_count()  # Number of CPU cores on your system
+partitions = cores  # Define as many partitions as you want
+
+
+def parallelize(data, func):
+    data_split = np.array_split(data, partitions)
+    pool = Pool(cores)
+    data = pd.concat(pool.map(func, data_split))
+    pool.close()
+    pool.join()
+    return data
 
 class DataLoader:
     def __init__(self, data_path, args):
@@ -80,15 +94,7 @@ class DataLoader:
         df['index'] = [this.split(":")[0] for this in df['index']]
         samples = df.iloc[0]
         df = df.drop(0, axis=0)
-        did = True
-
-        for i in df.columns.to_series():
-            print(i)
-            if did and str(i) == "index":
-                did = False
-                df[i] = df[i].astype(str)
-            else:
-                df[i] = pd.to_numeric(df[i])
+        print df.dtypes
         logging.debug("Reworked snp numerics.")
 
         gb = df.groupby("index", sort=False).sum().transpose()
