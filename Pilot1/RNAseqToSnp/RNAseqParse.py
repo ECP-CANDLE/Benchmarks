@@ -50,7 +50,7 @@ class DataLoader:
     def load_snp_data(self, file="combo_snp", name_mapping="ensembl2genes"):
         if self.snps is not None:
             return self.snps
-        if os.path.exists(self.data_path + file + ".hdf"):
+        if os.path.exists(self.cache_path + file + ".hdf"):
             print "loading from cache..."
             self.snps = self.load_hdf(self.data_path + file + ".hdf")
             return self.snps
@@ -108,7 +108,8 @@ class DataLoader:
     def load_rnaseq_data(self, file="combined_rnaseq_data", name_mapping="ensembl2genes"):
         if self.rnaseq is not None:
             return self.rnaseq
-        if os.path.exists(self.data_path + file + ".hdf"):
+        if os.path.exists(self.cache_path + file + ".hdf"):
+            print "loading from cache..."
             self.rnaseq = self.load_hdf(self.data_path + file + ".hdf")
             return self.rnaseq
 
