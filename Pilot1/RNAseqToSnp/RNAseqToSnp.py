@@ -96,5 +96,5 @@ def main(args):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level="debug")
+    logging.basicConfig(level=logging.DEBUG)
     main(arg_setup())
