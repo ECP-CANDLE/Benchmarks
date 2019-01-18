@@ -27,7 +27,7 @@ class DataLoader:
     def load_hdf(self, file, key=None):
         if key is None:
             key = self.get_key(file)
-        df = pd.read_hdf(self.data_path + file, key=key)
+        df = pd.read_hdf(self.cache_path + file, key=key)
         logging.debug("Loaded %s with shape (%i, %i)", file, df.shape[0], df.shape[1])
         return df
 
@@ -35,7 +35,7 @@ class DataLoader:
         if self.cl_metadata is not None:
             return self.cl_metadata
         if os.path.exists(self.cache_path + file + ".hdf"):
-            self.cl_metadata =  self.load_hdf(self.data_path + file + ".hdf")
+            self.cl_metadata =  self.load_hdf(file + ".hdf")
             return self.cl_metadata
 
         df = pd.read_table(self.data_path + file)
@@ -52,7 +52,7 @@ class DataLoader:
             return self.snps
         if os.path.exists(self.cache_path + file + ".hdf"):
             print "loading from cache..."
-            self.snps = self.load_hdf(self.cache_path + file + ".hdf")
+            self.snps = self.load_hdf(file + ".hdf")
             return self.snps
         print "Reading snp data....could take awhile."
         df = pd.read_table(self.data_path + file).astype(np.int, errors='ignore')
@@ -110,7 +110,7 @@ class DataLoader:
             return self.rnaseq
         if os.path.exists(self.cache_path + file + ".hdf"):
             print "loading from cache..."
-            self.rnaseq = self.load_hdf(self.data_path + file + ".hdf")
+            self.rnaseq = self.load_hdf( file + ".hdf")
             return self.rnaseq
 
         df = pd.read_table(self.data_path + file)
