@@ -88,21 +88,18 @@ class DataLoader:
     def reduce_snps_by_ensembl(self, snps, reduce_func = np.sum):
         logging.debug("Logging reduce snps by ensbl.")
         df = snps
-        df[df.columns.difference(['Sample:Sample'])] = df[df.columns.difference(['Sample:Sample'])].apply(pd.to_numeric, axis=1)
+        df = df.set_index('Sample:Sample')
+        df = df.apply(pd.to_numeric, axis=1)
         df = df.transpose()
         print df
         print df.dtypes
         df = df.apply(lambda x : x.astype(int), axis=1)
         df = df.reset_index()
         df['index'] = [this.split(":")[0] for this in df['index']]
-        samples = df.iloc[0]
-        df = df.drop(0, axis=0)
-        print df.dtypes
         logging.debug("Reworked snp numerics.")
 
         gb = df.groupby("index", sort=False).sum().transpose()
         logging.debug("Loaded reduced snps.")
-        gb['Sample'] = samples
         return gb
 
 
