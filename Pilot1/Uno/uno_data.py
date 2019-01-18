@@ -7,6 +7,7 @@ import os
 import pickle
 import sys
 import mygene
+from multiprocessing.pool import ThreadPool
 
 import numpy as np
 import pandas as pd
@@ -437,6 +438,8 @@ def load_genemania_adj_matrix(fp="GraphCovTestPMDR/GeneMania_adj.hdf"):
 
 def align_features(df, adj, features_to_ensembl="/home/aclyde11/scratch-area/ensembl_name_rnaseq_dict.hdf"):
     print("aligning genemania!")
+    print("Orig Shapes")
+    print(df.shape, adj.shape)
     df_orig = df.columns.to_series()
     df.columns = df_orig.apply(lambda x: str(x)[7:])
     gene_names = df.columns
@@ -444,10 +447,6 @@ def align_features(df, adj, features_to_ensembl="/home/aclyde11/scratch-area/ens
     qu = mg.querymany(gene_names, scopes='symbol', fields="ensembl.gene", as_dataframe=True, df_index=True)
     mapper = qu[qu['ensembl.gene'].apply(lambda x: str(x)[:4]) == "ENSG"]['ensembl.gene'].to_dict()
     df = df.rename(mapper, axis=1)
-    print("from data")
-    print(df.columns)
-    print("from gnee")
-    print(mapper.keys())
     data_features = set(df.columns)
     adj_features = set(adj.columns)
     common_features = data_features.intersection(adj_features)
@@ -464,33 +463,40 @@ def align_features(df, adj, features_to_ensembl="/home/aclyde11/scratch-area/ens
 
 def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True,
                      use_landmark_genes=False, use_filtered_genes=False, preprocess_rnaseq=None,
-                     embed_feature_source=False, sample_set=None, index_by_sample=False, adj_matrix=None):
-    if use_landmark_genes:
-        filename = 'combined_rnaseq_data_lincs1000'
-    elif use_filtered_genes:
-        filename = 'combined_rnaseq_data_filtered'
-    else:
-        filename = 'combined_rnaseq_data'
+                     embed_feature_source=False, sample_set=None, index_by_sample=False, adj_matrix=None, use_file_rnaseq=None):
+    if use_file_rnaseq is None:
 
-    if preprocess_rnaseq and preprocess_rnaseq != 'none':
-        scaling = None
-        filename += ('_' + preprocess_rnaseq)  # 'source_scale' or 'combat'
+        if use_landmark_genes:
+            filename = 'combined_rnaseq_data_lincs1000'
+        elif use_filtered_genes:
+            filename = 'combined_rnaseq_data_filtered'
+        else:
+            filename = 'combined_rnaseq_data'
 
-    path = get_file(DATA_URL + filename)
-    df_cols = pd.read_table(path, engine='c', nrows=0)
-    total = df_cols.shape[1] - 1  # remove Sample column
-    if 'Cancer_type_id' in df_cols.columns:
-        total -= 1
-    usecols = None
-    if ncols and ncols < total:
-        usecols = np.random.choice(total, size=ncols, replace=False)
-        usecols = np.append([0], np.add(sorted(usecols), 2))
-        df_cols = df_cols.iloc[:, usecols]
+        if preprocess_rnaseq and preprocess_rnaseq != 'none':
+            scaling = None
+            filename += ('_' + preprocess_rnaseq)  # 'source_scale' or 'combat'
 
-    dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
-    df = pd.read_table(path, engine='c', usecols=usecols, dtype=dtype_dict)
-    if 'Cancer_type_id' in df.columns:
-        df.drop('Cancer_type_id', axis=1, inplace=True)
+        path = get_file(DATA_URL + filename)
+        df_cols = pd.read_table(path, engine='c', nrows=0)
+        total = df_cols.shape[1] - 1  # remove Sample column
+        if 'Cancer_type_id' in df_cols.columns:
+            total -= 1
+        usecols = None
+        if ncols and ncols < total:
+            usecols = np.random.choice(total, size=ncols, replace=False)
+            usecols = np.append([0], np.add(sorted(usecols), 2))
+            df_cols = df_cols.iloc[:, usecols]
+
+        dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
+        df = pd.read_table(path, engine='c', usecols=usecols, dtype=dtype_dict)
+        if 'Cancer_type_id' in df.columns:
+            df.drop('Cancer_type_id', axis=1, inplace=True)
+
+    else :
+        df = pd.read_hdf(use_file_rnaseq, key="data")
+        print (df.shape)
+
 
     prefixes = df['Sample'].str.extract('^([^.]*)', expand=False).rename('Source')
     sources = prefixes.drop_duplicates().reset_index(drop=True)
@@ -588,6 +594,20 @@ def values_or_dataframe(df, contiguous=False, dataframe=False):
     if contiguous:
         mat = np.ascontiguousarray(mat)
     return mat
+
+
+import threading
+
+
+class FuncThread(threading.Thread):
+    def __init__(self, target, *args):
+        self._target = target
+        self._args = args
+        threading.Thread.__init__(self)
+
+    def run(self):
+        self._target(*self._args)
+
 
 
 class CombinedDataLoader(object):
@@ -775,7 +795,8 @@ class CombinedDataLoader(object):
              test_sources=['train'],
              partition_by='drug_pair',
              use_genemania_adj_matrix=False,
-             genemania_file_path=None):
+             genemania_file_path=None,
+             use_file_rnaseq=None):
 
         params = locals().copy()
         del params['self']
@@ -856,6 +877,9 @@ class CombinedDataLoader(object):
                                                              upper_median=drug_median_response_max)
         logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
 
+
+        #use two threads
+        pool = ThreadPool(processes=1)
         self.adj = None
         if use_genemania_adj_matrix:
             self.adj = load_genemania_adj_matrix(genemania_file_path)
@@ -907,8 +931,11 @@ class CombinedDataLoader(object):
                                   df_response['Drug1'].isin(df_drug_ids['Drug']) &
                                   (df_response['Drug2'].isin(df_drug_ids['Drug']) | df_response['Drug2'].isnull())]
 
+        print ("df_response before prune")
+        print (df_response.shape)
         df_response = df_response[df_response['Source'].isin(train_sep_sources + test_sep_sources)]
-
+        print ("df_response after prune")
+        print (df_response.shape)
         df_response.reset_index(drop=True, inplace=True)
 
         if logger.isEnabledFor(logging.INFO):
@@ -916,7 +943,7 @@ class CombinedDataLoader(object):
             logger.info(summarize_response_data(df_response))
 
         df_response = df_response.assign(Group=assign_partition_groups(df_response, partition_by))
-
+        print (df_response.shape)
         self.cell_features = cell_features
         self.drug_features = drug_features
         self.cell_df_dict = cell_df_dict

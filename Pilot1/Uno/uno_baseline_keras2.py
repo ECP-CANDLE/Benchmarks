@@ -16,7 +16,7 @@ import keras
 from keras import backend as K
 from keras import optimizers
 from keras.models import Model
-from keras.layers import Input, Dense, Dropout
+from keras.layers import Input, Dense, Dropout, Conv1D,MaxPooling1D, Reshape, Flatten, LocallyConnected1D
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from keras.utils import get_custom_objects
 from keras.utils import multi_gpu_model
@@ -210,12 +210,22 @@ class ModelRecorder(Callback):
 
 
 
-def build_feature_model_genes(input_shape, name='', dense_layers=[1000, 1000],
+def build_feature_model_genes(input_shape, name='', dense_layers=[500, 500],
                         activation='relu', residual=False,
-                        dropout_rate=0, permanent_dropout=True, regularize_genes=None):
+                        dropout_rate=0, permanent_dropout=True, regularize_genes=None, use_file_rnaseq=None):
     x_input = Input(shape=input_shape)
+    print ("Input shape: ")
+    print (input_shape)
     h = x_input
     to_reg = (regularize_genes is not None)
+
+    if use_file_rnaseq is not None:
+        x = h
+        h = Reshape((max(input_shape), 1), input_shape=input_shape)(h)
+        h = LocallyConnected1D(256, 30, strides=3, activation='relu')(h)
+        h =  LocallyConnected1D(256, 30, strides=3, activation='relu')(h)
+        h = LocallyConnected1D(256, 30, strides =3, activation='relu')(h)
+        h = Flatten()(h)
     for i, layer in enumerate(dense_layers):
         x = h
         if to_reg:
@@ -276,8 +286,8 @@ def build_model(loader, args, permanent_dropout=True, silent=False, adj=None):
         if base_type in ['cell', 'drug']:
             if base_type == 'cell':
                 box = build_feature_model_genes(input_shape=shape, name=fea_type,
-                                          dense_layers=args.dense_feature_layers,
-                                          dropout_rate=dropout_rate, permanent_dropout=permanent_dropout, regularize_genes=regularizers)
+                                          dense_layers=args.dense_feature_layers_genes or args.dense_feature_layers,
+                                          dropout_rate=dropout_rate, permanent_dropout=permanent_dropout, regularize_genes=regularizers, use_file_rnaseq=args.use_file_rnaseq)
             else:
                 box = build_feature_model_drugs(input_shape=shape, name=fea_type,
                                                 dense_layers=args.dense_feature_layers,
@@ -366,7 +376,8 @@ def run(params):
                 embed_feature_source=not args.no_feature_source,
                 encode_response_source=not args.no_response_source,
                 use_genemania_adj_matrix=args.genemania_regularizers,
-                genemania_file_path=args.genemania_filepath
+                genemania_file_path=args.genemania_filepath,
+                use_file_rnaseq=args.use_file_rnaseq
                 )
 
     val_split = args.validation_split
@@ -472,7 +483,7 @@ def run(params):
                                 batch_size=args.batch_size,
                                 epochs=args.epochs,
                                 callbacks=callbacks,
-                                validation_data=(x_val_list, y_val))
+                                validation_data=(x_val_list, y_val), use_multiprocessing=(args.workers > 1), workers=args.workers)
         else:
             logger.info('Data points per epoch: train = %d, val = %d',train_gen.size, val_gen.size)
             logger.info('Steps per epoch: train = %d, val = %d',train_gen.steps, val_gen.steps)
@@ -480,7 +491,7 @@ def run(params):
                                           epochs=args.epochs,
                                           callbacks=callbacks,
                                           validation_data=val_gen.flow(single=args.single),
-                                          validation_steps=val_gen.steps)
+                                          validation_steps=val_gen.steps,   use_multiprocessing=(args.workers > 1), workers=args.workers)
 
         if args.cp:
             model.load_weights(prefix+cv_ext+'.weights.h5')
