@@ -70,8 +70,6 @@ class DataLoader:
             return self.snps
         print "Reading snp data....could take awhile."
         df = pd.read_table(self.data_path + file).astype(np.int, errors='ignore')
-        to_numeric_ignore = partial(pd.to_numeric, errors="ignore")
-        df = df.apply(to_numeric_ignore, axis=1)
         if name_mapping is not None:
             ensembl_dict = self.load_ensembl_dict(name_mapping)
             snp_names = df.columns.to_series()
@@ -90,6 +88,7 @@ class DataLoader:
     def reduce_snps_by_ensembl(self, snps, reduce_func = np.sum):
         logging.debug("Logging reduce snps by ensbl.")
         df = snps.transpose()
+        df = df.apply(pd.to_numeric, axis=1)
         df = df.reset_index()
         df['index'] = [this.split(":")[0] for this in df['index']]
         samples = df.iloc[0]
