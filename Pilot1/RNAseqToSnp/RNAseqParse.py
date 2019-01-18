@@ -87,8 +87,9 @@ class DataLoader:
     #
     def reduce_snps_by_ensembl(self, snps, reduce_func = np.sum):
         logging.debug("Logging reduce snps by ensbl.")
-        df = snps.transpose()
+        df = snps
         df[df.columns.difference(['Sample:Sample'])] = df[df.columns.difference(['Sample:Sample'])].apply(pd.to_numeric, axis=1)
+        df = df.transpose()
         print df
         print df.dtypes
         df = df.apply(lambda x : x.astype(int), axis=1)
