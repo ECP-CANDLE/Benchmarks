@@ -73,7 +73,7 @@ class DataLoader:
     # reduces snps by a given function along ensembl id
     #
     def reduce_snps_by_ensembl(self, snps, reduce_func = np.sum):
-        logging.log("Logging reduce snps by ensbl.")
+        logging.debug("Logging reduce snps by ensbl.")
         df = snps.transpose()
         df = df.reset_index()
         df['index'] = [this.split(":")[0] for this in df['index']]
@@ -87,9 +87,10 @@ class DataLoader:
                 df[i] = df[i].astype(str)
             else:
                 df[i] = pd.to_numeric(df[i])
+        logging.debug("Reworked snp numerics.")
 
         gb = df.groupby("index", sort=False).sum().transpose()
-        logging.log("Loaded reduced snps.")
+        logging.debug("Loaded reduced snps.")
         gb['Sample'] = samples
         return gb
 
@@ -125,6 +126,7 @@ class DataLoader:
             rnaseq = self.load_hdf(self.data_path + cached_file[0], key=cached_file[2])
             return snps, rnaseq
 
+        logging.debug("Loading data from scratch.")
         if self.args.pooled_snps is not None:
             snps = self.load_hdf(self.args.pooled_snps)
         else:
@@ -150,6 +152,7 @@ class DataLoader:
         else:
             print "Please select name, pos, or genemania"
             exit(1)
+        logging.debug("Aligned files. Final shapes: " + str(snps.shape) + str(rnaseq.shape))
 
         snps.to_hdf(self.cache_path + cached_file[0], key=cached_file[1])
         rnaseq.to_hdf(self.cache_path + cached_file[0], key=cached_file[2])

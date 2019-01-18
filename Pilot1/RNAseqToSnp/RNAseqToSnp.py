@@ -86,6 +86,9 @@ def build_model(input_shape_feats, output_shape):
 def main(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
+
+
+
     print snps
     print rnaseq
  #   model = build_model(rnaseq.shape[1])
