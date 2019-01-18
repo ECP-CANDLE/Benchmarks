@@ -34,7 +34,7 @@ class DataLoader:
     def load_cell_metadata(self, file="combined_cl_metadata"):
         if self.cl_metadata is not None:
             return self.cl_metadata
-        if os.path.exists(self.data_path + file + ".hdf"):
+        if os.path.exists(self.cache_path + file + ".hdf"):
             self.cl_metadata =  self.load_hdf(self.data_path + file + ".hdf")
             return self.cl_metadata
 
