@@ -51,9 +51,10 @@ class DataLoader:
         if self.snps is not None:
             return self.snps
         if os.path.exists(self.data_path + file + ".hdf"):
+            print "loading from cache..."
             self.snps = self.load_hdf(self.data_path + file + ".hdf")
             return self.snps
-
+        print "Reading snp data....could take awhile."
         df = pd.read_table(self.data_path + file).astype(np.int, errors='ignore')
         to_numeric_ignore = partial(pd.to_numeric, errors="ignore")
         df = df.apply(to_numeric_ignore, axis=1)
@@ -82,6 +83,7 @@ class DataLoader:
         did = True
 
         for i in df.columns.to_series():
+            print(i)
             if did and str(i) == "index":
                 did = False
                 df[i] = df[i].astype(str)
