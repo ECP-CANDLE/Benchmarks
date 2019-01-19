@@ -244,7 +244,6 @@ def main_rnasseq_pretrain(args):
         shape = y.shape
         y = scaler.fit_transform(y)
     print "Procressed y:"
-    print pd.Series(y).describe()
 
     if args.nfeats > 0:
         rf = ensemble.RandomForestClassifier(n_estimators=1000, criterion='entropy',
