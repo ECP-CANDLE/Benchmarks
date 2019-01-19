@@ -28,7 +28,8 @@ def arg_setup():
     parser.add_argument('--epochs', type=int, default=10, help="number of epochs to do")
     parser.add_argument('--batch_size', type=int, default=1, help="batch_size")
     parser.add_argument('--lr', type=float, default=0.002, help="optmizer lr")
-    ###############s
+    parser.add_argument('--y_scale:', choices=['max1', 'scale'], default='max1')
+    ###############
     # model setup #
     ###############
 
@@ -140,8 +141,13 @@ def main(args):
     print model.summary()
     print y.describe()
     y = np.array(y, dtype=np.float32)
-    y = np.minimum(y, np.ones(y.shape))
-    x = preprocessing.scale(x)
+    if args.y_scale == 'max1':
+        y = np.minimum(y, np.ones(y.shape))
+    elif args.y_scale == 'scale':
+        y = preprocessing.robust_scale(y)
+    x = preprocessing.robust_scale(x)
+    print "Procressed y:"
+    print y.describe()
 
     labels, counts = np.unique(y, return_counts=True)
     label_dict = dict(zip(labels, counts))
