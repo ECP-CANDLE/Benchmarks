@@ -253,11 +253,11 @@ def main_rnasseq_pretrain(args):
         rfecv = rfecv.fit(x, y)
         x = rfecv.transform(x)
 
-    labels, counts = np.unique(y, return_counts=True)
-    label_dict = dict(zip(labels, counts))
-    weights = create_class_weight(label_dict, y)
-    print label_dict
-    print weights
+    #  labels, counts = np.unique(y, return_counts=True)
+    # label_dict = dict(zip(labels, counts))
+    # weights = create_class_weight(label_dict, y)
+    # print label_dict
+    # print weights
 
     model_auto, model_snp = build_autoencoder(x.shape[1], 1)
     if args.num_gpus >= 2:
@@ -272,8 +272,7 @@ def main_rnasseq_pretrain(args):
                       metrics=['accuracy', r2, 'mae', 'mse'])
     model_auto.fit(x_big, x_big, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.01, shuffle=True)
     print x.shape, y.shape
-    model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
-                  class_weight=weights)
+    model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True)
 
 
 
