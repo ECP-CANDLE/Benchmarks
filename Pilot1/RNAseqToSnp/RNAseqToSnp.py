@@ -119,7 +119,7 @@ def build_autoencoder(input_dim, encoded_dim=1000, output_dim=1):
     x = Dense(2000, activation='relu')(x_input)
     encoded = Dense(encoded_dim, activation='relu')(x)
 
-    attention_probs = Dense(input_dim, activation='softmax', name='attention_vec')(encoded)
+    attention_probs = Dense(encoded_dim, activation='softmax', name='attention_vec')(encoded)
     attention_mul = multiply([encoded, attention_probs], name='attention_mul')
     x = Dense(encoded_dim, activation='relu')(attention_mul)
     x = Dense(encoded_dim)(x)
