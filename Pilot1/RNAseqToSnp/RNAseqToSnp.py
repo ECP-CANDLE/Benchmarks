@@ -257,13 +257,13 @@ def main_rnasseq_pretrain(args):
     model_auto = multi_gpu_model(model_auto, gpus=args.num_gpus)
     model_snp = multi_gpu_model(model_snp, gpus=args.num_gpus)
 
-    model_auto.compile(optimizer=optimizers.Nadam(lr=args.lr),
+    model_auto.compile(optimizer=optimizers.Nadam(lr=args.lr * 3),
                        loss='mse',
                        metrics=['accuracy', r2, 'mae', 'mse'])
     model_snp.compile(optimizer=optimizers.Nadam(lr=args.lr),
                       loss=args.loss,
                       metrics=['accuracy', r2, 'mae', 'mse'])
-    model_auto.fit(x, x, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True)
+    model_auto.fit(x, x, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.01, shuffle=True)
     model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
                   class_weight=weights)
 
