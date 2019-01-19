@@ -269,6 +269,7 @@ def main_rnasseq_pretrain(args):
                       loss=args.loss,
                       metrics=['accuracy', r2, 'mae', 'mse'])
     model_auto.fit(x_big, x_big, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.01, shuffle=True)
+    print x.shape, y.shape
     model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
                   class_weight=weights)
 

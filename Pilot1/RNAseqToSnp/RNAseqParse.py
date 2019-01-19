@@ -154,6 +154,10 @@ class DataLoader:
         logging.debug("Loaded all files. Aligning by %s", align_by)
         if align_by == 'pos':
             print "Position aligned by not support yet"
+            snp_feats = set(snps.columns.to_series())
+            rna_feats = set(rnaseq.columns.to_series())
+            intersect = snp_feats.intersection(rna_feats)
+            print("Intersect size: %s" % len(intersect))
             exit(1)
         elif align_by == 'name':
             snp_feats = set(snps.columns.to_series())
