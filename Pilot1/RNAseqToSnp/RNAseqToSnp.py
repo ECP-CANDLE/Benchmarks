@@ -24,6 +24,8 @@ def arg_setup():
     parser.add_argument('--cache', type=str, default="cache/", help="Folder location to cache files.")
     parser.add_argument('--pooled_snps', type=str, default=None, help="Pool hdf file containing agg snps.")
     parser.add_argument('--num_gpus', type=int, default=1, help="number of gpus.")
+    parser.add_argument('--epochs', type=int, default=10, help="number of epochs to do")
+    parser.add_argument('--batch_size', type=int, default=1, help="batch_size")
     ###############s
     # model setup #
     ###############
@@ -145,7 +147,8 @@ def main(args):
     weights = create_class_weight(label_dict, y)
     print label_dict
     print weights
-    model.fit([x], y, batch_size=1, epochs=10, validation_split=0.2, shuffle=True, class_weight=weights)
+    model.fit([x], y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
+              class_weight=weights)
     attention_vector = get_activations(model, x,
                                        print_shape_only=True,
                                        layer_name='attention_vec')[0].flatten()
