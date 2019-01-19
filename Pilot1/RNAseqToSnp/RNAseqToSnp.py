@@ -210,7 +210,9 @@ def main_rnasseq_pretrain(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
     rnaseq = rnaseq.set_index("Sample")
-    rnaseq = rnaseq.apply(lambda x: preprocessing.MinMaxScaler().fit_transform(x), axis=1)
+    cols = rnaseq.columns.to_series()
+    index = rnaseq.index.to_series()
+    rnaseq = pd.DataFrame(preprocessing.MinMaxScaler().fit_transform(rnaseq), columns=cols, index=index)
     # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
     # filter_snps_oncogenes = snps[list(intersect)]
     x_big = rnaseq
