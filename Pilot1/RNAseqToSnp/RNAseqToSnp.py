@@ -118,7 +118,10 @@ def build_autoencoder(input_dim, encoded_dim=1000):
     x = Dense(2000, activation='relu')(x_input)
     encoded = Dense(encoded_dim, activation='relu')(x)
 
-    x = Dense(encoded_dim, activation='relu')(encoded)
+    attention_probs = Dense(input_dim, activation='softmax', name='attention_vec')(encoded)
+    attention_mul = multiply([encoded, attention_probs], name='attention_mul')
+    x = Dense(encoded_dim, activation='relu')(attention_mul)
+    x = Dense(100)(x)
     snp_guess = Dense(1, activation='sigmoid')(x)
 
     x = Dense(2000, activation='relu')(encoded)
