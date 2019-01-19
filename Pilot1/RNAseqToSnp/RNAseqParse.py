@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 from functools import partial
 from multiprocessing import cpu_count, Pool
-
+import mygene
 
 cores = cpu_count()  # Number of CPU cores on your system
 partitions = cores  # Define as many partitions as you want
@@ -157,8 +157,18 @@ class DataLoader:
             snp_feats = set(snps.columns.to_series())
             rna_feats = set(rnaseq.columns.to_series())
             intersect = snp_feats.intersection(rna_feats)
-            print("Intersect size: %s" % len(intersect))
-            exit(1)
+            print "intersectyion has " % len(intersect)
+            gene_names = intersect
+            mg = mygene.MyGeneInfo()
+            qu = mg.querymany(gene_names, fields='genomic_pos', scopes='ensembl.gene', as_dataframe=True, df_index=True)
+            qu = qu[['genomic_pos.chr', 'genomic_pos.start']].dropna(axis=0)
+            qu['genomic_pos.chr'] = pd.to_numeric(qu['genomic_pos.chr'], coerce)
+            qu['genomic_pos.start'] = pd.to_numeric(qu['genomic_pos.start'], coerce)
+            qu = qu.dropna(axis=0)
+            ordered_rna_seq = qu.sort_values(["genomic_pos.chr", "genomic_pos.start"]).index.to_series()
+            rnaseq = rnaseq[ordered_rna_seq]
+            snps = snps[ordered_rna_seq]
+
         elif align_by == 'name':
             snp_feats = set(snps.columns.to_series())
             rna_feats = set(rnaseq.columns.to_series())

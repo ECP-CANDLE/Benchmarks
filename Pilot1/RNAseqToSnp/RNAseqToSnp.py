@@ -33,6 +33,7 @@ def arg_setup():
     parser.add_argument('--nfeats', type=int, default=-1)
     parser.add_argument('--nfeat_step', type=int, default=100)
     parser.add_argument('--model_type', choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt'])
+    parser.add_argument('--reduce_snps', type=str, default="name")
 
     ###############
     # model setup #
@@ -141,7 +142,7 @@ def create_class_weight(labels_dict, y):
 
 def main_rna_to_snp(args):
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
     rnaseq = rnaseq.set_index("Sample")
 
     # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
@@ -212,7 +213,7 @@ def main_rna_to_snp(args):
 
 def main_rnasseq_pretrain(args):
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
     rnaseq = rnaseq.set_index("Sample")
     cols = rnaseq.columns.to_series()
     index = rnaseq.index.to_series()
@@ -259,7 +260,7 @@ def main_rnasseq_pretrain(args):
     # print label_dict
     # print weights
 
-    model_auto, model_snp = build_autoencoder(x.shape[1], 1)
+    model_auto, model_snp = build_autoencoder(x.shape[1], encoded_dim=1000, output_dim=4)
     if args.num_gpus >= 2:
         model_auto = multi_gpu_model(model_auto, gpus=args.num_gpus)
         model_snp = multi_gpu_model(model_snp, gpus=args.num_gpus)
@@ -279,7 +280,7 @@ def main_rnasseq_pretrain(args):
 
 def main_rna_autoencoder(args):
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
     x = rnaseq.set_index("Sample")
     x = preprocessing.scale(x)
 
