@@ -11,7 +11,7 @@ from keras.layers import Input, Dense, Dropout, Conv1D,MaxPooling1D, Reshape, Fl
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from keras.utils import get_custom_objects
 from keras.utils import multi_gpu_model
-
+import math
 import os
 
 
@@ -80,6 +80,17 @@ def build_model(input_shape_feats, output_shape):
     model = Model(inputs=x_input, outputs=predictions)
     return model
 
+def create_class_weight(labels_dict,mu=0.15):
+    total = np.sum(labels_dict.values())
+    keys = labels_dict.keys()
+    class_weight = dict()
+
+    for key in keys:
+        score = math.log(mu*total/float(labels_dict[key]))
+        class_weight[key] = score if score > 1.0 else 1.0
+
+    return class_weight
+
 
 def main(args):
     loader = DataLoader(args.data_path, args)
@@ -111,7 +122,12 @@ def main(args):
     y = np.array(y, dtype=np.float32)
     y = np.maximum(y, np.zeros(y.shape))
     x = preprocessing.scale(x)
-    model.fit(x, y, batch_size=1, epochs=50, validation_split=0.2, shuffle=True)
+
+    labels, counts = np.unique(y, return_counts=True)
+    label_dict = dict(zip(labels, counts))
+    print label_dict
+    print create_class_weight(label_dict)
+    model.fit(x, y, batch_size=1, epochs=50, validation_split=0.2, shuffle=True, class_weight=create_class_weight(label_dict))
 
 
 
