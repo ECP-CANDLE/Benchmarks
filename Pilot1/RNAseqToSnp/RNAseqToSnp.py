@@ -35,6 +35,27 @@ def arg_setup():
     return parser.parse_args()
 
 
+def get_activations(model, inputs, print_shape_only=False, layer_name=None):
+    # Documentation is available online on Github at the address below.
+    # From: https://github.com/philipperemy/keras-visualize-activations
+    print('----- activations -----')
+    activations = []
+    inp = model.input
+    if layer_name is None:
+        outputs = [layer.output for layer in model.layers]
+    else:
+        outputs = [layer.output for layer in model.layers if layer.name == layer_name]  # all layer outputs
+    funcs = [K.function([inp] + [K.learning_phase()], [out]) for out in outputs]  # evaluation functions
+    layer_outputs = [func([inputs, 1.])[0] for func in funcs]
+    for layer_activations in layer_outputs:
+        activations.append(layer_activations)
+        if print_shape_only:
+            print(layer_activations.shape)
+        else:
+            print(layer_activations)
+    return activations
+
+
 def build_feature_model_genes(input_shape, name='', dense_layers=[500, 500],
                         activation='relu', residual=False,
                         dropout_rate=0,  regularize_genes=None, use_file_rnaseq=None):
@@ -83,7 +104,7 @@ def build_model(input_dim, output_shape):
     x = Dense(64,  activation='relu')(x)
     x = Dense(64,  activation='relu')(x)
     predictions = Dense(output_shape, activation='sigmoid')(x)
-    model = Model(inputs=x_input, outputs=predictions)
+    model = Model(inputs=[x_input], outputs=predictions)
     return model
 
 def create_class_weight(labels_dict, y):
@@ -128,8 +149,18 @@ def main(args):
     weights = create_class_weight(label_dict, y)
     print label_dict
     print weights
-    model.fit(x, y, batch_size=1, epochs=50, validation_split=0.2, shuffle=True, class_weight=weights)
+    model.fit([x], y, batch_size=1, epochs=10, validation_split=0.2, shuffle=True, class_weight=weights)
+    attention_vector = get_activations(model, x,
+                                       print_shape_only=True,
+                                       layer_name='attention_vec')[0].flatten()
+    print('attention =', attention_vector)
+    import matplotlib.pyplot as plt
+    import pandas as pd
 
+    pd.DataFrame(attention_vector, columns=['attention (%)']).plot(kind='bar',
+                                                                   title='Attention Mechanism as '
+                                                                         'a function of input'
+                                                                         ' dimensions.')
 
 
 if __name__ == "__main__":
