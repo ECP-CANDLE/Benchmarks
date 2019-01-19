@@ -28,7 +28,7 @@ def arg_setup():
     parser.add_argument('--epochs', type=int, default=10, help="number of epochs to do")
     parser.add_argument('--batch_size', type=int, default=1, help="batch_size")
     parser.add_argument('--lr', type=float, default=0.002, help="optmizer lr")
-    parser.add_argument('--y_scale:', choices=['max1', 'scale'], default='max1')
+    parser.add_argument('--y_scale', choices=['max1', 'scale'], default='max1')
     ###############
     # model setup #
     ###############
