@@ -5,6 +5,7 @@ import keras
 import numpy as np
 import pandas as pd
 from keras import backend as K
+from keras import optimizers
 from keras.layers import Input, Dense, Dropout, Reshape, Flatten, LocallyConnected1D, multiply
 from keras.models import Model
 from keras.utils import multi_gpu_model
@@ -26,6 +27,7 @@ def arg_setup():
     parser.add_argument('--num_gpus', type=int, default=1, help="number of gpus.")
     parser.add_argument('--epochs', type=int, default=10, help="number of epochs to do")
     parser.add_argument('--batch_size', type=int, default=1, help="batch_size")
+    parser.add_argument('--lr', type=float, default=0.002, help="optmizer lr")
     ###############s
     # model setup #
     ###############
@@ -133,9 +135,9 @@ def main(args):
 
     model = build_model(rnaseq.shape[1], 1)
     model = multi_gpu_model(model, gpus=args.num_gpus)
-    model.compile(optimizer='adam',
+    model.compile(optimizer=optimizers.Nadam(lr=args.lr),
                   loss='binary_crossentropy',
-                  metrics=['accuracy', r2, 'mae', 'mse'] )
+                  metrics=['accuracy', r2, 'mae', 'mse'])
     print model.summary()
     print y.describe()
     y = np.array(y, dtype=np.float32)
@@ -151,7 +153,7 @@ def main(args):
               class_weight=weights)
     attention_vector = get_activations(model, x,
                                        print_shape_only=True,
-                                       layer_name='attention_vec')[0].flatten()
+                                       layer_name='attention_vec').flatten()
     print('attention =', attention_vector)
 
     pd.DataFrame(attention_vector, columns=['attention (%)']).plot(kind='bar',
