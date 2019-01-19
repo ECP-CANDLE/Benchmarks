@@ -113,7 +113,7 @@ def build_model(input_dim, output_shape):
     return model
 
 
-def build_autoencoder(input_dim, encoded_dim=1000):
+def build_autoencoder(input_dim, encoded_dim=1000, output_dim=1):
     x_input = Input(shape=(input_dim,))
     x = Dense(2000, activation='relu')(x_input)
     encoded = Dense(encoded_dim, activation='relu')(x)
@@ -121,8 +121,8 @@ def build_autoencoder(input_dim, encoded_dim=1000):
     attention_probs = Dense(input_dim, activation='softmax', name='attention_vec')(encoded)
     attention_mul = multiply([encoded, attention_probs], name='attention_mul')
     x = Dense(encoded_dim, activation='relu')(attention_mul)
-    x = Dense(100)(x)
-    snp_guess = Dense(1, activation='sigmoid')(x)
+    x = Dense(encoded_dim)(x)
+    snp_guess = Dense(output_dim, activation='sigmoid')(x)
 
     x = Dense(2000, activation='relu')(encoded)
     decoded = Dense(input_dim, activation='sigmoid')(x)
@@ -228,7 +228,7 @@ def main_rnasseq_pretrain(args):
     y = y.sort_index(axis=0)
     x = x.sort_index(axis=0)
 
-    y = y['ENSG00000145113']
+    y = y[['ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311']]
 
     print y.tail()
     print x.tail()
