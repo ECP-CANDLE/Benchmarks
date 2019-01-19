@@ -112,7 +112,7 @@ def main(args):
     print x.tail()
     print x.shape, y.shape
 
-    model = build_model(rnaseq.shape[1], y.shape[1])
+    model = build_model(rnaseq.shape[1], 1)
     model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer='adam',
                   loss='binary_crossentropy',
