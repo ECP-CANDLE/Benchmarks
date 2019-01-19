@@ -151,9 +151,9 @@ def main(args):
     print pd.Series(y).describe()
 
     if args.nfeats > 0:
-        rf = ensemble.RandomForestClassifier(n_estimators=2000, criterion='entropy',
+        rf = ensemble.RandomForestClassifier(n_estimators=1000, criterion='entropy',
                                              n_jobs=8) if args.y_scale == 'max1' or args.y_scale == 'None' else ensemble.RandomForestRegressor(
-            n_estimators=2000, criterion='entropy', n_jobs=8)
+            n_estimators=1000, criterion='entropy', n_jobs=8)
         rfecv = feature_selection.RFE(estimator=rf, step=args.nfeat_step, n_features_to_select=args.nfeats, verbose=100)
         rfecv = rfecv.fit(x, y)
         x = rfecv.transform(x)
