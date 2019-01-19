@@ -153,7 +153,7 @@ def main(args):
               class_weight=weights)
     attention_vector = get_activations(model, x,
                                        print_shape_only=True,
-                                       layer_name='attention_vec').flatten()
+                                       layer_name='attention_vec')
     print('attention =', attention_vector)
 
     pd.DataFrame(attention_vector, columns=['attention (%)']).plot(kind='bar',
