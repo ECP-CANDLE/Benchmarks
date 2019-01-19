@@ -145,8 +145,9 @@ def main(args):
     if args.y_scale == 'max1':
         y = np.minimum(y, np.ones(y.shape))
     elif args.y_scale == 'scale':
-        y = preprocessing.robust_scale(y)
-    x = preprocessing.robust_scale(x)
+        print "roubust scaling"
+        y = preprocessing.scale(y)
+    x = preprocessing.scale(x)
     print "Procressed y:"
     print pd.Series(y).describe()
 
