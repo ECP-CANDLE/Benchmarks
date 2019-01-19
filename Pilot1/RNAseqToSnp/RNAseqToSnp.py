@@ -73,7 +73,6 @@ def build_model(input_shape_feats, output_shape):
     x_input = Input(shape=(input_shape_feats, ))
     x = Dense(1000)(x_input)
     x = Dense(1000)(x)
-    x = Dense(1000)(x)
     x = Dense(250)(x)
     x = Dense(250)(x)
     x = Dense(150)(x)
@@ -101,9 +100,10 @@ def main(args):
 
     model = build_model(rnaseq.shape[1], y.shape[1])
     model = multi_gpu_model(model, gpus=4)
-    model.compile(optimizer='rmsprop',
-                  loss='mae',
-                  metrics=['accuracy', r2])
+    model.compile(optimizer='adam',
+                  loss='mse',
+                  metrics=['accuracy', r2, 'mae'], )
+    print model
     print y.describe()
     y = np.array(y, dtype=np.float32)
     y = np.maximum(y, np.zeros(y.shape))
