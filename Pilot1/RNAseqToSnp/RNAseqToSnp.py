@@ -186,7 +186,8 @@ def main_rna_to_snp(args):
 
 
     model = build_model(x.shape[1], 1)
-    model = multi_gpu_model(model, gpus=args.num_gpus)
+    if args.num_gpus >= 2:
+        model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
                   loss=args.loss,
                   metrics=['accuracy', r2, 'mae', 'mse'])
@@ -257,8 +258,9 @@ def main_rnasseq_pretrain(args):
     print weights
 
     model_auto, model_snp = build_autoencoder(x.shape[1], 1)
-    model_auto = multi_gpu_model(model_auto, gpus=args.num_gpus)
-    model_snp = multi_gpu_model(model_snp, gpus=args.num_gpus)
+    if args.num_gpus >= 2:
+        model_auto = multi_gpu_model(model_auto, gpus=args.num_gpus)
+        model_snp = multi_gpu_model(model_snp, gpus=args.num_gpus)
 
     model_auto.compile(optimizer=optimizers.Nadam(lr=args.lr * 3),
                        loss='mse',
@@ -280,7 +282,8 @@ def main_rna_autoencoder(args):
     x = preprocessing.scale(x)
 
     model, _ = build_autoencoder(x.shape[1], 1000)
-    model = multi_gpu_model(model, gpus=args.num_gpus)
+    if args.num_gpus >= 2:
+        model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
                   loss=args.loss,
                   metrics=['accuracy', r2, 'mae', 'mse'])
