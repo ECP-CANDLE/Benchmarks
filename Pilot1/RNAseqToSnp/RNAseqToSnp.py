@@ -34,7 +34,7 @@ def arg_setup():
     parser.add_argument('--nfeat_step', type=int, default=100)
     parser.add_argument('--model_type', choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt'])
     parser.add_argument('--reduce_snps', type=str, default="name")
-
+    parser.add_argument('--encoded_dim', type=int, default=100)
     ###############
     # model setup #
     ###############
@@ -260,7 +260,7 @@ def main_rnasseq_pretrain(args):
     # print label_dict
     # print weights
 
-    model_auto, model_snp = build_autoencoder(x.shape[1], encoded_dim=1000, output_dim=4)
+    model_auto, model_snp = build_autoencoder(x.shape[1], encoded_dim=args.encoded_dim, output_dim=4)
     if args.num_gpus >= 2:
         model_auto = multi_gpu_model(model_auto, gpus=args.num_gpus)
         model_snp = multi_gpu_model(model_snp, gpus=args.num_gpus)
@@ -284,7 +284,7 @@ def main_rna_autoencoder(args):
     x = rnaseq.set_index("Sample")
     x = preprocessing.scale(x)
 
-    model, _ = build_autoencoder(x.shape[1], 1000)
+    model, _ = build_autoencoder(x.shape[1], encoded_dim=args.encoded_dim)
     if args.num_gpus >= 2:
         model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
