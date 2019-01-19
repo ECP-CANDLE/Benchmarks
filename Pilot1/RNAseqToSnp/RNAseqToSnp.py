@@ -149,7 +149,7 @@ def main(args):
     print "Procressed y:"
     print pd.Series(y).describe()
 
-    if args.n_feats > 0:
+    if args.nfeats > 0:
         rf = ensemble.RandomForestClassifier(n_estimators=2000, criterion='entropy',
                                              n_jobs=8) if args.y_scale == 'max1' or args.y_scale == 'None' else ensemble.RandomForestRegressor(
             n_estimators=2000, criterion='entropy', n_jobs=8)
