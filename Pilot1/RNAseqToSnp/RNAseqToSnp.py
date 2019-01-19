@@ -2,6 +2,7 @@ from RNAseqParse import DataLoader
 import argparse
 import logging
 import numpy as np
+from sklearn import preprocessing
 import keras
 from keras import backend as K
 from keras import optimizers
@@ -72,9 +73,9 @@ def r2(y_true, y_pred):
 
 def build_model(input_shape_feats, output_shape):
     x_input = Input(shape=(input_shape_feats, ))
-    x = Dense(1000)(x_input)
-    x = Dense(1000)(x)
-    x = Dense(250)(x)
+    x = Dense(1000)(x_input, activation='relu')
+    x = Dense(1000)(x,  activation='relu')
+    x = Dense(250)(x,  activation='relu')
     predictions = Dense(output_shape, activation='sigmoid')(x)
     model = Model(inputs=x_input, outputs=predictions)
     return model
@@ -108,6 +109,7 @@ def main(args):
     print y.describe()
     y = np.array(y, dtype=np.float32)
     y = np.maximum(y, np.zeros(y.shape))
+    x = preprocessing.scale(x)
     model.fit(x, y, batch_size=1, epochs=50, validation_split=0.2, shuffle=True)
 
 
