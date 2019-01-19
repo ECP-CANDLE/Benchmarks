@@ -32,6 +32,8 @@ def arg_setup():
     parser.add_argument('--loss', type=str, default='mse')
     parser.add_argument('--nfeats', type=int, default=-1)
     parser.add_argument('--nfeat_step', type=int, default=100)
+    parser.add_argument('--model_type', choices=['rna_to_rna', 'rna_to_snp'])
+
     ###############
     # model setup #
     ###############
@@ -111,9 +113,13 @@ def build_model(input_dim, output_shape):
     return model
 
 
-def build_autoencoder(input_dim):
+def build_autoencoder(input_dim, encoded_dim):
     x_input = Input(shape=(input_dim,))
-
+    encoded = Dense(encoded_dim)(x_input)
+    decoded = Dense(input_dim)(encoded)
+    model = Model(inputs=x_input, outputs=decoded)
+    print model.summary()
+    return model
 
 def create_class_weight(labels_dict, y):
     classes = labels_dict.keys()
@@ -121,7 +127,7 @@ def create_class_weight(labels_dict, y):
     return dict(zip(classes, weights))
 
 
-def main(args):
+def main_rna_to_snp(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
     rnaseq = rnaseq.set_index("Sample")
@@ -169,6 +175,7 @@ def main(args):
     print label_dict
     print weights
 
+
     model = build_model(x.shape[1], 1)
     model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
@@ -190,6 +197,26 @@ def main(args):
                                                                          ' dimensions.')
 
 
+def main_rna_autoencoder(args):
+    loader = DataLoader(args.data_path, args)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
+    x = rnaseq.set_index("Sample")
+
+    model = build_autoencoder(x.shape[1], 1000)
+    model = multi_gpu_model(model, gpus=args.num_gpus)
+    model.compile(optimizer=optimizers.Nadam(lr=args.lr),
+                  loss=args.loss,
+                  metrics=['accuracy', r2, 'mae', 'mse'])
+    print model.summary()
+
+    model.fit(x, x, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True)
+
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
-    main(arg_setup())
+    args = arg_setup()
+    if args.model_type == 'rna_to_snp':
+        main_rna_to_snp(args)
+    elif args.model_type == 'rna_to_rna':
+        main_rna_autoencoder(args)
