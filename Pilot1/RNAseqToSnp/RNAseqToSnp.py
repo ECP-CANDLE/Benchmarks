@@ -99,9 +99,8 @@ def build_model(input_dim, output_shape):
     attention_probs = Dense(input_dim, activation='softmax', name='attention_vec')(x_input)
     attention_mul = multiply([x_input, attention_probs], name='attention_mul')
 
-    x = Dense(64)(attention_mul)
-    x = Dense(64, activation='relu')(x)
-    x = Dense(64,  activation='relu')(x)
+    x = Dense(100)(attention_mul)
+    x = Dense(100, activation='relu')(x)
     x = Dense(64,  activation='relu')(x)
     predictions = Dense(output_shape, activation='sigmoid')(x)
     model = Model(inputs=[x_input], outputs=predictions)
@@ -151,7 +150,7 @@ def main(args):
     print weights
     model.fit([x], y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
               class_weight=weights)
-    attention_vector = get_activations(model, x,
+    attention_vector = get_activations(model, [x],
                                        print_shape_only=True,
                                        layer_name='attention_vec')
     print('attention =', attention_vector)
