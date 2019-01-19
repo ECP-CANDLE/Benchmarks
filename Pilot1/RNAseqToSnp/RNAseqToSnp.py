@@ -100,7 +100,7 @@ def build_model(input_dim, output_shape):
     attention_mul = multiply([x_input, attention_probs], name='attention_mul')
 
     x = Dense(64)(attention_mul)
-    x = Dense(64,  activation='relu')(x_input)
+    x = Dense(64, activation='relu')(x)
     x = Dense(64,  activation='relu')(x)
     x = Dense(64,  activation='relu')(x)
     predictions = Dense(output_shape, activation='sigmoid')(x)
