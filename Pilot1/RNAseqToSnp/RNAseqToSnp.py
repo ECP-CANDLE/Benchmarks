@@ -148,7 +148,7 @@ def main(args):
         y = preprocessing.robust_scale(y)
     x = preprocessing.robust_scale(x)
     print "Procressed y:"
-    print y.describe()
+    print pd.Series(y).describe()
 
     labels, counts = np.unique(y, return_counts=True)
     label_dict = dict(zip(labels, counts))
