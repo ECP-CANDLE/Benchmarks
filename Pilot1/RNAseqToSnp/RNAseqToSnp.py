@@ -31,6 +31,7 @@ def arg_setup():
     parser.add_argument('--y_scale', choices=['max1', 'scale'], default='max1')
     parser.add_argument('--loss', type=str, default='mse')
     parser.add_argument('--nfeats', type=int, default=-1)
+    parser.add_argument('--nfeat_step', type=int, default=100)
     ###############
     # model setup #
     ###############
@@ -153,7 +154,7 @@ def main(args):
         rf = ensemble.RandomForestClassifier(n_estimators=2000, criterion='entropy',
                                              n_jobs=8) if args.y_scale == 'max1' or args.y_scale == 'None' else ensemble.RandomForestRegressor(
             n_estimators=2000, criterion='entropy', n_jobs=8)
-        rfecv = feature_selection.RFECV(estimator=rf, step=20, cv=model_selection.StratifiedKFold(2),
+        rfecv = feature_selection.RFECV(estimator=rf, step=args.nfeat_step, cv=model_selection.StratifiedKFold(2),
                                         scoring='accuracy', n_jobs=8, min_features_to_select=args.nfeats, verbose=100)
         rfecv = rfecv.fit(x, y)
         x = rfecv.transform(x)
