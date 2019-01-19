@@ -120,7 +120,7 @@ def main(args):
     print model.summary()
     print y.describe()
     y = np.array(y, dtype=np.float32)
-    y = np.maximum(y, np.ones(y.shape))
+    y = np.minimum(y, np.ones(y.shape))
     x = preprocessing.scale(x)
 
     labels, counts = np.unique(y, return_counts=True)
