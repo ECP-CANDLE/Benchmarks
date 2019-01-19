@@ -210,9 +210,11 @@ def main_rnasseq_pretrain(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
     rnaseq = rnaseq.set_index("Sample")
-
+    rnaseq = rnaseq.apply(lambda x: preprocessing.MinMaxScaler().fit_transform(x))
     # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
     # filter_snps_oncogenes = snps[list(intersect)]
+    x_big = rnaseq
+
 
     samples = set(rnaseq.index.to_series()).intersection(set(snps.index.to_series()))
     y = snps.loc[samples]
@@ -235,7 +237,6 @@ def main_rnasseq_pretrain(args):
         scaler = preprocessing.MinMaxScaler()
         shape = y.shape
         y = scaler.fit_transform(y.reshape(-1, 1)).reshape(shape)
-    x = preprocessing.scale(x)
     print "Procressed y:"
     print pd.Series(y).describe()
 
@@ -263,7 +264,7 @@ def main_rnasseq_pretrain(args):
     model_snp.compile(optimizer=optimizers.Nadam(lr=args.lr),
                       loss=args.loss,
                       metrics=['accuracy', r2, 'mae', 'mse'])
-    model_auto.fit(x, x, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.01, shuffle=True)
+    model_auto.fit(x_big, x_big, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.01, shuffle=True)
     model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
                   class_weight=weights)
 
