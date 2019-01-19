@@ -105,7 +105,8 @@ def main(args):
                   loss='mae',
                   metrics=['accuracy', r2])
     print y.describe()
-    y = np.max(1, np.array(y.values, dtype=np.float32))
+    y = np.array(y, dtype=np.float32)
+    y = np.max(y, 0)
     model.fit(x, y, batch_size=20, epochs=20, validation_split=0.2)
 
 
