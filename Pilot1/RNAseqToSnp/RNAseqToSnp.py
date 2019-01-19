@@ -75,7 +75,6 @@ def build_model(input_shape_feats, output_shape):
     x = Dense(1000)(x)
     x = Dense(250)(x)
     x = Dense(250)(x)
-    x = Dense(150)(x)
     predictions = Dense(output_shape, activation='sigmoid')(x)
     model = Model(inputs=x_input, outputs=predictions)
     return model
