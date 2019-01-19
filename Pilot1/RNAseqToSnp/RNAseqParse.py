@@ -61,6 +61,12 @@ class DataLoader:
         self.cl_metadata = df
         return df
 
+    def load_oncogenes_(self, file="oncogenes"):
+        dic = self.load_ensembl_dict()
+        oncogenes = pd.read_table("oncogenes", names=[' '])
+        oncogenes.replace(dic)
+        return oncogenes
+
     def load_snp_data(self, file="combo_snp", name_mapping="ensembl2genes"):
         if self.snps is not None:
             return self.snps

@@ -70,12 +70,6 @@ def r2(y_true, y_pred):
 
 def build_model(input_shape_feats, output_shape):
     x_input = Input(shape=(input_shape_feats, ))
-    x = Reshape((max(input_shape_feats), 1))(x_input)
-    x = LocallyConnected1D(256, 10, strides=2, activation='relu')(x)
-    x = LocallyConnected1D(256, 10, strides=2, activation='relu')(x)
-    x = LocallyConnected1D(256, 10, strides=2, activation='relu')(x)
-    x = LocallyConnected1D(256, 10, strides=2, activation='relu')(x)
-    x = Flatten()(x)
     x = Dense(5000)(x)
     x = Dense(5000)(x)
     predictions = Dense(output_shape[1], activation='sigmoid')(x)
@@ -86,6 +80,8 @@ def build_model(input_shape_feats, output_shape):
 def main(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
+    filter_snps_oncogenes = snps[loader.load_oncogenes_()['oncogoenes']]
+    print filter_snps_oncogenes.shape
 
 
 
