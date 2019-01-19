@@ -119,7 +119,7 @@ def build_autoencoder(input_dim, encoded_dim=1000):
     encoded = Dense(encoded_dim, activation='relu')(x)
 
     x = Dense(encoded_dim, activation='relu')(encoded)
-    snp_guess = Dense(1)(x)
+    snp_guess = Dense(1, activation='sigmoid')(x)
 
     x = Dense(2000, activation='relu')(encoded)
     decoded = Dense(input_dim, activation='sigmoid')(x)
