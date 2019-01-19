@@ -9,7 +9,7 @@ from keras import optimizers
 from keras.layers import Input, Dense, Dropout, Reshape, Flatten, LocallyConnected1D, multiply
 from keras.models import Model
 from keras.utils import multi_gpu_model
-from sklearn import preprocessing, utils
+from sklearn import preprocessing, utils, ensemble, feature_selection, model_selection
 
 from RNAseqParse import DataLoader
 
@@ -30,6 +30,7 @@ def arg_setup():
     parser.add_argument('--lr', type=float, default=0.002, help="optmizer lr")
     parser.add_argument('--y_scale', choices=['max1', 'scale'], default='max1')
     parser.add_argument('--loss', type=str, default='mse')
+    parser.add_argument('--nfeats', type=int, default=-1)
     ###############
     # model setup #
     ###############
@@ -104,7 +105,6 @@ def build_model(input_dim, output_shape):
 
     x = Dense(100)(attention_mul)
     x = Dense(100, activation='relu')(x)
-    x = Dense(100, activation='relu')(x)
     predictions = Dense(output_shape, activation='sigmoid')(x)
     model = Model(inputs=[x_input], outputs=predictions)
     return model
@@ -135,11 +135,7 @@ def main(args):
     print x.tail()
     print x.shape, y.shape
 
-    model = build_model(rnaseq.shape[1], 1)
-    model = multi_gpu_model(model, gpus=args.num_gpus)
-    model.compile(optimizer=optimizers.Nadam(lr=args.lr),
-                  loss=args.loss,
-                  metrics=['accuracy', r2, 'mae', 'mse'])
+
     print model.summary()
     print y.describe()
     y = np.array(y, dtype=np.float32)
@@ -154,11 +150,27 @@ def main(args):
     print "Procressed y:"
     print pd.Series(y).describe()
 
+    if args.n_feats > 0:
+        rf = ensemble.RandomForestClassifier(n_estimators=2000, criterion='entropy',
+                                             n_jobs=8) if args.y_scale == 'max1' or args.y_scale == 'None' else ensemble.RandomForestRegressor(
+            n_estimators=2000, criterion='entropy', n_jobs=8)
+        rfecv = feature_selection.RFECV(estimator=rf, step=20, cv=model_selection.StratifiedKFold(2),
+                                        scoring='accuracy', n_jobs=8, min_features_to_select=args.nfeats, verbose=100)
+        rfecv = rfecv.fit(x, y)
+        x = rfecv.transform(x)
+
     labels, counts = np.unique(y, return_counts=True)
     label_dict = dict(zip(labels, counts))
     weights = create_class_weight(label_dict, y)
     print label_dict
     print weights
+
+    model = build_model(rnaseq.shape[1], 1)
+    model = multi_gpu_model(model, gpus=args.num_gpus)
+    model.compile(optimizer=optimizers.Nadam(lr=args.lr),
+                  loss=args.loss,
+                  metrics=['accuracy', r2, 'mae', 'mse'])
+
     model.fit([x], y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
               class_weight=weights)
     attention_vector = get_activations(model, [x],
