@@ -148,7 +148,8 @@ def main(args):
     elif args.y_scale == 'scale':
         print "roubust scaling"
         scaler = preprocessing.MinMaxScaler()
-        y = scaler.fit_transform(y)
+        shape = y.shape
+        y = scaler.fit_transform(y.reshape(-1, 1)).reshape(shape)
     x = preprocessing.scale(x)
     print "Procressed y:"
     print pd.Series(y).describe()
