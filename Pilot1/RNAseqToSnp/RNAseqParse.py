@@ -134,9 +134,9 @@ class DataLoader:
 
     def load_aligned_snps_rnaseq(self, file_rnaseq=None, file_snp=None, cached_file=("combined_aligned_rnaseq_snp.hdf", "aligned_snp", "aligned_rnaseq"), name_mapping="ensembl2genes", use_reduced=False, align_by='name'):
         logging.info("Loading aligned snp rna seq.")
-        if os.path.exists(self.data_path + cached_file[0]):
-            snps =  self.load_hdf(self.data_path + cached_file[0], key=cached_file[1])
-            rnaseq = self.load_hdf(self.data_path + cached_file[0], key=cached_file[2])
+        if os.path.exists(self.cache_path + cached_file[0]):
+            snps =  self.load_hdf(cached_file[0], key=cached_file[1])
+            rnaseq = self.load_hdf(cached_file[0], key=cached_file[2])
             return snps, rnaseq
 
         logging.debug("Loading data from scratch.")

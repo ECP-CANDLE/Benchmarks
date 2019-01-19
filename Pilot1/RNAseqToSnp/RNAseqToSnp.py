@@ -70,8 +70,8 @@ def r2(y_true, y_pred):
 
 def build_model(input_shape_feats, output_shape):
     x_input = Input(shape=(input_shape_feats, ))
-    x = Dense(5000)(x)
-    x = Dense(5000)(x)
+    x = Dense(1000)(x_input)
+    x = Dense(1000)(x)
     predictions = Dense(output_shape[1], activation='sigmoid')(x)
     model = Model(inputs=x_input, outputs=predictions)
     return model
@@ -84,10 +84,6 @@ def main(args):
     filter_snps_oncogenes = snps[list(intersect)]
     print filter_snps_oncogenes.shape
 
-
-
-    print snps
-    print rnaseq
  #   model = build_model(rnaseq.shape[1])
  #   model = multi_gpu_model(model, gpus=2)
  #   model.compile(optimizer='rmsprop',
