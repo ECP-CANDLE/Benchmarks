@@ -101,8 +101,8 @@ def main(args):
     model = build_model(rnaseq.shape[1], y.shape[1])
     model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer='adam',
-                  loss='mse',
-                  metrics=['accuracy', r2, 'mae'], )
+                  loss='categorical_crossentropy',
+                  metrics=['accuracy', r2, 'mae', 'mse'] )
     print model
     print y.describe()
     y = np.array(y, dtype=np.float32)
