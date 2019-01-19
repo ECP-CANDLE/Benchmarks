@@ -2,7 +2,7 @@ from RNAseqParse import DataLoader
 import argparse
 import logging
 import numpy as np
-from sklearn import preprocessing
+from sklearn import preprocessing, utils
 import keras
 from keras import backend as K
 from keras import optimizers
@@ -80,16 +80,10 @@ def build_model(input_shape_feats, output_shape):
     model = Model(inputs=x_input, outputs=predictions)
     return model
 
-def create_class_weight(labels_dict,mu=0.15):
-    total = np.sum(labels_dict.values())
-    keys = labels_dict.keys()
-    class_weight = dict()
-
-    for key in keys:
-        score = math.log(mu*total/float(labels_dict[key]))
-        class_weight[key] = score if score > 1.0 else 1.0
-
-    return class_weight
+def create_class_weight(labels_dict, y):
+    classes = labels_dict.keys()
+    weights = utils.class_weight.compute_class_weight('balanced', classes, y)
+    return dict(zip(classes, weights))
 
 
 def main(args):
@@ -125,9 +119,10 @@ def main(args):
 
     labels, counts = np.unique(y, return_counts=True)
     label_dict = dict(zip(labels, counts))
+    weights = create_class_weight(label_dict, y)
     print label_dict
-    print create_class_weight(label_dict)
-    model.fit(x, y, batch_size=1, epochs=50, validation_split=0.2, shuffle=True, class_weight=create_class_weight(label_dict))
+    print weights
+    model.fit(x, y, batch_size=1, epochs=50, validation_split=0.2, shuffle=True, class_weight=weights)
 
 
 
