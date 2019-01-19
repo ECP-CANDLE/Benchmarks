@@ -32,7 +32,7 @@ def arg_setup():
     parser.add_argument('--loss', type=str, default='mse')
     parser.add_argument('--nfeats', type=int, default=-1)
     parser.add_argument('--nfeat_step', type=int, default=100)
-    parser.add_argument('--model_type', choices=['rna_to_rna', 'rna_to_snp'])
+    parser.add_argument('--model_type', choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt'])
 
     ###############
     # model setup #
@@ -113,13 +113,22 @@ def build_model(input_dim, output_shape):
     return model
 
 
-def build_autoencoder(input_dim, encoded_dim):
+def build_autoencoder(input_dim, encoded_dim=1000):
     x_input = Input(shape=(input_dim,))
-    encoded = Dense(encoded_dim, activation='relu')(x_input)
-    decoded = Dense(input_dim, activation='sigmoid')(encoded)
-    model = Model(inputs=x_input, outputs=decoded)
-    print model.summary()
-    return model
+    x = Dense(2000, activation='relu')(x_input)
+    encoded = Dense(encoded_dim, activation='relu')(x)
+
+    x = Dense(encoded_dim, activation='relu')(encoded)
+    snp_guess = Dense(1)(x)
+
+    x = Dense(2000, activation='relu')(encoded)
+    decoded = Dense(input_dim, activation='sigmoid')(x)
+
+    model_autoencoder = Model(inputs=x_input, outputs=decoded)
+    model_snp = Model(inputs=x_input, outputs=snp_guess)
+    print model_autoencoder.summary()
+    print model_snp.summary()
+    return model_autoencoder, model_snp
 
 def create_class_weight(labels_dict, y):
     classes = labels_dict.keys()
@@ -197,13 +206,77 @@ def main_rna_to_snp(args):
                                                                          ' dimensions.')
 
 
+def main_rnasseq_pretrain(args):
+    loader = DataLoader(args.data_path, args)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
+    rnaseq = rnaseq.set_index("Sample")
+
+    # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
+    # filter_snps_oncogenes = snps[list(intersect)]
+
+    samples = set(rnaseq.index.to_series()).intersection(set(snps.index.to_series()))
+    y = snps.loc[samples]
+    x = rnaseq.loc[samples]
+    y = y.sort_index(axis=0)
+    x = x.sort_index(axis=0)
+
+    y = y['ENSG00000145113']
+
+    print y.tail()
+    print x.tail()
+    print x.shape, y.shape
+
+    print y.describe()
+    y = np.array(y, dtype=np.float32)
+    if args.y_scale == 'max1':
+        y = np.minimum(y, np.ones(y.shape))
+    elif args.y_scale == 'scale':
+        print "roubust scaling"
+        scaler = preprocessing.MinMaxScaler()
+        shape = y.shape
+        y = scaler.fit_transform(y.reshape(-1, 1)).reshape(shape)
+    x = preprocessing.scale(x)
+    print "Procressed y:"
+    print pd.Series(y).describe()
+
+    if args.nfeats > 0:
+        rf = ensemble.RandomForestClassifier(n_estimators=1000, criterion='entropy',
+                                             n_jobs=8) if args.y_scale == 'max1' or args.y_scale == 'None' else ensemble.RandomForestRegressor(
+            n_estimators=1000, criterion='entropy', n_jobs=8)
+        rfecv = feature_selection.RFE(estimator=rf, step=args.nfeat_step, n_features_to_select=args.nfeats, verbose=100)
+        rfecv = rfecv.fit(x, y)
+        x = rfecv.transform(x)
+
+    labels, counts = np.unique(y, return_counts=True)
+    label_dict = dict(zip(labels, counts))
+    weights = create_class_weight(label_dict, y)
+    print label_dict
+    print weights
+
+    model_auto, model_snp = build_autoencoder(x.shape[1], 1)
+    model_auto = multi_gpu_model(model_auto, gpus=args.num_gpus)
+    model_snp = multi_gpu_model(model_snp, gpus=args.num_gpus)
+
+    model_auto.compile(optimizer=optimizers.Nadam(lr=args.lr),
+                       loss='mse',
+                       metrics=['accuracy', r2, 'mae', 'mse'])
+    model_snp.compile(optimizer=optimizers.Nadam(lr=args.lr),
+                      loss=args.loss,
+                      metrics=['accuracy', r2, 'mae', 'mse'])
+    model_auto.fit(x, x, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True)
+    model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
+                  class_weight=weights)
+
+
+
+
 def main_rna_autoencoder(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
     x = rnaseq.set_index("Sample")
     x = preprocessing.scale(x)
 
-    model = build_autoencoder(x.shape[1], 1000)
+    model, _ = build_autoencoder(x.shape[1], 1000)
     model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
                   loss=args.loss,
@@ -221,3 +294,5 @@ if __name__ == "__main__":
         main_rna_to_snp(args)
     elif args.model_type == 'rna_to_rna':
         main_rna_autoencoder(args)
+    elif args.model_type == 'rna_to_snp_pt':
+        main_rnasseq_pretrain(args)
