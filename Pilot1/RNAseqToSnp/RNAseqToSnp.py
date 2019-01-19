@@ -104,7 +104,7 @@ def build_model(input_dim, output_shape):
 
     x = Dense(100)(attention_mul)
     x = Dense(100, activation='relu')(x)
-    x = Dense(64,  activation='relu')(x)
+    x = Dense(100, activation='relu')(x)
     predictions = Dense(output_shape, activation='relu')(x)
     model = Model(inputs=[x_input], outputs=predictions)
     return model
