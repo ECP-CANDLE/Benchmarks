@@ -32,7 +32,7 @@ def arg_setup():
     parser.add_argument('--loss', type=str, default='mse')
     parser.add_argument('--nfeats', type=int, default=-1)
     parser.add_argument('--nfeat_step', type=int, default=100)
-    parser.add_argument('--model_type', choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt'])
+    parser.add_argument('--model_type', choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt', 'snp_to_snp'])
     parser.add_argument('--reduce_snps', type=str, default="name")
     parser.add_argument('--encoded_dim', type=int, default=100)
     ###############
@@ -119,9 +119,9 @@ def build_autoencoder(input_dim, encoded_dim=1000, output_dim=1):
     x = Dense(2000, activation='relu')(x_input)
     encoded = Dense(encoded_dim, activation='relu')(x)
 
-    # attention_probs = Dense(encoded_dim, activation='softmax', name='attention_vec')(encoded)
-    # attention_mul = multiply([encoded, attention_probs], name='attention_mul')
-    x = Dense(encoded_dim, activation='relu')(encoded)
+    attention_probs = Dense(encoded_dim, activation='softmax', name='attention_vec')(encoded)
+    attention_mul = multiply([encoded, attention_probs], name='attention_mul')
+    x = Dense(encoded_dim, activation='relu')(attention_mul)
     x = Dense(encoded_dim)(x)
     snp_guess = Dense(output_dim, activation='sigmoid')(x)
 
@@ -276,7 +276,21 @@ def main_rnasseq_pretrain(args):
     model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True)
 
 
+def main_snp_autoencoder(args):
+    loader = DataLoader(args.data_path, args)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    y = snps
+    y = np.minimum(y, np.ones(y.shape))
 
+    model, _ = build_autoencoder(y.shape[1], encoded_dim=args.encoded_dim)
+    if args.num_gpus >= 2:
+        model = multi_gpu_model(model, gpus=args.num_gpus)
+    model.compile(optimizer=optimizers.Nadam(lr=args.lr),
+                  loss=args.loss,
+                  metrics=['accuracy', r2, 'mae', 'mse'])
+    print model.summary()
+
+    model.fit(y, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
 
 def main_rna_autoencoder(args):
     loader = DataLoader(args.data_path, args)
@@ -305,3 +319,5 @@ if __name__ == "__main__":
         main_rna_autoencoder(args)
     elif args.model_type == 'rna_to_snp_pt':
         main_rnasseq_pretrain(args)
+    elif args.model_type == 'snp_to_snp':
+        main_snp_autoencoder(args)
