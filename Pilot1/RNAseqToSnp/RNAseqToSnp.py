@@ -29,6 +29,7 @@ def arg_setup():
     parser.add_argument('--batch_size', type=int, default=1, help="batch_size")
     parser.add_argument('--lr', type=float, default=0.002, help="optmizer lr")
     parser.add_argument('--y_scale', choices=['max1', 'scale'], default='max1')
+    parser.add_argument('--loss', type=str, default='mse')
     ###############
     # model setup #
     ###############
@@ -137,7 +138,7 @@ def main(args):
     model = build_model(rnaseq.shape[1], 1)
     model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
-                  loss='binary_crossentropy',
+                  loss=args.loss,
                   metrics=['accuracy', r2, 'mae', 'mse'])
     print model.summary()
     print y.describe()
