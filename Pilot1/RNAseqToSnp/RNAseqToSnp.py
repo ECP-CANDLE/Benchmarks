@@ -75,7 +75,6 @@ def build_model(input_shape_feats, output_shape):
     x = Dense(1000)(x_input)
     x = Dense(1000)(x)
     x = Dense(250)(x)
-    x = Dense(250)(x)
     predictions = Dense(output_shape, activation='sigmoid')(x)
     model = Model(inputs=x_input, outputs=predictions)
     return model
@@ -103,11 +102,11 @@ def main(args):
     model.compile(optimizer='adam',
                   loss='categorical_crossentropy',
                   metrics=['accuracy', r2, 'mae', 'mse'] )
-    print model
+    print model.summary()
     print y.describe()
     y = np.array(y, dtype=np.float32)
     y = np.maximum(y, np.zeros(y.shape))
-    model.fit(x, y, batch_size=20, epochs=20, validation_split=0.2)
+    model.fit(x, y, batch_size=1, epochs=50, validation_split=0.2, shuffle=True)
 
 
 
