@@ -128,7 +128,6 @@ def main(args):
     weights = create_class_weight(label_dict, y)
     print label_dict
     print weights
-    plot_model(model, to_file='model.png')
     model.fit(x, y, batch_size=1, epochs=50, validation_split=0.2, shuffle=True, class_weight=weights)
 
 
