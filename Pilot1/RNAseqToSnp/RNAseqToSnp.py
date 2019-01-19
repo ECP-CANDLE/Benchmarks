@@ -80,9 +80,22 @@ def build_model(input_shape_feats, output_shape):
 def main(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
+    rnaseq = rnaseq.set_index("Sample")
     intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
     filter_snps_oncogenes = snps[list(intersect)]
-    print filter_snps_oncogenes.shape
+
+    samples = set(rnaseq.index.to_series()).intersection(set(snps.index.to_series()))
+    y = filter_snps_oncogenes.loc[samples]
+    x = rnaseq.loc[samples]
+    y = y.sort_index(axis=0)
+    x = x.sort_index(axis=0)
+
+    print y.tail()
+    print x.tail()
+    print x.shape, y.shape
+
+
+
 
  #   model = build_model(rnaseq.shape[1])
  #   model = multi_gpu_model(model, gpus=2)
