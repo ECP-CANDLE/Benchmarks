@@ -154,8 +154,7 @@ def main(args):
         rf = ensemble.RandomForestClassifier(n_estimators=2000, criterion='entropy',
                                              n_jobs=8) if args.y_scale == 'max1' or args.y_scale == 'None' else ensemble.RandomForestRegressor(
             n_estimators=2000, criterion='entropy', n_jobs=8)
-        rfecv = feature_selection.RFECV(estimator=rf, step=args.nfeat_step, cv=model_selection.StratifiedKFold(2),
-                                        scoring='accuracy', n_jobs=8, min_features_to_select=args.nfeats, verbose=100)
+        rfecv = feature_selection.RFE(estimator=rf, step=args.nfeat_step, n_features_to_select=args.nfeats, verbose=100)
         rfecv = rfecv.fit(x, y)
         x = rfecv.transform(x)
 
@@ -165,7 +164,7 @@ def main(args):
     print label_dict
     print weights
 
-    model = build_model(rnaseq.shape[1], 1)
+    model = build_model(x.shape[1], 1)
     model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
                   loss=args.loss,
