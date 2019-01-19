@@ -9,7 +9,7 @@ from keras.utils import plot_model
 
 from keras import optimizers
 from keras.models import Model
-from keras.layers import Input, Dense, Dropout, Conv1D,MaxPooling1D, Reshape, Flatten, LocallyConnected1D, merge
+from keras.layers import Input, Dense, Dropout, Conv1D,MaxPooling1D, Reshape, Flatten, LocallyConnected1D, multiply
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from keras.utils import get_custom_objects
 from keras.utils import multi_gpu_model
@@ -76,7 +76,7 @@ def r2(y_true, y_pred):
 def build_model(input_dim, output_shape):
     x_input = Input(shape= (input_dim, ))
     attention_probs = Dense(input_dim, activation='softmax', name='attention_vec')(x_input)
-    attention_mul = merge([x_input, attention_probs], output_shape=32, name='attention_mul', mode='mul')
+    attention_mul = multiply([x_input, attention_probs], output_shape=32, name='attention_mul')
 
     x = Dense(64)(attention_mul)
     x = Dense(64,  activation='relu')(x_input)
