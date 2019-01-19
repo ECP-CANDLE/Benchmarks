@@ -24,6 +24,7 @@ def arg_setup():
     parser.add_argument('--cellline_data', type=str, default=None, help='metadata file containing cell line info to add to model')
     parser.add_argument('--cache', type=str, default="cache/", help="Folder location to cache files.")
     parser.add_argument('--pooled_snps', type=str, default=None, help="Pool hdf file containing agg snps.")
+    parser.add_argument('--num_gpus', type=int, default=1, help="number of gpus.")
     ###############s
     # model setup #
     ###############
@@ -98,7 +99,7 @@ def main(args):
     print x.shape, y.shape
 
     model = build_model(rnaseq.shape[1], y.shape[1])
-    model = multi_gpu_model(model, gpus=4)
+    model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer='adam',
                   loss='mse',
                   metrics=['accuracy', r2, 'mae'], )
