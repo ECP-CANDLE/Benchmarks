@@ -136,7 +136,6 @@ def main(args):
     print x.shape, y.shape
 
 
-    print model.summary()
     print y.describe()
     y = np.array(y, dtype=np.float32)
     if args.y_scale == 'max1':
@@ -173,6 +172,8 @@ def main(args):
 
     model.fit([x], y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
               class_weight=weights)
+    print model.summary()
+
     attention_vector = get_activations(model, [x],
                                        print_shape_only=True,
                                        layer_name='attention_vec')
