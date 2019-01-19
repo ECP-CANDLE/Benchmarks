@@ -115,7 +115,7 @@ class DataLoader:
     #
     # Loads RNASeq from file and maps names to ensembl id
     #
-    def load_rnaseq_data(self, file="combined_rnaseq_data_oncogenes", name_mapping="ensembl2genes"):
+    def load_rnaseq_data(self, file="combined_rnaseq_data", name_mapping="ensembl2genes"):
         if self.rnaseq is not None:
             return self.rnaseq
         if os.path.exists(self.cache_path + file + ".hdf"):

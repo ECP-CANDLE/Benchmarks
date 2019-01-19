@@ -86,15 +86,16 @@ def main(args):
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
     rnaseq = rnaseq.set_index("Sample")
 
-
-    intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
-    filter_snps_oncogenes = snps[list(intersect)]
+    # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
+    # filter_snps_oncogenes = snps[list(intersect)]
 
     samples = set(rnaseq.index.to_series()).intersection(set(snps.index.to_series()))
-    y = filter_snps_oncogenes.loc[samples]
+    y = snps.loc[samples]
     x = rnaseq.loc[samples]
     y = y.sort_index(axis=0)
     x = x.sort_index(axis=0)
+
+    y=y['ENSG00000145113']
 
     print y.tail()
     print x.tail()
@@ -103,7 +104,7 @@ def main(args):
     model = build_model(rnaseq.shape[1], y.shape[1])
     model = multi_gpu_model(model, gpus=args.num_gpus)
     model.compile(optimizer='adam',
-                  loss='categorical_crossentropy',
+                  loss='binary_crossentropy',
                   metrics=['accuracy', r2, 'mae', 'mse'] )
     print model.summary()
     print y.describe()
