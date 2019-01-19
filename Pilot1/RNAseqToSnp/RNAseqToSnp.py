@@ -1,20 +1,16 @@
-from RNAseqParse import DataLoader
 import argparse
 import logging
-import numpy as np
-from sklearn import preprocessing, utils
-import keras
-from keras import backend as K
-from keras.utils import plot_model
 
-from keras import optimizers
+import keras
+import numpy as np
+import pandas as pd
+from keras import backend as K
+from keras.layers import Input, Dense, Dropout, Reshape, Flatten, LocallyConnected1D, multiply
 from keras.models import Model
-from keras.layers import Input, Dense, Dropout, Conv1D,MaxPooling1D, Reshape, Flatten, LocallyConnected1D, multiply
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from keras.utils import get_custom_objects
 from keras.utils import multi_gpu_model
-import math
-import os
+from sklearn import preprocessing, utils
+
+from RNAseqParse import DataLoader
 
 
 def arg_setup():
@@ -154,8 +150,6 @@ def main(args):
                                        print_shape_only=True,
                                        layer_name='attention_vec')[0].flatten()
     print('attention =', attention_vector)
-    import matplotlib.pyplot as plt
-    import pandas as pd
 
     pd.DataFrame(attention_vector, columns=['attention (%)']).plot(kind='bar',
                                                                    title='Attention Mechanism as '
