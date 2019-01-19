@@ -104,7 +104,7 @@ def main(args):
                   loss='mae',
                   metrics=['accuracy', r2])
 
-    model.fit(x, y, batch_size=20, epochs=20, verbose=3, validation_split=0.2)
+    model.fit(x, y, batch_size=20, epochs=20, validation_split=0.2)
 
 
 
