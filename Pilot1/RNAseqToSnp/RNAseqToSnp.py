@@ -100,7 +100,7 @@ def main(args):
     print x.shape, y.shape
 
     model = build_model(rnaseq.shape[1], y.shape[1])
-    model = multi_gpu_model(model, gpus=2)
+    model = multi_gpu_model(model, gpus=4)
     model.compile(optimizer='rmsprop',
                   loss='mae',
                   metrics=['accuracy', r2])
