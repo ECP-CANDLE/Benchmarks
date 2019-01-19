@@ -106,7 +106,7 @@ def main(args):
                   metrics=['accuracy', r2])
     print y.describe()
     y = np.array(y, dtype=np.float32)
-    y = np.max(y, 0)
+    y = np.max(y, np.zeros(y.shape))
     model.fit(x, y, batch_size=20, epochs=20, validation_split=0.2)
 
 
