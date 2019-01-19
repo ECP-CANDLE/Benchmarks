@@ -242,7 +242,7 @@ def main_rnasseq_pretrain(args):
         print "roubust scaling"
         scaler = preprocessing.MinMaxScaler()
         shape = y.shape
-        y = scaler.fit_transform(y.reshape(-1, 1)).reshape(shape)
+        y = scaler.fit_transform(y)
     print "Procressed y:"
     print pd.Series(y).describe()
 
@@ -293,7 +293,7 @@ def main_rna_autoencoder(args):
                   metrics=['accuracy', r2, 'mae', 'mse'])
     print model.summary()
 
-    model.fit(x, x, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True)
+    model.fit(x, x, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
 
 
 
