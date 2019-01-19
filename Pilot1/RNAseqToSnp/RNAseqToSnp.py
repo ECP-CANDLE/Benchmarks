@@ -115,8 +115,8 @@ def build_model(input_dim, output_shape):
 
 def build_autoencoder(input_dim, encoded_dim):
     x_input = Input(shape=(input_dim,))
-    encoded = Dense(encoded_dim)(x_input)
-    decoded = Dense(input_dim)(encoded)
+    encoded = Dense(encoded_dim, activation='relu')(x_input)
+    decoded = Dense(input_dim, activation='sigmoid')(encoded)
     model = Model(inputs=x_input, outputs=decoded)
     print model.summary()
     return model
@@ -201,6 +201,7 @@ def main_rna_autoencoder(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
     x = rnaseq.set_index("Sample")
+    x = preprocessing.scale(x)
 
     model = build_autoencoder(x.shape[1], 1000)
     model = multi_gpu_model(model, gpus=args.num_gpus)
