@@ -5,9 +5,11 @@ import numpy as np
 from sklearn import preprocessing, utils
 import keras
 from keras import backend as K
+from keras.utils import plot_model
+
 from keras import optimizers
 from keras.models import Model
-from keras.layers import Input, Dense, Dropout, Conv1D,MaxPooling1D, Reshape, Flatten, LocallyConnected1D
+from keras.layers import Input, Dense, Dropout, Conv1D,MaxPooling1D, Reshape, Flatten, LocallyConnected1D, merge
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from keras.utils import get_custom_objects
 from keras.utils import multi_gpu_model
@@ -71,11 +73,16 @@ def r2(y_true, y_pred):
     SS_tot = K.sum(K.square( y_true - K.mean(y_true) ) )
     return ( 1 - SS_res/(SS_tot + K.epsilon()) )
 
-def build_model(input_shape_feats, output_shape):
-    x_input = Input(shape=(input_shape_feats, ))
-    x = Dense(1000,  activation='relu')(x_input)
-    x = Dense(1000,  activation='relu')(x)
-    x = Dense(250,  activation='relu')(x)
+def build_model(input_dim, output_shape):
+    input_dim = (input_dim, )
+    x_input = Input(shape=input_dim)
+    attention_probs = Dense(input_dim, activation='softmax', name='attention_vec')(x_input)
+    attention_mul = merge([x_input, attention_probs], output_shape=32, name='attention_mul', mode='mul')
+
+    x = Dense(64)(attention_mul)
+    x = Dense(64,  activation='relu')(x_input)
+    x = Dense(64,  activation='relu')(x)
+    x = Dense(64,  activation='relu')(x)
     predictions = Dense(output_shape, activation='sigmoid')(x)
     model = Model(inputs=x_input, outputs=predictions)
     return model
@@ -122,6 +129,7 @@ def main(args):
     weights = create_class_weight(label_dict, y)
     print label_dict
     print weights
+    plot_model(model, to_file='model.png')
     model.fit(x, y, batch_size=1, epochs=50, validation_split=0.2, shuffle=True, class_weight=weights)
 
 
