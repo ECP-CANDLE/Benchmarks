@@ -1,6 +1,7 @@
 from RNAseqParse import DataLoader
 import argparse
 import logging
+import numpy as np
 import keras
 from keras import backend as K
 from keras import optimizers
@@ -103,7 +104,8 @@ def main(args):
     model.compile(optimizer='rmsprop',
                   loss='mae',
                   metrics=['accuracy', r2])
-
+    print y.describe()
+    y = np.max(1, np.array(y))
     model.fit(x, y, batch_size=20, epochs=20, validation_split=0.2)
 
 
