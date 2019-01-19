@@ -63,7 +63,7 @@ class DataLoader:
 
     def load_oncogenes_(self, file="oncogenes"):
         dic = self.load_ensembl_dict()
-        oncogenes = pd.read_table("oncogenes", names=[' '])
+        oncogenes = pd.read_table(self.data_path + file, names=['oncogenes'])
         oncogenes.replace(dic)
         return oncogenes
 

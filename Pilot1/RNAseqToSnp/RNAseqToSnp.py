@@ -80,7 +80,7 @@ def build_model(input_shape_feats, output_shape):
 def main(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True)
-    intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogoenes'])))
+    intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
     filter_snps_oncogenes = snps[list(intersect)]
     print filter_snps_oncogenes.shape
 
