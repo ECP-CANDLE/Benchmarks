@@ -110,6 +110,11 @@ def build_model(input_dim, output_shape):
     model = Model(inputs=[x_input], outputs=predictions)
     return model
 
+
+def build_autoencoder(input_dim):
+    x_input = Input(shape=(input_dim,))
+
+
 def create_class_weight(labels_dict, y):
     classes = labels_dict.keys()
     weights = utils.class_weight.compute_class_weight('balanced', classes, y)
