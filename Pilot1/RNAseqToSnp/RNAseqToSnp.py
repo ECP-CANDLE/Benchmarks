@@ -169,10 +169,10 @@ def main(args):
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
                   loss=args.loss,
                   metrics=['accuracy', r2, 'mae', 'mse'])
+    print model.summary()
 
     model.fit([x], y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
               class_weight=weights)
-    print model.summary()
 
     attention_vector = get_activations(model, [x],
                                        print_shape_only=True,
