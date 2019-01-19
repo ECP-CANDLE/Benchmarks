@@ -91,8 +91,6 @@ class DataLoader:
         df = df.set_index('Sample:Sample')
         df = df.apply(pd.to_numeric, axis=1)
         df = df.transpose()
-        print df
-        print df.dtypes
         df = df.apply(lambda x : x.astype(int), axis=1)
         df = df.reset_index()
         df['index'] = [this.split(":")[0] for this in df['index']]
