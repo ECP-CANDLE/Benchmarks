@@ -74,8 +74,7 @@ def r2(y_true, y_pred):
     return ( 1 - SS_res/(SS_tot + K.epsilon()) )
 
 def build_model(input_dim, output_shape):
-    input_dim = (input_dim, )
-    x_input = Input(shape=input_dim)
+    x_input = Input(shape= (input_dim, ))
     attention_probs = Dense(input_dim, activation='softmax', name='attention_vec')(x_input)
     attention_mul = merge([x_input, attention_probs], output_shape=32, name='attention_mul', mode='mul')
 
