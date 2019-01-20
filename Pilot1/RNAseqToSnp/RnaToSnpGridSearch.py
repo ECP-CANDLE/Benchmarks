@@ -23,6 +23,7 @@ from metrics import r2
 ###################
 
 gpu_nums = None
+x_big = None
 
 def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
     x_input = Input(shape=(x_train.shape[1],))
@@ -202,7 +203,7 @@ def rna_snp_pt_gridsearch(x_train, y_train, x_val, y_val, params):
     if params['use_attention']:
         attention_probs = Dense(params['encoded_dim'], activation='softmax', name='attention_vec')(encoded)
         attention_mul = multiply([encoded, attention_probs], name='attention_mul')
-        h = x
+        h = attention_mul
     else:
         h = encoded
     x = Dense(params['encoded_dim'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
@@ -216,14 +217,15 @@ def rna_snp_pt_gridsearch(x_train, y_train, x_val, y_val, params):
                     kernel_initializer=params['kernel_initializer'])(x)
 
     model_snps = Model(inputs=x_input, outputs=snp_guess)
-    model_snps = multi_gpu_model(model_snps, 2)
+    model_snps = multi_gpu_model(model_snps, gpu_nums)
     model_auto = Model(inputs=x_input, outputs=decoded)
-    model_auto = multi_gpu_model(model_auto, 2)
-    model_auto.compile(loss=params['auto_losses'], optimizer=optimizers.adam(), metrics=['acc', r2])
-    model_snps.compile(loss=params['losses'],
-                       optimizer=params['optimizer'], metrics=['accuracy', r2, 'mae', 'mse'])
+    model_auto = multi_gpu_model(model_auto, gpu_nums)
+    model_auto.compile(loss=params['auto_losses'], optimizer=params['auto_optimizer'](params['lr'] * 4),
+                       metrics=['acc', r2])
+    model_snps.compile(loss=params['snp_losses'],
+                       optimizer=params['snp_optimizer']('lr'), metrics=['accuracy', r2, 'mae', 'mse'])
 
-    model_auto.fit(x_train, x_train, epochs=20, batch_size=200, verbose=0)
+    model_auto.fit(x_big, x_big, epochs=20, batch_size=200, verbose=0, validation_split=0.05)
 
     history = model_snps.fit(x_train, y_train,
                              validation_data=[x_val, y_val],
@@ -235,19 +237,21 @@ def rna_snp_pt_gridsearch(x_train, y_train, x_val, y_val, params):
 
 
 def snps_from_rnaseq_params():
-    p = {'first_neuron': (10, 2000, 10),
-         'batch_size': (1, 200, 10),
-         'epochs': (10, 200, 5),
+    p = {'first_neuron': [1000, 1500],
+         'batch_size': [200],
+         'epochs': [50],
          'dropout': (0, 0.3, 2),
-         'hidden_unit': (100, 1000, 10),
-         'kernel_initializer': ['uniform', 'normal'],
+         'hidden_unit': ([500, 750]),
+         'kernel_initializer': ['uniform'],
          'use_attention': [True, False],
-         'encoded_dim': (10, 1000, 10),
-         'auto_losses': ['mse', 'kullback_leibler_divergence', 'mae'],
-         'optimizer': ['nadam', 'adam', 'SGD'],
-         'losses': ['categorical_crossentropy', 'categorical_hinge', 'sparse_categorical_crossentropy'],
-         'activation': ['sigmoid', 'elu', 'elu'],
-         'last_activation': ['sigmoid', 'elu']}
+         'encoded_dim': [500, 750, 1000],
+         'auto_losses': ['mse', 'mae'],
+         'snp_losses': ['categorical_crossentropy', 'sparse_categorical_crossentropy'],
+         'optimizer': [keras.optimizers.adam],
+         'lr': [0.001, 0.01, 0.1],
+         'activation': ['sigmoid', 'elu', 'relu'],
+         'last_activation': ['sigmoid', 'relu'],
+         'snp_activation': ['sigmoid']}
     return p
 
 def snps_from_rnaseq_grid_search(args):
@@ -259,6 +263,7 @@ def snps_from_rnaseq_grid_search(args):
     rnaseq = pd.DataFrame(preprocessing.scale(rnaseq), columns=cols, index=index)
     # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
     # filter_snps_oncogenes = snps[list(intersect)]
+    global x_big
     x_big = rnaseq
 
     samples = set(rnaseq.index.to_series()).intersection(set(snps.index.to_series()))
@@ -295,8 +300,7 @@ def snps_from_rnaseq_grid_search(args):
     t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
                 params=snps_from_rnaseq_params(),
                 model=rna_snp_pt_gridsearch,
-                grid_downsample=0.01,
+                grid_downsample=0.1,
                 reduction_metric='val_r2',
                 dataset_name="RNA Autoencoder pretained snp 'ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311'",
-                experiment_no='1', val_split=0.2, debug=True, print_params=True)
-    r = ta.Reporting("breast_cancer_1.csv")
+                experiment_no='1', debug=True, print_params=True)
