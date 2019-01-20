@@ -385,7 +385,8 @@ def snps_from_rnaseq_grid_search(args):
          'activation': ['relu', 'elu', 'sigmoid'],
          'last_activation': ['sigmoid'],
          'snp_activation': ['sigmoid']}
-
+    x = np.array(x, dtype=np.float32)
+    y = np.array(x, dtype=np.float32)
     t = ta.Scan(x, y,
                 params=p,
                 model=breast_cancer_model,
