@@ -114,7 +114,7 @@ def snps_from_rnaseq_grid_search(args):
                 params=p,
                 model=rna_snp_pt_gridsearch,
                 grid_downsample=0.05,
-                random_method='quantum',
+                random_method='ambient_sound',
                 reduction_metric='val_r2',
                 dataset_name="RNA Autoencoder pretained snp 'ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311'",
                 experiment_no='1', val_split=0.2, debug=True, print_params=True)
