@@ -10,6 +10,7 @@ from keras.layers import Input, Dense, Dropout, Reshape, Flatten, LocallyConnect
 from keras.models import Model
 from keras.utils import multi_gpu_model
 from sklearn import preprocessing, utils, ensemble, feature_selection, model_selection
+import talos as ta
 
 from RNAseqParse import DataLoader
 
@@ -134,6 +135,50 @@ def build_autoencoder(input_dim, encoded_dim=1000, output_dim=1):
     print model_autoencoder.summary()
     print model_snp.summary()
     return model_autoencoder, model_snp
+
+
+def breast_cancer_model(x_train, y_train, x_val, y_val, params):
+    x_input = Input(shape=(x_train.shape[0],))
+    x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
+        x_input)
+    layer = Dropout(params['dropout'])(x)
+    encoded = Dense(params['encoded_dim'], activation=params['activation'],
+                    kernel_initializer=params['kernel_initializer'])(x)
+
+    h = None
+    if params['use_attention']:
+        attention_probs = Dense(params['encoded_dim'], activation='softmax', name='attention_vec')(encoded)
+        attention_mul = multiply([encoded, attention_probs], name='attention_mul')
+        h = x
+    else:
+        h = encoded
+    x = Dense(params['encoded_dim'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
+        h)
+    x = Dense(params['hidden_unit'])(x)
+    snp_guess = Dense(y_train.shape[1], activation=params['snp_activation'])(x)
+
+    x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
+        encoded)
+    decoded = Dense(x_train.shape[1], activation=params['last_activation'],
+                    kernel_initializer=params['kernel_initializer'])(x)
+
+    model_snps = Model(inputs=x_input, outputs=snp_guess)
+    model_snps = multi_gpu_model(model_snps, 2)
+    model_auto = Model(inputs=x_input, outputs=decoded)
+    model_auto = multi_gpu_model(model_auto, 2)
+    model_auto.compile(loss=params['auto_losses'], optimizer=optimizers.adam, metrics=['acc'])
+    model_snps.compile(loss=params['losses'],
+                       optimizer=params['optimizer'](), metrics=['accuracy', r2, 'mae', 'mse'])
+
+    model_auto.fit(x_train, x_train, epochs=20, batch_size=200, verbose=0)
+
+    history = model_snps.fit(x_train, y_train,
+                             validation_data=[x_val, y_val],
+                             batch_size=params['batch_size'],
+                             epochs=params['epochs'],
+                             verbose=0)
+
+    return history, model_snps
 
 def create_class_weight(labels_dict, y):
     classes = labels_dict.keys()
@@ -275,6 +320,65 @@ def main_rnasseq_pretrain(args):
     model_auto.fit(x_big, x_big, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.01, shuffle=True)
     print x.shape, y.shape
     model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
+
+
+def snps_from_rnaseq_grid_search(args):
+    loader = DataLoader(args.data_path, args)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    rnaseq = rnaseq.set_index("Sample")
+    cols = rnaseq.columns.to_series()
+    index = rnaseq.index.to_series()
+    rnaseq = pd.DataFrame(preprocessing.scale(rnaseq), columns=cols, index=index)
+    # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
+    # filter_snps_oncogenes = snps[list(intersect)]
+    x_big = rnaseq
+
+    samples = set(rnaseq.index.to_series()).intersection(set(snps.index.to_series()))
+    y = snps.loc[samples]
+    x = rnaseq.loc[samples]
+    y = y.sort_index(axis=0)
+    x = x.sort_index(axis=0)
+
+    y = y[['ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311']]
+
+    print y.tail()
+    print x.tail()
+    print x.shape, y.shape
+
+    print y.describe()
+    y = np.array(y, dtype=np.float32)
+    if args.y_scale == 'max1':
+        y = np.minimum(y, np.ones(y.shape))
+    elif args.y_scale == 'scale':
+        print "roubust scaling"
+        scaler = preprocessing.MinMaxScaler()
+        shape = y.shape
+        y = scaler.fit_transform(y)
+    print "Procressed y:"
+
+    # then we can go ahead and set the parameter space
+    p = {'first_neuron': (50, 2000, 200),
+         'batch_size': (1, 200, 20),
+         'epochs': (10, 200, 20),
+         'dropout': (0, 0.3, 0.1),
+         'kernel_initializer': ['uniform', 'normal'],
+         'use_attention': [True, False],
+         'encoded_dim': (10, 1000, 100),
+         'auto_losses': [keras.losses.mse, keras.losses.kullback_leibler_divergence, keras.losses.mae],
+         'optimizer': [keras.optimizers.nadam, keras.optimizers.adam, keras.optimizers.SGD],
+         'losses': [keras.losses.categorical_crossentropy, keras.losses.categorical_hinge,
+                    keras.losses.sparse_categorical_crossentropy],
+         'activation': [keras.activations.relu, keras.activations.elu, keras.activations.sigmoid],
+         'last_activation': [keras.activations.sigmoid, keras.activations.relu]}
+
+    t = ta.Scan(x, y,
+                params=p,
+                model=breast_cancer_model,
+                grid_downsample=1,
+                random_method='quantum', functional_model=True,
+                dataset_name="RNA Autoencoder pretained snp 'ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311'",
+                experiment_no='1', val_split=0.2)
+    r = ta.Reporting("breast_cancer_1.csv")
 
 
 def main_snp_autoencoder(args):
