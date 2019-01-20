@@ -136,7 +136,7 @@ def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
 def snp_snp_gridsearch_params():
     params = {'first_neuron': (1500, 2000, 2),
               'batch_size': (100, 400, 3),
-              'epochs': (10, 75, 4),
+              'epochs': (10, 50, 3),
               'dropout': (0, 0.3, 3),
               'kernel_initializer': ['uniform', 'normal'],
               'encoded_dim': [500, 1000, 1500],
