@@ -275,17 +275,6 @@ def main_rnasseq_pretrain(args):
     model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
 
 
-def load_and_normalize_rnaseq(args):
-    loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
-    rnaseq = rnaseq.set_index("Sample")
-    cols = rnaseq.columns.to_series()
-    index = rnaseq.index.to_series()
-    rnaseq = pd.DataFrame(preprocessing.scale(rnaseq), columns=cols, index=index)
-
-
-def rna_seq_autoencoder_gridsearch(args):
-    rnaseq = load_and_normalize_rnaseq(args)
 
 
 def main_snp_autoencoder(args):
