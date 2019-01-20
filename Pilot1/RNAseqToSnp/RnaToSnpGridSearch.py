@@ -109,7 +109,7 @@ def rna_rna_gridsearch(args):
     x = np.array(x, dtype=np.float32)
     y = np.array(x, dtype=np.float32)
 
-    x_train, y_train, x_val, y_val = train_test_split(x, y, test_split=0.2)
+    x_train, y_train, x_val, y_val = train_test_split(x, y, test_size=0.2)
 
     t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
                 params=rna_rna_gridsearch_params(),

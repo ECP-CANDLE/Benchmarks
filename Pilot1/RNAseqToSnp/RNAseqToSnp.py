@@ -12,6 +12,7 @@ from keras.utils import multi_gpu_model
 from sklearn import preprocessing, utils, ensemble, feature_selection, model_selection
 import talos as ta
 
+from metrics import r2
 from RNAseqParse import DataLoader
 from RnaToSnpGridSearch import snps_from_rnaseq_grid_search, rna_rna_gridsearch
 
