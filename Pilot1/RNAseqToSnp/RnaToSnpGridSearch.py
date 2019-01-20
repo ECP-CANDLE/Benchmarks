@@ -96,7 +96,7 @@ def rna_rna_gridsearch(args):
     t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
                 params=rna_rna_gridsearch_params(),
                 model=rna_rna_gridsearch_model,
-                grid_downsample=0.05,
+                grid_downsample=0.01,
                 #       reduction_metric='val_r2',
                 #       reduction_method='correlation',
                 dataset_name="RNA_Autoencoder",
