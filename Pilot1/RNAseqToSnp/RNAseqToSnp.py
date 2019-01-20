@@ -19,10 +19,11 @@ def arg_setup():
     parser = argparse.ArgumentParser()
 
     ##data
-    parser.add_argument('--data_path', type=str, default="",  help='Folder where data is contained.')
+    parser.add_argument('--data_path', type=str, default="", help='Folder where data is contained.')
     parser.add_argument('--RNAseq_file', type=str, default="combined_rnaseq_data")
     parser.add_argument('--SNP_file', type=str, default='combo_snp')
-    parser.add_argument('--cellline_data', type=str, default=None, help='metadata file containing cell line info to add to model')
+    parser.add_argument('--cellline_data', type=str, default=None,
+                        help='metadata file containing cell line info to add to model')
     parser.add_argument('--cache', type=str, default="cache/", help="Folder location to cache files.")
     parser.add_argument('--pooled_snps', type=str, default=None, help="Pool hdf file containing agg snps.")
     parser.add_argument('--num_gpus', type=int, default=1, help="number of gpus.")
@@ -68,8 +69,8 @@ def get_activations(model, inputs, print_shape_only=False, layer_name=None):
 
 
 def build_feature_model_genes(input_shape, name='', dense_layers=[500, 500],
-                        activation='relu', residual=False,
-                        dropout_rate=0,  regularize_genes=None, use_file_rnaseq=None):
+                              activation='relu', residual=False,
+                              dropout_rate=0, regularize_genes=None, use_file_rnaseq=None):
     x_input = Input(shape=input_shape)
     print ("Input shape: ")
     print (input_shape)
@@ -80,8 +81,8 @@ def build_feature_model_genes(input_shape, name='', dense_layers=[500, 500],
         x = h
         h = Reshape((max(input_shape), 1), input_shape=input_shape)(h)
         h = LocallyConnected1D(256, 30, strides=3, activation='relu')(h)
-        h =  LocallyConnected1D(256, 30, strides=3, activation='relu')(h)
-        h = LocallyConnected1D(256, 30, strides =3, activation='relu')(h)
+        h = LocallyConnected1D(256, 30, strides=3, activation='relu')(h)
+        h = LocallyConnected1D(256, 30, strides=3, activation='relu')(h)
         h = Flatten()(h)
     for i, layer in enumerate(dense_layers):
         x = h
@@ -100,13 +101,15 @@ def build_feature_model_genes(input_shape, name='', dense_layers=[500, 500],
     model = Model(x_input, h, name=name)
     return model
 
+
 def r2(y_true, y_pred):
-    SS_res =  K.sum(K.square( y_true-y_pred ))
-    SS_tot = K.sum(K.square( y_true - K.mean(y_true) ) )
-    return ( 1 - SS_res/(SS_tot + K.epsilon()) )
+    SS_res = K.sum(K.square(y_true - y_pred))
+    SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
+    return (1 - SS_res / (SS_tot + K.epsilon()))
+
 
 def build_model(input_dim, output_shape):
-    x_input = Input(shape= (input_dim, ))
+    x_input = Input(shape=(input_dim,))
     attention_probs = Dense(input_dim, activation='softmax', name='attention_vec')(x_input)
     attention_mul = multiply([x_input, attention_probs], name='attention_mul')
 
@@ -181,6 +184,7 @@ def breast_cancer_model(x_train, y_train, x_val, y_val, params):
 
     return history, model_snps
 
+
 def create_class_weight(labels_dict, y):
     classes = labels_dict.keys()
     weights = utils.class_weight.compute_class_weight('balanced', classes, y)
@@ -201,12 +205,11 @@ def main_rna_to_snp(args):
     y = y.sort_index(axis=0)
     x = x.sort_index(axis=0)
 
-    y=y['ENSG00000145113']
+    y = y['ENSG00000145113']
 
     print y.tail()
     print x.tail()
     print x.shape, y.shape
-
 
     print y.describe()
     y = np.array(y, dtype=np.float32)
@@ -234,7 +237,6 @@ def main_rna_to_snp(args):
     weights = create_class_weight(label_dict, y)
     print label_dict
     print weights
-
 
     model = build_model(x.shape[1], 1)
     if args.num_gpus >= 2:
@@ -268,7 +270,6 @@ def main_rnasseq_pretrain(args):
     # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
     # filter_snps_oncogenes = snps[list(intersect)]
     x_big = rnaseq
-
 
     samples = set(rnaseq.index.to_series()).intersection(set(snps.index.to_series()))
     y = snps.loc[samples]
@@ -376,7 +377,7 @@ def snps_from_rnaseq_grid_search(args):
                 params=p,
                 model=breast_cancer_model,
                 grid_downsample=1,
-                random_method='quantum', functional_model=True,
+                random_method='quantum',
                 dataset_name="RNA Autoencoder pretained snp 'ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311'",
                 experiment_no='1', val_split=0.2)
     r = ta.Reporting("breast_cancer_1.csv")
@@ -397,6 +398,7 @@ def main_snp_autoencoder(args):
     print model.summary()
 
     model.fit(y, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
+
 
 def main_rna_autoencoder(args):
     loader = DataLoader(args.data_path, args)
@@ -420,6 +422,7 @@ def main_snp_to_rna(args):
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
     x = rnaseq.set_index("Sample")
     x = preprocessing.scale(x)
+
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
