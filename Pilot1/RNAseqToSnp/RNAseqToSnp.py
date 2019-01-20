@@ -379,7 +379,7 @@ def snps_from_rnaseq_grid_search(args):
                 grid_downsample=1,
                 random_method='quantum',
                 dataset_name="RNA Autoencoder pretained snp 'ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311'",
-                experiment_no='1', val_split=0.2)
+                experiment_no='1', val_split=0.2, debug=True, print_params=True)
     r = ta.Reporting("breast_cancer_1.csv")
 
 
