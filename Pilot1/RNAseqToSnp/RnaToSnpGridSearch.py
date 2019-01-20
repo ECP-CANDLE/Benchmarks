@@ -118,6 +118,8 @@ def rna_rna_gridsearch(args):
                 reduction_metric='val_r2',
                 dataset_name="RNA Autoencoder on all RNAseq",
                 experiment_no='1', debug=True, print_params=True)
+    r = ta.Reporting("rna_autoencoder.csv")
+
 
 
 def snps_from_rnaseq_grid_search(args):
