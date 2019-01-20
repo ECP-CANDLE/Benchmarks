@@ -148,7 +148,7 @@ def snp_snp_gridsearch_params():
     return params
 
 
-def rna_rna_gridsearch(args):
+def snp_snp_gridsearch(args):
     global gpu_nums
     gpu_nums = args.num_gpus
     loader = DataLoader(args.data_path, args)

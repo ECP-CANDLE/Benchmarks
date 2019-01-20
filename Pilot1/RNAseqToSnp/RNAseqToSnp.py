@@ -16,7 +16,7 @@ import talos as ta
 
 from metrics import r2
 from RNAseqParse import DataLoader
-from RnaToSnpGridSearch import snps_from_rnaseq_grid_search, rna_rna_gridsearch
+from RnaToSnpGridSearch import snps_from_rnaseq_grid_search, rna_rna_gridsearch, snp_snp_gridsearch
 
 def arg_setup():
     parser = argparse.ArgumentParser()
@@ -39,7 +39,7 @@ def arg_setup():
     parser.add_argument('--nfeat_step', type=int, default=100)
     parser.add_argument('--model_type',
                         choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt', 'snp_to_snp', 'snp_to_rna',
-                                 'grid_search', 'rna_rna_grid_search'])
+                                 'grid_search', 'rna_rna_grid_search', 'snp_snp_grid_search'])
     parser.add_argument('--reduce_snps', type=str, default="name")
     parser.add_argument('--encoded_dim', type=int, default=100)
     ###############
@@ -338,3 +338,5 @@ if __name__ == "__main__":
         snps_from_rnaseq_grid_search(args)
     elif args.model_type == 'rna_rna_grid_search':
         rna_rna_gridsearch(args)
+    elif args.model_type == 'snp_snp_grid_search':
+        snp_snp_gridsearch(args)
