@@ -16,8 +16,9 @@ from RNAseqParse import DataLoader
 from metrics import r2
 
 
-
-
+###################
+# RNA GRIDSEARRCH #
+###################
 
 def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
     x_input = Input(shape=(x_train.shape[1],))
@@ -43,17 +44,17 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
 
 
 def rna_rna_gridsearch_params():
-    params = {'first_neuron': (100, 2000, 5),
-              'batch_size': (1, 200, 5),
+    params = {'first_neuron': (1000, 2000, 3),
+              'batch_size': (1, 200, 4),
               'epochs': (10, 75, 4),
               'dropout': (0, 0.3, 3),
               'kernel_initializer': ['uniform', 'normal'],
-              'encoded_dim': (10, 2000, 10),
+              'encoded_dim': (100, 2000, 5),
               'auto_losses': ['mse', 'kullback_leibler_divergence', 'mae'],
-              'optimizer': [keras.optimizers.nadam, keras.optimizers.adam, keras.optimizers.SGD],
-              'lr': (0.001, 2, 10),
-              'activation': ['sigmoid', 'elu', 'relu'],
-              'last_activation': ['sigmoid', 'elu']}
+              'optimizer': [keras.optimizers.adam, keras.optimizers.SGD],
+              'lr': (0.001, 1, 4),
+              'activation': ['sigmoid', 'relu'],
+              'last_activation': ['sigmoid', 'relu']}
     return params
 
 
@@ -78,6 +79,10 @@ def rna_rna_gridsearch(args):
                 experiment_no='1', debug=True, print_params=True)
     r = ta.Reporting("rna_autoencoder.csv")
 
+
+#######################
+# RNA->SNP GRIDSEARCH #
+#######################
 
 def rna_snp_pt_gridsearch(x_train, y_train, x_val, y_val, params):
     x_input = Input(shape=(x_train.shape[1],))
