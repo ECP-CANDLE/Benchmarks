@@ -20,6 +20,8 @@ from metrics import r2
 # RNA GRIDSEARRCH #
 ###################
 
+gpu_nums = None
+
 def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
     x_input = Input(shape=(x_train.shape[1],))
     x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
@@ -34,7 +36,7 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
                     kernel_initializer=params['kernel_initializer'])(x)
 
     model_auto = Model(inputs=x_input, outputs=decoded)
-    model_auto = multi_gpu_model(model_auto, 2)
+    model_auto = multi_gpu_model(model_auto, gpu_nums)
     model_auto.compile(loss=params['auto_losses'], optimizer=params['optimizer'](lr=params['lr']), metrics=['acc', r2])
 
     history = model_auto.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=params['epochs'],
@@ -44,6 +46,23 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
 
 
 def rna_rna_gridsearch_params():
+    params = {'first_neuron': (1000, 2000, 3),
+              'batch_size': (100, 300, 2),
+              'epochs': (10, 75, 4),
+              'dropout': (0, 0.3, 3),
+              'kernel_initializer': ['uniform', 'normal'],
+              'encoded_dim': (100, 2000, 5),
+              'auto_losses': ['mse', 'kullback_leibler_divergence', 'mae'],
+              'optimizer': [keras.optimizers.adam, keras.optimizers.SGD],
+              'lr': (0.001, 1, 4),
+              'activation': ['relu'],
+              'last_activation': ['sigmoid', 'relu']}
+    return params
+
+
+##based on analysis
+
+def rna_rna_gridsearch_params_2():
     params = {'first_neuron': (1000, 2000, 3),
               'batch_size': (1, 200, 4),
               'epochs': (10, 75, 4),
@@ -59,6 +78,7 @@ def rna_rna_gridsearch_params():
 
 
 def rna_rna_gridsearch(args):
+    gpu_nums = args.num_gpus
     loader = DataLoader(args.data_path, args)
     _, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
     rnaseq = rnaseq.set_index("Sample")
@@ -75,7 +95,7 @@ def rna_rna_gridsearch(args):
                 grid_downsample=0.01,
                 reduction_metric='val_r2',
                 reduction_method='correlation',
-                dataset_name="RNA Autoencoder on all RNAseq",
+                dataset_name="RNA_Autoencoder",
                 experiment_no='1', debug=True, print_params=True)
     r = ta.Reporting("rna_autoencoder.csv")
 
