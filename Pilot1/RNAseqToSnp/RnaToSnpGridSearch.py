@@ -174,7 +174,7 @@ def snp_snp_gridsearch(args):
     t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
                 params=snp_snp_gridsearch_params(),
                 model=snp_snp_gridsearch_model,
-                grid_downsample=0.1,
+                grid_downsample=1,
                 # reduction_metric='val_r2',
                 # reduction_method='correlation',
                 dataset_name="SNP_Autoencoder",
