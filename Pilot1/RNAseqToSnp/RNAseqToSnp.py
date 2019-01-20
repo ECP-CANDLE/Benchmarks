@@ -218,7 +218,7 @@ def main_rnasseq_pretrain(args):
     rnaseq = rnaseq.set_index("Sample")
     cols = rnaseq.columns.to_series()
     index = rnaseq.index.to_series()
-    rnaseq = pd.DataFrame(preprocessing.MinMaxScaler().fit_transform(rnaseq), columns=cols, index=index)
+    rnaseq = pd.DataFrame(preprocessing.scale(rnaseq), columns=cols, index=index)
     # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
     # filter_snps_oncogenes = snps[list(intersect)]
     x_big = rnaseq
@@ -266,15 +266,15 @@ def main_rnasseq_pretrain(args):
         model_auto = multi_gpu_model(model_auto, gpus=args.num_gpus)
         model_snp = multi_gpu_model(model_snp, gpus=args.num_gpus)
 
-    model_auto.compile(optimizer=optimizers.Nadam(lr=args.lr),
+    model_auto.compile(optimizer=optimizers.Nadam(),
                        loss='mse',
                        metrics=['accuracy', r2, 'mae', 'mse'])
-    model_snp.compile(optimizer=optimizers.Nadam(lr=args.lr),
+    model_snp.compile(optimizer=optimizers.Nadam(),
                       loss=args.loss,
                       metrics=['accuracy', r2, 'mae', 'mse'])
     model_auto.fit(x_big, x_big, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.01, shuffle=True)
     print x.shape, y.shape
-    model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True)
+    model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
 
 
 def main_snp_autoencoder(args):
