@@ -170,7 +170,7 @@ def breast_cancer_model(x_train, y_train, x_val, y_val, params):
     model_snps = multi_gpu_model(model_snps, 2)
     model_auto = Model(inputs=x_input, outputs=decoded)
     model_auto = multi_gpu_model(model_auto, 2)
-    model_auto.compile(loss=params['auto_losses'], optimizer=optimizers.adam, metrics=['acc'])
+    model_auto.compile(loss=params['auto_losses'], optimizer=optimizers.adam(), metrics=['acc'])
     model_snps.compile(loss=params['losses'],
                        optimizer=params['optimizer'], metrics=['accuracy', r2, 'mae', 'mse'])
 
@@ -323,6 +323,18 @@ def main_rnasseq_pretrain(args):
     print x.shape, y.shape
     model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
 
+
+def load_and_normalize_rnaseq(args):
+    loader = DataLoader(args.data_path, args)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    rnaseq = rnaseq.set_index("Sample")
+    cols = rnaseq.columns.to_series()
+    index = rnaseq.index.to_series()
+    rnaseq = pd.DataFrame(preprocessing.scale(rnaseq), columns=cols, index=index)
+
+
+def rna_seq_autoencoder_gridsearch(args):
+    rnaseq = load_and_normalize_rnaseq(args)
 
 def snps_from_rnaseq_grid_search(args):
     loader = DataLoader(args.data_path, args)
