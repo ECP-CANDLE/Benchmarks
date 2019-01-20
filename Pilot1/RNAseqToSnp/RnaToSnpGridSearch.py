@@ -100,16 +100,14 @@ def rna_rna_gridsearch_params():
 
 def rna_rna_gridsearch(args):
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    _, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
     rnaseq = rnaseq.set_index("Sample")
-    cols = rnaseq.columns.to_series()
-    index = rnaseq.index.to_series()
-    x = pd.DataFrame(preprocessing.scale(rnaseq), columns=cols, index=index)
+    x = preprocessing.scale(rnaseq)
 
     x = np.array(x, dtype=np.float32)
     y = np.array(x, dtype=np.float32)
 
-    x_train, y_train, x_val, y_val = train_test_split(x, y, test_size=0.2)
+    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
 
     t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
                 params=rna_rna_gridsearch_params(),
