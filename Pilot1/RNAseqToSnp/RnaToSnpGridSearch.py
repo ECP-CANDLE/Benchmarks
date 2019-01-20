@@ -134,15 +134,15 @@ def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
 
 
 def snp_snp_gridsearch_params():
-    params = {'first_neuron': (1000, 2000, 3),
-              'batch_size': (100, 300, 4),
+    params = {'first_neuron': (1500, 2000, 2),
+              'batch_size': (100, 400, 3),
               'epochs': (10, 75, 4),
               'dropout': (0, 0.3, 3),
               'kernel_initializer': ['uniform', 'normal'],
-              'encoded_dim': (100, 3000, 5),
-              'auto_losses': ['mse', 'kullback_leibler_divergence', 'mae', 'categorical_crossentropy'],
+              'encoded_dim': [500, 1000, 1500],
+              'auto_losses': ['mse', 'kullback_leibler_divergence', 'categorical_crossentropy'],
               'optimizer': [keras.optimizers.adam, keras.optimizers.SGD],
-              'lr': (0.001, 0.1, 4),
+              'lr': [0.001, 0.01, 0.1],
               'activation': ['sigmoid', 'relu'],
               'last_activation': ['sigmoid', 'relu']}
     return params
