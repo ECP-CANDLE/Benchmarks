@@ -81,6 +81,7 @@ def rna_rna_gridsearch_params_2():
 
 
 def rna_rna_gridsearch(args):
+    global gpu_nums
     gpu_nums = args.num_gpus
     loader = DataLoader(args.data_path, args)
     _, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
