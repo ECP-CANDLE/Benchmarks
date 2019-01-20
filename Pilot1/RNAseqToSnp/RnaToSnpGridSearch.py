@@ -116,8 +116,8 @@ def rna_rna_gridsearch(args):
                 model=rna_rna_gridsearch_model,
                 grid_downsample=0.01,
                 reduction_metric='val_r2',
-                dataset_name="RNA Autoencoder pretained snp 'ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311'",
-                experiment_no='1', val_split=0.2, debug=True, print_params=True)
+                dataset_name="RNA Autoencoder on all RNAseq",
+                experiment_no='1', debug=True, print_params=True)
 
 
 def snps_from_rnaseq_grid_search(args):
