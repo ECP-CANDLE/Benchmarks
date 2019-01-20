@@ -13,7 +13,7 @@ from sklearn import preprocessing, utils, ensemble, feature_selection, model_sel
 import talos as ta
 
 from RNAseqParse import DataLoader
-from RnaToSnpGridSearch import snps_from_rnaseq_grid_search
+from RnaToSnpGridSearch import snps_from_rnaseq_grid_search, rna_rna_gridsearch
 
 def arg_setup():
     parser = argparse.ArgumentParser()
@@ -333,3 +333,5 @@ if __name__ == "__main__":
         main_snp_to_rna(args)
     elif args.model_type == 'grid_search':
         snps_from_rnaseq_grid_search(args)
+    elif args.model_type == 'rna_rna_grid_search':
+        rna_rna_gridsearch(args)
