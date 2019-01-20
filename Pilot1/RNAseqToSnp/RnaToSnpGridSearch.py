@@ -51,7 +51,7 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
 def rna_rna_gridsearch_params():
     params = {'first_neuron': (1000, 2000, 3),
               'batch_size': (100, 300, 2),
-              'epochs': (10, 75, 4),
+              'epochs': (10, 50, 3),
               'dropout': (0, 0.3, 3),
               'kernel_initializer': ['uniform', 'normal'],
               'encoded_dim': (100, 2000, 5),
@@ -67,7 +67,7 @@ def rna_rna_gridsearch_params():
 
 def rna_rna_gridsearch_params_2():
     params = {'first_neuron': (1000, 2000, 3),
-              'batch_size': (1, 200, 4),
+              'batch_size': (100, 400, 4),
               'epochs': (10, 75, 4),
               'dropout': (0, 0.3, 3),
               'kernel_initializer': ['uniform', 'normal'],
@@ -96,7 +96,7 @@ def rna_rna_gridsearch(args):
     t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
                 params=rna_rna_gridsearch_params(),
                 model=rna_rna_gridsearch_model,
-                grid_downsample=0.01,
+                grid_downsample=0.05,
                 reduction_metric='val_r2',
                 reduction_method='correlation',
                 dataset_name="RNA_Autoencoder",
