@@ -104,6 +104,88 @@ def rna_rna_gridsearch(args):
     r = ta.Reporting("rna_autoencoder.csv")
 
 
+##############
+# SNP -> SNP #
+##############
+
+def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
+    x_input = Input(shape=(x_train.shape[1],))
+    x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
+        x_input)
+    layer = Dropout(params['dropout'])(x)
+    encoded = Dense(params['encoded_dim'], activation=params['activation'],
+                    kernel_initializer=params['kernel_initializer'])(x)
+
+    x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
+        encoded)
+    decoded = Dense(x_train.shape[1], activation=params['last_activation'],
+                    kernel_initializer=params['kernel_initializer'])(x)
+
+    model_auto = Model(inputs=x_input, outputs=decoded)
+    print(gpu_nums)
+    model_auto = multi_gpu_model(model_auto, gpus=gpu_nums)
+    model_auto.compile(loss=params['auto_losses'], optimizer=params['optimizer'](lr=params['lr']), metrics=['acc', r2])
+
+    history = model_auto.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=params['epochs'],
+                             batch_size=params['batch_size'], verbose=0)
+
+    return history, model_auto
+
+
+def snp_snp_gridsearch_params():
+    params = {'first_neuron': (1000, 2000, 3),
+              'batch_size': (100, 300, 4),
+              'epochs': (10, 75, 4),
+              'dropout': (0, 0.3, 3),
+              'kernel_initializer': ['uniform', 'normal'],
+              'encoded_dim': (100, 3000, 5),
+              'auto_losses': ['mse', 'kullback_leibler_divergence', 'mae', 'categorical_crossentropy'],
+              'optimizer': [keras.optimizers.adam, keras.optimizers.SGD],
+              'lr': (0.001, 0.1, 4),
+              'activation': ['sigmoid', 'relu'],
+              'last_activation': ['sigmoid', 'relu']}
+    return params
+
+
+def rna_rna_gridsearch(args):
+    global gpu_nums
+    gpu_nums = args.num_gpus
+    loader = DataLoader(args.data_path, args)
+    y, _ = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+
+    print(y.tail())
+    print(y.describe())
+    y = np.array(y, dtype=np.float32)
+    if args.y_scale == 'max1':
+        y = np.minimum(y, np.ones(y.shape))
+    elif args.y_scale == 'scale':
+        print("roubust scaling")
+        scaler = preprocessing.MinMaxScaler()
+        shape = y.shape
+        y = scaler.fit_transform(y)
+    print("Procressed y:")
+
+    x = np.array(y, dtype=np.float32)
+    y = np.array(y, dtype=np.float32)
+
+    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
+
+    t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
+                params=snp_snp_gridsearch_params(),
+                model=snp_snp_gridsearch_model(),
+                grid_downsample=0.05,
+                reduction_metric='val_r2',
+                reduction_method='correlation',
+                dataset_name="SNP_Autoencoder",
+                experiment_no='1', debug=True, print_params=True)
+    r = ta.Reporting("snp_autoencoder.csv")
+
+
+
+
+
+
+
 #######################
 # RNA->SNP GRIDSEARCH #
 #######################
