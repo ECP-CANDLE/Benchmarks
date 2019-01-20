@@ -134,17 +134,17 @@ def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
 
 
 def snp_snp_gridsearch_params():
-    params = {'first_neuron': (1500, 2000, 2),
-              'batch_size': (100, 400, 3),
-              'epochs': (10, 50, 3),
-              'dropout': (0, 0.3, 3),
-              'kernel_initializer': ['uniform', 'normal'],
-              'encoded_dim': [500, 1000, 1500],
-              'auto_losses': ['mse', 'kullback_leibler_divergence', 'categorical_crossentropy'],
-              'optimizer': [keras.optimizers.adam, keras.optimizers.SGD],
-              'lr': [0.001, 0.01, 0.1],
-              'activation': ['sigmoid', 'relu'],
-              'last_activation': ['sigmoid', 'relu']}
+    params = {'first_neuron': [1750],
+              'batch_size': [150],
+              'epochs': [40],
+              'dropout': [0.2],
+              'kernel_initializer': ['uniform'],
+              'encoded_dim': [350, 500, 750],
+              'auto_losses': ['sparse_categorical_crossentropy', 'categorical_crossentropy'],
+              'optimizer': [keras.optimizers.adam],
+              'lr': [0.001, 0.0005],
+              'activation': ['relu'],
+              'last_activation': ['sigmoid']}
     return params
 
 
@@ -174,12 +174,11 @@ def snp_snp_gridsearch(args):
     t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
                 params=snp_snp_gridsearch_params(),
                 model=snp_snp_gridsearch_model,
-                grid_downsample=0.01,
+                grid_downsample=0.1,
                 # reduction_metric='val_r2',
                 # reduction_method='correlation',
                 dataset_name="SNP_Autoencoder",
-                experiment_no='1', debug=True, print_params=True)
-    r = ta.Reporting("snp_autoencoder.csv")
+                experiment_no='2', debug=True, print_params=True)
 
 
 
