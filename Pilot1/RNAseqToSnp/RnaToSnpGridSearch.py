@@ -113,8 +113,7 @@ def snps_from_rnaseq_grid_search(args):
     t = ta.Scan(x, y,
                 params=p,
                 model=rna_snp_pt_gridsearch,
-                grid_downsample=5,
-                random_method='ambient_sound',
+                grid_downsample=0.01,
                 reduction_metric='val_r2',
                 dataset_name="RNA Autoencoder pretained snp 'ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311'",
                 experiment_no='1', val_split=0.2, debug=True, print_params=True)
