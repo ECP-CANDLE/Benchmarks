@@ -36,7 +36,8 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
                     kernel_initializer=params['kernel_initializer'])(x)
 
     model_auto = Model(inputs=x_input, outputs=decoded)
-    model_auto = multi_gpu_model(model_auto, gpu_nums)
+    print gpu_nums
+    model_auto = multi_gpu_model(model_auto, gpus=gpu_nums)
     model_auto.compile(loss=params['auto_losses'], optimizer=params['optimizer'](lr=params['lr']), metrics=['acc', r2])
 
     history = model_auto.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=params['epochs'],
