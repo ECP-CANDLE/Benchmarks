@@ -95,13 +95,13 @@ def snps_from_rnaseq_grid_search(args):
     print "Procressed y:"
 
     # then we can go ahead and set the parameter space
-    p = {'first_neuron': (50, 2000, 200),
-         'batch_size': (1, 200, 20),
-         'epochs': (10, 200, 20),
-         'dropout': (0, 0.3, 0.1),
+    p = {'first_neuron': (10, 2000, 10),
+         'batch_size': (1, 200, 10),
+         'epochs': (10, 200, 5),
+         'dropout': (0, 0.3, 2),
          'kernel_initializer': ['uniform', 'normal'],
          'use_attention': [True, False],
-         'encoded_dim': (10, 1000, 100),
+         'encoded_dim': (10, 1000, 10),
          'auto_losses': ['mse', 'kullback_leibler_divergence', 'mae'],
          'optimizer': ['nadam', 'adam', 'SGD'],
          'losses': ['categorical_crossentropy', 'categorical_hinge', 'sparse_categorical_crossentropy'],
