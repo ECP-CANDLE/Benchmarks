@@ -34,7 +34,8 @@ def arg_setup():
     parser.add_argument('--nfeats', type=int, default=-1)
     parser.add_argument('--nfeat_step', type=int, default=100)
     parser.add_argument('--model_type',
-                        choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt', 'snp_to_snp', 'snp_to_rna'])
+                        choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt', 'snp_to_snp', 'snp_to_rna',
+                                 'grid_search'])
     parser.add_argument('--reduce_snps', type=str, default="name")
     parser.add_argument('--encoded_dim', type=int, default=100)
     ###############
@@ -433,3 +434,5 @@ if __name__ == "__main__":
         main_snp_autoencoder(args)
     elif args.model_type == 'snp_to_rna':
         main_snp_to_rna(args)
+    elif args.model_type == 'grid_search':
+        snps_from_rnaseq_grid_search(args)
