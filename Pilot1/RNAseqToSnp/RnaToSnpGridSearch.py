@@ -255,6 +255,8 @@ def snps_from_rnaseq_params():
     return p
 
 def snps_from_rnaseq_grid_search(args):
+    global gpu_nums
+    gpu_nums = args.num_gpus
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
     rnaseq = rnaseq.set_index("Sample")
