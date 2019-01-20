@@ -36,7 +36,7 @@ def arg_setup():
     parser.add_argument('--nfeat_step', type=int, default=100)
     parser.add_argument('--model_type',
                         choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt', 'snp_to_snp', 'snp_to_rna',
-                                 'grid_search'])
+                                 'grid_search', 'rna_rna_grid_search'])
     parser.add_argument('--reduce_snps', type=str, default="name")
     parser.add_argument('--encoded_dim', type=int, default=100)
     ###############
