@@ -173,7 +173,7 @@ def snp_snp_gridsearch(args):
 
     t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
                 params=snp_snp_gridsearch_params(),
-                model=snp_snp_gridsearch_model(),
+                model=snp_snp_gridsearch_model,
                 grid_downsample=0.05,
                 reduction_metric='val_r2',
                 reduction_method='correlation',
