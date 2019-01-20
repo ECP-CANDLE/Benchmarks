@@ -320,7 +320,7 @@ def main_snp_to_rna(args):
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
     args = arg_setup()
     if args.model_type == 'rna_to_snp':
         main_rna_to_snp(args)

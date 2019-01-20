@@ -17,7 +17,7 @@ from metrics import r2
 
 
 def rna_snp_pt_gridsearch(x_train, y_train, x_val, y_val, params):
-    x_input = Input(shape=(x_train.shape[0],))
+    x_input = Input(shape=(x_train.shape[1],))
     x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
         x_input)
     layer = Dropout(params['dropout'])(x)
