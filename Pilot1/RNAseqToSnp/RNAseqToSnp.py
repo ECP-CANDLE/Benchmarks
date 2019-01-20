@@ -172,7 +172,7 @@ def breast_cancer_model(x_train, y_train, x_val, y_val, params):
     model_auto = multi_gpu_model(model_auto, 2)
     model_auto.compile(loss=params['auto_losses'], optimizer=optimizers.adam, metrics=['acc'])
     model_snps.compile(loss=params['losses'],
-                       optimizer=params['optimizer'](), metrics=['accuracy', r2, 'mae', 'mse'])
+                       optimizer=params['optimizer'], metrics=['accuracy', r2, 'mae', 'mse'])
 
     model_auto.fit(x_train, x_train, epochs=20, batch_size=200, verbose=0)
 
@@ -359,19 +359,32 @@ def snps_from_rnaseq_grid_search(args):
     print "Procressed y:"
 
     # then we can go ahead and set the parameter space
-    p = {'first_neuron': (50, 2000, 200),
-         'batch_size': (1, 200, 20),
-         'epochs': (10, 200, 20),
-         'dropout': (0, 0.3, 0.1),
+    # p = {'first_neuron': (50, 2000, 200),
+    #      'batch_size': (1, 200, 20),
+    #      'epochs': (10, 200, 20),
+    #      'dropout': (0, 0.3, 0.1),
+    #      'kernel_initializer': ['uniform', 'normal'],
+    #      'use_attention': [True, False],
+    #      'encoded_dim': (10, 1000, 100),
+    #      'auto_losses': [keras.losses.mse, keras.losses.kullback_leibler_divergence, keras.losses.mae],
+    #      'optimizer': [keras.optimizers.nadam, keras.optimizers.adam, keras.optimizers.SGD],
+    #      'losses': [keras.losses.categorical_crossentropy, keras.losses.categorical_hinge,
+    #                 keras.losses.sparse_categorical_crossentropy],
+    #      'activation': [keras.activations.relu, keras.activations.elu, keras.activations.sigmoid],
+    #      'last_activation': [keras.activations.sigmoid, keras.activations.relu]}
+    p = {'first_neuron': [200],
+         'batch_size': [200],
+         'epochs': [5],
+         'dropout': [0],
          'kernel_initializer': ['uniform', 'normal'],
          'use_attention': [True, False],
-         'encoded_dim': (10, 1000, 100),
-         'auto_losses': [keras.losses.mse, keras.losses.kullback_leibler_divergence, keras.losses.mae],
-         'optimizer': [keras.optimizers.nadam, keras.optimizers.adam, keras.optimizers.SGD],
-         'losses': [keras.losses.categorical_crossentropy, keras.losses.categorical_hinge,
-                    keras.losses.sparse_categorical_crossentropy],
-         'activation': [keras.activations.relu, keras.activations.elu, keras.activations.sigmoid],
-         'last_activation': [keras.activations.sigmoid, keras.activations.relu]}
+         'encoded_dim': [100],
+         'auto_losses': ['mse', 'mae'],
+         'optimizer': ['sgd'],
+         'losses': ['keras.losses.categorical_crossentropy'],
+         'activation': ['relu', 'elu', 'sigmoid'],
+         'last_activation': ['sigmoid'],
+         'snp_activation': ['sigmoid']}
 
     t = ta.Scan(x, y,
                 params=p,
