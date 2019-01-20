@@ -266,10 +266,10 @@ def main_rnasseq_pretrain(args):
         model_auto = multi_gpu_model(model_auto, gpus=args.num_gpus)
         model_snp = multi_gpu_model(model_snp, gpus=args.num_gpus)
 
-    model_auto.compile(optimizer=optimizers.adam(),
+    model_auto.compile(optimizer=optimizers.adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.01),
                        loss='mse',
                        metrics=['accuracy', r2, 'mae', 'mse'])
-    model_snp.compile(optimizer=optimizers.adam(),
+    model_snp.compile(optimizer=optimizers.adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.01),
                       loss=args.loss,
                       metrics=['accuracy', r2, 'mae', 'mse'])
     model_auto.fit(x_big, x_big, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.01, shuffle=True)
