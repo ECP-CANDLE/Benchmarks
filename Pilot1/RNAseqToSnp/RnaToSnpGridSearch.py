@@ -49,16 +49,16 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
 
 
 def rna_rna_gridsearch_params():
-    params = {'first_neuron': (1000, 2000, 3),
-              'batch_size': (100, 300, 2),
-              'epochs': (10, 50, 3),
+    params = {'first_neuron': [2000, 3000],
+              'batch_size': (100, 400, 4),
+              'epochs': (10, 50, 2),
               'dropout': (0, 0.3, 3),
               'kernel_initializer': ['uniform', 'normal'],
-              'encoded_dim': (100, 2000, 5),
+              'encoded_dim': [500, 1000, 1500, 2000],
               'auto_losses': ['mse', 'kullback_leibler_divergence', 'mae'],
               'optimizer': [keras.optimizers.adam, keras.optimizers.SGD],
-              'lr': (0.001, 1, 4),
-              'activation': ['relu'],
+              'lr': [1.0, 0.1, 0.001],
+              'activation': ['sigmoid', 'relu'],
               'last_activation': ['sigmoid', 'relu']}
     return params
 
@@ -66,15 +66,15 @@ def rna_rna_gridsearch_params():
 ##based on analysis
 
 def rna_rna_gridsearch_params_2():
-    params = {'first_neuron': (1000, 2000, 3),
+    params = {'first_neuron': [2000, 3000],
               'batch_size': (100, 400, 4),
-              'epochs': (10, 75, 4),
+              'epochs': (10, 50, 2),
               'dropout': (0, 0.3, 3),
               'kernel_initializer': ['uniform', 'normal'],
-              'encoded_dim': (100, 2000, 5),
+              'encoded_dim': [500, 1000, 1500, 2000],
               'auto_losses': ['mse', 'kullback_leibler_divergence', 'mae'],
               'optimizer': [keras.optimizers.adam, keras.optimizers.SGD],
-              'lr': (0.001, 1, 4),
+              'lr': [1.0, 0.1, 0.001],
               'activation': ['sigmoid', 'relu'],
               'last_activation': ['sigmoid', 'relu']}
     return params
