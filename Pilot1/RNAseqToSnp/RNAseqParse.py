@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import sys
 import logging
@@ -71,10 +73,10 @@ class DataLoader:
         if self.snps is not None:
             return self.snps
         if os.path.exists(self.cache_path + file + ".hdf"):
-            print "loading from cache..."
+            print("loading from cache...")
             self.snps = self.load_hdf(file + ".hdf")
             return self.snps
-        print "Reading snp data....could take awhile."
+        print("Reading snp data....could take awhile.")
         df = pd.read_table(self.data_path + file).astype(np.int, errors='ignore')
         if name_mapping is not None:
             ensembl_dict = self.load_ensembl_dict(name_mapping)
@@ -119,7 +121,7 @@ class DataLoader:
         if self.rnaseq is not None:
             return self.rnaseq
         if os.path.exists(self.cache_path + file + ".hdf"):
-            print "loading from cache..."
+            print("loading from cache...")
             self.rnaseq = self.load_hdf( file + ".hdf")
             return self.rnaseq
 
@@ -153,11 +155,11 @@ class DataLoader:
         # aligned by chromosome position here.
         logging.debug("Loaded all files. Aligning by %s", align_by)
         if align_by == 'pos':
-            print "Position aligned by not support yet"
+            print("Position aligned by not support yet")
             snp_feats = set(snps.columns.to_series())
             rna_feats = set(rnaseq.columns.to_series())
             intersect = snp_feats.intersection(rna_feats)
-            print "intersectyion has " % len(intersect)
+            print("intersectyion has " % len(intersect))
             gene_names = intersect
             mg = mygene.MyGeneInfo()
             qu = mg.querymany(gene_names, fields='genomic_pos', scopes='ensembl.gene', as_dataframe=True, df_index=True)
@@ -174,10 +176,10 @@ class DataLoader:
             rna_feats = set(rnaseq.columns.to_series())
             intersect = snp_feats.intersection(rna_feats)
         elif align_by == 'genemania':
-            print "Genemania not supported yet."
+            print("Genemania not supported yet.")
             exit(1)
         else:
-            print "Please select name, pos, or genemania"
+            print("Please select name, pos, or genemania")
             exit(1)
         logging.debug("Aligned files. Final shapes: " + str(snps.shape) + str(rnaseq.shape))
 

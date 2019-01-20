@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import argparse
 import logging
 
@@ -36,7 +38,7 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
                     kernel_initializer=params['kernel_initializer'])(x)
 
     model_auto = Model(inputs=x_input, outputs=decoded)
-    print gpu_nums
+    print(gpu_nums)
     model_auto = multi_gpu_model(model_auto, gpus=gpu_nums)
     model_auto.compile(loss=params['auto_losses'], optimizer=params['optimizer'](lr=params['lr']), metrics=['acc', r2])
 
@@ -184,20 +186,20 @@ def snps_from_rnaseq_grid_search(args):
 
     y = y[['ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311']]
 
-    print y.tail()
-    print x.tail()
-    print x.shape, y.shape
+    print(y.tail())
+    print(x.tail())
+    print(x.shape, y.shape)
 
-    print y.describe()
+    print(y.describe())
     y = np.array(y, dtype=np.float32)
     if args.y_scale == 'max1':
         y = np.minimum(y, np.ones(y.shape))
     elif args.y_scale == 'scale':
-        print "roubust scaling"
+        print("roubust scaling")
         scaler = preprocessing.MinMaxScaler()
         shape = y.shape
         y = scaler.fit_transform(y)
-    print "Procressed y:"
+    print("Procressed y:")
 
     # then we can go ahead and set the parameter space
 

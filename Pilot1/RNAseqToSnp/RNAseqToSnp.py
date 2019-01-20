@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import argparse
 import logging
 
@@ -57,7 +59,7 @@ def get_activations(model, inputs, print_shape_only=False, layer_name=None):
         outputs = [layer.output for layer in model.layers]
     else:
         outputs = [layer.output for layer in model.layers if layer.name == layer_name]  # all layer outputs
-    print outputs
+    print(outputs)
     funcs = [K.function([inp] + [K.learning_phase()], [out]) for out in outputs]  # evaluation functions
     layer_outputs = [func([inputs, 1.])[0] for func in funcs]
     for layer_activations in layer_outputs:
@@ -73,8 +75,8 @@ def build_feature_model_genes(input_shape, name='', dense_layers=[500, 500],
                               activation='relu', residual=False,
                               dropout_rate=0, regularize_genes=None, use_file_rnaseq=None):
     x_input = Input(shape=input_shape)
-    print ("Input shape: ")
-    print (input_shape)
+    print("Input shape: ")
+    print(input_shape)
     h = x_input
     to_reg = (regularize_genes is not None)
 
@@ -131,8 +133,8 @@ def build_autoencoder(input_dim, encoded_dim=1000, output_dim=1):
 
     model_autoencoder = Model(inputs=x_input, outputs=decoded)
     model_snp = Model(inputs=x_input, outputs=snp_guess)
-    print model_autoencoder.summary()
-    print model_snp.summary()
+    print(model_autoencoder.summary())
+    print(model_snp.summary())
     return model_autoencoder, model_snp
 
 
@@ -159,22 +161,22 @@ def main_rna_to_snp(args):
 
     y = y['ENSG00000145113']
 
-    print y.tail()
-    print x.tail()
-    print x.shape, y.shape
+    print(y.tail())
+    print(x.tail())
+    print(x.shape, y.shape)
 
-    print y.describe()
+    print(y.describe())
     y = np.array(y, dtype=np.float32)
     if args.y_scale == 'max1':
         y = np.minimum(y, np.ones(y.shape))
     elif args.y_scale == 'scale':
-        print "roubust scaling"
+        print("roubust scaling")
         scaler = preprocessing.MinMaxScaler()
         shape = y.shape
         y = scaler.fit_transform(y.reshape(-1, 1)).reshape(shape)
     x = preprocessing.scale(x)
-    print "Procressed y:"
-    print pd.Series(y).describe()
+    print("Procressed y:")
+    print(pd.Series(y).describe())
 
     if args.nfeats > 0:
         rf = ensemble.RandomForestClassifier(n_estimators=1000, criterion='entropy',
@@ -187,8 +189,8 @@ def main_rna_to_snp(args):
     labels, counts = np.unique(y, return_counts=True)
     label_dict = dict(zip(labels, counts))
     weights = create_class_weight(label_dict, y)
-    print label_dict
-    print weights
+    print(label_dict)
+    print(weights)
 
     model = build_model(x.shape[1], 1)
     if args.num_gpus >= 2:
@@ -196,7 +198,7 @@ def main_rna_to_snp(args):
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
                   loss=args.loss,
                   metrics=['accuracy', r2, 'mae', 'mse'])
-    print model.summary()
+    print(model.summary())
 
     model.fit([x], y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.2, shuffle=True,
               class_weight=weights)
@@ -231,20 +233,20 @@ def main_rnasseq_pretrain(args):
 
     y = y[['ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311']]
 
-    print y.tail()
-    print x.tail()
-    print x.shape, y.shape
+    print(y.tail())
+    print(x.tail())
+    print(x.shape, y.shape)
 
-    print y.describe()
+    print(y.describe())
     y = np.array(y, dtype=np.float32)
     if args.y_scale == 'max1':
         y = np.minimum(y, np.ones(y.shape))
     elif args.y_scale == 'scale':
-        print "roubust scaling"
+        print("roubust scaling")
         scaler = preprocessing.MinMaxScaler()
         shape = y.shape
         y = scaler.fit_transform(y)
-    print "Procressed y:"
+    print("Procressed y:")
 
     if args.nfeats > 0:
         rf = ensemble.RandomForestClassifier(n_estimators=1000, criterion='entropy',
@@ -272,7 +274,7 @@ def main_rnasseq_pretrain(args):
                       loss=args.loss,
                       metrics=['accuracy', r2, 'mae', 'mse'])
     model_auto.fit(x_big, x_big, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.01, shuffle=True)
-    print x.shape, y.shape
+    print(x.shape, y.shape)
     model_snp.fit(x, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
 
 
@@ -290,7 +292,7 @@ def main_snp_autoencoder(args):
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
                   loss=args.loss,
                   metrics=['accuracy', r2, 'mae', 'mse'])
-    print model.summary()
+    print(model.summary())
 
     model.fit(y, y, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
 
@@ -307,7 +309,7 @@ def main_rna_autoencoder(args):
     model.compile(optimizer=optimizers.Nadam(lr=args.lr),
                   loss=args.loss,
                   metrics=['accuracy', r2, 'mae', 'mse'])
-    print model.summary()
+    print(model.summary())
 
     model.fit(x, x, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
 
