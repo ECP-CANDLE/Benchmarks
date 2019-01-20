@@ -60,6 +60,27 @@ def rna_snp_pt_gridsearch(x_train, y_train, x_val, y_val, params):
     return history, model_snps
 
 
+def rna_rna_gridsearch(x_train, y_train, x_val, y_val, params):
+    x_input = Input(shape=(x_train.shape[0],))
+    x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
+        x_input)
+    layer = Dropout(params['dropout'])(x)
+    encoded = Dense(params['encoded_dim'], activation=params['activation'],
+                    kernel_initializer=params['kernel_initializer'])(x)
+
+    x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
+        encoded)
+    decoded = Dense(x_train.shape[1], activation=params['last_activation'],
+                    kernel_initializer=params['kernel_initializer'])(x)
+
+    model_auto = Model(inputs=x_input, outputs=decoded)
+    model_auto = multi_gpu_model(model_auto, 2)
+    model_auto.compile(loss=params['auto_losses'], optimizer=optimizers.adam(), metrics=['acc', r2])
+
+    history = model_auto.fit(x_train, x_train, epochs=20, batch_size=200, verbose=0)
+
+    return history, model_auto
+
 def snps_from_rnaseq_grid_search(args):
     loader = DataLoader(args.data_path, args)
     snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
@@ -99,6 +120,7 @@ def snps_from_rnaseq_grid_search(args):
          'batch_size': (1, 200, 10),
          'epochs': (10, 200, 5),
          'dropout': (0, 0.3, 2),
+         'hidden_unit': (100, 1000, 10),
          'kernel_initializer': ['uniform', 'normal'],
          'use_attention': [True, False],
          'encoded_dim': (10, 1000, 10),
