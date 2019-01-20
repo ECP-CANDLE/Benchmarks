@@ -373,6 +373,7 @@ def snps_from_rnaseq_grid_search(args):
     #      'activation': [keras.activations.relu, keras.activations.elu, keras.activations.sigmoid],
     #      'last_activation': [keras.activations.sigmoid, keras.activations.relu]}
     p = {'first_neuron': [200],
+         'hidden_unit': [200],
          'batch_size': [200],
          'epochs': [5],
          'dropout': [0],
