@@ -32,7 +32,8 @@ def arg_setup():
     parser.add_argument('--loss', type=str, default='mse')
     parser.add_argument('--nfeats', type=int, default=-1)
     parser.add_argument('--nfeat_step', type=int, default=100)
-    parser.add_argument('--model_type', choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt', 'snp_to_snp'])
+    parser.add_argument('--model_type',
+                        choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt', 'snp_to_snp', 'snp_to_rna'])
     parser.add_argument('--reduce_snps', type=str, default="name")
     parser.add_argument('--encoded_dim', type=int, default=100)
     ###############
@@ -265,7 +266,7 @@ def main_rnasseq_pretrain(args):
         model_auto = multi_gpu_model(model_auto, gpus=args.num_gpus)
         model_snp = multi_gpu_model(model_snp, gpus=args.num_gpus)
 
-    model_auto.compile(optimizer=optimizers.Nadam(lr=args.lr * 3),
+    model_auto.compile(optimizer=optimizers.Nadam(lr=args.lr),
                        loss='mse',
                        metrics=['accuracy', r2, 'mae', 'mse'])
     model_snp.compile(optimizer=optimizers.Nadam(lr=args.lr),
@@ -309,6 +310,11 @@ def main_rna_autoencoder(args):
     model.fit(x, x, batch_size=args.batch_size, epochs=args.epochs, validation_split=0.1, shuffle=True)
 
 
+def main_snp_to_rna(args):
+    loader = DataLoader(args.data_path, args)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    x = rnaseq.set_index("Sample")
+    x = preprocessing.scale(x)
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.DEBUG)
@@ -321,3 +327,5 @@ if __name__ == "__main__":
         main_rnasseq_pretrain(args)
     elif args.model_type == 'snp_to_snp':
         main_snp_autoencoder(args)
+    elif args.model_type == 'snp_to_rna':
+        main_snp_to_rna(args)
