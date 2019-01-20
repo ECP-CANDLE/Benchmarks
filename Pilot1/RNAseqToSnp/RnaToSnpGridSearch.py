@@ -97,8 +97,8 @@ def rna_rna_gridsearch(args):
                 params=rna_rna_gridsearch_params(),
                 model=rna_rna_gridsearch_model,
                 grid_downsample=0.05,
-                reduction_metric='val_r2',
-                reduction_method='correlation',
+                #       reduction_metric='val_r2',
+                #       reduction_method='correlation',
                 dataset_name="RNA_Autoencoder",
                 experiment_no='1', debug=True, print_params=True)
     r = ta.Reporting("rna_autoencoder.csv")
@@ -174,7 +174,7 @@ def snp_snp_gridsearch(args):
     t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
                 params=snp_snp_gridsearch_params(),
                 model=snp_snp_gridsearch_model,
-                # grid_downsample=0.01,
+                grid_downsample=0.01,
                 # reduction_metric='val_r2',
                 # reduction_method='correlation',
                 dataset_name="SNP_Autoencoder",
