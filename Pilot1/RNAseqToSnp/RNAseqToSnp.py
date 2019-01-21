@@ -13,7 +13,6 @@ from keras.layers import Input, Dense, Dropout, Reshape, Flatten, LocallyConnect
 from keras.models import Model
 from keras.utils import multi_gpu_model
 from sklearn import preprocessing, utils, ensemble, feature_selection, model_selection
-import talos as ta
 
 from metrics import r2
 from RNAseqParse import DataLoader
