@@ -230,7 +230,7 @@ def snp_snp_gridsearch(args):
         experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
                                 project_name="Pilot1", workspace="aclyde11")
         history, model = snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
-        experiment.set_model_graph(K.get_session().graph())
+        experiment.set_model_graph(K.get_session().graph)
         suggestion.report_score("accuracy", history.history['val_acc'][-1])
 
 
