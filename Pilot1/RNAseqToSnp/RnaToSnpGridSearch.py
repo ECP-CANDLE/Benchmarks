@@ -32,6 +32,7 @@ gpu_nums = None
 x_big = None
 optimizer = Optimizer("sWqygZPzck6CCDVasK2e0PHhT")
 
+
 def my_product(inp):
     from itertools import product
     return (dict(zip(inp.keys(), values)) for values in product(*inp.values()))
@@ -179,7 +180,7 @@ def snp_snp_gridsearch_params():
               'encoded_dim': [350, 500, 750],
               'auto_losses': ['categorical_crossentropy'],
               'optimizer': [keras.optimizers.adam],
-              'lr': [0.001, 0.0005],
+              'lr': [0.05, 0.0005],
               'activation': ['relu'],
               'last_activation': ['sigmoid']}
     return params
@@ -187,17 +188,17 @@ def snp_snp_gridsearch_params():
 
 def snp_snp_comet_params():
     params = """
-        first_neuron integer [1000, 2000] [1500]
-        batch_size integer [100, 200] [150]
-        epochs integer [50, 100] [50]
-        dropout real [0, 0.5] [0.2]
-        kernel_initializer categorical {uniform, normal} [uniform]
-        encoded_dim integer [350, 1000] [500]
-        auto_losses categorical {categorical_crossentropy, mse} [categorical_crossentropy]
-        optimizer categorical {adam, SGD} [adam]
-        lr real [0.001, 0.1] [0.01] log
-        activation categorical {relu, elu, sigmoid} [relu]
-        last_activation categorical {elu, relu, sigmoid} [relu]
+        first_neuron integer [1500, 2000] [1750]
+        batch_size integer [150, 200] [150]
+        epochs integer [70, 100] [80]
+        dropout real [0, 0.3] [0.15]
+        kernel_initializer categorical {uniform} [uniform]
+        encoded_dim integer [500, 750] [750]
+        auto_losses categorical {categorical_crossentropy} [categorical_crossentropy]
+        optimizer categorical {adam} [adam]
+        lr real [0.0005, 0.1] [0.01] log
+        activation categorical {relu} [relu]
+        last_activation categorical {relu, sigmoid} [sigmoid]
     """
     return params
 
@@ -229,6 +230,7 @@ def snp_snp_gridsearch(args):
         suggestion = optimizer.get_suggestion()
         experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
                                 project_name="Pilot1", workspace="aclyde11")
+        experiment.add_tags(["snp_snp_autoencoder", "autoencoder", 'snps'])
         history, model = snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
         experiment.set_model_graph(K.get_session().graph)
         suggestion.report_score("accuracy", history.history['val_acc'][-1])
