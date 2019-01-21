@@ -134,11 +134,14 @@ class DataLoader:
         self.rnaseq = df
         return df
 
-    def load_aligned_snps_rnaseq(self, file_rnaseq=None, file_snp=None, cached_file=("combined_aligned_rnaseq_snp.hdf", "aligned_snp", "aligned_rnaseq"), name_mapping="ensembl2genes", use_reduced=False, align_by='name'):
+    def load_aligned_snps_rnaseq(self, file_rnaseq=None, file_snp=None, cached_file=("combined_aligned_rnaseq_snp.hdf", "aligned_snp", "aligned_rnaseq"), name_mapping="ensembl2genes", use_reduced=False, align_by=['name']):
         logging.info("Loading aligned snp rna seq.")
         if os.path.exists(self.cache_path + cached_file[0]):
-            snps =  self.load_hdf(cached_file[0], key=cached_file[1])
-            rnaseq = self.load_hdf(cached_file[0], key=cached_file[2])
+            snps =  self.load_hdf("_".join(align_by) + "_" + cached_file[0], key=cached_file[1])
+            rnaseq = self.load_hdf("_".join(align_by) + "_" + cached_file[0], key=cached_file[2])
+            if "genemania" in align_by:
+                adj = pd.read_hdf("_".join(align_by) + "_" + cached_file[0], key="adj")
+                self.adj = adj
             return snps, rnaseq
 
         logging.debug("Loading data from scratch.")
@@ -154,13 +157,15 @@ class DataLoader:
         #now I have snps aligned to ensembl id's..... I want to align them and get the stride based on position on the chromosome
         # aligned by chromosome position here.
         logging.debug("Loaded all files. Aligning by %s", align_by)
-        if align_by == 'pos':
+        if  'pos' in align_by:
             print("Position aligned by not support yet")
-            snp_feats = set(snps.columns.to_series())
-            rna_feats = set(rnaseq.columns.to_series())
-            intersect = snp_feats.intersection(rna_feats)
-            print("intersectyion has " % len(intersect))
-            gene_names = intersect
+            snp_feats = set(snps.columns)
+            rna_feats = set(rnaseq.columns)
+            common_feats = snp_feats.intersection(rna_feats)
+            snps = snps.drop(snp_feats.difference(common_feats), axis=1)
+            rnaseq = rnaseq.drop(rna_feats.difference(common_feats), axis=1)
+            print("intersectyion has %i" % len(common_feats))
+            gene_names = common_feats
             mg = mygene.MyGeneInfo()
             qu = mg.querymany(gene_names, fields='genomic_pos', scopes='ensembl.gene', as_dataframe=True, df_index=True)
             qu = qu[['genomic_pos.chr', 'genomic_pos.start']].dropna(axis=0)
@@ -170,25 +175,34 @@ class DataLoader:
             ordered_rna_seq = qu.sort_values(["genomic_pos.chr", "genomic_pos.start"]).index.to_series()
             rnaseq = rnaseq[ordered_rna_seq]
             snps = snps[ordered_rna_seq]
+        elif "genemania" in align_by:
+            adj = pd.read_hdf(self.data_path + "GeneMania_adj.hdf", key="adj")
+            adj_feats = set(adj.columns)
+            rna_feats = set(rnaseq.columns)
+            snp_feats = set(snps.columns)
+            common_feats = set(adj.columns).intersection(rna_feats).intersection(snp_feats)
+            adj = adj.drop(adj_feats.difference(common_feats), axis=1).drop(adj_feats.difference(common_feats), axis=0)
+            snps = snps.drop(snp_feats.difference(common_feats), axis=1)
+            rnaseq = rnaseq.drop(rna_feats.difference(common_feats), axis=1)
+            print(adj.shape, snps.shape, rnaseq.shape)
+            snps = snps.sort_index(axis=1)
+            rnaseq = rnaseq.sort_index(axis=1)
+            adj = adj.sort_index(axis=0).sort_index(axis=1)
+            self.adj = adj
+            adj.to_hdf(self.cache_path + "_".join(align_by) + "_" + cached_file[0], key='adj')
 
-        elif align_by == 'name':
-            snp_feats = set(snps.columns.to_series())
-            rna_feats = set(rnaseq.columns.to_series())
-            intersect = snp_feats.intersection(rna_feats)
-        elif align_by == 'genemania':
-            print("Genemania not supported yet.")
-            exit(1)
         else:
             print("Please select name, pos, or genemania")
             exit(1)
         logging.debug("Aligned files. Final shapes: " + str(snps.shape) + str(rnaseq.shape))
 
-        snps.to_hdf(self.cache_path + cached_file[0], key=cached_file[1])
-        rnaseq.to_hdf(self.cache_path + cached_file[0], key=cached_file[2])
+        snps.to_hdf(self.cache_path + "_".join(align_by) + "_" + cached_file[0], key=cached_file[1])
+        rnaseq.to_hdf(self.cache_path + "_".join(align_by) + "_" + cached_file[0], key=cached_file[2])
         logging.debug("Cached files.")
         return snps, rnaseq
 
-
+    def get_adj(self):
+        return self.adj
 
     def load_table(self, file):
         df = pd.read_table(self.data_path + file)

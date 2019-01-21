@@ -36,11 +36,11 @@ def arg_setup():
     parser.add_argument('--y_scale', choices=['max1', 'scale'], default='max1')
     parser.add_argument('--loss', type=str, default='mse')
     parser.add_argument('--nfeats', type=int, default=-1)
+    parser.add_argument('--align_by', nargs='+', choices=["None", "pos", "genemania"])
     parser.add_argument('--nfeat_step', type=int, default=100)
     parser.add_argument('--model_type',
                         choices=['rna_to_rna', 'rna_to_snp', 'rna_to_snp_pt', 'snp_to_snp', 'snp_to_rna',
                                  'grid_search', 'rna_rna_grid_search', 'snp_snp_grid_search'])
-    parser.add_argument('--reduce_snps', type=str, default="name")
     parser.add_argument('--encoded_dim', type=int, default=100)
     ###############
     # model setup #
@@ -147,7 +147,7 @@ def create_class_weight(labels_dict, y):
 
 def main_rna_to_snp(args):
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.align_by)
     rnaseq = rnaseq.set_index("Sample")
 
     # intersect = set(snps.columns.to_series()).intersection(set((loader.load_oncogenes_()['oncogenes'])))
@@ -216,7 +216,7 @@ def main_rna_to_snp(args):
 
 def main_rnasseq_pretrain(args):
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.align_by)
     rnaseq = rnaseq.set_index("Sample")
     cols = rnaseq.columns.to_series()
     index = rnaseq.index.to_series()
@@ -282,7 +282,7 @@ def main_rnasseq_pretrain(args):
 
 def main_snp_autoencoder(args):
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.align_by)
     y = snps
     y = np.minimum(y, np.ones(y.shape))
 
@@ -299,7 +299,7 @@ def main_snp_autoencoder(args):
 
 def main_rna_autoencoder(args):
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.align_by)
     x = rnaseq.set_index("Sample")
     x = preprocessing.scale(x)
 
@@ -316,7 +316,7 @@ def main_rna_autoencoder(args):
 
 def main_snp_to_rna(args):
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.align_by)
     x = rnaseq.set_index("Sample")
     x = preprocessing.scale(x)
 

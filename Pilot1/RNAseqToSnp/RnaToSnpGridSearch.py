@@ -109,7 +109,7 @@ def rna_rna_gridsearch(args):
     global gpu_nums
     gpu_nums = args.num_gpus
     loader = DataLoader(args.data_path, args)
-    _, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    _, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.align_by)
     rnaseq = rnaseq.set_index("Sample")
     x = preprocessing.scale(rnaseq)
 
@@ -123,10 +123,10 @@ def rna_rna_gridsearch(args):
     optimizer.set_params(rna_rna_gridsearch_comet())
     #     do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
     count = 0
-    while count < 25:
+    while count < 50:
         suggestion = optimizer.get_suggestion()
         experiment = Experiment(api_key=os.environ['COMET_ML_KEY'],
-                                project_name="Pilot1", workspace="aclyde11")
+                                project_name="Pilot1_arch", workspace="aclyde11")
         experiment.add_tags(["rnaseq_rnaseq_autoencoder", "autoencoder", 'rnaseq'])
         history, model = rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
         experiment.set_model_graph(K.get_session().graph)
@@ -212,7 +212,7 @@ def snp_snp_gridsearch(args):
     global gpu_nums
     gpu_nums = args.num_gpus
     loader = DataLoader(args.data_path, args)
-    y, _ = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    y, _ = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.align_by)
 
     print(y.tail())
     print(y.describe())
@@ -233,10 +233,10 @@ def snp_snp_gridsearch(args):
     optimizer.set_params(snp_snp_comet_params())
     #     do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
     count = 0
-    while count < 25:
+    while count < 50:
         suggestion = optimizer.get_suggestion()
         experiment = Experiment(api_key=os.environ['COMET_ML_KEY'],
-                                project_name="Pilot1", workspace="aclyde11")
+                                project_name="Pilot1_arch", workspace="aclyde11")
         experiment.add_tags(["snp_snp_autoencoder", "autoencoder", 'snps'])
         history, model = snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
         experiment.set_model_graph(K.get_session().graph)
@@ -320,7 +320,7 @@ def snps_from_rnaseq_grid_search(args):
     global gpu_nums
     gpu_nums = args.num_gpus
     loader = DataLoader(args.data_path, args)
-    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.reduce_snps)
+    snps, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.align_by)
     rnaseq = rnaseq.set_index("Sample")
     cols = rnaseq.columns.to_series()
     index = rnaseq.index.to_series()
