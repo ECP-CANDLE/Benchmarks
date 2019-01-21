@@ -151,7 +151,7 @@ def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
     print(gpu_nums)
     if gpu_nums > 1:
         model_auto = multi_gpu_model(model_auto, gpus=gpu_nums)
-    keras.callbacks.EarlyStopping(monitor='val_acc', min_delta=0.005, patience=4, verbose=0, mode='auto',
+    keras.callbacks.EarlyStopping(monitor='val_acc', min_delta=0.0005, patience=4, verbose=0, mode='auto',
                                   baseline=None, restore_best_weights=False)
 
     opt = None
