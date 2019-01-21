@@ -162,7 +162,7 @@ def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
         print("OPTIMIZER NOT DFOUND %s" % params['optimizer'])
         opt = keras.optimizers.adam
 
-    model_auto.compile(loss=params['auto_losses'], optimizer=params['optimizer'](lr=params['lr']), metrics=['acc', r2])
+    model_auto.compile(loss=params['auto_losses'], optimizer=opt(lr=params['lr']), metrics=['acc', r2])
 
     history = model_auto.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=params['epochs'],
                              batch_size=params['batch_size'], verbose=0)
