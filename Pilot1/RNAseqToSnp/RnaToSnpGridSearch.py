@@ -236,7 +236,7 @@ def rna_snp_pt_gridsearch(x_train, y_train, x_val, y_val, params):
                              batch_size=params['batch_size'],
                              epochs=params['epochs'],
                              verbose=1)
-
+    print("returning...")
     return history, model_snps
 
 
