@@ -101,6 +101,7 @@ def rna_rna_gridsearch_comet():
     activation categorical {sigmoid, relu} [relu]
     last_activation categorical {sigmoid, relu} [relu]    
     '''
+    return params
 
 
 def rna_rna_gridsearch(args):
