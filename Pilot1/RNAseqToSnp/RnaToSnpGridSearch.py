@@ -63,7 +63,7 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
     model_auto = Model(inputs=x_input, outputs=decoded)
     print(gpu_nums)
     model_auto = multi_gpu_model(model_auto, gpus=gpu_nums)
-    model_auto.compile(loss=params['auto_losses'], optimizer=params['optimizer'](lr=params['lr']), metrics=['acc', r2])
+    model_auto.compile(loss=params['auto_losses'], optimizer=keras.optimizers.adam(lr=params['lr']), metrics=['acc', r2])
 
     history = model_auto.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=params['epochs'],
                              batch_size=params['batch_size'], verbose=0)
@@ -88,19 +88,18 @@ def rna_rna_gridsearch_params():
 
 ##based on analysis
 
-def rna_rna_gridsearch_params_2():
-    params = {'first_neuron': [2000, 3000],
-              'batch_size': (100, 400, 4),
-              'epochs': (10, 50, 2),
-              'dropout': (0, 0.3, 3),
-              'kernel_initializer': ['uniform', 'normal'],
-              'encoded_dim': [500, 1000, 1500, 2000],
-              'auto_losses': ['mse', 'kullback_leibler_divergence', 'mae'],
-              'optimizer': [keras.optimizers.adam, keras.optimizers.SGD],
-              'lr': [1.0, 0.1, 0.001],
-              'activation': ['sigmoid', 'relu'],
-              'last_activation': ['sigmoid', 'relu']}
-    return params
+def rna_rna_gridsearch_comet():
+    params = '''
+    first_neuron integer [1000, 3000] [2000]
+    batch_size integer [100, 300] [200]
+    epochs integer [50, 100] [50]
+    dropout real [0, 0.5] [0.3]
+    kernel_initializer categorical {uniform} [uniform]
+    encoded_dim integer [500, 1500] [750]
+    lr real [0.0001, 1.0] [0.01] log
+    activation categorical {sigmoid, relu} [relu]
+    last_activation categorical {sigmoid, relu} [relu]    
+    '''
 
 
 def rna_rna_gridsearch(args):
@@ -116,15 +115,20 @@ def rna_rna_gridsearch(args):
 
     x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
 
-    t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
-                params=rna_rna_gridsearch_params(),
-                model=rna_rna_gridsearch_model,
-                grid_downsample=0.01,
-                #       reduction_metric='val_r2',
-                #       reduction_method='correlation',
-                dataset_name="RNA_Autoencoder",
-                experiment_no='1', debug=True, print_params=True)
-    r = ta.Reporting("rna_autoencoder.csv")
+
+
+    optimizer.set_params(rna_rna_gridsearch_comet())
+    #     do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
+    count = 0
+    while count < 25:
+        suggestion = optimizer.get_suggestion()
+        experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
+                                project_name="Pilot1", workspace="aclyde11")
+        experiment.add_tags(["rnaseq_rnaseq_autoencoder", "autoencoder", 'rnaseq'])
+        history, model = rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
+        experiment.set_model_graph(K.get_session().graph)
+        suggestion.report_score("mse", history.history['val_mse'][-1])
+        count += 1
 
 
 ##############
