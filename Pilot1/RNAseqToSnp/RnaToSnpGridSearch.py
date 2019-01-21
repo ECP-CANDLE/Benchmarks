@@ -23,8 +23,7 @@ from metrics import r2
 # import comet_ml in the top of your file
 
 # Add the following code anywhere in your machine learning file
-experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
-                        project_name="general", workspace="aclyde11")
+
 ###################
 # RNA GRIDSEARRCH #
 ###################
@@ -133,6 +132,8 @@ def rna_rna_gridsearch(args):
 ##############
 
 def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
+    experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
+                            project_name="general", workspace="aclyde11")
     print(x_train.shape, y_train.shape, x_val.shape, y_val.shape)
     x_input = Input(shape=(x_train.shape[1],))
     x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
