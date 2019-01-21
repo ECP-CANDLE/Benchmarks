@@ -188,7 +188,7 @@ def snp_snp_gridsearch_params():
 def snp_snp_comet_params():
     params = """
         first_neuron integer [1000, 2000] [1500]
-        batch_size ordinal {100, 150, 200} [150]
+        batch_size integer [100, 150, 200] [150]
         epochs integer [50, 100] [50]
         dropout real [0, 0.5] [0.2]
         kernel_initializer categorical {uniform, normal} [uniform]
@@ -230,6 +230,7 @@ def snp_snp_gridsearch(args):
         experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
                                 project_name="Pilot1", workspace="aclyde11")
         history, model = snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
+        experiment.set_model_graph(K.get_session().graph())
         suggestion.report_score("accuracy", history.history['val_acc'][-1])
 
 
