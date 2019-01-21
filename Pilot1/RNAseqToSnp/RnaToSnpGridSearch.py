@@ -130,7 +130,7 @@ def rna_rna_gridsearch(args):
         experiment.add_tags(["rnaseq_rnaseq_autoencoder", "autoencoder", 'rnaseq'])
         history, model = rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
         experiment.set_model_graph(K.get_session().graph)
-        suggestion.report_score("mse", history.history['val_mse'][-1])
+        suggestion.report_score("mse", history.history['val_mean_squared_error'][-1])
         count += 1
 
 
