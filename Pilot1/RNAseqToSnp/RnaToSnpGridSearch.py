@@ -25,6 +25,22 @@ from metrics import r2
 gpu_nums = None
 x_big = None
 
+
+def my_product(inp):
+    from itertools import product
+    return (dict(zip(inp.keys(), values)) for values in product(*inp.values()))
+
+
+def do_search(x_train, y_train, x_val, y_val, model, params):
+    perms = my_product(params)
+
+    for perm in perms:
+        print(perms)
+        history, _ = model(x_train, y_train, x_val, y_val, perm)
+        print("MODEL DONE: ", str(history.history['r2'][-1]), str(history.history['val_r2'][-1]),
+              str(history.history['val_acc'][-1]))
+
+
 def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
     x_input = Input(shape=(x_train.shape[1],))
     x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
@@ -131,6 +147,7 @@ def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
 
     history = model_auto.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=params['epochs'],
                              batch_size=params['batch_size'], verbose=0)
+    print
 
     return history, model_auto
 
@@ -172,16 +189,7 @@ def snp_snp_gridsearch(args):
     y = np.array(y, dtype=np.float32)
 
     x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
-
-    t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
-                params=snp_snp_gridsearch_params(),
-                model=snp_snp_gridsearch_model,
-                grid_downsample=1,
-                # reduction_metric='val_r2',
-                # reduction_method='correlation',
-                dataset_name="SNP_Autoencoder",
-                experiment_no='2', debug=True, print_params=True)
-
+    do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
 
 
 
