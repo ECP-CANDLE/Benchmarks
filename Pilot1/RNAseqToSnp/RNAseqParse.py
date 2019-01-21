@@ -177,7 +177,8 @@ class DataLoader:
             ordered_rna_seq = qu.sort_values(["genomic_pos.chr", "genomic_pos.start"]).index.to_series()
             rnaseq = rnaseq[ordered_rna_seq]
             snps = snps[ordered_rna_seq]
-        elif "genemania" in align_by:
+        if "genemania" in align_by:
+            print("aligning_genemania")
             adj = pd.read_hdf(self.data_path + "GeneMania_adj.hdf", key="adj")
             adj_feats = set(adj.columns)
             rna_feats = set(rnaseq.columns)
@@ -195,9 +196,6 @@ class DataLoader:
             adj.to_hdf(self.cache_path + "_".join(align_by) + "_" + cached_file[0], key='adj')
             print("Success!")
 
-        else:
-            print("Please select name, pos, or genemania")
-            exit(1)
         logging.debug("Aligned files. Final shapes: " + str(snps.shape) + str(rnaseq.shape))
 
         snps.to_hdf(self.cache_path + "_".join(align_by) + "_" + cached_file[0], key=cached_file[1])
