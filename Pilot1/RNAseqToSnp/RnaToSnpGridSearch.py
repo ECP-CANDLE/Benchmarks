@@ -153,7 +153,7 @@ def rna_rna_gridsearch(args):
     x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.15)
 
 
-    params = rna_rna_gridsearch_comet_lc
+    params = rna_rna_gridsearch_comet_lc()
     print(params)
     optimizer.set_params(params)
     #     do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
