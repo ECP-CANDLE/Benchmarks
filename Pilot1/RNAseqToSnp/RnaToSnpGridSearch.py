@@ -110,6 +110,7 @@ def rna_rna_gridsearch(args):
 ##############
 
 def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
+    print(x_train.shape, y_train.shape, x_val.shape, y_val.shape)
     x_input = Input(shape=(x_train.shape[1],))
     x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
         x_input)
