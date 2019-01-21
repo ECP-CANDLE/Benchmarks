@@ -155,7 +155,7 @@ class DataLoader:
                 snps = self.reduce_snps_by_ensembl(snps)
         rnaseq = self.load_rnaseq_data()
         ensembl_dict = self.load_ensembl_dict(name_mapping)
-
+        rnaseq = rnaseq.set_index("Sample")
         #now I have snps aligned to ensembl id's..... I want to align them and get the stride based on position on the chromosome
         # aligned by chromosome position here.
         logging.debug("Loaded all files. Aligning by %s", align_by)
