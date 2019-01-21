@@ -3,7 +3,7 @@ from __future__ import print_function
 import argparse
 import logging
 
-from comet_ml import Experiment
+from comet_ml import Experiment, Optimizer
 
 
 import keras
@@ -30,7 +30,7 @@ from metrics import r2
 
 gpu_nums = None
 x_big = None
-
+optimizer = Optimizer("sWqygZPzck6CCDVasK2e0PHhT")
 
 def my_product(inp):
     from itertools import product
@@ -132,8 +132,7 @@ def rna_rna_gridsearch(args):
 ##############
 
 def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
-    experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
-                            project_name="general", workspace="aclyde11")
+
     print(x_train.shape, y_train.shape, x_val.shape, y_val.shape)
     x_input = Input(shape=(x_train.shape[1],))
     x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
@@ -151,6 +150,9 @@ def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
     print(gpu_nums)
     if gpu_nums > 1:
         model_auto = multi_gpu_model(model_auto, gpus=gpu_nums)
+    keras.callbacks.EarlyStopping(monitor='val_acc', min_delta=0.005, patience=4, verbose=0, mode='auto',
+                                  baseline=None, restore_best_weights=False)
+
     model_auto.compile(loss=params['auto_losses'], optimizer=params['optimizer'](lr=params['lr']), metrics=['acc', r2])
 
     history = model_auto.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=params['epochs'],
@@ -174,6 +176,22 @@ def snp_snp_gridsearch_params():
     return params
 
 
+def snp_snp_comet_params():
+    params = """
+        first_neuron integer [1000, 2000] [1500]
+        batch_size ordinal {100, 150, 200} [150]
+        epochs integer [50, 100] [50]
+        dropout real [0, 0.5] [0.2]
+        kernel_initializer categorical {uniform, normal} [uniform]
+        encoded_dim integer [350, 1000] [500]
+        auto_losses categorical {categorical_crossentropy, mse} [categorical_crossentropy]
+        optimizer categorical {adam, SGD} [adam]
+        lr real [0.001, 0.1] [0.01] log
+        activation categorical {relu, elu, sigmoid} [relu]
+        last_activation categorical {elu, relu, sigmoid} [relu]
+    """
+    return params
+
 def snp_snp_gridsearch(args):
     global gpu_nums
     gpu_nums = args.num_gpus
@@ -196,11 +214,14 @@ def snp_snp_gridsearch(args):
     y = np.array(y, dtype=np.float32)
 
     x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
-    do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
-
-
-
-
+    optimizer.set_params(snp_snp_comet_params())
+    #     do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
+    while True:
+        suggestion = optimizer.get_suggestion()
+        experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
+                                project_name="Pilot1", workspace="aclyde11")
+        history, model = snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
+        suggestion.report_score("accuracy", history.history['val_acc'][-1])
 
 
 #######################
