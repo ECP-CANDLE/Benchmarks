@@ -97,6 +97,7 @@ def rna_rna_gridsearch_comet():
     dropout real [0, 0.5] [0.3]
     kernel_initializer categorical {uniform} [uniform]
     encoded_dim integer [500, 1500] [750]
+    auto_losses categorical {mse, mae, kullback_leibler_divergence} [mse]
     lr real [0.0001, 1.0] [0.01] log
     activation categorical {sigmoid, relu} [relu]
     last_activation categorical {sigmoid, relu} [relu]    
