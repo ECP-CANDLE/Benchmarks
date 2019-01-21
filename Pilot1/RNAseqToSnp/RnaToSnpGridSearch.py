@@ -188,7 +188,7 @@ def snp_snp_gridsearch_params():
 def snp_snp_comet_params():
     params = """
         first_neuron integer [1000, 2000] [1500]
-        batch_size integer [100, 150, 200] [150]
+        batch_size integer [100, 200] [150]
         epochs integer [50, 100] [50]
         dropout real [0, 0.5] [0.2]
         kernel_initializer categorical {uniform, normal} [uniform]
