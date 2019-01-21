@@ -91,7 +91,7 @@ def rna_rna_gridsearch_params():
 
 def rna_rna_gridsearch_comet():
     params = '''
-    first_neuron integer [1000, 3000] [2000]
+    first_neuron integer [1000, 3000] [1500]
     batch_size integer [100, 300] [200]
     epochs integer [50, 100] [50]
     dropout real [0, 0.5] [0.3]
@@ -116,18 +116,18 @@ def rna_rna_gridsearch(args):
     x = np.array(x, dtype=np.float32)
     y = np.array(x, dtype=np.float32)
 
-    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
+    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.15)
 
 
 
     optimizer.set_params(rna_rna_gridsearch_comet())
     #     do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
     count = 0
-    while count < 50:
+    while count < 100:
         suggestion = optimizer.get_suggestion()
         experiment = Experiment(api_key=os.environ['COMET_ML_KEY'],
                                 project_name="Pilot1_arch", workspace="aclyde11")
-        experiment.add_tags(["rnaseq_rnaseq_autoencoder", "autoencoder", 'rnaseq'])
+        experiment.add_tags(["rnaseq_rnaseq_autoencoder", "autoencoder", 'rnaseq', 'genemania_aligned'])
         history, model = rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
         experiment.set_model_graph(K.get_session().graph)
         suggestion.report_score("mse", history.history['val_mean_squared_error'][-1])
@@ -199,10 +199,10 @@ def snp_snp_comet_params():
         epochs integer [90, 125] [100]
         dropout real [0.15, 0.3] [0.22]
         kernel_initializer categorical {uniform} [uniform]
-        encoded_dim integer [650, 750] [750]
+        encoded_dim integer [500, 1000] [750]
         auto_losses categorical {categorical_crossentropy} [categorical_crossentropy]
         optimizer categorical {adam} [adam]
-        lr real [0.0001, 0.006] [0.001] log
+        lr real [0.0001, 0.01] [0.001] log
         activation categorical {relu} [relu]
         last_activation categorical {sigmoid} [sigmoid]
     """
@@ -229,15 +229,15 @@ def snp_snp_gridsearch(args):
     x = np.array(y, dtype=np.float32)
     y = np.array(y, dtype=np.float32)
 
-    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
+    x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.15)
     optimizer.set_params(snp_snp_comet_params())
     #     do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
     count = 0
-    while count < 50:
+    while count < 100:
         suggestion = optimizer.get_suggestion()
         experiment = Experiment(api_key=os.environ['COMET_ML_KEY'],
                                 project_name="Pilot1_arch", workspace="aclyde11")
-        experiment.add_tags(["snp_snp_autoencoder", "autoencoder", 'snps'])
+        experiment.add_tags(["snp_snp_autoencoder", "autoencoder", 'snps', 'genemania_aligned'])
         history, model = snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
         experiment.set_model_graph(K.get_session().graph)
         suggestion.report_score("accuracy", history.history['val_acc'][-1])
