@@ -135,6 +135,7 @@ def rna_rna_gridsearch_comet_lc():
     strides_2 integer [2, 10] [2]
     activation_2 categorical {relu, elu, sigmoid} [relu]
     dropout real [0, 0.5] [0]
+    lr real [0.0001, 1.0] [0.01] log
     last_activation categorical {relu, elu, sigmoid} [sigmoid]
     '''
     return params
