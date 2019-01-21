@@ -17,7 +17,12 @@ from sklearn.model_selection import train_test_split
 from RNAseqParse import DataLoader
 from metrics import r2
 
+# import comet_ml in the top of your file
+from comet_ml import Experiment
 
+# Add the following code anywhere in your machine learning file
+experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
+                        project_name="general", workspace="aclyde11")
 ###################
 # RNA GRIDSEARRCH #
 ###################
