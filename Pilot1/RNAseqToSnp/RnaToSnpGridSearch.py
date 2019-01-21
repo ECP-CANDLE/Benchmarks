@@ -225,6 +225,7 @@ def rna_snp_pt_gridsearch(x_train, y_train, x_val, y_val, params):
     model_snps.compile(loss=params['snp_losses'],
                        optimizer=params['snp_optimizer']('lr'), metrics=['accuracy', r2, 'mae', 'mse'])
 
+    print("TRAINING MODEL")
     model_auto.fit(x_big, x_big, epochs=20, batch_size=200, verbose=1, validation_split=0.05)
 
     history = model_snps.fit(x_train, y_train,
