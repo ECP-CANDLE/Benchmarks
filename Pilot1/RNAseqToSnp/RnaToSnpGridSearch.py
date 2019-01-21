@@ -159,7 +159,7 @@ def snp_snp_gridsearch_params():
               'dropout': [0.2],
               'kernel_initializer': ['uniform'],
               'encoded_dim': [350, 500, 750],
-              'auto_losses': ['sparse_categorical_crossentropy', 'categorical_crossentropy'],
+              'auto_losses': ['categorical_crossentropy'],
               'optimizer': [keras.optimizers.adam],
               'lr': [0.001, 0.0005],
               'activation': ['relu'],
