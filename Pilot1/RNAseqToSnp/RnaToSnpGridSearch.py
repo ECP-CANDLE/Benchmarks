@@ -51,7 +51,7 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
     x_input = Input(shape=(x_train.shape[1],))
     x = Dense(params['first_neuron'], activation=params['activation'], kernel_initializer=params['kernel_initializer'])(
         x_input)
-    layer = Dropout(params['dropout'])(x)
+    x = Dropout(params['dropout'])(x)
     encoded = Dense(params['encoded_dim'], activation=params['activation'],
                     kernel_initializer=params['kernel_initializer'])(x)
 
@@ -59,6 +59,26 @@ def rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, params):
         encoded)
     decoded = Dense(x_train.shape[1], activation=params['last_activation'],
                     kernel_initializer=params['kernel_initializer'])(x)
+
+    model_auto = Model(inputs=x_input, outputs=decoded)
+    print(gpu_nums)
+    if gpu_nums > 1:
+        model_auto = multi_gpu_model(model_auto, gpus=gpu_nums)
+    model_auto.compile(loss=params['auto_losses'], optimizer=keras.optimizers.adam(lr=params['lr']), metrics=['acc', r2, 'mse', 'mae'])
+
+    history = model_auto.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=params['epochs'],
+                             batch_size=params['batch_size'], verbose=0)
+
+    return history, model_auto
+
+def rna_rna_gridsearch_model_lc(x_train, y_train, x_val, y_val, params):
+    x_input = Input(shape=(x_train.shape[1],))
+
+    x = LocallyConnected1D(filter=params['filter_1'], kernel_size=params['kernel_size_1'], strides=params['strides_1'], activation=params['activation_1'] )(x_input)
+    x = Dropout(params['dropout'])(x)
+    encoded = LocallyConnected1D(filter=params['filter_2'], kernel_size=params['kernel_size_2'], strides=params['strides_2'], activation=params['activation_2'])(x)
+    x = LocallyConnected1D(filter=params['filter_1'], kernel_size=params['kernel_size_1'], strides=params['strides_1'], activation=params['activation_1'] )(x_input)
+    decoded = Dense(x_train.shape[1], activation=params['last_activation'])(x)
 
     model_auto = Model(inputs=x_input, outputs=decoded)
     print(gpu_nums)
@@ -89,7 +109,7 @@ def rna_rna_gridsearch_params():
 
 ##based on analysis
 
-def rna_rna_gridsearch_comet():
+def rna_rna_gridsearch_comet_dense():
     params = '''
     first_neuron integer [1000, 3000] [1500]
     batch_size integer [100, 300] [200]
@@ -101,6 +121,21 @@ def rna_rna_gridsearch_comet():
     lr real [0.0001, 1.0] [0.01] log
     activation categorical {sigmoid, relu} [relu]
     last_activation categorical {sigmoid, relu} [relu]    
+    '''
+    return params
+
+def rna_rna_gridsearch_comet_lc():
+    params = '''
+    filter_1 integer [1, 25] [10]
+    kernel_size_1 integer [2, 30] [10]
+    strides_1 integer [1, 30] [10]
+    activation_1 categorical {relu, elu, sigmoid} [relu]
+    filter_2 integer [1, 25] [10]
+    kernel_size_2 integer [2, 15] [10]
+    strides_2 integer [2, 10] [2]
+    activation_2 {relu, elu, sigmoid} [relu]
+    dropout real [0, 0.5] [0]
+    last_activation {relu, elu, sigmoid} [sigmoid]
     '''
     return params
 
@@ -119,7 +154,7 @@ def rna_rna_gridsearch(args):
 
 
 
-    optimizer.set_params(rna_rna_gridsearch_comet())
+    optimizer.set_params(rna_rna_gridsearch_comet_lc())
     #     do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
     count = 0
     while count < 100:
@@ -127,7 +162,7 @@ def rna_rna_gridsearch(args):
         experiment = Experiment(api_key=os.environ['COMET_ML_KEY'],
                                 project_name="Pilot1_arch", workspace="aclyde11")
         experiment.add_tags(["rnaseq_rnaseq_autoencoder", "autoencoder", 'rnaseq', 'genemania_aligned'])
-        history, model = rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
+        history, model = rna_rna_gridsearch_model_lc(x_train, y_train, x_val, y_val, suggestion)
         experiment.set_model_graph(K.get_session().graph)
         suggestion.report_score("mse", history.history['val_mean_squared_error'][-1])
         count += 1
@@ -236,7 +271,7 @@ def snp_snp_gridsearch(args):
         suggestion = optimizer.get_suggestion()
         experiment = Experiment(api_key=os.environ['COMET_ML_KEY'],
                                 project_name="Pilot1_arch", workspace="aclyde11")
-        experiment.add_tags(["snp_snp_autoencoder", "autoencoder", 'snps', 'genemania_aligned'])
+        experiment.add_tags(["snp_snp_autoencoder", "autoencoder", 'snps', 'genemania_aligned', 'locally_connected'])
         history, model = snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
         experiment.set_model_graph(K.get_session().graph)
         suggestion.report_score("accuracy", history.history['val_acc'][-1])
