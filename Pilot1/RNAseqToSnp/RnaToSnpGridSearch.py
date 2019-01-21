@@ -3,6 +3,9 @@ from __future__ import print_function
 import argparse
 import logging
 
+from comet_ml import Experiment
+
+
 import keras
 import numpy as np
 import pandas as pd
@@ -18,7 +21,6 @@ from RNAseqParse import DataLoader
 from metrics import r2
 
 # import comet_ml in the top of your file
-from comet_ml import Experiment
 
 # Add the following code anywhere in your machine learning file
 experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",

@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import argparse
 import logging
+from comet_ml import Experiment
 
 import keras
 import numpy as np
