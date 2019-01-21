@@ -141,7 +141,6 @@ def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
 
     model_auto = Model(inputs=x_input, outputs=decoded)
     print(gpu_nums)
-    print(model_auto.summary())
     if gpu_nums > 1:
         model_auto = multi_gpu_model(model_auto, gpus=gpu_nums)
     model_auto.compile(loss=params['auto_losses'], optimizer=params['optimizer'](lr=params['lr']), metrics=['acc', r2])
