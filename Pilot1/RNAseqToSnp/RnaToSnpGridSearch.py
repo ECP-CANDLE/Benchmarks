@@ -15,7 +15,6 @@ from keras.layers import Input, Dense, Dropout, Reshape, Flatten, LocallyConnect
 from keras.models import Model
 from keras.utils import multi_gpu_model
 from sklearn import preprocessing, utils, ensemble, feature_selection, model_selection
-import talos as ta
 from sklearn.model_selection import train_test_split
 from RNAseqParse import DataLoader
 from metrics import r2
@@ -189,16 +188,16 @@ def snp_snp_gridsearch_params():
 def snp_snp_comet_params():
     params = """
         first_neuron integer [1500, 2000] [1750]
-        batch_size integer [150, 200] [150]
-        epochs integer [70, 100] [80]
-        dropout real [0, 0.3] [0.15]
+        batch_size integer [150, 150] [150]
+        epochs integer [90, 125] [100]
+        dropout real [0.15, 0.3] [0.22]
         kernel_initializer categorical {uniform} [uniform]
-        encoded_dim integer [500, 750] [750]
+        encoded_dim integer [650, 750] [750]
         auto_losses categorical {categorical_crossentropy} [categorical_crossentropy]
         optimizer categorical {adam} [adam]
-        lr real [0.0005, 0.1] [0.01] log
+        lr real [0.0001, 0.006] [0.001] log
         activation categorical {relu} [relu]
-        last_activation categorical {relu, sigmoid} [sigmoid]
+        last_activation categorical {sigmoid} [sigmoid]
     """
     return params
 
@@ -354,11 +353,11 @@ def snps_from_rnaseq_grid_search(args):
     y = np.array(x, dtype=np.float32)
 
     x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.15)
-
-    t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
-                params=snps_from_rnaseq_params(),
-                model=rna_snp_pt_gridsearch,
-                grid_downsample=0.1,
-                reduction_metric='val_r2',
-                dataset_name="RNA Autoencoder pretained snp 'ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311'",
-                experiment_no='1', debug=True, print_params=True)
+    #
+    # t = ta.Scan(x_train, y_train, x_val=x_val, y_val=y_val,
+    #             params=snps_from_rnaseq_params(),
+    #             model=rna_snp_pt_gridsearch,
+    #             grid_downsample=0.1,
+    #             reduction_metric='val_r2',
+    #             dataset_name="RNA Autoencoder pretained snp 'ENSG00000181143', 'ENSG00000145113', 'ENSG00000127914', 'ENSG00000149311'",
+    #             experiment_no='1', debug=True, print_params=True)
