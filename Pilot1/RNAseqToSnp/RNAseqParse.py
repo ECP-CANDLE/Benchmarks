@@ -136,7 +136,9 @@ class DataLoader:
 
     def load_aligned_snps_rnaseq(self, file_rnaseq=None, file_snp=None, cached_file=("combined_aligned_rnaseq_snp.hdf", "aligned_snp", "aligned_rnaseq"), name_mapping="ensembl2genes", use_reduced=False, align_by=['name']):
         logging.info("Loading aligned snp rna seq.")
-        if os.path.exists(self.cache_path + cached_file[0]):
+        if len(align_by) == 0:
+            align_by = ['None']
+        if os.path.exists(self.cache_path+ "_".join(align_by) + "_" + cached_file[0] + cached_file[0]):
             snps =  self.load_hdf("_".join(align_by) + "_" + cached_file[0], key=cached_file[1])
             rnaseq = self.load_hdf("_".join(align_by) + "_" + cached_file[0], key=cached_file[2])
             if "genemania" in align_by:
