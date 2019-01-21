@@ -153,6 +153,15 @@ def snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, params):
     keras.callbacks.EarlyStopping(monitor='val_acc', min_delta=0.005, patience=4, verbose=0, mode='auto',
                                   baseline=None, restore_best_weights=False)
 
+    opt = None
+    if params['optimizer'] == 'adam':
+        opt = keras.optimizers.adam
+    elif params['optimizer'] == 'SGD':
+        opt = keras.optimizers.SGD
+    else:
+        print("OPTIMIZER NOT DFOUND %s" % params['optimizer'])
+        opt = keras.optimizers.adam
+
     model_auto.compile(loss=params['auto_losses'], optimizer=params['optimizer'](lr=params['lr']), metrics=['acc', r2])
 
     history = model_auto.fit(x_train, y_train, validation_data=[x_val, y_val], epochs=params['epochs'],
