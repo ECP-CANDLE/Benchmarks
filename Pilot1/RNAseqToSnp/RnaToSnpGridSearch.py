@@ -133,9 +133,9 @@ def rna_rna_gridsearch_comet_lc():
     filter_2 integer [1, 25] [10]
     kernel_size_2 integer [2, 15] [10]
     strides_2 integer [2, 10] [2]
-    activation_2 {relu, elu, sigmoid} [relu]
+    activation_2 categorical {relu, elu, sigmoid} [relu]
     dropout real [0, 0.5] [0]
-    last_activation {relu, elu, sigmoid} [sigmoid]
+    last_activation categorical {relu, elu, sigmoid} [sigmoid]
     '''
     return params
 
