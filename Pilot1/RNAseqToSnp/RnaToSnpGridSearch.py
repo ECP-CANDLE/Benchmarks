@@ -247,7 +247,7 @@ def snps_from_rnaseq_params():
          'encoded_dim': [500, 750, 1000],
          'auto_losses': ['mse', 'mae'],
          'snp_losses': ['categorical_crossentropy', 'sparse_categorical_crossentropy'],
-         'optimizer': [keras.optimizers.adam],
+         'snp_optimizer': [keras.optimizers.adam],
          'auto_optimizer': [keras.optimizers.adam],
          'lr': [0.001, 0.01, 0.1],
          'activation': ['sigmoid', 'elu', 'relu'],
