@@ -18,7 +18,7 @@ from sklearn import preprocessing, utils, ensemble, feature_selection, model_sel
 from sklearn.model_selection import train_test_split
 from RNAseqParse import DataLoader
 from metrics import r2
-
+import os
 # import comet_ml in the top of your file
 
 # Add the following code anywhere in your machine learning file
@@ -29,7 +29,7 @@ from metrics import r2
 
 gpu_nums = None
 x_big = None
-optimizer = Optimizer("sWqygZPzck6CCDVasK2e0PHhT")
+optimizer = Optimizer(os.environ['COMET_ML_KEY'])
 
 
 def my_product(inp):
@@ -125,7 +125,7 @@ def rna_rna_gridsearch(args):
     count = 0
     while count < 25:
         suggestion = optimizer.get_suggestion()
-        experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
+        experiment = Experiment(api_key=os.environ['COMET_ML_KEY'],
                                 project_name="Pilot1", workspace="aclyde11")
         experiment.add_tags(["rnaseq_rnaseq_autoencoder", "autoencoder", 'rnaseq'])
         history, model = rna_rna_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
@@ -235,7 +235,7 @@ def snp_snp_gridsearch(args):
     count = 0
     while count < 25:
         suggestion = optimizer.get_suggestion()
-        experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
+        experiment = Experiment(api_key=os.environ['COMET_ML_KEY'],
                                 project_name="Pilot1", workspace="aclyde11")
         experiment.add_tags(["snp_snp_autoencoder", "autoencoder", 'snps'])
         history, model = snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
