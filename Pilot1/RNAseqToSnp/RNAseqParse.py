@@ -191,7 +191,9 @@ class DataLoader:
             rnaseq = rnaseq.sort_index(axis=1)
             adj = adj.sort_index(axis=0).sort_index(axis=1)
             self.adj = adj
+            print("Caching adj....")
             adj.to_hdf(self.cache_path + "_".join(align_by) + "_" + cached_file[0], key='adj')
+            print("Success!")
 
         else:
             print("Please select name, pos, or genemania")
