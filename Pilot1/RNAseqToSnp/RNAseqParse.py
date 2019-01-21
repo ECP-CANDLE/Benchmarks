@@ -138,7 +138,7 @@ class DataLoader:
         logging.info("Loading aligned snp rna seq.")
         if len(align_by) == 0:
             align_by = ['None']
-        if os.path.exists(self.cache_path+ "_".join(align_by) + "_" + cached_file[0] + cached_file[0]):
+        if os.path.exists(self.cache_path+ "_".join(align_by) + "_" + cached_file[0]):
             snps =  self.load_hdf("_".join(align_by) + "_" + cached_file[0], key=cached_file[1])
             rnaseq = self.load_hdf("_".join(align_by) + "_" + cached_file[0], key=cached_file[2])
             if "genemania" in align_by:
