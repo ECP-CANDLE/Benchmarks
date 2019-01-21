@@ -226,7 +226,8 @@ def snp_snp_gridsearch(args):
     x_train, x_val, y_train, y_val = train_test_split(x, y, test_size=0.2)
     optimizer.set_params(snp_snp_comet_params())
     #     do_search(x_train, y_train, x_val, y_val, snp_snp_gridsearch_model, snp_snp_gridsearch_params())
-    while True:
+    count = 0
+    while count < 25:
         suggestion = optimizer.get_suggestion()
         experiment = Experiment(api_key="sWqygZPzck6CCDVasK2e0PHhT",
                                 project_name="Pilot1", workspace="aclyde11")
@@ -234,6 +235,7 @@ def snp_snp_gridsearch(args):
         history, model = snp_snp_gridsearch_model(x_train, y_train, x_val, y_val, suggestion)
         experiment.set_model_graph(K.get_session().graph)
         suggestion.report_score("accuracy", history.history['val_acc'][-1])
+        count += 1
 
 
 #######################
