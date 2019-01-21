@@ -110,7 +110,6 @@ def rna_rna_gridsearch(args):
     gpu_nums = args.num_gpus
     loader = DataLoader(args.data_path, args)
     _, rnaseq = loader.load_aligned_snps_rnaseq(use_reduced=True, align_by=args.align_by)
-    rnaseq = rnaseq.set_index("Sample")
     x = preprocessing.scale(rnaseq)
 
     x = np.array(x, dtype=np.float32)
