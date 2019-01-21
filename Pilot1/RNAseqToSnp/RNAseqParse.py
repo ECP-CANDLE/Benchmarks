@@ -187,10 +187,8 @@ class DataLoader:
             adj = adj.drop(adj_feats.difference(common_feats), axis=1).drop(adj_feats.difference(common_feats), axis=0)
             snps = snps.drop(snp_feats.difference(common_feats), axis=1)
             rnaseq = rnaseq.drop(rna_feats.difference(common_feats), axis=1)
+            adj = adj.loc[rnaseq.columns.tolist()][rnaseq.columns.tolist()]
             print(adj.shape, snps.shape, rnaseq.shape)
-            snps = snps.sort_index(axis=1)
-            rnaseq = rnaseq.sort_index(axis=1)
-            adj = adj.sort_index(axis=0).sort_index(axis=1)
             self.adj = adj
             print("Caching adj....")
             adj.to_hdf(self.cache_path + "_".join(align_by) + "_" + cached_file[0], key='adj')
