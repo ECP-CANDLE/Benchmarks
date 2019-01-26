@@ -753,7 +753,7 @@ class CombinedDataLoader(object):
     def load(self, cache=None, ncols=None, scaling='std', dropna=None,
              embed_feature_source=True, encode_response_source=True,
              cell_features=['rnaseq'], drug_features=['descriptors', 'fingerprints'],
-             feature_subset_path=None,
+             cell_feature_subset_path=None, drug_feature_subset_path=None,
              drug_lower_response=1, drug_upper_response=-1, drug_response_span=0,
              drug_median_response_min=-1, drug_median_response_max=1,
              use_landmark_genes=False, use_filtered_genes=False,
@@ -808,19 +808,20 @@ class CombinedDataLoader(object):
         df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response, lower_median=drug_median_response_min, upper_median=drug_median_response_max)
         logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
 
-        feature_subset = read_set_from_file(feature_subset_path)
+        cell_feature_subset = read_set_from_file(cell_feature_subset_path)
+        drug_feature_subset = read_set_from_file(drug_feature_subset_path)
 
         for fea in cell_features:
             fea = fea.lower()
             if fea == 'rnaseq' or fea == 'expression':
-                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, feature_subset=feature_subset, preprocess_rnaseq=preprocess_rnaseq, embed_feature_source=embed_feature_source)
+                df_cell_rnaseq = load_cell_rnaseq(ncols=ncols, scaling=scaling, use_landmark_genes=use_landmark_genes, use_filtered_genes=use_filtered_genes, feature_subset=cell_feature_subset, preprocess_rnaseq=preprocess_rnaseq, embed_feature_source=embed_feature_source)
 
         for fea in drug_features:
             fea = fea.lower()
             if fea == 'descriptors':
-                df_drug_desc = load_drug_descriptors(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=feature_subset)
+                df_drug_desc = load_drug_descriptors(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
             elif fea == 'fingerprints':
-                df_drug_fp = load_drug_fingerprints(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=feature_subset)
+                df_drug_fp = load_drug_fingerprints(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
 
         # df_drug_desc, df_drug_fp = load_drug_data(ncols=ncols, scaling=scaling, dropna=dropna)
 
