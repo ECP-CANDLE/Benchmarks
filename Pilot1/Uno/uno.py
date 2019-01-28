@@ -38,6 +38,11 @@ class BenchmarkUno(candle.Benchmark):
 
 additional_definitions = [
 # Feature selection
+    {'name':'agg_dose',
+        'type': str,
+        'default': None,
+        'choices':['AUC', 'IC50', 'EC50', 'HS', 'AAC1', 'AUC1', 'DSS1'],
+        'help':'use dose-independent response data with the specified aggregation metric'},
     {'name':'cell_features',
         'nargs':'+',
         'choices':['rnaseq', 'none'],

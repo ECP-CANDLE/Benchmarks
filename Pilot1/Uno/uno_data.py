@@ -206,6 +206,44 @@ def load_combo_dose_response(fraction=True):
     return df
 
 
+def load_aggregated_single_response(target='AUC', min_r2_fit=0.3, max_ec50_se=3, combo_format=False, rename=True):
+    path = get_file(DATA_URL + 'combined_single_response_agg')
+
+    df = global_cache.get(path)
+    if df is None:
+        df = pd.read_table(path, engine='c',
+                           dtype={'SOURCE': str, 'CELL': str, 'DRUG': str, 'STUDY': str,
+                                  'AUC': np.float32, 'IC50': np.float32,
+                                  'EC50': np.float32, 'EC50se': np.float32,
+                                  'R2fit': np.float32, 'Einf': np.float32,
+                                  'HS': np.float32, 'AAC1': np.float32,
+                                  'AUC1': np.float32, 'DSS1': np.float32})
+        global_cache[path] = df
+
+    total = len(df)
+
+    df = df[(df['R2fit'] >= min_r2_fit) & (df['EC50se'] <= max_ec50_se)]
+    df = df[['SOURCE', 'CELL', 'DRUG', target, 'STUDY']]
+    df = df[~df[target].isnull()]
+
+    logger.info('Loaded %d dose indepdendent response samples (filtered by EC50se <= %f & R2fit >=%f from a total of %d).', len(df), max_ec50_se, min_r2_fit, total)
+
+    if combo_format:
+        df = df.rename(columns={'DRUG': 'DRUG1'})
+        df['DRUG2'] = np.nan
+        df['DRUG2'] = df['DRUG2'].astype(object)
+        df = df[['SOURCE', 'CELL', 'DRUG1', 'DRUG2', target, 'STUDY']]
+        if rename:
+            df = df.rename(columns={'SOURCE': 'Source', 'CELL': 'Sample',
+                                    'DRUG1': 'Drug1', 'DRUG2': 'Drug2', 'STUDY': 'Study'})
+    else:
+        if rename:
+            df = df.rename(columns={'SOURCE': 'Source', 'CELL': 'Sample',
+                                    'DRUG': 'Drug', 'STUDY': 'Study'})
+
+    return df
+
+
 def load_drug_data(ncols=None, scaling='std', imputing='mean', dropna=None, add_prefix=True):
     df_info = load_drug_info()
     df_info['Drug'] = df_info['PUBCHEM']
@@ -526,10 +564,12 @@ def select_drugs_with_response_range(df_response, lower=0, upper=0, span=0, lowe
     return df_sub
 
 
-def summarize_response_data(df):
-    df_sum = df.groupby('Source').agg({'Growth': 'count', 'Sample': 'nunique',
+def summarize_response_data(df, target=None):
+    target = target or 'Growth'
+    df_sum = df.groupby('Source').agg({target: 'count', 'Sample': 'nunique',
                                        'Drug1': 'nunique', 'Drug2': 'nunique'})
-    df_sum['MedianDose'] = df.groupby('Source').agg({'Dose1': 'median'})
+    if 'Dose1' in df_sum:
+        df_sum['MedianDose'] = df.groupby('Source').agg({'Dose1': 'median'})
     return df_sum
 
 
@@ -714,10 +754,11 @@ class CombinedDataLoader(object):
         input_features = collections.OrderedDict()
         feature_shapes = {}
 
-        doses = ['dose1', 'dose2'] if not single else ['dose1']
-        for dose in doses:
-            input_features[dose] = 'dose'
-            feature_shapes['dose'] = (1,)
+        if not self.agg_dose:
+            doses = ['dose1', 'dose2'] if not single else ['dose1']
+            for dose in doses:
+                input_features[dose] = 'dose'
+                feature_shapes['dose'] = (1,)
 
         if self.encode_response_source:
             input_features['response.source'] = 'response.source'
@@ -751,7 +792,7 @@ class CombinedDataLoader(object):
         logger.info('Total input dimensions: {}'.format(self.input_dim))
 
     def load(self, cache=None, ncols=None, scaling='std', dropna=None,
-             embed_feature_source=True, encode_response_source=True,
+             agg_dose=None, embed_feature_source=True, encode_response_source=True,
              cell_features=['rnaseq'], drug_features=['descriptors', 'fingerprints'],
              cell_feature_subset_path=None, drug_feature_subset_path=None,
              drug_lower_response=1, drug_upper_response=-1, drug_response_span=0,
@@ -780,10 +821,14 @@ class CombinedDataLoader(object):
 
         logger.info('Loading data from scratch ...')
 
-        df_response = load_combined_dose_response()
+        if agg_dose:
+            df_response = load_aggregated_single_response(target=agg_dose, combo_format=True)
+        else:
+            df_response = load_combined_dose_response()
+
         if logger.isEnabledFor(logging.INFO):
             logger.info('Summary of combined dose response by source:')
-            logger.info(summarize_response_data(df_response))
+            logger.info(summarize_response_data(df_response, target=agg_dose))
 
         all_sources = df_response['Source'].unique()
         df_source = encode_sources(all_sources)
@@ -804,9 +849,13 @@ class CombinedDataLoader(object):
         df_cells_with_response = df_response[['Sample']].drop_duplicates().reset_index(drop=True)
         logger.info('Combined raw dose response data has %d unique samples and %d unique drugs', df_cells_with_response.shape[0], df_drugs_with_response.shape[0])
 
-        logger.info('Limiting drugs to those with response min <= %g, max >= %g, span >= %g, median_min <= %g, median_max >= %g ...', drug_lower_response, drug_upper_response, drug_response_span, drug_median_response_min, drug_median_response_max)
-        df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response, lower_median=drug_median_response_min, upper_median=drug_median_response_max)
-        logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
+        if agg_dose:
+            df_selected_drugs = None
+        else:
+            logger.info('Limiting drugs to those with response min <= %g, max >= %g, span >= %g, median_min <= %g, median_max >= %g ...', drug_lower_response, drug_upper_response, drug_response_span, drug_median_response_min, drug_median_response_max)
+            df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response, lower_median=drug_median_response_min, upper_median=drug_median_response_max)
+            logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
+
 
         cell_feature_subset = read_set_from_file(cell_feature_subset_path)
         drug_feature_subset = read_set_from_file(drug_feature_subset_path)
@@ -846,7 +895,8 @@ class CombinedDataLoader(object):
             df_drug = locals()[drug_df_dict[fea]]
             df_drug_ids = df_drug_ids.merge(df_drug[['Drug']]).drop_duplicates()
 
-        df_drug_ids = df_drug_ids.merge(df_selected_drugs).drop_duplicates()
+        if df_selected_drugs is not None:
+            df_drug_ids = df_drug_ids.merge(df_selected_drugs).drop_duplicates()
         logger.info('  %d selected drugs with feature and response data', df_drug_ids.shape[0])
 
         df_response = df_response[df_response['Sample'].isin(df_cell_ids['Sample']) &
@@ -859,10 +909,11 @@ class CombinedDataLoader(object):
 
         if logger.isEnabledFor(logging.INFO):
             logger.info('Summary of filtered dose response by source:')
-            logger.info(summarize_response_data(df_response))
+            logger.info(summarize_response_data(df_response, target=agg_dose))
 
         df_response = df_response.assign(Group = assign_partition_groups(df_response, partition_by))
 
+        self.agg_dose = agg_dose
         self.cell_features = cell_features
         self.drug_features = drug_features
         self.cell_df_dict = cell_df_dict
@@ -927,38 +978,43 @@ class CombinedDataGenerator(object):
 
     def get_slice(self, size=None, contiguous=True, single=False, dataframe=False):
         size = size or self.size
+        single = single or self.data.agg_dose
+        target = self.data.agg_dose
 
         index = list(islice(self.index_cycle, size))
         df_orig = self.data.df_response.iloc[index, :]
         df = df_orig.copy()
 
-        df['Swap'] = np.random.choice([True, False], df.shape[0])
-        df['DoseSplit'] = np.random.uniform(0.001, 0.999, df.shape[0])
-
-        swap = df_orig['Drug2'].notnull() & df['Swap']
-        df.loc[swap, 'Drug1'] = df_orig.loc[swap, 'Drug2']
-        df.loc[swap, 'Dose1'] = df_orig.loc[swap, 'Dose2']
-        df.loc[swap, 'Drug2'] = df_orig.loc[swap, 'Drug1']
-        df.loc[swap, 'Dose2'] = df_orig.loc[swap, 'Dose1']
+        if not single:
+            df['Swap'] = np.random.choice([True, False], df.shape[0])
+            swap = df_orig['Drug2'].notnull() & df['Swap']
+            df.loc[swap, 'Drug1'] = df_orig.loc[swap, 'Drug2']
+            df.loc[swap, 'Drug2'] = df_orig.loc[swap, 'Drug1']
+            if not self.data.agg_dose:
+                df['DoseSplit'] = np.random.uniform(0.001, 0.999, df.shape[0])
+                df.loc[swap, 'Dose1'] = df_orig.loc[swap, 'Dose2']
+                df.loc[swap, 'Dose2'] = df_orig.loc[swap, 'Dose1']
 
         split = df_orig['Drug2'].isnull()
         if not single:
             df.loc[split, 'Drug2'] = df_orig.loc[split, 'Drug1']
-            df.loc[split, 'Dose1'] = df_orig.loc[split, 'Dose1'] - np.log10(df.loc[split, 'DoseSplit'])
-            df.loc[split, 'Dose2'] = df_orig.loc[split, 'Dose1'] - np.log10(1 - df.loc[split, 'DoseSplit'])
+            if not self.data.agg_dose:
+                df.loc[split, 'Dose1'] = df_orig.loc[split, 'Dose1'] - np.log10(df.loc[split, 'DoseSplit'])
+                df.loc[split, 'Dose2'] = df_orig.loc[split, 'Dose1'] - np.log10(1 - df.loc[split, 'DoseSplit'])
 
         if dataframe:
-            cols = ['Growth', 'Sample', 'Drug1', 'Drug2'] if not single else ['Growth', 'Sample', 'Drug1']
+            cols = [target, 'Sample', 'Drug1', 'Drug2'] if not single else [target, 'Sample', 'Drug1']
             y = df[cols].reset_index(drop=True)
         else:
-            y = values_or_dataframe(df['Growth'], contiguous, dataframe)
+            y = values_or_dataframe(df[target], contiguous, dataframe)
 
         x_list = []
 
-        doses = ['Dose1', 'Dose2'] if not single else ['Dose1']
-        for dose in doses:
-            x = values_or_dataframe(df[[dose]].reset_index(drop=True), contiguous, dataframe)
-            x_list.append(x)
+        if not self.data.agg_dose:
+            doses = ['Dose1', 'Dose2'] if not single else ['Dose1']
+            for dose in doses:
+                x = values_or_dataframe(df[[dose]].reset_index(drop=True), contiguous, dataframe)
+                x_list.append(x)
 
         if self.data.encode_response_source:
             df_x = pd.merge(df[['Source']], self.data.df_source, on='Source', how='left')

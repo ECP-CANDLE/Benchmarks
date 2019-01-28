@@ -307,6 +307,7 @@ def run(params):
     loader = CombinedDataLoader(seed=args.rng_seed)
     loader.load(cache=args.cache,
                 ncols=args.feature_subsample,
+                agg_dose=args.agg_dose,
                 cell_features=args.cell_features,
                 drug_features=args.drug_features,
                 drug_median_response_min=args.drug_median_response_min,
@@ -323,6 +324,7 @@ def run(params):
                 encode_response_source=not args.no_response_source,
                 )
 
+    target = args.agg_dose or 'Growth'
     val_split = args.validation_split
     train_split = 1 - val_split
 
@@ -411,7 +413,7 @@ def run(params):
         val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
 
         df_val = val_gen.get_response(copy=True)
-        y_val = df_val['Growth'].values
+        y_val = df_val[target].values
         y_shuf = np.random.permutation(y_val)
         log_evaluation(evaluate_prediction(y_val, y_shuf),
                        description='Between random pairs in y_val:')
@@ -449,7 +451,10 @@ def run(params):
         scores = evaluate_prediction(y_val, y_val_pred)
         log_evaluation(scores)
 
-        df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred-y_val)
+        # df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred-y_val)
+        df_val['Predicted'+target] = y_val_pred
+        df_val[target+'Error'] = y_val_pred-y_val
+
         df_pred_list.append(df_val)
 
         plot_history(prefix, history, 'loss')
@@ -457,17 +462,20 @@ def run(params):
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
-    df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
+    if args.agg_dose:
+        df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', target], inplace=True)
+    else:
+        df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
     df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
 
     if args.cv > 1:
-        scores = evaluate_prediction(df_pred['Growth'], df_pred['PredictedGrowth'])
+        scores = evaluate_prediction(df_pred[target], df_pred['Predicted'+target])
         log_evaluation(scores, description='Combining cross validation folds:')
 
     for test_source in loader.test_sep_sources:
         test_gen = CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size, source=test_source)
         df_test = test_gen.get_response(copy=True)
-        y_test = df_test['Growth'].values
+        y_test = df_test[target].values
         n_test = len(y_test)
         if n_test == 0:
             continue
