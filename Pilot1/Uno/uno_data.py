@@ -979,7 +979,7 @@ class CombinedDataGenerator(object):
     def get_slice(self, size=None, contiguous=True, single=False, dataframe=False):
         size = size or self.size
         single = single or self.data.agg_dose
-        target = self.data.agg_dose
+        target = self.data.agg_dose or 'Growth'
 
         index = list(islice(self.index_cycle, size))
         df_orig = self.data.df_response.iloc[index, :]
