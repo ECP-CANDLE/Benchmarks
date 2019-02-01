@@ -359,12 +359,17 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0):
     with open(scores_fname, "w") as scores_file:
         scores_file.write(score_format('accuracy_gain', accuracy_gain, signed=True, eol='\n'))
         for m in metric_names:
+            s = None
             try:
                 s = getattr(metrics, m)(tests, preds, average=average)
+            except Exception:
+                try:
+                    s = getattr(metrics, m)(tests, preds)
+                except Exception:
+                    pass
+            if s:
                 print(' ', score_format(m, s))
                 scores_file.write(score_format(m, s, eol='\n'))
-            except Exception:
-                pass
         if roc_auc_score:
             print(' ', score_format('roc_auc_score', roc_auc_score))
             scores_file.write(score_format('roc_auc_score', roc_auc_score, eol='\n'))

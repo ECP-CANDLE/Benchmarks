@@ -47,6 +47,8 @@ def get_parser(description='Run machine learning training algorithms implemented
                         help="number of features to randomly sample from each category, 0 means using all features")
     parser.add_argument("-C", "--ignore_categoricals", action='store_true',
                         help="ignore categorical feature columns")
+    parser.add_argument("--csv", action='store_true',
+                        help="comma separated file")
     parser.add_argument("--seed", type=int, default=SEED,
                         help="specify random seed")
     return parser
@@ -66,7 +68,7 @@ def main():
     prefix = args.prefix or os.path.basename(args.data)
     prefix = os.path.join(args.out_dir, prefix)
 
-    df = pd.read_table(args.data, engine='c')
+    df = pd.read_table(args.data, engine='c', sep=',' if args.csv else '\t')
     x, y, splits, features = split_data(df, ycol=args.ycol, classify=args.classify, cv=args.cv,
                                         bins=args.bins, cutoffs=args.cutoffs, groupcols=args.groupcols,
                                         ignore_categoricals=args.ignore_categoricals, verbose=True)
