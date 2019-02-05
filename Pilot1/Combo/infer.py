@@ -50,10 +50,10 @@ def get_parser(description=None):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-s', '--sample_set',
                         default='NCIPDM',
-                        help='cell sample set: NCI60, NCIPDM, GDSC, ...')
+                        help='cell sample set: NCI60, NCIPDM, GDSC, RTS, ...')
     parser.add_argument('-d', '--drug_set',
                         default='ALMANAC',
-                        help='drug set: ALMANAC, GDSC, NCI_IOA_AOA, ...')
+                        help='drug set: ALMANAC, GDSC, NCI_IOA_AOA, RTS, ...')
     parser.add_argument('-z', '--batch_size', type=int,
                         default=100000,
                         help='batch size')
@@ -134,11 +134,13 @@ def prepare_data(sample_set='NCI60', drug_set='ALMANAC', use_landmark_genes=Fals
     df_desc = NCI60.load_drug_set_descriptors(drug_set=drug_set)
     return df_expr, df_desc
 
+
 def initialize_parameters():
     description = 'Infer drug pair response from trained combo model.'
     parser = get_parser(description)
     args = parser.parse_args()
     return args
+
 
 def run():
     args = initialize_parameters()

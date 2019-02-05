@@ -104,7 +104,8 @@ def load_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, fractio
     return df
 
 
-def load_combo_response(response_url=None, fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
+def load_combo_response(response_url=None, fraction=False, use_combo_score=False, use_mean_growth=False,
+                        exclude_cells=[], exclude_drugs=[]):
     """Load cell line response to pairs of drugs, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
@@ -160,8 +161,15 @@ def load_combo_response(response_url=None, fraction=False, use_combo_score=False
     df_max = df.groupby(['CELLNAME', 'NSC1', 'NSC2']).max()
     df_max = df_max.add_suffix('_MAX').reset_index()  # add SCORE_MAX by flattening the hierarchical index
 
+    df_avg = df.copy()
+    df_avg['PERCENTGROWTH'] = df_avg['PERCENTGROWTH'].apply(lambda x: 100 if x > 100 else 50+x/2 if x < 0 else 50+x/2)
+    df_avg = df.groupby(['CELLNAME', 'NSC1', 'NSC2']).mean()
+    df_avg = df_avg.add_suffix('_AVG').reset_index()
+
     if use_combo_score:
         df = df_max.rename(columns={'SCORE_MAX': 'GROWTH'}).drop('PERCENTGROWTH_MAX', axis=1)
+    elif use_mean_growth:
+        df = df_avg.rename(columns={'PERCENTGROWTH_AVG': 'GROWTH'}).drop('SCORE_AVG', axis=1)
     else:
         df = df_min.rename(columns={'PERCENTGROWTH_MIN': 'GROWTH'}).drop('SCORE_MIN', axis=1)
 
@@ -252,6 +260,10 @@ def load_drug_set_descriptors(drug_set='ALMANAC', ncols=None, scaling='std', add
         path = get_file(DATA_URL + 'GDSC_PubChemCID_drug_descriptors_dragon7')
     elif drug_set == 'NCI_IOA_AOA':
         path = get_file(DATA_URL + 'NCI_IOA_AOA_drug_descriptors_dragon7')
+    elif drug_set == 'RTS':
+        path = get_file(DATA_URL + 'RTS_drug_descriptors_dragon7')
+    elif drug_set == 'pan':
+        path = get_file(DATA_URL + 'pan_drugs_dragon7_descriptors')
     else:
         raise Exception('Drug set {} not supported!'.format(drug_set))
 
@@ -347,7 +359,8 @@ def load_drug_descriptors(ncols=None, scaling='std', add_prefix=True):
         add feature namespace prefix
     """
 
-    path = get_file(DATA_URL + 'ALMANAC_drug_descriptors_dragon7.txt')
+    # path = get_file(DATA_URL + 'ALMANAC_drug_descriptors_dragon7.txt')
+    path = get_file(DATA_URL + 'pan_drugs_dragon7_descriptors')
 
     df = global_cache.get(path)
     if df is None:
@@ -452,7 +465,11 @@ def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_
         df = pd.read_csv(path, sep='\t', engine='c')
         global_cache[path] = df
 
-    df = df[df['Sample'].str.startswith(sample_set)].reset_index(drop=True)
+    if sample_set == 'RTS':
+        df_ids = pd.read_table(get_file(DATA_URL + 'RTS_PDM_samples'))
+        df = df.merge(df_ids, on='Sample').reset_index(drop=True)
+    else:
+        df = df[df['Sample'].str.startswith(sample_set)].reset_index(drop=True)
 
     # cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.new.txt')
     # df_cellmap = pd.read_csv(cellmap_path, sep='\t')

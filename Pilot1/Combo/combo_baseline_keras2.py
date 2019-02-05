@@ -108,6 +108,8 @@ def extension_from_parameters(args):
         ext += '.gen'
     if args.use_combo_score:
         ext += '.scr'
+    if args.use_mean_growth:
+        ext += '.mg'
     for i, n in enumerate(args.dense):
         if n > 0:
             ext += '.D{}={}'.format(i+1, n)
@@ -132,7 +134,8 @@ class ComboDataLoader(object):
 
     def __init__(self, seed, val_split=0.2, shuffle=True,
                  cell_features=['expression'], drug_features=['descriptors'],
-                 response_url=None, use_landmark_genes=False, use_combo_score=False,
+                 response_url=None, use_landmark_genes=False,
+                 use_combo_score=False, use_mean_growth=False,
                  preprocess_rnaseq=None, exclude_cells=[], exclude_drugs=[],
                  feature_subsample=None, scaling='std', scramble=False,
                  cv_partition='overlapping', cv=0):
@@ -163,6 +166,8 @@ class ComboDataLoader(object):
             only use LINCS1000 landmark genes
         use_combo_score: bool (default False)
             use combination score in place of percent growth (stored in 'GROWTH' column)
+        use_mean_growth: bool (default False)
+            use mean aggregation instead of min on percent growth
         scaling: None, 'std', 'minmax' or 'maxabs' (default 'std')
             type of feature scaling: 'maxabs' to [-1,1], 'maxabs' to [-1, 1], 'std' for standard normalization
         """
@@ -171,7 +176,7 @@ class ComboDataLoader(object):
 
         np.random.seed(seed)
 
-        df = NCI60.load_combo_response(response_url=response_url, use_combo_score=use_combo_score, fraction=True, exclude_cells=exclude_cells, exclude_drugs=exclude_drugs)
+        df = NCI60.load_combo_response(response_url=response_url, use_combo_score=use_combo_score, use_mean_growth=use_mean_growth, fraction=True, exclude_cells=exclude_cells, exclude_drugs=exclude_drugs)
         logger.info('Loaded {} unique (CL, D1, D2) response sets.'.format(df.shape[0]))
 
         if 'all' in cell_features:
@@ -643,7 +648,7 @@ def initialize_parameters():
 
     # Build benchmark object
     comboBmk = combo.BenchmarkCombo(combo.file_path, 'combo_default_model.txt', 'keras',
-        prog='combo_baseline', 
+        prog='combo_baseline',
         desc = 'Build neural network based models to predict tumor response to drug pairs.')
 
     # Initialize parameters
@@ -671,6 +676,7 @@ def run(params):
                              val_split=args.validation_split,
                              cell_features=args.cell_features,
                              drug_features=args.drug_features,
+                             use_mean_growth=args.use_mean_growth,
                              response_url=args.response_url,
                              use_landmark_genes=args.use_landmark_genes,
                              preprocess_rnaseq=args.preprocess_rnaseq,
@@ -805,9 +811,12 @@ def run(params):
             K.clear_session()
 
     if not args.gen:
-        pred_fname = prefix + '.predicted.growth.tsv'
         if args.use_combo_score:
             pred_fname = prefix + '.predicted.score.tsv'
+        elif args.use_mean_growth:
+            pred_fname = prefix + '.predicted.mean.growth.tsv'
+        else:
+            pred_fname = prefix + '.predicted.growth.tsv'
         df_pred = pd.concat(df_pred_list)
         df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
 
