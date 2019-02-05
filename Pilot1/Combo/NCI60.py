@@ -263,7 +263,7 @@ def load_drug_set_descriptors(drug_set='ALMANAC', ncols=None, scaling='std', add
     elif drug_set == 'RTS':
         path = get_file(DATA_URL + 'RTS_drug_descriptors_dragon7')
     elif drug_set == 'pan':
-        path = get_file(DATA_URL + 'pan_drugs_dragon7_descriptors')
+        path = get_file(DATA_URL + 'pan_drugs_dragon7_descriptors.tsv')
     else:
         raise Exception('Drug set {} not supported!'.format(drug_set))
 
@@ -360,7 +360,7 @@ def load_drug_descriptors(ncols=None, scaling='std', add_prefix=True):
     """
 
     # path = get_file(DATA_URL + 'ALMANAC_drug_descriptors_dragon7.txt')
-    path = get_file(DATA_URL + 'pan_drugs_dragon7_descriptors')
+    path = get_file(DATA_URL + 'pan_drugs_dragon7_descriptors.tsv')
 
     df = global_cache.get(path)
     if df is None:
