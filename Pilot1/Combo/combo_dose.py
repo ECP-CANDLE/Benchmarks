@@ -32,15 +32,16 @@ import matplotlib.pyplot as plt
 
 
 import combo
-import p1_common
+# import p1_common
 # import p1_common_keras
-from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
+# from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
+import candle_keras as candle
 
 # import argparser
 # from datasets import NCI60
 
 import NCI60
-import combo
+# import combo
 
 
 logger = logging.getLogger(__name__)
@@ -140,7 +141,7 @@ class ComboDataLoader(object):
 
     def __init__(self, seed, val_split=0.2, shuffle=True,
                  cell_features=['expression'], drug_features=['descriptors'],
-                 use_landmark_genes=False, use_combo_score=False,
+                 response_url=None, use_landmark_genes=False, use_combo_score=False,
                  preprocess_rnaseq=None, exclude_cells=[], exclude_drugs=[],
                  feature_subsample=None, scaling='std', scramble=False,
                  cv_partition='overlapping', cv=0):
@@ -665,16 +666,30 @@ def get_combo_parser():
     return combo.common_parser(parser)
 
 
+# def initialize_parameters():
+#     # Get command-line parameters
+#     parser = get_combo_parser()
+#     args = parser.parse_args()
+#     # Get parameters from configuration file
+#     file_params = combo.read_config_file(args.config_file)
+#     # Consolidate parameter set. Command-line parameters overwrite file configuration
+#     params = p1_common.args_overwrite_config(args, file_params)
+#     # print(params)
+#     return params
+
+
 def initialize_parameters():
-    # Get command-line parameters
-    parser = get_combo_parser()
-    args = parser.parse_args()
-    # Get parameters from configuration file
-    file_params = combo.read_config_file(args.config_file)
-    # Consolidate parameter set. Command-line parameters overwrite file configuration
-    params = p1_common.args_overwrite_config(args, file_params)
-    # print(params)
-    return params
+
+    # Build benchmark object
+    comboBmk = combo.BenchmarkCombo(combo.file_path, 'combo_default_model.txt', 'keras',
+        prog='combo_baseline',
+        desc = 'Build neural network based models to predict tumor response to drug pairs.')
+
+    # Initialize parameters
+    gParameters = candle.initialize_parameters(comboBmk)
+    #combo.logger.info('Params: {}'.format(gParameters))
+
+    return gParameters
 
 
 class Struct:
@@ -748,10 +763,10 @@ def run(params):
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 
         # calculate trainable and non-trainable params
-        params.update(compute_trainable_params(model))
+        # params.update(compute_trainable_params(model))
 
-        candle_monitor = CandleRemoteMonitor(params=params)
-        timeout_monitor = TerminateOnTimeOut(params['timeout'])
+        # candle_monitor = CandleRemoteMonitor(params=params)
+        # timeout_monitor = TerminateOnTimeOut(params['timeout'])
 
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
@@ -760,8 +775,8 @@ def run(params):
         history_logger = LoggingCallback(logger.debug)
         model_recorder = ModelRecorder()
 
-        # callbacks = [history_logger, model_recorder]
-        callbacks = [candle_monitor, timeout_monitor, history_logger, model_recorder]
+        callbacks = [history_logger, model_recorder]
+        # callbacks = [candle_monitor, timeout_monitor, history_logger, model_recorder]
         if args.reduce_lr:
             callbacks.append(reduce_lr)
         if args.warmup_lr:

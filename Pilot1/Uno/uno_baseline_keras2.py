@@ -400,6 +400,7 @@ def run(params):
 
         # callbacks = [history_logger, model_recorder]
         callbacks = [candle_monitor, timeout_monitor, history_logger, model_recorder]
+        # callbacks = [candle_monitor, history_logger, model_recorder]  #
         if args.reduce_lr:
             callbacks.append(reduce_lr)
         if args.warmup_lr:
@@ -436,8 +437,9 @@ def run(params):
                                           validation_steps=val_gen.steps)
 
         if args.cp:
-            model.load_weights(prefix+cv_ext+'.weights.h5')
-        # model = model_recorder.best_model
+            model = model_recorder.best_model
+            model.save(prefix+'.model.h5')
+            # model.load_weights(prefix+cv_ext+'.weights.h5')
 
         if args.no_gen:
             y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)

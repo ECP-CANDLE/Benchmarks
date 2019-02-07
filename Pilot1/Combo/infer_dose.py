@@ -35,10 +35,10 @@ def get_parser(description=None):
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument('-s', '--sample_set',
                         default='NCIPDM',
-                        help='cell sample set: NCI60, NCIPDM, GDSC, ...')
+                        help='cell sample set: NCI60, NCIPDM, GDSC, RTS, ...')
     parser.add_argument('-d', '--drug_set',
                         default='ALMANAC',
-                        help='drug set: ALMANAC, GDSC, NCI_IOA_AOA, ...')
+                        help='drug set: ALMANAC, GDSC, NCI_IOA_AOA, RTS, ...')
     parser.add_argument('-z', '--batch_size', type=int,
                         default=100000,
                         help='batch size')
@@ -203,11 +203,11 @@ def main():
         df_all = df_all[(df_all['Drug1'] != df_all['Drug2']) | (df_all['pCONC1'] == df_all['pCONC2'])]
         df_sum = df_sum[(df_sum['Drug1'] != df_sum['Drug2']) | (df_sum['pCONC1'] == df_sum['pCONC2'])]
 
-    csv_all = 'comb_dose_pred_{}_{}.all.tsv'.format(args.sample_set, args.drug_set)
+    csv_all = 'combo_dose_pred_{}_{}.all.tsv'.format(args.sample_set, args.drug_set)
     df_all.to_csv(csv_all, index=False, sep='\t', float_format='%.4f')
 
     if n > 0:
-        csv = 'comb_dose_pred_{}_{}.tsv'.format(args.sample_set, args.drug_set)
+        csv = 'combo_dose_pred_{}_{}.tsv'.format(args.sample_set, args.drug_set)
         df_sum.to_csv(csv, index=False, sep='\t', float_format='%.4f')
 
 
