@@ -31,6 +31,7 @@ if 'keras' in sys.modules:
     #from keras_utils import add_dense
     from keras_utils import build_initializer
     from keras_utils import build_optimizer
+    from keras_utils import get_function
     from keras_utils import set_seed
     from keras_utils import set_parallelism_threads
     from keras_utils import PermanentDropout
@@ -46,6 +47,7 @@ elif 'torch' in sys.modules:
     from pytorch_utils import set_seed
     from pytorch_utils import build_optimizer
     from pytorch_utils import build_activation
+    from pytorch_utils import get_function
     from pytorch_utils import initialize
     from pytorch_utils import xent
     from pytorch_utils import mse
