@@ -47,7 +47,15 @@ def sample( preds, temperature= 1.0 ):
 
 
 
-def run(gParameters, data_path):
+def run(gParameters):
+
+    origin = gParameters['data_url']
+    train_data = gParameters['train_data']
+    data_loc = candle.fetch_file(origin+train_data, untar=True, md5_hash=None, subdir='Pilot3')
+
+    print( 'Data downloaded and stored at: ' + data_loc )
+    data_path = os.path.dirname(data_loc)
+    print( data_path )
 
     kerasDefaults = candle.keras_default_config()
 
@@ -228,13 +236,4 @@ def run(gParameters, data_path):
 if __name__  == "__main__":
 
     gParameters = initialize_parameters()
-
-    origin = gParameters['data_url']
-    train_data = gParameters['train_data']
-    data_loc = candle.fetch_file(origin+train_data, untar=True, md5_hash=None, subdir='Pilot3')
-
-    print( 'Data downloaded and stored at: ' + data_loc )
-    data_path = os.path.dirname(data_loc)
-    print( data_path )
-
-    run(gParameters, data_path)
+    run(gParameters)

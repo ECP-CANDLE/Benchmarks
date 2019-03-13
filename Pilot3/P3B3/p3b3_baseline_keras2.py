@@ -133,8 +133,9 @@ def run_cnn( GP, train_x, train_y, test_x, test_y,
 
 
 
-def run(gParameters, fpath):
+def run(gParameters):
 
+    fpath = fetch_data(gParameters)
     # Get default parameters for initialization and optimizer functions
     kerasDefaults = candle.keras_default_config()
 
@@ -191,7 +192,6 @@ def run(gParameters, fpath):
 def main():
 
     gParameters = initialize_parameters()
-    fpath = fetch_data(gParameters)
     avg_loss = run(gParameters, fpath)
     print( "Return: ", avg_loss )
 

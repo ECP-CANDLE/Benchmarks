@@ -198,8 +198,9 @@ def evaluate_model(X_test, truths_test, labels_test, models):
     return ret
 
 
-def run(gParameters, fpath):
+def run(gParameters):
 
+    fpath = fetch_data(gParameters)
     # Get default parameters for initialization and optimizer functions
     kerasDefaults = candle.keras_default_config()
 
@@ -283,8 +284,7 @@ def run(gParameters, fpath):
 def main():
 
     gParameters = initialize_parameters()
-    fpath = fetch_data(gParameters)
-    avg_loss = run(gParameters, fpath)
+    avg_loss = run(gParameters)
     print( "Average loss: ", avg_loss )
 
 
