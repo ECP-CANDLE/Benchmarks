@@ -304,6 +304,14 @@ def run(params):
     set_up_logger(logfile, args.verbose)
     logger.info('Params: {}'.format(params))
 
+    if (len(args.gpus) > 0):
+        import tensorflow as tf
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        config.gpu_options.visible_device_list = ",".join(map(str,args.gpus))
+        K.set_session(tf.Session(config=config))
+
+
     loader = CombinedDataLoader(seed=args.rng_seed)
     loader.load(cache=args.cache,
                 ncols=args.feature_subsample,
@@ -376,7 +384,19 @@ def run(params):
             logger.info('Cross validation fold {}/{}:'.format(fold+1, cv))
             cv_ext = '.cv{}'.format(fold+1)
 
-        model = build_model(loader, args, silent=True)
+        if len(args.gpus) > 1:
+            from keras.utils import multi_gpu_model
+            gpu_count = len(args.gpus)
+            model = multi_gpu_model(build_model(loader, args, silent=True), cpu_merge=False, gpus=gpu_count)
+            max_queue_size = 10 * gpu_count
+            use_multiprocessing = False
+            workers = 2 * gpu_count
+        else:
+            model = build_model(loader,args, silent=True)
+            max_queue_size = 10
+            use_multiprocessing = False
+            workers = 1
+
 
         optimizer = optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
         base_lr = args.base_lr or K.get_value(optimizer.lr)
@@ -399,7 +419,8 @@ def run(params):
         model_recorder = ModelRecorder()
 
         # callbacks = [history_logger, model_recorder]
-        callbacks = [candle_monitor, timeout_monitor, history_logger, model_recorder]
+        # callbacks = [candle_monitor, timeout_monitor, history_logger, model_recorder]
+        callbacks = []
         # callbacks = [candle_monitor, history_logger, model_recorder]  #
         if args.reduce_lr:
             callbacks.append(reduce_lr)
@@ -430,10 +451,13 @@ def run(params):
         else:
             logger.info('Data points per epoch: train = %d, val = %d',train_gen.size, val_gen.size)
             logger.info('Steps per epoch: train = %d, val = %d',train_gen.steps, val_gen.steps)
-            history = model.fit_generator(train_gen.flow(single=args.single), train_gen.steps,
+            history = model.fit_generator(train_gen, train_gen.steps,
                                           epochs=args.epochs,
                                           callbacks=callbacks,
-                                          validation_data=val_gen.flow(single=args.single),
+                                          max_queue_size=max_queue_size,
+                                          use_multiprocessing=use_multiprocessing,
+                                          workers=workers,
+                                          validation_data=val_gen,
                                           validation_steps=val_gen.steps)
 
         if args.cp:
