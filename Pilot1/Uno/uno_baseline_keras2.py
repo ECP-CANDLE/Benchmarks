@@ -33,7 +33,7 @@ import uno as benchmark
 import candle_keras as candle
 
 import uno_data
-from uno_data import CombinedDataLoader, CombinedDataGenerator
+from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
 
 
 logger = logging.getLogger(__name__)
@@ -343,14 +343,20 @@ def run(params):
                               cell_subset_path=args.cell_subset_path, drug_subset_path=args.drug_subset_path)
         train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
-        x_train_list, y_train = train_gen.get_slice(size=train_gen.size, dataframe=True, single=args.single)
-        x_val_list, y_val = val_gen.get_slice(size=val_gen.size, dataframe=True, single=args.single)
-        df_train = pd.concat([y_train] + x_train_list, axis=1)
-        df_val = pd.concat([y_val] + x_val_list, axis=1)
-        df = pd.concat([df_train, df_val]).reset_index(drop=True)
-        if args.growth_bins > 1:
-            df = uno_data.discretize(df, 'Growth', bins=args.growth_bins)
-        df.to_csv(fname, sep='\t', index=False, float_format="%.3g")
+        store = pd.HDFStore(fname, complevel=9, complib='blosc:snappy')
+        for partition in ['train', 'val']:
+            gen = train_gen if partition == 'train' else val_gen
+            for i in range(gen.steps):
+                x_list, y = gen.get_slice(size=args.batch_size, dataframe=True, single=args.single)
+
+                for j, input_feature in enumerate(x_list):
+                    input_feature.columns = [''] * len(input_feature.columns)
+                    store.append('x_{}_{}'.format(partition, j), input_feature.astype('float32'), format='table', data_column=True)
+                store.append('y_{}'.format(partition), y.astype({target:'float32'}), format='table', data_column=True,
+                        min_itemsize={'Sample':30, 'Drug1':10, 'Drug2':10})
+                logger.info('Generating {} dataset. {} / {}'.format(partition, i, gen.steps))
+        store.close()
+        logger.info('Completed generating {}'.format(fname))
         return
 
     loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
@@ -390,7 +396,7 @@ def run(params):
             model = multi_gpu_model(build_model(loader, args, silent=True), cpu_merge=False, gpus=gpu_count)
             max_queue_size = 10 * gpu_count
             use_multiprocessing = False
-            workers = 2 * gpu_count
+            workers = 1 # * gpu_count
         else:
             model = build_model(loader,args, silent=True)
             max_queue_size = 10
@@ -431,8 +437,12 @@ def run(params):
         if args.tb:
             callbacks.append(tensorboard)
 
-        train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
-        val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
+        if args.use_exported_data is not None:
+            train_gen = DataFeeder(loader, filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle)
+            val_gen = DataFeeder(loader, partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle)
+        else:
+            train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
+            val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
 
         df_val = val_gen.get_response(copy=True)
         y_val = df_val[target].values
@@ -469,7 +479,7 @@ def run(params):
             y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
         else:
             val_gen.reset()
-            y_val_pred = model.predict_generator(val_gen.flow(single=args.single), val_gen.steps)
+            y_val_pred = model.predict_generator(val_gen, val_gen.steps+1)
             y_val_pred = y_val_pred[:val_gen.size]
 
         y_val_pred = y_val_pred.flatten()
@@ -477,10 +487,9 @@ def run(params):
         scores = evaluate_prediction(y_val, y_val_pred)
         log_evaluation(scores)
 
-        # df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred-y_val)
+        df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred-y_val)
         df_val['Predicted'+target] = y_val_pred
         df_val[target+'Error'] = y_val_pred-y_val
-
         df_pred_list.append(df_val)
 
         plot_history(prefix, history, 'loss')
@@ -491,7 +500,7 @@ def run(params):
     if args.agg_dose:
         df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', target], inplace=True)
     else:
-        df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
+        df_pred.sort_values(['Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
     df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
 
     if args.cv > 1:

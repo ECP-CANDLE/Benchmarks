@@ -940,6 +940,53 @@ class CombinedDataLoader(object):
         if cache:
             self.save_to_cache(cache, params)
 
+class DataFeeder(keras.utils.Sequence):
+    """Read from pre-joined dataset (HDF5 format) and feed data to the model.
+    """
+    def __init__(self, loader, partition='train', filename=None, batch_size=32, shuffle=False):
+        self.data = loader
+        self.partition = partition
+        self.filename = filename
+        self.batch_size = batch_size
+        self.shuffle = shuffle
+
+        self.store = pd.HDFStore(filename)
+        y = self.store.select('y_{}'.format(self.partition))
+        self.index = y.index
+        self.index_cycle = cycle(self.index)
+        self.size = len(self.index)
+        self.steps = self.size // self.batch_size
+
+    def __len__(self):
+        return self.steps
+
+    def __getitem__(self, idx):
+        index = list(islice(self.index_cycle, self.batch_size))
+        start = index[0]
+        stop = index[-1]
+        x = []
+        for i in range(7):
+            x.append(self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop))
+
+        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop)['Growth']
+        return x, y
+
+    def on_epoch_end(self):
+        if self.shuffle:
+            self.index = np.random.permutation(self.index)
+            self.index_cycle = cycle(self.index)
+
+    def reset(self):
+        pass
+
+    def get_response(self, copy=False):
+        df = self.store.get('y_{}'.format(self.partition))
+        df_dose1 = self.store.get('x_{}_0'.format(self.partition))
+        df_dose2 = self.store.get('x_{}_1'.format(self.partition))
+        df['Dose1'] = df_dose1
+        df['Dose2'] = df_dose2
+        return df.copy() if copy else df
+
 
 class CombinedDataGenerator(keras.utils.Sequence):
     """Generate training, validation or testing batches from loaded data
