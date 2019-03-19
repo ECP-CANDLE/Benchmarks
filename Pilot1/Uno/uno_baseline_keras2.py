@@ -492,8 +492,10 @@ def run(params):
         df_val[target+'Error'] = y_val_pred-y_val
         df_pred_list.append(df_val)
 
-        plot_history(prefix, history, 'loss')
-        plot_history(prefix, history, 'r2')
+        if hasattr(history, 'loss'):
+            plot_history(prefix, history, 'loss')
+        if hasattr(history, 'r2'):
+            plot_history(prefix, history, 'r2')
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
