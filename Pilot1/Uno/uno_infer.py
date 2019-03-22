@@ -34,9 +34,8 @@ def main():
     if 'json' == args.model_file.split('.')[-1]:
         with open(args.model_file, 'r') as f:
             model_json = f.read()
-            print(model_json)
             model = keras.models.model_from_json(model_json)
-            model.load_weights(args.weights_file)
+            model.load_weights(args.weights_file, by_name=True)
     else:
         model = keras.models.load_model(args.model_file, compile=False)
         model.load_weights(args.weights_file)
