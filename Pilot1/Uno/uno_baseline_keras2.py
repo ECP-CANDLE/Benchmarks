@@ -425,8 +425,7 @@ def run(params):
         model_recorder = ModelRecorder()
 
         # callbacks = [history_logger, model_recorder]
-        # callbacks = [candle_monitor, timeout_monitor, history_logger, model_recorder]
-        callbacks = []
+        callbacks = [candle_monitor, timeout_monitor, history_logger, model_recorder]
         # callbacks = [candle_monitor, history_logger, model_recorder]  #
         if args.reduce_lr:
             callbacks.append(reduce_lr)
