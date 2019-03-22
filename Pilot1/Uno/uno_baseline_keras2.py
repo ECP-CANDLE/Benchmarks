@@ -437,8 +437,8 @@ def run(params):
             callbacks.append(tensorboard)
 
         if args.use_exported_data is not None:
-            train_gen = DataFeeder(loader, filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle)
-            val_gen = DataFeeder(loader, partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle)
+            train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle)
+            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle)
         else:
             train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
             val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)

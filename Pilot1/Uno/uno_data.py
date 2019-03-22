@@ -943,8 +943,7 @@ class CombinedDataLoader(object):
 class DataFeeder(keras.utils.Sequence):
     """Read from pre-joined dataset (HDF5 format) and feed data to the model.
     """
-    def __init__(self, loader, partition='train', filename=None, batch_size=32, shuffle=False):
-        self.data = loader
+    def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False):
         self.partition = partition
         self.filename = filename
         self.batch_size = batch_size
