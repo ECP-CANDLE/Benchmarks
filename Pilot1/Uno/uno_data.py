@@ -949,7 +949,7 @@ class DataFeeder(keras.utils.Sequence):
         self.batch_size = batch_size
         self.shuffle = shuffle
 
-        self.store = pd.HDFStore(filename)
+        self.store = pd.HDFStore(filename, mode='r')
         y = self.store.select('y_{}'.format(self.partition))
         self.index = y.index
         self.size = len(self.index)
