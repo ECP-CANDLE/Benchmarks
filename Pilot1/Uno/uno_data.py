@@ -184,7 +184,7 @@ def load_combo_dose_response(fraction=True):
     df['SOURCE'] = 'ALMANAC.' + df['SCREENER']
 
     cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.txt')
-    df_cellmap = pd.read_table(cellmap_path)
+    df_cellmap = pd.read_csv(cellmap_path)
     df_cellmap.set_index('Name', inplace=True)
     cellmap = df_cellmap[['NCI60.ID']].to_dict()['NCI60.ID']
 
@@ -211,7 +211,7 @@ def load_aggregated_single_response(target='AUC', min_r2_fit=0.3, max_ec50_se=3,
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_table(path, engine='c',
+        df = pd.read_csv(path, engine='c', sep='\t',
                            dtype={'SOURCE': str, 'CELL': str, 'DRUG': str, 'STUDY': str,
                                   'AUC': np.float32, 'IC50': np.float32,
                                   'EC50': np.float32, 'EC50se': np.float32,
@@ -329,7 +329,7 @@ def load_drug_fingerprints(ncols=None, scaling='std', imputing='mean', dropna=No
 
 def load_drug_info():
     path = get_file(DATA_URL + 'drug_info')
-    df = pd.read_table(path, dtype=object)
+    df = pd.read_csv(path, dtype=object)
     df['PUBCHEM'] = 'PubChem.CID.' + df['PUBCHEM']
     return df
 
@@ -346,16 +346,16 @@ def lookup(df, query, ret, keys, match='match'):
 
 def load_cell_metadata():
     path = get_file(DATA_URL + 'cl_metadata')
-    df = pd.read_table(path)
+    df = pd.read_csv(path)
     return df
 
 
 def cell_name_to_ids(name, source=None):
     path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.txt')
-    df1 = pd.read_table(path)
+    df1 = pd.read_csv(path)
     hits1 = lookup(df1, name, 'NCI60.ID', ['NCI60.ID', 'CELLNAME', 'Name'], match='contains')
     path = get_file(DATA_URL + 'cl_mapping')
-    df2 = pd.read_table(path, header=None)
+    df2 = pd.read_csv(path, header=None)
     hits2 = lookup(df2, name, [0, 1], [0, 1], match='contains')
     hits = hits1 + hits2
     if source:
@@ -366,7 +366,7 @@ def cell_name_to_ids(name, source=None):
 def drug_name_to_ids(name, source=None):
     df1 = load_drug_info()
     path = get_file(DATA_URL + 'NCI_IOA_AOA_drugs')
-    df2 = pd.read_table(path, dtype=str)
+    df2 = pd.read_csv(path, dtype=str)
     df2['NSC'] = 'NSC.' + df2['NSC']
     hits1 = lookup(df1, name, 'ID', ['ID', 'NAME', 'CLEAN_NAME', 'PUBCHEM'])
     hits2 = lookup(df2, name, 'NSC', ['NSC', 'Generic Name', 'Preffered Name'])
@@ -380,7 +380,7 @@ def load_drug_set_descriptors(drug_set='Combined_PubChem', ncols=None, usecols=N
                               scaling=None, imputing=None, add_prefix=False):
     path = get_file(DATA_URL + '{}_dragon7_descriptors.tsv'.format(drug_set))
 
-    df_cols = pd.read_table(path, engine='c', nrows=0)
+    df_cols = pd.read_csv(path, engine='c', sep='\t', nrows=0)
     total = df_cols.shape[1] - 1
     if usecols is not None:
         usecols = [x for x in usecols if x in df_cols.columns]
@@ -393,8 +393,8 @@ def load_drug_set_descriptors(drug_set='Combined_PubChem', ncols=None, usecols=N
         df_cols = df_cols.iloc[:, usecols]
 
     dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
-    df = pd.read_table(path, engine='c', usecols=usecols, dtype=dtype_dict,
-                       na_values=['na', '-', ''])
+    df = pd.read_csv(path, engine='c', sep='\t', usecols=usecols, dtype=dtype_dict,
+                     na_values=['na', '-', ''])
 
     df1 = pd.DataFrame(df.loc[:, 'NAME'])
     df1.rename(columns={'NAME': 'Drug'}, inplace=True)
@@ -416,7 +416,7 @@ def load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=None, usecols=
     df_merged = None
     for fp in fps:
         path = get_file(DATA_URL + '{}_dragon7_{}.tsv'.format(drug_set, fp))
-        df_cols = pd.read_table(path, engine='c', nrows=0, skiprows=1, header=None)
+        df_cols = pd.read_csv(path, engine='c', sep='\t', nrows=0, skiprows=1, header=None)
         total = df_cols.shape[1] - 1
         if usecols_all is not None:
             usecols = [x.replace(fp+'.', '') for x in usecols_all]
@@ -431,8 +431,8 @@ def load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=None, usecols=
             df_cols = df_cols.iloc[:, usecols]
 
         dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
-        df = pd.read_table(path, engine='c', skiprows=1, header=None,
-                           usecols=usecols, dtype=dtype_dict)
+        df = pd.read_csv(path, engine='c', sep='\t', skiprows=1, header=None,
+                         usecols=usecols, dtype=dtype_dict)
         df.columns = ['{}.{}'.format(fp, x) for x in df.columns]
 
         col1 = '{}.0'.format(fp)
@@ -490,7 +490,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         filename += ('_' + preprocess_rnaseq)  # 'source_scale' or 'combat'
 
     path = get_file(DATA_URL + filename)
-    df_cols = pd.read_table(path, engine='c', nrows=0)
+    df_cols = pd.read_csv(path, engine='c', sep='\t', nrows=0)
     total = df_cols.shape[1] - 1  # remove Sample column
     if 'Cancer_type_id' in df_cols.columns:
         total -= 1
@@ -505,7 +505,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         df_cols = df_cols.iloc[:, usecols]
 
     dtype_dict = dict((x, np.float32) for x in df_cols.columns[1:])
-    df = pd.read_table(path, engine='c', usecols=usecols, dtype=dtype_dict)
+    df = pd.read_csv(path, engine='c', sep='\t', usecols=usecols, dtype=dtype_dict)
     if 'Cancer_type_id' in df.columns:
         df.drop('Cancer_type_id', axis=1, inplace=True)
 
