@@ -184,7 +184,7 @@ def load_combo_dose_response(fraction=True):
     df['SOURCE'] = 'ALMANAC.' + df['SCREENER']
 
     cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.txt')
-    df_cellmap = pd.read_csv(cellmap_path)
+    df_cellmap = pd.read_csv(cellmap_path, sep='\t')
     df_cellmap.set_index('Name', inplace=True)
     cellmap = df_cellmap[['NCI60.ID']].to_dict()['NCI60.ID']
 
@@ -329,7 +329,7 @@ def load_drug_fingerprints(ncols=None, scaling='std', imputing='mean', dropna=No
 
 def load_drug_info():
     path = get_file(DATA_URL + 'drug_info')
-    df = pd.read_csv(path, dtype=object)
+    df = pd.read_csv(path, sep='\t', dtype=object)
     df['PUBCHEM'] = 'PubChem.CID.' + df['PUBCHEM']
     return df
 
@@ -346,16 +346,16 @@ def lookup(df, query, ret, keys, match='match'):
 
 def load_cell_metadata():
     path = get_file(DATA_URL + 'cl_metadata')
-    df = pd.read_csv(path)
+    df = pd.read_csv(path, sep='\t')
     return df
 
 
 def cell_name_to_ids(name, source=None):
     path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.txt')
-    df1 = pd.read_csv(path)
+    df1 = pd.read_csv(path, sep='\t')
     hits1 = lookup(df1, name, 'NCI60.ID', ['NCI60.ID', 'CELLNAME', 'Name'], match='contains')
     path = get_file(DATA_URL + 'cl_mapping')
-    df2 = pd.read_csv(path, header=None)
+    df2 = pd.read_csv(path, sep='\t', header=None)
     hits2 = lookup(df2, name, [0, 1], [0, 1], match='contains')
     hits = hits1 + hits2
     if source:
@@ -366,7 +366,7 @@ def cell_name_to_ids(name, source=None):
 def drug_name_to_ids(name, source=None):
     df1 = load_drug_info()
     path = get_file(DATA_URL + 'NCI_IOA_AOA_drugs')
-    df2 = pd.read_csv(path, dtype=str)
+    df2 = pd.read_csv(path, sep='\t', dtype=str)
     df2['NSC'] = 'NSC.' + df2['NSC']
     hits1 = lookup(df1, name, 'ID', ['ID', 'NAME', 'CLEAN_NAME', 'PUBCHEM'])
     hits2 = lookup(df2, name, 'NSC', ['NSC', 'Generic Name', 'Preffered Name'])
