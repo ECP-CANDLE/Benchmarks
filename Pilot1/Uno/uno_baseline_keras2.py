@@ -206,6 +206,15 @@ class ModelRecorder(Callback):
             self.best_val_loss = val_loss
 
 
+class MultiGPUCheckpoint(ModelCheckpoint):
+
+    def set_model(self, model):
+        if isinstance(model.layers[-2], Model):
+            self.model = model.layers[-2]
+        else:
+            self.model = model
+
+
 def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
                         activation='relu', residual=False,
                         dropout_rate=0, permanent_dropout=True):
@@ -419,7 +428,10 @@ def run(params):
 
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
-        checkpointer = ModelCheckpoint(prefix+cv_ext+'.weights.h5', save_best_only=True, save_weights_only=True)
+        if len(args.gpus) > 1:
+            checkpointer = MultiGPUCheckpoint(prefix+cv_ext+'.model.h5', save_best_only=True)
+        else:
+            checkpointer = ModelCheckpoint(prefix+cv_ext+'.model.h5', save_best_only=True)
         tensorboard = TensorBoard(log_dir="tb/tb{}{}".format(ext, cv_ext))
         history_logger = LoggingCallback(logger.debug)
         model_recorder = ModelRecorder()
@@ -469,9 +481,9 @@ def run(params):
                                           validation_data=val_gen,
                                           validation_steps=val_gen.steps)
 
-        if args.cp:
-            model = model_recorder.best_model
-            model.save(prefix+'.model.h5')
+        # if args.cp:
+            # model = model_recorder.best_model
+            # model.save(prefix+'.model.h5')
             # model.load_weights(prefix+cv_ext+'.weights.h5')
 
         if args.no_gen:
