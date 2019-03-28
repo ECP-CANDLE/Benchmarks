@@ -21,6 +21,8 @@ def get_parser():
                        help="data file to infer on. expect exported file from uno_baseline_keras2.py")
     parser.add_argument("--model_file", help="json model description file")
     parser.add_argument("--weights_file", help="model weights file")
+    parser.add_argument("--partition", default='all',
+                        choices=['train', 'val', 'all'], help="partition of test dataset")
 
     return parser
 
@@ -28,8 +30,6 @@ def get_parser():
 def main():
     parser = get_parser()
     args = parser.parse_args()
-
-    test_gen = DataFeeder(filename=args.data, batch_size=1024)
 
     if 'json' == args.model_file.split('.')[-1]:
         with open(args.model_file, 'r') as f:
@@ -41,18 +41,27 @@ def main():
 
     model.summary()
 
-    y_test_pred = model.predict_generator(test_gen, test_gen.steps)
-    y_test_pred = y_test_pred.flatten()
+    df_pred_list = []
+    dataset = ['train', 'val'] if args.partition == 'all' else [args.partition]
+    for partition in dataset:
+        test_gen = DataFeeder(filename=args.data, partition=partition, batch_size=1024)
+        y_test_pred = model.predict_generator(test_gen, test_gen.steps)
+        y_test_pred = y_test_pred.flatten()
 
-    df_y = test_gen.get_response(copy=True)
-    y_test = df_y['Growth'].values
-    scores = evaluate_prediction(y_test, y_test_pred)
-    log_evaluation(scores, description='Testing on data from {} ({})'.format(args.data, len(y_test_pred)))
+        df_y = test_gen.get_response(copy=True)
+        y_test = df_y['Growth'].values
+
+        df_pred = df_y.assign(PredictedGrowth=y_test_pred, GrowthError=y_test_pred-y_test)
+        df_pred_list.append(df_pred)
+
+
+    df_pred = pd.concat(df_pred_list)
+    scores = evaluate_prediction(df_pred['Growth'], df_pred['PredictedGrowth'])
+    log_evaluation(scores, description='Testing on data from {} on partition {}, ({})'.format(args.data, args.partition, len(y_test_pred)))
 
     # save to tsv
-    df_pred = df_y.assign(PredictedGrowth=y_test_pred, GrowthError=y_test_pred-y_test)
     df_pred.sort_values(['Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
-    df_pred.to_csv('prediction.tsv', sep='\t', index=False, float_format='%.4g')
+    df_pred.to_csv('prediction.{}.tsv'.format(args.partition), sep='\t', index=False, float_format='%.4g')
 
 
 if __name__ == '__main__':
