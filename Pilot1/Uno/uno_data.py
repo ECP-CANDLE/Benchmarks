@@ -987,6 +987,9 @@ class DataFeeder(keras.utils.Sequence):
         df['Dose2'] = df_dose2
         return df.copy() if copy else df
 
+    def close(self):
+        self.store.close()
+
 
 class CombinedDataGenerator(keras.utils.Sequence):
     """Generate training, validation or testing batches from loaded data
