@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 
 import argparse
-import logging
 
 import keras
 import pandas as pd
 
 from uno_data import DataFeeder
-from uno_baseline_keras2 import evaluate_prediction, log_evaluation
+from uno_baseline_keras2 import evaluate_prediction
+
 
 def log_evaluation(metric_outputs, description='Comparing y_true and y_pred:'):
     print(description)
@@ -18,7 +18,7 @@ def log_evaluation(metric_outputs, description='Comparing y_true and y_pred:'):
 def get_parser():
     parser = argparse.ArgumentParser(description='Uno infer script')
     parser.add_argument("--data",
-                       help="data file to infer on. expect exported file from uno_baseline_keras2.py")
+                        help="data file to infer on. expect exported file from uno_baseline_keras2.py")
     parser.add_argument("--model_file", help="json model description file")
     parser.add_argument("--weights_file", help="model weights file")
     parser.add_argument("--partition", default='all',
@@ -31,9 +31,9 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    if 'json' == args.model_file.split('.')[-1]:
-        with open(args.model_file, 'r') as f:
-            model_json = f.read()
+    if args.model_file.split('.')[-1] == 'json':
+        with open(args.model_file, 'r') as model_file:
+            model_json = model_file.read()
             model = keras.models.model_from_json(model_json)
             model.load_weights(args.weights_file)
     else:
@@ -54,7 +54,6 @@ def main():
         df_pred = df_y.assign(PredictedGrowth=y_test_pred, GrowthError=y_test_pred-y_test)
         df_pred_list.append(df_pred)
 
-
     df_pred = pd.concat(df_pred_list)
     scores = evaluate_prediction(df_pred['Growth'], df_pred['PredictedGrowth'])
     log_evaluation(scores, description='Testing on data from {} on partition {}, ({})'.format(args.data, args.partition, len(y_test_pred)))
@@ -66,4 +65,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
