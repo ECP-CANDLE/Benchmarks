@@ -187,25 +187,6 @@ class PermanentDropout(Dropout):
         return x
 
 
-class ModelRecorder(Callback):
-    def __init__(self, save_all_models=False):
-        Callback.__init__(self)
-        self.save_all_models = save_all_models
-        get_custom_objects()['PermanentDropout'] = PermanentDropout
-
-    def on_train_begin(self, logs={}):
-        self.val_losses = []
-        self.best_val_loss = np.Inf
-        self.best_model = None
-
-    def on_epoch_end(self, epoch, logs={}):
-        val_loss = logs.get('val_loss')
-        self.val_losses.append(val_loss)
-        if val_loss < self.best_val_loss:
-            self.best_model = keras.models.clone_model(self.model)
-            self.best_val_loss = val_loss
-
-
 class MultiGPUCheckpoint(ModelCheckpoint):
 
     def set_model(self, model):
@@ -433,17 +414,11 @@ def run(params):
 
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
-        if len(args.gpus) > 1:
-            checkpointer = MultiGPUCheckpoint(prefix+cv_ext+'.model.h5', save_best_only=True)
-        else:
-            checkpointer = ModelCheckpoint(prefix+cv_ext+'.model.h5', save_best_only=True)
+        checkpointer = MultiGPUCheckpoint(prefix+cv_ext+'.model.h5', save_best_only=True)
         tensorboard = TensorBoard(log_dir="tb/tb{}{}".format(ext, cv_ext))
         history_logger = LoggingCallback(logger.debug)
-        model_recorder = ModelRecorder()
 
-        # callbacks = [history_logger, model_recorder]
-        callbacks = [candle_monitor, timeout_monitor, history_logger, model_recorder]
-        # callbacks = [candle_monitor, history_logger, model_recorder]  #
+        callbacks = [candle_monitor, timeout_monitor, history_logger]
         if args.reduce_lr:
             callbacks.append(reduce_lr)
         if args.warmup_lr:
@@ -485,11 +460,6 @@ def run(params):
                                           workers=workers,
                                           validation_data=val_gen,
                                           validation_steps=val_gen.steps)
-
-        # if args.cp:
-            # model = model_recorder.best_model
-            # model.save(prefix+'.model.h5')
-            # model.load_weights(prefix+cv_ext+'.weights.h5')
 
         if args.no_gen:
             y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
