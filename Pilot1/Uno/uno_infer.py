@@ -60,7 +60,7 @@ def main():
             df_y = test_gen.get_response(copy=True)
             y_test = df_y['Growth'].values
 
-            df_pred = df_y.assign(PredictedGrowth=y_test_pred, GrowthError=y_test_pred-y_test)
+            df_pred = df_y.assign(PredictedGrowth=y_test_pred, GrowthError=y_test_pred - y_test)
             df_pred_list.append(df_pred)
             test_gen.close()
 

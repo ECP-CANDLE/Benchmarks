@@ -17,13 +17,11 @@ from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 from sklearn.model_selection import ShuffleSplit, KFold
 
+import file_utils
+
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
-
-# import candle_keras as candle
-import file_utils
-
 
 global_cache = {}
 
@@ -169,13 +167,13 @@ def load_combo_dose_response(fraction=True):
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path, sep=',', engine='c',
-                         na_values=['na','-',''],
+                         na_values=['na', '-', ''],
                          usecols=['CELLNAME', 'NSC1', 'CONC1', 'NSC2', 'CONC2',
                                   'PERCENTGROWTH', 'VALID', 'SCREENER', 'STUDY'],
                          # nrows=10000,
                          dtype={'CELLNAME': str, 'NSC1': str, 'NSC2': str,
                                 'CONC1': np.float32, 'CONC2': np.float32,
-                                'PERCENTGROWTH':np.float32, 'VALID': str,
+                                'PERCENTGROWTH': np.float32, 'VALID': str,
                                 'SCREENER': str, 'STUDY': str},
                          error_bad_lines=False, warn_bad_lines=True)
         global_cache[path] = df
@@ -213,12 +211,12 @@ def load_aggregated_single_response(target='AUC', min_r2_fit=0.3, max_ec50_se=3,
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path, engine='c', sep='\t',
-                           dtype={'SOURCE': str, 'CELL': str, 'DRUG': str, 'STUDY': str,
-                                  'AUC': np.float32, 'IC50': np.float32,
-                                  'EC50': np.float32, 'EC50se': np.float32,
-                                  'R2fit': np.float32, 'Einf': np.float32,
-                                  'HS': np.float32, 'AAC1': np.float32,
-                                  'AUC1': np.float32, 'DSS1': np.float32})
+                         dtype={'SOURCE': str, 'CELL': str, 'DRUG': str, 'STUDY': str,
+                                'AUC': np.float32, 'IC50': np.float32,
+                                'EC50': np.float32, 'EC50se': np.float32,
+                                'R2fit': np.float32, 'Einf': np.float32,
+                                'HS': np.float32, 'AAC1': np.float32,
+                                'AUC1': np.float32, 'DSS1': np.float32})
         global_cache[path] = df
 
     total = len(df)
@@ -360,7 +358,7 @@ def cell_name_to_ids(name, source=None):
     hits2 = lookup(df2, name, [0, 1], [0, 1], match='contains')
     hits = hits1 + hits2
     if source:
-        hits = [x for x in hits if x.startswith(source.upper()+'.')]
+        hits = [x for x in hits if x.startswith(source.upper() + '.')]
     return hits
 
 
@@ -373,7 +371,7 @@ def drug_name_to_ids(name, source=None):
     hits2 = lookup(df2, name, 'NSC', ['NSC', 'Generic Name', 'Preffered Name'])
     hits = hits1 + hits2
     if source:
-        hits = [x for x in hits if x.startswith(source.upper()+'.')]
+        hits = [x for x in hits if x.startswith(source.upper() + '.')]
     return hits
 
 
@@ -420,7 +418,7 @@ def load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=None, usecols=
         df_cols = pd.read_csv(path, engine='c', sep='\t', nrows=0, skiprows=1, header=None)
         total = df_cols.shape[1] - 1
         if usecols_all is not None:
-            usecols = [x.replace(fp+'.', '') for x in usecols_all]
+            usecols = [x.replace(fp + '.', '') for x in usecols_all]
             usecols = [int(x) for x in usecols if x.isdigit()]
             usecols = [x for x in usecols if x in df_cols.columns]
             if usecols[0] != 0:
@@ -480,7 +478,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
                      embed_feature_source=False, sample_set=None, index_by_sample=False):
 
     if use_landmark_genes:
-        filename =  'combined_rnaseq_data_lincs1000'
+        filename = 'combined_rnaseq_data_lincs1000'
     elif use_filtered_genes:
         filename = 'combined_rnaseq_data_filtered'
     else:
@@ -501,7 +499,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         usecols = np.append([0], np.add(sorted(usecols), 2))
         df_cols = df_cols.iloc[:, usecols]
     if feature_subset:
-        with_prefix = lambda x: 'rnaseq.'+x if add_prefix else x
+        with_prefix = lambda x: 'rnaseq.' + x if add_prefix else x
         usecols = [0] + [i for i, c in enumerate(df_cols.columns) if with_prefix(c) in feature_subset]
         df_cols = df_cols.iloc[:, usecols]
 
@@ -519,7 +517,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
     if embed_feature_source:
         df_sample_source = pd.concat([df1, prefixes], axis=1)
         df1 = df_sample_source.merge(df_source, on='Source', how='left').drop('Source', axis=1)
-        logger.info('Embedding RNAseq data source into features: %d additional columns', df1.shape[1]-1)
+        logger.info('Embedding RNAseq data source into features: %d additional columns', df1.shape[1] - 1)
 
     df2 = df.drop('Sample', 1)
     if add_prefix:
@@ -598,7 +596,7 @@ def dict_compare(d1, d2, ignore=[], expand=False):
     intersect_keys = d1_keys.intersection(d2_keys)
     added = d1_keys - d2_keys
     removed = d2_keys - d1_keys
-    modified = set({x : (d1[x], d2[x]) for x in intersect_keys if d1[x] != d2[x]})
+    modified = set({x: (d1[x], d2[x]) for x in intersect_keys if d1[x] != d2[x]})
     common = set(x for x in intersect_keys if d1[x] == d2[x])
     equal = not (added or removed or modified)
     if expand:
@@ -679,7 +677,7 @@ class CombinedDataLoader(object):
                 partition_by = 'drug_pair'
 
         if partition_by != self.partition_by:
-            df_response = df_response.assign(Group = assign_partition_groups(df_response, partition_by))
+            df_response = df_response.assign(Group=assign_partition_groups(df_response, partition_by))
 
         mask = df_response['Source'].isin(train_sep_sources)
         test_mask = df_response['Source'].isin(test_sep_sources)
@@ -844,8 +842,8 @@ class CombinedDataLoader(object):
         train_sep_sources = [x for x in all_sources for y in train_sources if x.startswith(y)]
         test_sep_sources = [x for x in all_sources for y in test_sources if x.startswith(y)]
 
-        ids1 = df_response[['Drug1']].drop_duplicates().rename(columns={'Drug1':'Drug'})
-        ids2 = df_response[['Drug2']].drop_duplicates().rename(columns={'Drug2':'Drug'})
+        ids1 = df_response[['Drug1']].drop_duplicates().rename(columns={'Drug1': 'Drug'})
+        ids2 = df_response[['Drug2']].drop_duplicates().rename(columns={'Drug2': 'Drug'})
         df_drugs_with_response = pd.concat([ids1, ids2]).drop_duplicates().dropna().reset_index(drop=True)
         df_cells_with_response = df_response[['Sample']].drop_duplicates().reset_index(drop=True)
         logger.info('Combined raw dose response data has %d unique samples and %d unique drugs', df_cells_with_response.shape[0], df_drugs_with_response.shape[0])
@@ -856,7 +854,6 @@ class CombinedDataLoader(object):
             logger.info('Limiting drugs to those with response min <= %g, max >= %g, span >= %g, median_min <= %g, median_max >= %g ...', drug_lower_response, drug_upper_response, drug_response_span, drug_median_response_min, drug_median_response_max)
             df_selected_drugs = select_drugs_with_response_range(df_response, span=drug_response_span, lower=drug_lower_response, upper=drug_upper_response, lower_median=drug_median_response_min, upper_median=drug_median_response_max)
             logger.info('Selected %d drugs from %d', df_selected_drugs.shape[0], df_response['Drug1'].nunique())
-
 
         cell_feature_subset = read_set_from_file(cell_feature_subset_path)
         drug_feature_subset = read_set_from_file(drug_feature_subset_path)
@@ -912,7 +909,7 @@ class CombinedDataLoader(object):
             logger.info('Summary of filtered dose response by source:')
             logger.info(summarize_response_data(df_response, target=agg_dose))
 
-        df_response = df_response.assign(Group = assign_partition_groups(df_response, partition_by))
+        df_response = df_response.assign(Group=assign_partition_groups(df_response, partition_by))
 
         self.agg_dose = agg_dose
         self.cell_features = cell_features
@@ -930,7 +927,7 @@ class CombinedDataLoader(object):
         self.test_sep_sources = test_sep_sources
         self.partition_by = partition_by
 
-        for var in (list(drug_df_dict.values()) +  list(cell_df_dict.values())):
+        for var in (list(drug_df_dict.values()) + list(cell_df_dict.values())):
             value = locals().get(var)
             if value is not None:
                 setattr(self, var, value)
@@ -939,6 +936,7 @@ class CombinedDataLoader(object):
 
         if cache:
             self.save_to_cache(cache, params)
+
 
 class DataFeeder(keras.utils.Sequence):
     """Read from pre-joined dataset (HDF5 format) and feed data to the model.
@@ -985,7 +983,7 @@ class DataFeeder(keras.utils.Sequence):
         df = self.store.get('y_{}'.format(self.partition))
         df_dose1 = self.store.get('x_{}_0'.format(self.partition))
         df['Dose1'] = df_dose1
-        if self.single == False:
+        if not self.single:
             df_dose2 = self.store.get('x_{}_1'.format(self.partition))
             df['Dose2'] = df_dose2
         return df.copy() if copy else df
