@@ -2,12 +2,9 @@
 
 from __future__ import division, print_function
 
-import argparse
-import collections
 import logging
 import os
 import random
-import threading
 
 import numpy as np
 import pandas as pd
@@ -18,10 +15,7 @@ from keras import optimizers
 from keras.models import Model
 from keras.layers import Input, Dense, Dropout
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from keras.utils import get_custom_objects
-from keras.utils.vis_utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
 
 # For non-interactive plotting
