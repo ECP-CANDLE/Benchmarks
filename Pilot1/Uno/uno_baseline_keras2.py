@@ -353,6 +353,11 @@ def run(params):
         train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
         store = pd.HDFStore(fname, complevel=9, complib='blosc:snappy')
+
+        config_min_itemsize={'Sample':30, 'Drug1':10}
+        if args.single == False:
+            config_min_itemsize['Drug2'] = 10
+
         for partition in ['train', 'val']:
             gen = train_gen if partition == 'train' else val_gen
             for i in range(gen.steps):
@@ -362,7 +367,7 @@ def run(params):
                     input_feature.columns = [''] * len(input_feature.columns)
                     store.append('x_{}_{}'.format(partition, j), input_feature.astype('float32'), format='table', data_column=True)
                 store.append('y_{}'.format(partition), y.astype({target:'float32'}), format='table', data_column=True,
-                        min_itemsize={'Sample':30, 'Drug1':10, 'Drug2':10})
+                        min_itemsize=config_min_itemsize)
                 logger.info('Generating {} dataset. {} / {}'.format(partition, i, gen.steps))
         store.close()
         logger.info('Completed generating {}'.format(fname))
@@ -449,8 +454,8 @@ def run(params):
             callbacks.append(tensorboard)
 
         if args.use_exported_data is not None:
-            train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle)
-            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle)
+            train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
+            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
         else:
             train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
             val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
@@ -511,9 +516,15 @@ def run(params):
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
     if args.agg_dose:
-        df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', target], inplace=True)
+        if args.single:
+            df_pred.sort_values(['Source', 'Sample', 'Drug1', target], inplace=True)
+        else:
+            df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', target], inplace=True)
     else:
-        df_pred.sort_values(['Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
+        if args.single:
+            df_pred.sort_values(['Sample', 'Drug1', 'Dose1', 'Growth'], inplace=True)
+        else:
+            df_pred.sort_values(['Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
     df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
 
     if args.cv > 1:
