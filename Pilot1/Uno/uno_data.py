@@ -943,11 +943,13 @@ class CombinedDataLoader(object):
 class DataFeeder(keras.utils.Sequence):
     """Read from pre-joined dataset (HDF5 format) and feed data to the model.
     """
-    def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False):
+    def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False, single=False):
         self.partition = partition
         self.filename = filename
         self.batch_size = batch_size
         self.shuffle = shuffle
+        self.single = single
+        self.input_size = 4 if self.single else 7
 
         self.store = pd.HDFStore(filename, mode='r')
         y = self.store.select('y_{}'.format(self.partition))
@@ -966,7 +968,7 @@ class DataFeeder(keras.utils.Sequence):
         start = _idx * self.batch_size
         stop = start + self.batch_size
         x = []
-        for i in range(7):
+        for i in range(self.input_size):
             x.append(self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop))
 
         y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop, columns=['Growth'])
@@ -982,9 +984,10 @@ class DataFeeder(keras.utils.Sequence):
     def get_response(self, copy=False):
         df = self.store.get('y_{}'.format(self.partition))
         df_dose1 = self.store.get('x_{}_0'.format(self.partition))
-        df_dose2 = self.store.get('x_{}_1'.format(self.partition))
         df['Dose1'] = df_dose1
-        df['Dose2'] = df_dose2
+        if self.single == False:
+            df_dose2 = self.store.get('x_{}_1'.format(self.partition))
+            df['Dose2'] = df_dose2
         return df.copy() if copy else df
 
     def close(self):
