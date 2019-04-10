@@ -391,7 +391,7 @@ def run(params):
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
         checkpointer = MultiGPUCheckpoint(prefix + cv_ext + '.model.h5', save_best_only=True)
-        tensorboard = TensorBoard(log_dir="tb/tb{}{}".format(ext, cv_ext))
+        tensorboard = TensorBoard(log_dir="tb/{}{}{}".format(args.tb_prefix, ext, cv_ext))
         history_logger = LoggingCallback(logger.debug)
 
         callbacks = [candle_monitor, timeout_monitor, history_logger]
