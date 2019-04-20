@@ -464,7 +464,7 @@ def run(params):
         scores = evaluate_prediction(y_val, y_val_pred)
         log_evaluation(scores)
 
-        df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred - y_val)
+        # df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred - y_val)
         df_val['Predicted' + target] = y_val_pred
         df_val[target + 'Error'] = y_val_pred - y_val
         df_pred_list.append(df_val)
