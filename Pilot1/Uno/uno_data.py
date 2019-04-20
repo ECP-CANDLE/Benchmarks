@@ -947,6 +947,8 @@ class DataFeeder(keras.utils.Sequence):
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.single = single
+        # 4 inputs for single drug model (cell, dose1, descriptor, fingerprint)
+        # 7 inputs for drug pair model (cell, dose1, dose1, dr1.descriptor, dr1.fingerprint, dr2.descriptor, dr2.fingerprint)
         self.input_size = 4 if self.single else 7
 
         self.store = pd.HDFStore(filename, mode='r')
@@ -967,19 +969,14 @@ class DataFeeder(keras.utils.Sequence):
         _idx = self.index_map[idx]
         start = _idx * self.batch_size
         stop = start + self.batch_size
-        x = []
-        for i in range(self.input_size):
-            x.append(self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop).iloc[self.in_batch_index_map])
+        x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop).iloc[self.in_batch_index_map] for i in range(self.input_size)]
 
         y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop, columns=['Growth']).iloc[self.in_batch_index_map]
         return x, y
 
-    def on_epoch_end(self):
-        if self.shuffle:
-            np.random.shuffle(self.index_map)
-            np.random.shuffle(self.in_batch_index_map)
-
     def reset(self):
+        """ empty method implementation to match reset() in CombinedDataGenerator
+        """
         pass
 
     def get_response(self, copy=False):
