@@ -957,21 +957,17 @@ class DataFeeder(keras.utils.Sequence):
         self.size = len(self.index)
         self.steps = self.size // self.batch_size
         self.index_map = np.arange(self.steps)
-        self.in_batch_index_map = np.arange(self.batch_size)
         if self.shuffle:
             np.random.shuffle(self.index_map)
-            np.random.shuffle(self.in_batch_index_map)
 
     def __len__(self):
         return self.steps
 
     def __getitem__(self, idx):
-        _idx = self.index_map[idx]
-        start = _idx * self.batch_size
-        stop = start + self.batch_size
-        x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop).iloc[self.in_batch_index_map] for i in range(self.input_size)]
-
-        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop, columns=['Growth']).iloc[self.in_batch_index_map]
+        start = self.index_map[idx] * self.batch_size
+        stop = (self.index_map[idx] + 1) * self.batch_size
+        x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
+        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop, columns=['Growth'])
         return x, y
 
     def reset(self):
@@ -980,12 +976,11 @@ class DataFeeder(keras.utils.Sequence):
         pass
 
     def get_response(self, copy=False):
-        df = self.store.get('y_{}'.format(self.partition))
-        df_dose1 = self.store.get('x_{}_0'.format(self.partition))
-        df['Dose1'] = df_dose1
+        self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
+        df = self.store.get('y_{}'.format(self.partition)).iloc[self.index,:]
+        df['Dose1'] = self.store.get('x_{}_0'.format(self.partition)).iloc[self.index,:]
         if not self.single:
-            df_dose2 = self.store.get('x_{}_1'.format(self.partition))
-            df['Dose2'] = df_dose2
+            df['Dose2'] = self.store.get('x_{}_1'.format(self.partition)).iloc[self.index,:]
         return df.copy() if copy else df
 
     def close(self):
