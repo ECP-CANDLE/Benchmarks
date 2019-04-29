@@ -941,15 +941,18 @@ class CombinedDataLoader(object):
 class DataFeeder(keras.utils.Sequence):
     """Read from pre-joined dataset (HDF5 format) and feed data to the model.
     """
-    def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False, single=False):
+    def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False, single=False, agg_dose=None):
         self.partition = partition
         self.filename = filename
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.single = single
+        self.agg_dose = agg_dose
+        self.target = agg_dose if agg_dose is not None else 'Growth'
         # 4 inputs for single drug model (cell, dose1, descriptor, fingerprint)
         # 7 inputs for drug pair model (cell, dose1, dose1, dr1.descriptor, dr1.fingerprint, dr2.descriptor, dr2.fingerprint)
         self.input_size = 4 if self.single else 7
+        self.input_size = 3 if agg_dose else self.input_size
 
         self.store = pd.HDFStore(filename, mode='r')
         y = self.store.select('y_{}'.format(self.partition))
@@ -967,7 +970,7 @@ class DataFeeder(keras.utils.Sequence):
         start = self.index_map[idx] * self.batch_size
         stop = (self.index_map[idx] + 1) * self.batch_size
         x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
-        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop, columns=['Growth'])
+        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop, columns=[self.target])
         return x, y
 
     def reset(self):
@@ -978,9 +981,10 @@ class DataFeeder(keras.utils.Sequence):
     def get_response(self, copy=False):
         self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
         df = self.store.get('y_{}'.format(self.partition)).iloc[self.index,:]
-        df['Dose1'] = self.store.get('x_{}_0'.format(self.partition)).iloc[self.index,:]
-        if not self.single:
-            df['Dose2'] = self.store.get('x_{}_1'.format(self.partition)).iloc[self.index,:]
+        if self.agg_dose is None:
+            df['Dose1'] = self.store.get('x_{}_0'.format(self.partition)).iloc[self.index,:]
+            if not self.single:
+                df['Dose2'] = self.store.get('x_{}_1'.format(self.partition)).iloc[self.index,:]
         return df.copy() if copy else df
 
     def close(self):

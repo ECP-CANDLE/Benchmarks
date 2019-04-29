@@ -423,8 +423,8 @@ def run(params):
             callbacks.append(tensorboard)
 
         if args.use_exported_data is not None:
-            train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
-            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
+            train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
+            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
         else:
             train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
             val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
@@ -478,7 +478,7 @@ def run(params):
     df_pred = pd.concat(df_pred_list)
     if args.agg_dose:
         if args.single:
-            df_pred.sort_values(['Source', 'Sample', 'Drug1', target], inplace=True)
+            df_pred.sort_values(['Sample', 'Drug1', target], inplace=True)
         else:
             df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', target], inplace=True)
     else:
