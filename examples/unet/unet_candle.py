@@ -1,8 +1,8 @@
-import unet
-import candle_keras as candle
-
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint
+
+import unet
+import candle
 
 def initialize_parameters():
     unet_common = unet.UNET(unet.file_path,
