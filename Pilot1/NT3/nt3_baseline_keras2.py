@@ -51,6 +51,18 @@ def load_data(train_path, test_path, gParameters):
     df_y_train = df_train[:,0].astype('int')
     df_y_test = df_test[:,0].astype('int')
 
+    noise_level = gParameters['noise_level']
+    print("flipping start")
+    flips = 0
+    import random
+    for i in range(0,df_train.shape[0]):
+        if random.random() < noise_level:
+            # print("flipping ", i)
+            flips += 1
+            df_train[i,0] = int(not df_train[i,0])
+    print("flips: %i / %i" % (flips, df_train.shape[0]));
+    print("flipping stop")
+
     Y_train = np_utils.to_categorical(df_y_train,gParameters['classes'])
     Y_test = np_utils.to_categorical(df_y_test,gParameters['classes'])
 
