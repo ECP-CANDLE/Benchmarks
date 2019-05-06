@@ -35,11 +35,13 @@ def initialize_parameters():
     return gParameters
 
 def load_data(train_path, test_path, gParameters):
-
+    import time
     print('Loading data...')
-    df_train = (pd.read_csv(train_path,header=None).values).astype('float32')
-    df_test = (pd.read_csv(test_path,header=None).values).astype('float32')
+    start = time.time()
+    df_train = (pd.read_csv(train_path,header=None,low_memory=False).values).astype('float32')
+    df_test = (pd.read_csv(test_path,header=None,low_memory=False).values).astype('float32')
     print('done')
+    print("LOAD TIME: %f" % (time.time()- start))
 
     print('df_train shape:', df_train.shape)
     print('df_test shape:', df_test.shape)
