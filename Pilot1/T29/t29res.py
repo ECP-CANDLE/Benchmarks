@@ -21,11 +21,11 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 
 # candle
 sys.path.append('/raid/brettin/Benchmarks/common')
-import candle_keras
+import candle
 
 # candle
 def initialize_parameters():
-    t29_common = candle_keras.Benchmark(file_path, 't29_default_model.txt','keras',
+    t29_common = candle.Benchmark(file_path, 't29_default_model.txt','keras',
                             prog='t29res.py',desc='resnet')
 
     # Need a pointer to the docs showing what is provided
@@ -41,7 +41,7 @@ def initialize_parameters():
          'help':'Residual connection distance between dense layers.'}
     ]
     t29_common.additional_definitions = additional_definitions
-    gParameters = candle_keras.initialize_parameters(t29_common)
+    gParameters = candle.initialize_parameters(t29_common)
     return gParameters
 
 
@@ -107,9 +107,9 @@ def run(gParameters):
     nb_classes = gParameters['classes']
     DR = gParameters['drop']
     ACTIVATION = gParameters['activation']
-    kerasDefaults = candle_keras.keras_default_config()
+    kerasDefaults = candle.keras_default_config()
     kerasDefaults['momentum_sgd'] = gParameters['momentum']
-    OPTIMIZER = candle_keras.build_optimizer(gParameters['optimizer'],
+    OPTIMIZER = candle.build_optimizer(gParameters['optimizer'],
                                         gParameters['learning_rate'],
                                         kerasDefaults)
     PL     = 6213   # 38 + 60483

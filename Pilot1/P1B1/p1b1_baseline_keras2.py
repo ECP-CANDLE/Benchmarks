@@ -23,7 +23,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 
 import p1b1 
-import candle_keras as candle
+import candle
 
 np.set_printoptions(precision=4)
 
@@ -70,28 +70,28 @@ class LoggingCallback(Callback):
         self.print_fcn(msg)
 
 
-def plot_history(out, history, metric='loss', title=None):
-    title = title or 'model {}'.format(metric)
-    val_metric = 'val_{}'.format(metric)
-    plt.figure(figsize=(16, 9))
-    plt.plot(history.history[metric])
-    plt.plot(history.history[val_metric])
-    plt.title(title)
-    plt.ylabel(metric)
-    plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
-    png = '{}.plot.{}.png'.format(out, metric)
-    plt.savefig(png, bbox_inches='tight')
+#def plot_history(out, history, metric='loss', title=None):
+#    title = title or 'model {}'.format(metric)
+#    val_metric = 'val_{}'.format(metric)
+#    plt.figure(figsize=(16, 9))
+#    plt.plot(history.history[metric])
+#    plt.plot(history.history[val_metric])
+#    plt.title(title)
+#    plt.ylabel(metric)
+#    plt.xlabel('epoch')
+#    plt.legend(['train', 'test'], loc='upper left')
+#    png = '{}.plot.{}.png'.format(out, metric)
+#    plt.savefig(png, bbox_inches='tight')
+#
 
-
-def plot_scatter(data, classes, out):
-    cmap = plt.cm.get_cmap('gist_rainbow')
-    plt.figure(figsize=(10, 8))
-    plt.scatter(data[:, 0], data[:, 1], c=classes, cmap=cmap, lw=0.5, edgecolor='black', alpha=0.7)
-    plt.colorbar()
-    png = '{}.png'.format(out)
-    plt.savefig(png, bbox_inches='tight')
-
+#def plot_scatter(data, classes, out):
+#    cmap = plt.cm.get_cmap('gist_rainbow')
+#    plt.figure(figsize=(10, 8))
+#    plt.scatter(data[:, 0], data[:, 1], c=classes, cmap=cmap, lw=0.5, edgecolor='black', alpha=0.7)
+#    plt.colorbar()
+#    png = '{}.png'.format(out)
+#    plt.savefig(png, bbox_inches='tight')
+#
 
 def build_type_classifier(x_train, y_train, x_test, y_test):
     y_train = np.argmax(y_train, axis=1)
@@ -149,8 +149,8 @@ def run(params):
     
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(params, '.keras')
-    candle.verify_path(params['save'])
-    prefix = '{}{}'.format(params['save'], ext)
+    candle.verify_path(params['save_path'])
+    prefix = '{}{}'.format(params['save_path'], ext)
     logfile = params['logfile'] if params['logfile'] else prefix+'.log'
     candle.set_up_logger(logfile, p1b1.logger, params['verbose'])
     p1b1.logger.info('Params: {}'.format(params))
@@ -329,7 +329,7 @@ def run(params):
 
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
     warmup_lr = LearningRateScheduler(warmup_scheduler)
-    checkpointer = ModelCheckpoint(params['save']+ext+'.weights.h5', save_best_only=True, save_weights_only=True)
+    checkpointer = ModelCheckpoint(params['save_path']+ext+'.weights.h5', save_best_only=True, save_weights_only=True)
     tensorboard = TensorBoard(log_dir="tb/tb{}".format(ext))
     candle_monitor = candle.CandleRemoteMonitor(params=params)
     timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
@@ -374,8 +374,8 @@ def run(params):
         encoder.save(prefix+'.encoder.h5')
         decoder.save(prefix+'.decoder.h5')
 
-    plot_history(prefix, history, 'loss')
-    plot_history(prefix, history, 'corr', 'streaming pearson correlation')
+    candle.plot_history(prefix, history, 'loss')
+    candle.plot_history(prefix, history, 'corr', 'streaming pearson correlation')
 
     # Evalute model on test set
     x_pred = model.predict(test_inputs)
@@ -384,12 +384,12 @@ def run(params):
 
     x_test_encoded = encoder.predict(test_inputs, batch_size=params['batch_size'])
     y_test_classes = np.argmax(y_test, axis=1)
-    plot_scatter(x_test_encoded, y_test_classes, prefix+'.latent')
+    candle.plot_scatter(x_test_encoded, y_test_classes, prefix+'.latent')
 
     if params['tsne']:
         tsne = TSNE(n_components=2, random_state=seed)
         x_test_encoded_tsne = tsne.fit_transform(x_test_encoded)
-        plot_scatter(x_test_encoded_tsne, y_test_classes, prefix+'.latent.tsne')
+        candle.plot_scatter(x_test_encoded_tsne, y_test_classes, prefix+'.latent.tsne')
 
     # diff = x_pred - x_test
     # plt.hist(diff.ravel(), bins='auto')

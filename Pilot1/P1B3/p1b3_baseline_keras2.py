@@ -24,9 +24,9 @@ import matplotlib.pyplot as plt
 
 
 import p1b3 as benchmark
-import candle_keras as candle
+import candle
 
-np.set_printoptions(threshold=np.nan)
+#np.set_printoptions(threshold=np.nan)
 
 def initialize_parameters():
 

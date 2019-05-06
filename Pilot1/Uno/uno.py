@@ -16,7 +16,7 @@ sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-import candle_keras as candle
+import candle
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +199,7 @@ required = [
     'optimizer',
     'residual',
     'rng_seed',
-    'save',
+    'save_path',
     'scaling',
     'validation_split',
     'solr_root',

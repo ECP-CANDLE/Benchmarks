@@ -14,7 +14,7 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
-import candle_keras as candle
+import candle
 
 global_cache = {}
 

@@ -27,7 +27,7 @@ lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
 import tc1 as bmk
-import candle_keras as candle
+import candle
 
 
 def initialize_parameters():
