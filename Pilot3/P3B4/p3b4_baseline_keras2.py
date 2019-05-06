@@ -1,8 +1,6 @@
 from __future__ import print_function
 
 import numpy as np
-import p3b4 as bmk
-import candle_keras as candle
 import os, sys, gzip
 import time
 import keras
@@ -11,6 +9,8 @@ from tf_mthcan import hcan
 
 import argparse
 
+import p3b4 as bmk
+import candle
 
 def initialize_parameters():
 

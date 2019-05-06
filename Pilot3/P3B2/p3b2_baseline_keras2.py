@@ -13,7 +13,7 @@ import argparse
 import sys
 
 import p3b2 as bmk
-import candle_keras as candle
+import candle
 
 def initialize_parameters():
 

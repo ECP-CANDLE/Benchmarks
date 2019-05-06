@@ -14,7 +14,7 @@ from sklearn.metrics import f1_score
 '''
 
 import p3b3 as bmk
-import candle_keras as candle
+import candle
 
 
 import os, sys, gzip
@@ -192,7 +192,7 @@ def run(gParameters):
 def main():
 
     gParameters = initialize_parameters()
-    avg_loss = run(gParameters, fpath)
+    avg_loss = run(gParameters)
     print( "Return: ", avg_loss )
 
 
