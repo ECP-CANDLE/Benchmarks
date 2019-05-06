@@ -25,7 +25,7 @@ sys.path.append(lib_path2)
 
 import helper
 import random
-import candle_keras as candle
+import candle
 
 additional_definitions = [
 {'name':'train_bool', 'type':candle.str2bool,'default':True,'help':'Invoke training'},
