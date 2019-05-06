@@ -177,3 +177,84 @@ python uno_baseline_keras2.py --conf uno_perf_benchmark.txt
 | Tesla (K20) | 0:43:21 | 638 | 1.00 | 35.5 | 31.8 | 9.6 | 8.9 | 6.5 | |
 | Titan | | | | | | | | |keras version 2.0.3 does not supprot model.clone_model() which is introduced in 2.0.7
 * Time per epoch on the machine divided by time per epoch of Titan (or Tesla)
+
+## Training and Inferencing Uno with Pre-staged Datasets
+We can expedite the training and inferencing using pre-staged dataset file. You may need to regenerate the files for a different combination of parameters, which are relevant to the data processing such as preprocess_rnaseq, train_sources, cell_feature_subset, etc. but you don't need to for training related params (i.e., batch_size, number of epochs, etc.)
+
+1. Generate pre-staged dataset file. Use `--export_data` to specify the file name and use a large batch size to speed up.
+```
+python uno_baseline_keras2.py --train_sources all --cache cache/all --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True -z 4096 --export_data All.h5 --shuffle True
+
+Using TensorFlow backend.
+...
+partition:train, rank:0, sharded index size:20156416, batch_size:4096, steps:4921, total_samples:20158325
+partition:val, rank:0, sharded index size:5144576, batch_size:4096, steps:1256, total_samples:5144721
+Generating train dataset. 0 / 4921
+Generating train dataset. 1 / 4921
+..
+Generating train dataset. 4919 / 4921
+Generating train dataset. 4920 / 4921
+Generating val dataset. 0 / 1256
+Generating val dataset. 1 / 1256
+..
+Generating val dataset. 1254 / 1256
+Generating val dataset. 1255 / 1256
+Completed generating All.h5
+```
+This took ~3 hours.
+
+2. Training with pre-staged dataset. Use `--use_exported_data` to point dataset file.
+```
+python uno_baseline_keras2.py --train_sources all --cache cache/all \
+--use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True \
+-z 512 --use_exported_data All.h5 --cp True --shuffle True --tb True
+Using TensorFlow backend.
+...
+Total params: 21,275,001
+Trainable params: 21,275,001
+Non-trainable params: 0
+__________________________________________________________________________________________________
+Between random pairs in y_val:
+  mse: 0.6070
+  mae: 0.5458
+  r2: -1.0002
+  corr: -0.0001
+Data points per epoch: train = 20156416, val = 5144576
+Steps per epoch: train = 39368, val = 10048
+Epoch 1/10
+39368/39368 [==============================] - 2530s 64ms/step - loss: 0.0928 - mae: 0.1893 - r2: 0.6876 - val_loss: 0.1316 - val_mae: 0.2259 - val_r2: 0.5644
+Current time ....2529.994
+Epoch 2/10
+39368/39368 [==============================] - 2329s 59ms/step - loss: 0.0698 - mae: 0.1689 - r2: 0.7645 - val_loss: 0.1283 - val_mae: 0.2212 - val_r2: 0.5753
+Current time ....4858.745
+Epoch 3/10
+39368/39368 [==============================] - 2314s 59ms/step - loss: 0.0669 - mae: 0.1652 - r2: 0.7740 - val_loss: 0.1339 - val_mae: 0.2214 - val_r2: 0.5569
+Current time ....7172.407
+Epoch 4/10
+39368/39368 [==============================] - 2308s 59ms/step - loss: 0.0657 - mae: 0.1634 - r2: 0.7784 - val_loss: 0.1333 - val_mae: 0.2233 - val_r2: 0.5584
+Current time ....9480.256
+Epoch 5/10
+39368/39368 [==============================] - 2328s 59ms/step - loss: 0.0651 - mae: 0.1627 - r2: 0.7802 - val_loss: 0.1348 - val_mae: 0.2216 - val_r2: 0.5540
+Current time ....11808.681
+Epoch 6/10
+39368/39368 [==============================] - 2323s 59ms/step - loss: 0.0640 - mae: 0.1612 - r2: 0.7839 - val_loss: 0.1335 - val_mae: 0.2217 - val_r2: 0.5580
+Current time ....14131.437
+Epoch 7/10
+39368/39368 [==============================] - 2335s 59ms/step - loss: 0.0634 - mae: 0.1603 - r2: 0.7860 - val_loss: 0.1331 - val_mae: 0.2215 - val_r2: 0.5596
+Current time ....16466.285
+Epoch 8/10
+39368/39368 [==============================] - 2327s 59ms/step - loss: 0.0630 - mae: 0.1597 - r2: 0.7873 - val_loss: 0.1313 - val_mae: 0.2193 - val_r2: 0.5654
+Current time ....18793.203
+Epoch 9/10
+39368/39368 [==============================] - 2347s 60ms/step - loss: 0.0627 - mae: 0.1593 - r2: 0.7884 - val_loss: 0.1360 - val_mae: 0.2212 - val_r2: 0.5501
+Current time ....21140.630
+Epoch 10/10
+39368/39368 [==============================] - 2372s 60ms/step - loss: 0.0624 - mae: 0.1588 - r2: 0.7895 - val_loss: 0.1352 - val_mae: 0.2216 - val_r2: 0.5524
+Current time ....23512.750
+
+```
+
+3. Inferencing with pre-staged dataset.
+```
+python uno_infer.py --data All.h5 --model_file model.h5 --n_pred 30
+```
