@@ -4,10 +4,10 @@ import numpy as np
 
 
 def generate_index_distribution(numTrain, numTest, numValidation, params):
-    """Generates a vector of indices to partition the data for training.
-       NO CHECKING IS DONE: it is assumed that the data could be partitioned
-       in the specified blocks and that the block indices describe a coherent
-       partition.
+    """ Generates a vector of indices to partition the data for training.
+        NO CHECKING IS DONE: it is assumed that the data could be partitioned
+        in the specified blocks and that the block indices describe a coherent
+        partition.
         
         Parameters
         ----------
@@ -50,8 +50,8 @@ def generate_index_distribution(numTrain, numTest, numValidation, params):
 
 
 def generate_index_distribution_from_fraction(numTrain, numTest, numValidation, params):
-    """Generates a vector of indices to partition the data for training.
-       It checks that the fractions provided are (0, 1) and add up to 1.
+    """ Generates a vector of indices to partition the data for training.
+        It checks that the fractions provided are (0, 1) and add up to 1.
        
         Parameters
         ----------
@@ -120,10 +120,10 @@ def generate_index_distribution_from_fraction(numTrain, numTest, numValidation, 
 
 
 def generate_index_distribution_from_blocks(numTrain, numTest, numValidation, params):
-    """Generates a vector of indices to partition the data for training.
-       NO CHECKING IS DONE: it is assumed that the data could be partitioned
-       in the specified block quantities and that the block quantities describe a
-       coherent partition.
+    """ Generates a vector of indices to partition the data for training.
+        NO CHECKING IS DONE: it is assumed that the data could be partitioned
+        in the specified block quantities and that the block quantities describe a
+        coherent partition.
         
         Parameters
         ----------
@@ -189,10 +189,10 @@ def generate_index_distribution_from_blocks(numTrain, numTest, numValidation, pa
 
 
 def generate_index_distribution_from_block_list(numTrain, numTest, numValidation, params):
-    """Generates a vector of indices to partition the data for training.
-       NO CHECKING IS DONE: it is assumed that the data could be partitioned
-       in the specified list of blocks and that the block indices describe a 
-       coherent partition.
+    """ Generates a vector of indices to partition the data for training.
+        NO CHECKING IS DONE: it is assumed that the data could be partitioned
+        in the specified list of blocks and that the block indices describe a
+        coherent partition.
         
         Parameters
         ----------
@@ -262,10 +262,10 @@ def generate_index_distribution_from_block_list(numTrain, numTest, numValidation
 
 
 def compute_limits(numdata, numblocks, blocksize, blockn):
-    """Generates the limit of indices corresponding to a 
-       specific block. It takes into account the non-exact
-       divisibility of numdata into numblocks letting the
-       last block to take the extra chunk.
+    """ Generates the limit of indices corresponding to a
+        specific block. It takes into account the non-exact
+        divisibility of numdata into numblocks letting the
+        last block to take the extra chunk.
         
         Parameters
         ----------
@@ -294,8 +294,8 @@ def compute_limits(numdata, numblocks, blocksize, blockn):
 
 
 def fill_array(blocklist, maxsize, numdata, numblocks, blocksize):
-    """Fills a new array of integers with the indices corresponding
-       to the specified block structure.
+    """ Fills a new array of integers with the indices corresponding
+        to the specified block structure.
         
         Parameters
         ----------

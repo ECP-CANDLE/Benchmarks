@@ -1,0 +1,43 @@
+curl -o rip.it.test.csv.gz ftp://ftp.mcs.anl.gov/pub/candle/public/tutorials/t29res/rip.it.test.csv.gz
+curl -o rip.it.train.csv.gz ftp://ftp.mcs.anl.gov/pub/candle/public/tutorials/t29res/rip.it.train.csv.gz
+gunzip rip.it.test.csv.gz 
+gunzip rip.it.train.csv.gz 
+
+
+git checkout release_01
+
+def initialize_parameters():
+    t29_common = candle_keras.Benchmark(file_path, 't29_default_model.txt','keras',
+                            prog='t29res.py',desc='resnet')
+    gParameters = candle.keras.initialize_parameters(t29_common)
+    return gParameters
+
+
+# In the run method, get default settings for keras objects,
+# such as those for the the optimizer.
+
+kerasDefaults = candle_keras.xkeras_default_config()
+kerasDefaults['momentum_sgd'] = gParameters['momentum']
+
+# In the run method, create the optimizer using user supplied
+# parameters as well as those in the keras defaults.
+
+OPTIMIZER = keras_utils.build_optimizer(gParameters['optimizer'],
+                                    gParameters['learning_rate'],
+                                    kerasDefaults)
+
+# Add additional arguements that are not represented in the default
+# arguments (Need a reference to the list of default arguements).
+
+additional_definitions = [
+    {'name':'connections',
+        'default':1,
+        'type':int,
+        'help':'The number of residual connections.'},
+    {'name':'distance',
+        'default':1,
+        'type':int,
+        'help':'Residual connection distance between dense layers.'}
+]
+
+# To configure the width of the dense layers

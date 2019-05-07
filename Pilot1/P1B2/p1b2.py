@@ -21,7 +21,7 @@ sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-import candle_keras as candle
+import candle
 
 #url_p1b2 = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B2/'
 #file_train = 'P1B2.train.csv'

@@ -1,8 +1,8 @@
-import mnist
-import candle_keras as candle
-
 from keras.callbacks import CSVLogger
 from keras import backend as K
+
+import mnist
+import candle
 
 def initialize_parameters():
     mnist_common = mnist.MNIST(mnist.file_path,

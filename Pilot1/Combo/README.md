@@ -184,3 +184,16 @@ GDSC.22RV1      NSC.105014      NSC.102816      100     0.1627  0.1060  -0.0531 
 
 A version of trained model files with dropout are available here: [saved.uq.model.h5](http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/saved.uq.model.h5) and [saved.uq.weights.h5](http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/saved.uq.weights.h5).
 
+## Profile runs
+We have run the same configuration across multiple machines and compared the resource utilization. 
+```
+python uno_baseline_keras2.py --conf combo_perf_benchmark.txt
+```
+
+| Machine | Time to complete (HH:mm:ss) | Time per epoch (s) | Perf factor <sup>*</sup> | CPU % | Mem % | Mem GB | GPU % | GPU Mem % | Note |
+| ------- | --------------------------: | -----------------: | -----------------------: | ----: | ----: | -----: | ----: | --------: | ---- |
+| Theta | 1:14:12 | 811 | 0.31 | 7.6 | 7.6 | 12.8 | | |
+| Nucleus | 0:14:13 | 72 | 3.47 | 3.8 | 9.3 | 21.9 | 63.4 | 91.9 |
+| Tesla (K20) | 0:44:17 | 250 | 1.00 | 3.9 | 42.3 | 12.9 | 73.8 | 53.3 |
+| Titan | | | | | | | | | keras version 2.0.3 does not supprot model.clone_model() which is introduced in 2.0.7 |
+* Time per epoch on the machine divided by time per epoch of Titan (or Tesla)

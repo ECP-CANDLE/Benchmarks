@@ -144,7 +144,7 @@ def discretize(y, bins=5, cutoffs=None, min_count=0, verbose=False, return_bins=
 def categorize_dataframe(df, ycol='0', bins=5, cutoffs=None, verbose=False):
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
-    y = df.loc[:, ycol].as_matrix()
+    y = df.loc[:, ycol].values
     classes = discretize(y, bins, cutoffs, verbose)
     df.iloc[:, 0] = classes
     return df
@@ -157,7 +157,7 @@ def make_group_from_columns(df, groupcols):
 def summarize(df, ycol='0', classify=False, bins=0, cutoffs=None, min_count=0):
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
-    y = df.loc[:, ycol].as_matrix()
+    y = df.loc[:, ycol].values
     print('Target column: {}'.format(ycol))
     print('  count = {}, uniq = {}, mean = {:.3g}, std = {:.3g}'.format(len(y), len(np.unique(y)), np.mean(y), np.std(y)))
     print('  min = {:.3g}, q1 = {:.3g}, median = {:.3g}, q3 = {:.3g}, max = {:.3g}'.format(np.min(y), np.percentile(y, 25), np.median(y), np.percentile(y, 75), np.max(y)))
@@ -242,13 +242,51 @@ def verify_path(path):
         os.makedirs(folder)
 
 
-def train(model, x, y, features=None, classify=False, threads=-1, prefix='', name=None, save=False, verbose=True):
+def infer(model, df, ycol='0', ignore_categoricals=False, classify=False, prefix=''):
+    if type(model) == str:
+        with open(model, 'rb') as f:
+            model = pickle.load(f)
+
+    cat_cols = df.select_dtypes(['object']).columns
+    if ignore_categoricals:
+        df[cat_cols] = 0
+    else:
+        df[cat_cols] = df[cat_cols].apply(lambda x: x.astype('category').cat.codes)
+
+    if ycol.isdigit():
+        ycol = df.columns[int(ycol)]
+
+    y = df.loc[:, ycol].values
+    x = df.drop(ycol, axis=1).values
+    y_pred = model.predict(x)
+
+    if classify:
+        metric_names = 'accuracy_score matthews_corrcoef f1_score precision_score recall_score log_loss'.split()
+    else:
+        metric_names = 'r2_score explained_variance_score mean_absolute_error mean_squared_error'.split()
+
+    scores = {}
+    print('Average test metrics:')
+    scores_fname = "{}.test.scores".format(prefix)
+    with open(scores_fname, "w") as scores_file:
+        for m in metric_names:
+            try:
+                s = getattr(metrics, m)(y, y_pred)
+                scores[m] = s
+                print(' ', score_format(m, s))
+                scores_file.write(score_format(m, s, eol='\n'))
+            except Exception:
+                pass
+        scores_file.write('\nModel:\n{}\n\n'.format(model))
+
+    print()
+    return scores
+
+
+def train(model, x, y, features=None, classify=False, threads=-1, prefix='', name=None, save=False):
     verify_path(prefix)
     model, model_name = get_model(model, threads, classify=classify)
     model.fit(x, y)
-    if verbose:
-        train_score = model.score(x, y)
-        print('Train score = {:.3f}'.format(train_score))
     name = name or model_name
     if save:
         model_desc_fname = "{}.{}.description".format(prefix, name)
@@ -266,8 +304,7 @@ def train(model, x, y, features=None, classify=False, threads=-1, prefix='', nam
         return model_fname
 
 
-
-def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0):
+def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class_weight=None):
     verify_path(prefix)
     model, name = get_model(model, threads, classify=True, seed=seed)
 
@@ -282,6 +319,7 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0):
     for i, (train_index, test_index) in enumerate(splits):
         x_train, x_test = x[train_index], x[test_index]
         y_train, y_test = y[train_index], y[test_index]
+        model.set_params(class_weight=class_weight)
         model.fit(x_train, y_train)
         train_score = model.score(x_train, y_train)
         test_score = model.score(x_test, y_test)
@@ -318,16 +356,21 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0):
     accuracy_gain = accuracy - naive_accuracy
     print(' ', score_format('accuracy_gain', accuracy_gain, signed=True))
     scores_fname = "{}.{}.scores".format(prefix, name)
-    metric_names = 'accuracy_score f1_score precision_score recall_score log_loss'.split()
+    metric_names = 'accuracy_score matthews_corrcoef f1_score precision_score recall_score log_loss'.split()
     with open(scores_fname, "w") as scores_file:
         scores_file.write(score_format('accuracy_gain', accuracy_gain, signed=True, eol='\n'))
         for m in metric_names:
+            s = None
             try:
                 s = getattr(metrics, m)(tests, preds, average=average)
+            except Exception:
+                try:
+                    s = getattr(metrics, m)(tests, preds)
+                except Exception:
+                    pass
+            if s:
                 print(' ', score_format(m, s))
                 scores_file.write(score_format(m, s, eol='\n'))
-            except Exception:
-                pass
         if roc_auc_score:
             print(' ', score_format('roc_auc_score', roc_auc_score))
             scores_file.write(score_format('roc_auc_score', roc_auc_score, eol='\n'))
