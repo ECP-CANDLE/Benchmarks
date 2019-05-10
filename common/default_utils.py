@@ -610,6 +610,7 @@ def args_overwrite_config(args, config):
         params['rng_seed'] = DEFAULT_SEED
 
     if 'timeout' not in params:
+        print("Setting default timeout: " + str(DEFAULT_TIMEOUT))
         params['timeout'] = DEFAULT_TIMEOUT
 
 
