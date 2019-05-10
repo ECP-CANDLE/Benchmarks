@@ -51,7 +51,7 @@ def load_data(train_path, test_path, gParameters):
     df_y_train = df_train[:,0].astype('int')
     df_y_test = df_test[:,0].astype('int')
 
-    noise_level = gParameters['noise_level']
+    noise_level = float(gParameters['noise_level']) / 100.0
     print("flipping start")
     flips = 0
     import random
