@@ -55,12 +55,12 @@ def load_data(train_path, test_path, gParameters):
     print("flipping start")
     flips = 0
     import random
-    for i in range(0,df_train.shape[0]):
+    for i in range(0,df_y_train.shape[0]):
         if random.random() < noise_level:
             # print("flipping ", i)
             flips += 1
-            df_train[i,0] = int(not df_train[i,0])
-    print("flips: %i / %i" % (flips, df_train.shape[0]));
+            df_y_train[i] = int(not df_y_train[i])
+    print("flips: %i / %i" % (flips, df_y_train.shape[0]));
     print("flipping stop")
 
     Y_train = np_utils.to_categorical(df_y_train,gParameters['classes'])
@@ -206,9 +206,10 @@ def run(gParameters):
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
+    print('Test score:', score[0])
+    print('Test accuracy:', score[1])
+
     if False:
-        print('Test score:', score[0])
-        print('Test accuracy:', score[1])
         # serialize model to JSON
         model_json = model.to_json()
         with open("{}/{}.model.json".format(output_dir, model_name), "w") as json_file:
