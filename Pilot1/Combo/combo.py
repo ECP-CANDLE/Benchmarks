@@ -12,7 +12,7 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-import candle_keras as candle
+import candle
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ additional_definitions = [
 
 required = [ 'activation', 'batch_size', 'dense', 'dense_feature_layers', 'drop',
              'epochs', 'learning_rate', 'loss', 'optimizer', 'residual', 'rng_seed',
-             'save', 'scaling', 'feature_subsample', 'validation_split',
+             'save_path', 'scaling', 'feature_subsample', 'validation_split',
             'solr_root', 'timeout'
 	    ]
 

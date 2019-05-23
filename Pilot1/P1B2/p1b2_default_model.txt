@@ -16,5 +16,5 @@ penalty=0.00001
 validation_split=0.1
 rng_seed=2017
 initialization='glorot_uniform'
-output_dir='save'
+save_path='save'
 shuffle = True

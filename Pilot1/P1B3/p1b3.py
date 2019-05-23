@@ -27,14 +27,14 @@ sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-import candle_keras as candle
+import candle
 
 logger = logging.getLogger(__name__)
 
 # Number of data generator workers
 WORKERS = 1
 
-np.set_printoptions(threshold=np.nan)
+#np.set_printoptions(threshold=np.nan)
 
 class BenchmarkP1B3(candle.Benchmark):
 

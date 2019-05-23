@@ -30,18 +30,10 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-
 import combo
-# import p1_common
-# import p1_common_keras
-# from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
-import candle_keras as candle
-
-# import argparser
-# from datasets import NCI60
+import candle
 
 import NCI60
-# import combo
 
 
 logger = logging.getLogger(__name__)

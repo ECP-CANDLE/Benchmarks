@@ -23,7 +23,7 @@ sys.path.append(lib_path2)
 from keras import backend as K
 
 import p2b1 
-import candle_keras as candle
+import candle
 
 import p2b1_AE_models as AE_models
 

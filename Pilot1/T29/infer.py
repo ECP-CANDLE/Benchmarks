@@ -15,12 +15,12 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 
 # candle
 sys.path.append('/raid/brettin/Benchmarks/common')
-import candle_keras
+import candle
 
 # This needs to be fixed
 # candle
 def initialize_parameters():
-    t29_common = candle_keras.Benchmark(file_path, 't29_default_model.txt','keras',
+    t29_common = candle.Benchmark(file_path, 't29_default_model.txt','keras',
                             prog='t29res.py',desc='resnet')
 
     # Need a pointer to the docs showing what is provided
@@ -48,7 +48,7 @@ def initialize_parameters():
          'help':'Number of predictions to do on each sample.'}
     ]
     t29_common.additional_definitions = additional_definitions
-    gParameters = candle_keras.initialize_parameters(t29_common)
+    gParameters = candle.initialize_parameters(t29_common)
     return gParameters
 
 

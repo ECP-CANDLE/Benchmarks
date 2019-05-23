@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 #TIMEOUT=3600 # in sec; set this to -1 for no timeout 
 
 import nt3 as bmk
-import candle_keras as candle
+import candle
 
 def initialize_parameters():
 

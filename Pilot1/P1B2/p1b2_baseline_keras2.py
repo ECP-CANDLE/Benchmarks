@@ -15,7 +15,7 @@ from keras.regularizers import l2
 #import sys,os
 
 import p1b2
-import candle_keras as candle
+import candle
 
 def initialize_parameters():
 
@@ -34,7 +34,7 @@ def run(gParameters):
     
     # Construct extension to save model
     ext = p1b2.extension_from_parameters(gParameters, '.keras')
-    logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['output_dir']+ext+'.log'
+    logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['save_path']+ext+'.log'
     p1b2.logger.info('Params: {}'.format(gParameters))
 
     # Get default parameters for initialization and optimizer functions

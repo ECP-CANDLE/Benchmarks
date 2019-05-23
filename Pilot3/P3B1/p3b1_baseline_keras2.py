@@ -12,7 +12,7 @@ from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 from sklearn.metrics import f1_score
 
 import p3b1 as bmk
-import candle_keras as candle
+import candle
 
 def initialize_parameters():
 

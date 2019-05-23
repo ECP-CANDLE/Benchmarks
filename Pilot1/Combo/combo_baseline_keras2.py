@@ -34,7 +34,7 @@ import combo
 
 import NCI60
 import combo
-import candle_keras as candle
+import candle
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -525,18 +525,18 @@ def log_evaluation(metric_outputs, description='Comparing y_true and y_pred:'):
         logger.info('  {}: {:.4f}'.format(metric, value))
 
 
-def plot_history(out, history, metric='loss', title=None):
-    title = title or 'model {}'.format(metric)
-    val_metric = 'val_{}'.format(metric)
-    plt.figure(figsize=(8, 6))
-    plt.plot(history.history[metric], marker='o')
-    plt.plot(history.history[val_metric], marker='d')
-    plt.title(title)
-    plt.ylabel(metric)
-    plt.xlabel('epoch')
-    plt.legend(['train_{}'.format(metric), 'val_{}'.format(metric)], loc='upper center')
-    png = '{}.plot.{}.png'.format(out, metric)
-    plt.savefig(png, bbox_inches='tight')
+#def plot_history(out, history, metric='loss', title=None):
+#    title = title or 'model {}'.format(metric)
+#    val_metric = 'val_{}'.format(metric)
+#    plt.figure(figsize=(8, 6))
+#    plt.plot(history.history[metric], marker='o')
+#    plt.plot(history.history[val_metric], marker='d')
+#    plt.title(title)
+#    plt.ylabel(metric)
+#    plt.xlabel('epoch')
+#    plt.legend(['train_{}'.format(metric), 'val_{}'.format(metric)], loc='upper center')
+#    png = '{}.plot.{}.png'.format(out, metric)
+#    plt.savefig(png, bbox_inches='tight')
 
 
 class LoggingCallback(Callback):
@@ -666,8 +666,8 @@ def run(params):
     args = Struct(**params)
     set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
-    verify_path(args.save)
-    prefix = args.save + ext
+    verify_path(args.save_path)
+    prefix = args.save_path + ext
     logfile = args.logfile if args.logfile else prefix+'.log'
     set_up_logger(logfile, args.verbose)
     logger.info('Params: {}'.format(params))
@@ -695,7 +695,7 @@ def run(params):
 
     model = build_model(loader, args, verbose=True)
     model.summary()
-    # plot_model(model, to_file=prefix+'.model.png', show_shapes=True)
+    # candle.plot_model(model, to_file=prefix+'.model.png', show_shapes=True)
 
     if args.cp:
         model_json = model.to_json()
@@ -804,8 +804,8 @@ def run(params):
             # print('old_pred:', y_val_pred[:10])
             # print('new_pred:', new_pred[:10])
 
-        plot_history(prefix, history, 'loss')
-        plot_history(prefix, history, 'r2')
+        candle.plot_history(prefix, history, 'loss')
+        candle.plot_history(prefix, history, 'r2')
 
         if K.backend() == 'tensorflow':
             K.clear_session()

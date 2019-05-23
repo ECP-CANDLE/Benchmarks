@@ -23,7 +23,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 import uno as benchmark
-import candle_keras as candle
+import candle
 
 import uno_data
 from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
@@ -135,19 +135,19 @@ def log_evaluation(metric_outputs, description='Comparing y_true and y_pred:'):
         logger.info('  {}: {:.4f}'.format(metric, value))
 
 
-def plot_history(out, history, metric='loss', title=None):
-    title = title or 'model {}'.format(metric)
-    val_metric = 'val_{}'.format(metric)
-    plt.figure(figsize=(8, 6))
-    plt.plot(history.history[metric], marker='o')
-    plt.plot(history.history[val_metric], marker='d')
-    plt.title(title)
-    plt.ylabel(metric)
-    plt.xlabel('epoch')
-    plt.legend(['train_{}'.format(metric), 'val_{}'.format(metric)], loc='upper center')
-    png = '{}.plot.{}.png'.format(out, metric)
-    plt.savefig(png, bbox_inches='tight')
-
+#def plot_history(out, history, metric='loss', title=None):
+#    title = title or 'model {}'.format(metric)
+#    val_metric = 'val_{}'.format(metric)
+#    plt.figure(figsize=(8, 6))
+#    plt.plot(history.history[metric], marker='o')
+#    plt.plot(history.history[val_metric], marker='d')
+#    plt.title(title)
+#    plt.ylabel(metric)
+#    plt.xlabel('epoch')
+#    plt.legend(['train_{}'.format(metric), 'val_{}'.format(metric)], loc='upper center')
+#    png = '{}.plot.{}.png'.format(out, metric)
+#    plt.savefig(png, bbox_inches='tight')
+#
 
 class LoggingCallback(Callback):
     def __init__(self, print_fcn=print):
@@ -272,9 +272,9 @@ def run(params):
     args = Struct(**params)
     set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
-    verify_path(args.save)
-    prefix = args.save + ext
-    logfile = args.logfile if args.logfile else prefix + '.log'
+    verify_path(args.save_path)
+    prefix = args.save_path + ext
+    logfile = args.logfile if args.logfile else prefix+'.log'
     set_up_logger(logfile, args.verbose)
     logger.info('Params: {}'.format(params))
 
@@ -426,8 +426,8 @@ def run(params):
             train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
             val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
         else:
-            train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
-            val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
+            train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
+            val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
 
         df_val = val_gen.get_response(copy=True)
         y_val = df_val[target].values

@@ -22,6 +22,10 @@ from default_utils import set_up_logger
 
 from generic_utils import Progbar
 
+# import from viz_utils
+from viz_utils import plot_history
+from viz_utils import plot_scatter
+
 # import benchmark-dependent utils
 import sys
 if 'keras' in sys.modules:
