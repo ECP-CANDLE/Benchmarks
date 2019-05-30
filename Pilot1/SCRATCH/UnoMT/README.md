@@ -27,68 +27,136 @@ The default network structure is shown below:
 
 An example of the program output for training on NCI60 and valdiation on all other data sources is shown below:
 ```
-python3.6 ./launcher.py
-Training Arguments:
-{
-    "trn_src": "NCI60",
-    "val_srcs": [
-        "NCI60",
-        "CTRP",
-        "GDSC",
-        "CCLE",
-        "gCSI"
-    ],
-    "grth_scaling": "none",
-    "dscptr_scaling": "std",
-    "rnaseq_scaling": "std",
-    "dscptr_nan_threshold": 0.0,
-    "qed_scaling": "none",
-    "rnaseq_feature_usage": "source_scale",
-    "drug_feature_usage": "both",
-    "validation_ratio": 0.2,
-    "disjoint_drugs": false,
-    "disjoint_cells": true,
-    "gene_layer_dim": 1024,
-    "gene_latent_dim": 512,
-    "gene_num_layers": 2,
-    "drug_layer_dim": 4096,
-    "drug_latent_dim": 2048,
-    "drug_num_layers": 2,
-    "autoencoder_init": true,
-    "resp_layer_dim": 2048,
-    "resp_num_layers_per_block": 2,
-    "resp_num_blocks": 4,
-    "resp_num_layers": 2,
-    "resp_dropout": 0.0,
-    "resp_activation": "none",
-    "cl_clf_layer_dim": 256,
-    "cl_clf_num_layers": 2,
-    "drug_target_layer_dim": 512,
-    "drug_target_num_layers": 2,
-    "drug_qed_layer_dim": 512,
-    "drug_qed_num_layers": 2,
-    "drug_qed_activation": "sigmoid",
-    "resp_loss_func": "mse",
-    "resp_opt": "SGD",
-    "resp_lr": 1e-05,
-    "cl_clf_opt": "SGD",
-    "cl_clf_lr": 0.01,
-    "drug_target_opt": "SGD",
-    "drug_target_lr": 0.01,
-    "drug_qed_loss_func": "mse",
-    "drug_qed_opt": "SGD",
-    "drug_qed_lr": 0.01,
-    "resp_val_start_epoch": 0,
-    "early_stop_patience": 20,
-    "lr_decay_factor": 0.98,
-    "trn_batch_size": 32,
-    "val_batch_size": 256,
-    "max_num_batches": 1000,
-    "max_num_epochs": 1000,
-    "multi_gpu": false,
-    "no_cuda": false,
-    "rand_state": 0
-}
+python unoMT_baseline_pytorch.py --resp_val_start_epoch 2 --epochs 5
+Importing candle utils for pytorch
+Created unoMT benchmark
+Configuration file:  ./unoMT_default_model.txt
+{'autoencoder_init': True,
+ 'cl_clf_layer_dim': 256,
+ 'cl_clf_lr': 0.008,
+ 'cl_clf_num_layers': 2,
+ 'cl_clf_opt': 'SGD',
+ 'disjoint_cells': True,
+ 'disjoint_drugs': False,
+ 'drop': 0.1,
+ 'drug_feature_usage': 'both',
+ 'drug_latent_dim': 1024,
+ 'drug_layer_dim': 4096,
+ 'drug_num_layers': 2,
+ 'drug_qed_activation': 'sigmoid',
+ 'drug_qed_layer_dim': 1024,
+ 'drug_qed_loss_func': 'mse',
+ 'drug_qed_lr': 0.01,
+ 'drug_qed_num_layers': 2,
+ 'drug_qed_opt': 'SGD',
+ 'drug_target_layer_dim': 1024,
+ 'drug_target_lr': 0.002,
+ 'drug_target_num_layers': 2,
+ 'drug_target_opt': 'SGD',
+ 'dscptr_nan_threshold': 0.0,
+ 'dscptr_scaling': 'std',
+ 'early_stop_patience': 5,
+ 'epochs': 1000,
+ 'gene_latent_dim': 512,
+ 'gene_layer_dim': 1024,
+ 'gene_num_layers': 2,
+ 'grth_scaling': 'none',
+ 'l2_regularization': 1e-05,
+ 'lr_decay_factor': 0.98,
+ 'max_num_batches': 1000,
+ 'qed_scaling': 'none',
+ 'resp_activation': 'none',
+ 'resp_layer_dim': 2048,
+ 'resp_loss_func': 'mse',
+ 'resp_lr': 1e-05,
+ 'resp_num_blocks': 4,
+ 'resp_num_layers': 2,
+ 'resp_num_layers_per_block': 2,
+ 'resp_opt': 'SGD',
+ 'resp_val_start_epoch': 0,
+ 'rnaseq_feature_usage': 'combat',
+ 'rnaseq_scaling': 'std',
+ 'rng_seed': 0,
+ 'save_path': 'save/unoMT',
+ 'solr_root': '',
+ 'timeout': 3600,
+ 'train_sources': 'NCI60',
+ 'trn_batch_size': 32,
+ 'val_batch_size': 256,
+ 'val_sources': ['NCI60', 'CTRP', 'GDSC', 'CCLE', 'gCSI'],
+ 'val_split': 0.2}
+Params:
+{'autoencoder_init': True,
+ 'cl_clf_layer_dim': 256,
+ 'cl_clf_lr': 0.008,
+ 'cl_clf_num_layers': 2,
+ 'cl_clf_opt': 'SGD',
+ 'datatype': <class 'numpy.float32'>,
+ 'disjoint_cells': True,
+ 'disjoint_drugs': False,
+ 'drop': 0.1,
+ 'drug_feature_usage': 'both',
+ 'drug_latent_dim': 1024,
+ 'drug_layer_dim': 4096,
+ 'drug_num_layers': 2,
+ 'drug_qed_activation': 'sigmoid',
+ 'drug_qed_layer_dim': 1024,
+ 'drug_qed_loss_func': 'mse',
+ 'drug_qed_lr': 0.01,
+ 'drug_qed_num_layers': 2,
+ 'drug_qed_opt': 'SGD',
+ 'drug_target_layer_dim': 1024,
+ 'drug_target_lr': 0.002,
+ 'drug_target_num_layers': 2,
+ 'drug_target_opt': 'SGD',
+ 'dscptr_nan_threshold': 0.0,
+ 'dscptr_scaling': 'std',
+ 'early_stop_patience': 5,
+ 'epochs': 5,
+ 'experiment_id': 'EXP000',
+ 'gene_latent_dim': 512,
+ 'gene_layer_dim': 1024,
+ 'gene_num_layers': 2,
+ 'gpus': [],
+ 'grth_scaling': 'none',
+ 'l2_regularization': 1e-05,
+ 'logfile': None,
+ 'lr_decay_factor': 0.98,
+ 'max_num_batches': 1000,
+ 'multi_gpu': False,
+ 'no_cuda': False,
+ 'output_dir': '/home/jamal/Code/ECP/CANDLE/Benchmarks/Pilot1/UnoMT/Output/EXP000/RUN000',
+ 'qed_scaling': 'none',
+ 'resp_activation': 'none',
+ 'resp_layer_dim': 2048,
+ 'resp_loss_func': 'mse',
+ 'resp_lr': 1e-05,
+ 'resp_num_blocks': 4,
+ 'resp_num_layers': 2,
+ 'resp_num_layers_per_block': 2,
+ 'resp_opt': 'SGD',
+ 'resp_val_start_epoch': 2,
+ 'rnaseq_feature_usage': 'combat',
+ 'rnaseq_scaling': 'std',
+ 'rng_seed': 0,
+ 'run_id': 'RUN000',
+ 'save_path': 'save/unoMT',
+ 'shuffle': False,
+ 'solr_root': '',
+ 'timeout': 3600,
+ 'train_bool': True,
+ 'train_sources': 'NCI60',
+ 'trn_batch_size': 32,
+ 'val_batch_size': 256,
+ 'val_sources': ['NCI60', 'CTRP', 'GDSC', 'CCLE', 'gCSI'],
+ 'val_split': 0.2,
+ 'verbose': None}
+Parameters initialized
+Failed to split NCI60 cells in stratified way. Splitting randomly ...
+Failed to split NCI60 cells in stratified way. Splitting randomly ...
+Failed to split CCLE cells in stratified way. Splitting randomly ...
+Failed to split CCLE drugs stratified on growth and correlation. Splitting solely on avg growth ...
+Failed to split gCSI drugs stratified on growth and correlation. Splitting solely on avg growth ...
 RespNet(
   (_RespNet__gene_encoder): Sequential(
     (dense_0): Linear(in_features=942, out_features=1024, bias=True)
@@ -146,58 +214,106 @@ RespNet(
     (dense_out): Linear(in_features=2048, out_features=1, bias=True)
   )
 )
+Data sizes:
+Train:
+Data set: NCI60 Size: 882873
+Validation:
+Data set: NCI60 Size: 260286
+Data set: CTRP Size: 1040021
+Data set: GDSC Size: 235812
+Data set: CCLE Size: 17510
+Data set: gCSI Size: 10323
 ================================================================================
 Training Epoch   1:
-	Drug Weighted QED Regression Loss: 0.055694
-	Drug Response Regression Loss:  1871.18
-
-Validation Results:
-	Cell Line Classification: 
-		Category Accuracy: 		98.98%; 
-		Site Accuracy: 			80.95%; 
-		Type Accuracy: 			82.76%
-	Drug Target Family Classification Accuracy:  1.85%
-	Drug Weighted QED Regression
-		MSE: 0.028476 	 MAE: 0.137004 	 R2: +0.17
-	Drug Response Regression:
-		NCI60  	 MSE:  1482.07 	 MAE:    27.89 	 R2: +0.53
-		CTRP   	 MSE:  2554.45 	 MAE:    38.62 	 R2: +0.27
-		GDSC   	 MSE:  2955.78 	 MAE:    42.73 	 R2: +0.11
-		CCLE   	 MSE:  2799.06 	 MAE:    42.44 	 R2: +0.31
-		gCSI   	 MSE:  2601.50 	 MAE:    38.44 	 R2: +0.35
-Epoch Running Time: 110.0 Seconds.
+	Drug Weighted QED Regression Loss: 0.022274
+	Drug Response Regression Loss:  1881.89
+Epoch Running Time: 13.2 Seconds.
 ================================================================================
 Training Epoch   2:
-    ...
-    ...
-
-Program Running Time: 8349.6 Seconds.
+	Drug Weighted QED Regression Loss: 0.019416
+	Drug Response Regression Loss:  1348.13
+Epoch Running Time: 12.9 Seconds.
+================================================================================
+Training Epoch   3:
+	Drug Weighted QED Regression Loss: 0.015868
+	Drug Response Regression Loss:  1123.27
+	Cell Line Classification: 
+		Category Accuracy: 		99.01%; 
+		Site Accuracy: 			94.11%; 
+		Type Accuracy: 			94.18%
+	Drug Target Family Classification Accuracy: 44.44%
+	Drug Weighted QED Regression
+		MSE: 0.018845 	 MAE: 0.111807 	 R2: +0.45
+	Drug Response Regression:
+		NCI60  	 MSE:   973.04 	 MAE:    22.18 	 R2: +0.69
+		CTRP   	 MSE:  2404.64 	 MAE:    34.04 	 R2: +0.32
+		GDSC   	 MSE:  2717.81 	 MAE:    36.53 	 R2: +0.19
+		CCLE   	 MSE:  2518.47 	 MAE:    36.60 	 R2: +0.38
+		gCSI   	 MSE:  2752.33 	 MAE:    36.97 	 R2: +0.35
+Epoch Running Time: 54.6 Seconds.
+================================================================================
+Training Epoch   4:
+	Drug Weighted QED Regression Loss: 0.014096
+	Drug Response Regression Loss:   933.27
+	Cell Line Classification: 
+		Category Accuracy: 		99.34%; 
+		Site Accuracy: 			96.12%; 
+		Type Accuracy: 			96.18%
+	Drug Target Family Classification Accuracy: 44.44%
+	Drug Weighted QED Regression
+		MSE: 0.018467 	 MAE: 0.110287 	 R2: +0.46
+	Drug Response Regression:
+		NCI60  	 MSE:   844.51 	 MAE:    20.41 	 R2: +0.73
+		CTRP   	 MSE:  2314.19 	 MAE:    33.76 	 R2: +0.35
+		GDSC   	 MSE:  2747.73 	 MAE:    36.65 	 R2: +0.18
+		CCLE   	 MSE:  2482.03 	 MAE:    35.89 	 R2: +0.39
+		gCSI   	 MSE:  2665.35 	 MAE:    36.27 	 R2: +0.37
+Epoch Running Time: 54.9 Seconds.
+================================================================================
+Training Epoch   5:
+	Drug Weighted QED Regression Loss: 0.013514
+	Drug Response Regression Loss:   846.06
+	Cell Line Classification: 
+		Category Accuracy: 		99.38%; 
+		Site Accuracy: 			95.89%; 
+		Type Accuracy: 			95.30%
+	Drug Target Family Classification Accuracy: 44.44%
+	Drug Weighted QED Regression
+		MSE: 0.017026 	 MAE: 0.106697 	 R2: +0.50
+	Drug Response Regression:
+		NCI60  	 MSE:   835.82 	 MAE:    21.33 	 R2: +0.74
+		CTRP   	 MSE:  2653.04 	 MAE:    37.98 	 R2: +0.25
+		GDSC   	 MSE:  2892.86 	 MAE:    39.76 	 R2: +0.13
+		CCLE   	 MSE:  2412.75 	 MAE:    36.82 	 R2: +0.41
+		gCSI   	 MSE:  2888.99 	 MAE:    38.70 	 R2: +0.32
+Epoch Running Time: 55.5 Seconds.
+Program Running Time: 191.1 Seconds.
 ================================================================================
 Overall Validation Results:
 
 	Best Results from Different Models (Epochs):
-		Cell Line Categories     Best Accuracy: 99.474% (Epoch =   5)
-		Cell Line Sites          Best Accuracy: 97.401% (Epoch =  60)
-		Cell Line Types          Best Accuracy: 97.368% (Epoch =  40)
-		Drug Target Family 	 Best Accuracy: 66.667% (Epoch =  23)
-		Drug Weighted QED 	 Best R2 Score: +0.7422 (Epoch =  59, MSE = 0.008837, MAE = 0.069400)
-		NCI60  	 Best R2 Score: +0.8107 (Epoch =  56, MSE =   601.18, MAE =  16.57)
-		CTRP   	 Best R2 Score: +0.3945 (Epoch =  37, MSE =  2127.28, MAE =  31.44)
-		GDSC   	 Best R2 Score: +0.2448 (Epoch =  22, MSE =  2506.03, MAE =  35.55)
-		CCLE   	 Best R2 Score: +0.4729 (Epoch =   4, MSE =  2153.30, MAE =  33.63)
-		gCSI   	 Best R2 Score: +0.4512 (Epoch =  31, MSE =  2203.04, MAE =  32.63)
+		Cell Line Categories     Best Accuracy: 99.375% (Epoch =   5)
+		Cell Line Sites          Best Accuracy: 96.118% (Epoch =   4)
+		Cell Line Types          Best Accuracy: 96.184% (Epoch =   4)
+		Drug Target Family 	 Best Accuracy: 44.444% (Epoch =   3)
+		Drug Weighted QED 	 Best R2 Score: +0.5034 (Epoch =   5, MSE = 0.017026, MAE = 0.106697)
+		NCI60  	 Best R2 Score: +0.7369 (Epoch =   5, MSE =   835.82, MAE =  21.33)
+		CTRP   	 Best R2 Score: +0.3469 (Epoch =   4, MSE =  2314.19, MAE =  33.76)
+		GDSC   	 Best R2 Score: +0.1852 (Epoch =   3, MSE =  2717.81, MAE =  36.53)
+		CCLE   	 Best R2 Score: +0.4094 (Epoch =   5, MSE =  2412.75, MAE =  36.82)
+		gCSI   	 Best R2 Score: +0.3693 (Epoch =   4, MSE =  2665.35, MAE =  36.27)
 
-	Best Results from the Same Model (Epoch =  22):
-		Cell Line Categories     Accuracy: 99.408%
-		Cell Line Sites          Accuracy: 97.138%
-		Cell Line Types          Accuracy: 97.039%
-		Drug Target Family 	 Accuracy: 57.407% 
-		Drug Weighted QED 	 R2 Score: +0.6033 (MSE = 0.013601, MAE = 0.093341)
-		NCI60  	 R2 Score: +0.7885 (MSE =   672.00, MAE =  17.89)
-		CTRP   	 R2 Score: +0.3841 (MSE =  2163.66, MAE =  32.28)
-		GDSC   	 R2 Score: +0.2448 (MSE =  2506.03, MAE =  35.55)
-		CCLE   	 R2 Score: +0.4653 (MSE =  2184.62, MAE =  34.12)
-		gCSI   	 R2 Score: +0.4271 (MSE =  2299.59, MAE =  32.93)
+	Best Results from the Same Model (Epoch =   5):
+		Cell Line Categories     Accuracy: 99.375%
+		Cell Line Sites          Accuracy: 95.888%
+		Cell Line Types          Accuracy: 95.296%
+		Drug Target Family 	 Accuracy: 44.444% 
+		Drug Weighted QED 	 R2 Score: +0.5034 (MSE = 0.017026, MAE = 0.106697)
+		NCI60  	 R2 Score: +0.7369 (MSE =   835.82, MAE =  21.33)
+		CTRP   	 R2 Score: +0.2513 (MSE =  2653.04, MAE =  37.98)
+		GDSC   	 R2 Score: +0.1327 (MSE =  2892.86, MAE =  39.76)
+		CCLE   	 R2 Score: +0.4094 (MSE =  2412.75, MAE =  36.82)
+		gCSI   	 R2 Score: +0.3164 (MSE =  2888.99, MAE =  38.70)
 ```
 
 For default hyper parameters, the transfer learning matrix results are shown below:
