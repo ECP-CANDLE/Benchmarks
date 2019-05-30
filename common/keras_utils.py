@@ -6,6 +6,7 @@ from keras import optimizers
 from keras import initializers
 
 from keras.layers import Dropout
+from keras.callbacks import Callback
 from keras.utils import get_custom_objects
 from keras.metrics import binary_crossentropy, mean_squared_error
 
@@ -35,6 +36,11 @@ def set_parallelism_threads():
 
 def set_seed(seed):
     """ Set the random number seed to the desired value
+
+        Parameters
+        ----------
+        seed : integer
+            Random number seed.
     """
 
     set_seed_defaultUtils(seed)
@@ -67,6 +73,12 @@ def build_optimizer(type, lr, kerasDefaults):
 
             Options recognized: 'sgd', 'rmsprop', 'adagrad', adadelta', 'adam'
             See the Keras documentation for a full description of the options
+
+        lr : float
+            Learning rate
+
+        kerasDefaults : list
+            List of default parameter values to ensure consistency between frameworks
 
         Returns
         ----------
@@ -125,8 +137,8 @@ def build_optimizer(type, lr, kerasDefaults):
 
 
 def build_initializer(type, kerasDefaults, seed=None, constant=0.):
-    """ Set the initializer to the appropriate Keras initializer function 
-        based on the input string and learning rate. Other required values 
+    """ Set the initializer to the appropriate Keras initializer function
+        based on the input string and learning rate. Other required values
         are set to the Keras default values
 
         Parameters
@@ -134,12 +146,21 @@ def build_initializer(type, kerasDefaults, seed=None, constant=0.):
         type : string
             String to choose the initializer
 
-            Options recognized: 'constant', 'uniform', 'normal', 
+            Options recognized: 'constant', 'uniform', 'normal',
             'glorot_uniform', 'lecun_uniform', 'he_normal'
 
             See the Keras documentation for a full description of the options
 
-        Returns
+        kerasDefaults : list
+            List of default parameter values to ensure consistency between frameworks
+
+        seed : integer
+            Random number seed
+
+        constant : float
+            Constant value (for the constant initializer only)
+
+        Return
         ----------
         The appropriate Keras initializer function
     """
@@ -212,3 +233,13 @@ class PermanentDropout(Dropout):
 
 def register_permanent_dropout():
     get_custom_objects()['PermanentDropout'] = PermanentDropout
+
+
+class LoggingCallback(Callback):
+    def __init__(self, print_fcn=print):
+        Callback.__init__(self)
+        self.print_fcn = print_fcn
+
+    def on_epoch_end(self, epoch, logs={}):
+        msg = "[Epoch: %i] %s" % (epoch, ", ".join("%s: %f" % (k, v) for k, v in sorted(logs.items())))
+        self.print_fcn(msg)

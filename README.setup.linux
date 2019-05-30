@@ -15,14 +15,14 @@ chmod u+x ./Anaconda3-5.1.0-Linux-x86_64.sh
 export PATH=$HOME/anaconda3/bin:$PATH
 
 # Install additonal modules not shipped with Anaconda
-conda install -c conda-forge tensorflow
-conda install -c anaconda hdf5=1.8.17
-conda install -c anaconda theano
-conda install -c conda-forge keras=2
-conda install -c anaconda pandas
-conda install -c anaconda scikit-learn 
-conda install -c anaconda matplotlib
----conda install -c conda-forge pygpu
+conda install -y -c conda-forge tensorflow
+conda install -y -c anaconda hdf5=1.8.17
+conda install -y -c anaconda theano
+conda install -y -c conda-forge keras=2
+conda install -y -c anaconda pandas
+conda install -y -c anaconda scikit-learn 
+conda install -y -c anaconda matplotlib
+conda install -y -c conda-forge pygpu
 
 # Install additional modules for Pilot2 benchmarks
 conda install -c conda-forge opencv
