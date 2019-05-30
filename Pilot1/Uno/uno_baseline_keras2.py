@@ -201,9 +201,16 @@ def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
     model = Model(x_input, h, name=name)
     return model
 
-class SimpleWeightSaver(Callback):
+class SimpleWeightSaver(Callback):    
+
     def __init__(self, fname):
         self.fname = fname
+
+    def set_model(self, model):
+        if isinstance(model.layers[-2], Model):
+            self.model = model.layers[-2]
+        else:
+            self.model = model
 
     def on_train_end(self, logs={}):
         self.model.save_weights(self.fname)
@@ -402,6 +409,7 @@ def run(params):
         if len(args.gpus) > 1:
             from keras.utils import multi_gpu_model
             gpu_count = len(args.gpus)
+            logger.info("Multi GPU with {} gpus".format(gpu_count))
             model = multi_gpu_model(template_model, cpu_merge=False, gpus=gpu_count)
         else:
             model = template_model
@@ -410,6 +418,7 @@ def run(params):
         base_lr = args.base_lr or K.get_value(optimizer.lr)
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
+
 
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 
