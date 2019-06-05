@@ -955,7 +955,7 @@ class DataFeeder(keras.utils.Sequence):
         # 4 inputs for single drug model (cell, dose1, descriptor, fingerprint)
         # 7 inputs for drug pair model (cell, dose1, dose1, dr1.descriptor, dr1.fingerprint, dr2.descriptor, dr2.fingerprint)
         self.input_size = 4 if self.single else 7
-        self.input_size = 3 if agg_dose else self.input_size
+        self.input_size = 2 if agg_dose else self.input_size
 
         self.store = pd.HDFStore(filename, mode='r')
         y = self.store.select('y_{}'.format(self.partition))
@@ -973,7 +973,7 @@ class DataFeeder(keras.utils.Sequence):
         start = self.index_map[idx] * self.batch_size
         stop = (self.index_map[idx] + 1) * self.batch_size
         x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
-        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop, columns=[self.target])
+        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop)[self.target]
         return x, y
 
     def reset(self):
@@ -982,8 +982,12 @@ class DataFeeder(keras.utils.Sequence):
         pass
 
     def get_response(self, copy=False):
-        self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
-        df = self.store.get('y_{}'.format(self.partition)).iloc[self.index,:]
+        if self.shuffle:
+            self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
+            df = self.store.get('y_{}'.format(self.partition)).iloc[self.index,:]
+        else:
+            df = self.store.get('y_{}'.format(self.partition))
+
         if self.agg_dose is None:
             df['Dose1'] = self.store.get('x_{}_0'.format(self.partition)).iloc[self.index,:]
             if not self.single:

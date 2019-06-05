@@ -444,7 +444,7 @@ def run(params):
         if args.tb:
             callbacks.append(tensorboard)
         if args.save_weights:
-            callbacks.append(SimpleWeightSaver(args.save_path + '/' + args.save_weights))
+            callbacks.append(MultiGPUCheckpoint(args.save_weights))
 
         if args.use_exported_data is not None:
             train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
