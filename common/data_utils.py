@@ -185,7 +185,7 @@ def drop_impute_and_scale_dataframe(df, scaling='std', imputing='mean', dropna='
 #        imputer = SimpleImputer(strategy=imputing)
         # Next line is from conditional import. axis=0 is default
         # in old version so it is not necessary.
-        imputer = Imputer(strategy=imputing, copy=False)
+        imputer = Imputer(strategy=imputing)
         mat = imputer.fit_transform(df.values)
 
     if scaling is None or scaling.lower() == 'none':
