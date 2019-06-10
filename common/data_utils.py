@@ -3,8 +3,15 @@ from __future__ import absolute_import
 import numpy as np
 import pandas as pd
 
+## Adding conditional import for compatibility between
+## sklearn versions
+## The second commented line corresponds to a more recent version
 #from sklearn.preprocessing import Imputer
-from sklearn.impute import SimpleImputer
+#from sklearn.impute import SimpleImputer
+try:
+    from sklearn.impute import SimpleImputer as Imputer
+except ImportError:
+    from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 from default_utils import DEFAULT_SEED
@@ -127,7 +134,10 @@ def impute_and_scale_array(mat, scaling=None):
     """
     
 #    imputer = Imputer(strategy='mean', axis=0, copy=False)
-    imputer = SimpleImputer(strategy='mean', copy=False)
+#    imputer = SimpleImputer(strategy='mean', copy=False)
+    # Next line is from conditional import. axis=0 is default
+    # in old version so it is not necessary.
+    imputer = Imputer(strategy='mean', copy=False)
     imputer.fit_transform(mat)
     
     return scale_array(mat, scaling)
@@ -172,7 +182,10 @@ def drop_impute_and_scale_dataframe(df, scaling='std', imputing='mean', dropna='
         mat = df.values
     else:
 #        imputer = Imputer(strategy=imputing, axis=0)
-        imputer = SimpleImputer(strategy=imputing)
+#        imputer = SimpleImputer(strategy=imputing)
+        # Next line is from conditional import. axis=0 is default
+        # in old version so it is not necessary.
+        imputer = Imputer(strategy='mean', copy=False)
         mat = imputer.fit_transform(df.values)
 
     if scaling is None or scaling.lower() == 'none':
