@@ -3,7 +3,8 @@ from __future__ import absolute_import
 import numpy as np
 import pandas as pd
 
-from sklearn.preprocessing import Imputer
+#from sklearn.preprocessing import Imputer
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 from default_utils import DEFAULT_SEED
@@ -125,12 +126,161 @@ def impute_and_scale_array(mat, scaling=None):
         it returns the imputed numpy array.
     """
     
-    imputer = Imputer(strategy='mean', axis=0, copy=False)
+#    imputer = Imputer(strategy='mean', axis=0, copy=False)
+    imputer = SimpleImputer(strategy='mean', copy=False)
     imputer.fit_transform(mat)
-    #mat = imputer.fit_transform(mat)
     
     return scale_array(mat, scaling)
 
+
+def drop_impute_and_scale_dataframe(df, scaling='std', imputing='mean', dropna='all'):
+    """Impute missing values with mean and scale data included in pandas dataframe.
+
+    Parameters
+    ----------
+    df : pandas dataframe
+        dataframe to process
+    scaling : string
+        String describing type of scaling to apply.
+        'maxabs' [-1,1], 'minmax' [0,1], 'std', or None, optional
+        (Default 'std')
+    imputing : string
+        String describing type of imputation to apply.
+        'mean' replace missing values with mean value along the column,
+        'median' replace missing values with median value along the column,
+        'most_frequent' replace missing values with most frequent value along column
+        (Default: 'mean').
+    dropna : string
+        String describing strategy for handling missing values.
+        'all' if all values are NA, drop that column.
+        'any' if any NA values are present, dropt that column.
+        (Default: 'all').
+
+    Return
+    ----------
+    Returns the data frame after handling missing values and scaling.
+
+    """
+
+    if dropna:
+        df = df.dropna(axis=1, how=dropna)
+    else:
+        empty_cols = df.columns[df.notnull().sum() == 0]
+        df[empty_cols] = 0
+
+    if imputing is None or imputing.lower() == 'none':
+        mat = df.values
+    else:
+#        imputer = Imputer(strategy=imputing, axis=0)
+        imputer = SimpleImputer(strategy=imputing)
+        mat = imputer.fit_transform(df.values)
+
+    if scaling is None or scaling.lower() == 'none':
+        return pd.DataFrame(mat, columns=df.columns)
+
+    if scaling == 'maxabs':
+        scaler = MaxAbsScaler()
+    elif scaling == 'minmax':
+        scaler = MinMaxScaler()
+    else:
+        scaler = StandardScaler()
+
+    mat = scaler.fit_transform(mat)
+    df = pd.DataFrame(mat, columns=df.columns)
+
+    return df
+
+
+def discretize_dataframe(df, col, bins=2, cutoffs=None):
+    """Discretize values of given column in pandas dataframe.
+
+    Parameters
+    ----------
+    df : pandas dataframe
+        dataframe to process.
+    col : int
+        Index of column to bin.
+    bins : int
+        Number of bins for distributing column values.
+    cutoffs : list
+        List of bin limits.
+        If None, the limits are computed as percentiles.
+        (Default: None).
+
+    Return
+    ----------
+    Returns the data frame with the values of the specified column binned, i.e. the values
+    are replaced by the associated bin number.
+
+    """
+
+    y = df[col]
+    thresholds = cutoffs
+    if thresholds is None:
+        percentiles = [100 / bins * (i + 1) for i in range(bins - 1)]
+        thresholds = [np.percentile(y, x) for x in percentiles]
+    classes = np.digitize(y, thresholds)
+    df[col] = classes
+    
+    return df
+
+
+def discretize_array(y, bins=5):
+    """Discretize values of given array.
+
+    Parameters
+    ----------
+    y : numpy array
+        array to discretize.
+    bins : int
+        Number of bins for distributing column values.
+
+    Return
+    ----------
+    Returns an array with the bin number associated to the values in the
+    original array.
+
+    """
+
+    percentiles = [100 / bins * (i + 1) for i in range(bins - 1)]
+    thresholds = [np.percentile(y, x) for x in percentiles]
+    classes = np.digitize(y, thresholds)
+    return classes
+
+
+
+def lookup(df, query, ret, keys, match='match'):
+    """Dataframe lookup.
+
+    Parameters
+    ----------
+    df : pandas dataframe
+        dataframe for retrieving values.
+    query : string
+        String for searching.
+    ret : int/string or list
+        Names or indices of columns to be returned.
+    keys : list
+        List of strings or integers specifying the names or
+        indices of columns to look into.
+    match : string
+        String describing strategy for matching keys to query.
+
+    Return
+    ----------
+    Returns a list of the values in the dataframe whose columns match
+    the specified query and have been selected to be returned.
+
+    """
+
+    mask = pd.Series(False, index=range(df.shape[0]))
+    for key in keys:
+        if match == 'contains':
+            mask |= df[key].str.contains(query.upper(), case=False)
+        else:
+            mask |= (df[key].str.upper() == query.upper())
+
+    return list(set(df[mask][ret].values.flatten().tolist()))
 
 
 def load_X_data(train_file, test_file,
