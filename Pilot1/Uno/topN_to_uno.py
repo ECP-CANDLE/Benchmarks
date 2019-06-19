@@ -24,7 +24,7 @@ def read_plan(filename, node):
         if node in plan:
             return plan[node]
         else:
-            raise Exception('Node index {} was not found in plan file')
+            raise Exception('Node index "{}" was not found in plan file'.format(node))
 
 
 def build_masks(args, df):
