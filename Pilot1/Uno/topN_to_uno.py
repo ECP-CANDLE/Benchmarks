@@ -37,26 +37,6 @@ def read_plan(filename, node):
             raise Exception('Node index "{}" was not found in plan file'.format(node))
 
 
-# def build_masks(args, df):
-#     if args.node is None:
-#        print('node is None. Generate Random split')
-#        mask = training_mask(df)
-#        return mask, ~mask
-#
-#    plan = read_plan(args.plan, args.node)
-#    mask = {}
-#    for partition in ['train', 'val']:
-#        _mask = df['Sample'] is None
-#        for i, element in enumerate(plan[partition]):
-#            cl_filter = element['cell']
-#            dr_filter = element['drug']
-#            __mask = df['Sample'].isin(cl_filter) & df['Drug1'].isin(dr_filter)
-#            _mask = _mask | __mask
-#        mask[partition] = _mask
-#
-#    return mask['train'], mask['val']
-
-
 def build_masks(args, df):
     if args.node is None:
         print('node is None. Generate Random split')
