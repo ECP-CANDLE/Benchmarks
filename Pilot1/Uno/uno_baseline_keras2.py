@@ -201,6 +201,21 @@ def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
     model = Model(x_input, h, name=name)
     return model
 
+class SimpleWeightSaver(Callback):    
+
+    def __init__(self, fname):
+        self.fname = fname
+
+    def set_model(self, model):
+        if isinstance(model.layers[-2], Model):
+            self.model = model.layers[-2]
+        else:
+            self.model = model
+
+    def on_train_end(self, logs={}):
+        self.model.save_weights(self.fname)
+    
+
 
 def build_model(loader, args, permanent_dropout=True, silent=False):
     input_models = {}
@@ -388,17 +403,24 @@ def run(params):
             logger.info('Cross validation fold {}/{}:'.format(fold + 1, cv))
             cv_ext = '.cv{}'.format(fold + 1)
 
+        template_model = build_model(loader, args, silent=True)
+        if args.initial_weights:
+            logger.info("Loading weights from {}".format(args.initial_weights))
+            template_model.load_weights(args.initial_weights)
+
         if len(args.gpus) > 1:
             from keras.utils import multi_gpu_model
             gpu_count = len(args.gpus)
-            model = multi_gpu_model(build_model(loader, args, silent=True), cpu_merge=False, gpus=gpu_count)
+            logger.info("Multi GPU with {} gpus".format(gpu_count))
+            model = multi_gpu_model(template_model, cpu_merge=False, gpus=gpu_count)
         else:
-            model = build_model(loader, args, silent=True)
+            model = template_model
 
         optimizer = optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
         base_lr = args.base_lr or K.get_value(optimizer.lr)
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
+
 
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 
@@ -413,7 +435,7 @@ def run(params):
         checkpointer = MultiGPUCheckpoint(prefix + cv_ext + '.model.h5', save_best_only=True)
         tensorboard = TensorBoard(log_dir="tb/{}{}{}".format(args.tb_prefix, ext, cv_ext))
         history_logger = LoggingCallback(logger.debug)
-
+            
         callbacks = [candle_monitor, timeout_monitor, history_logger]
         if args.reduce_lr:
             callbacks.append(reduce_lr)
@@ -423,13 +445,15 @@ def run(params):
             callbacks.append(checkpointer)
         if args.tb:
             callbacks.append(tensorboard)
+        if args.save_weights:
+            callbacks.append(SimpleWeightSaver(args.save_path + '/' + args.save_weights))
 
         if args.use_exported_data is not None:
             train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
             val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
         else:
-            train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
-            val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle)
+            train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
+            val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
 
         df_val = val_gen.get_response(copy=True)
         y_val = df_val[target].values

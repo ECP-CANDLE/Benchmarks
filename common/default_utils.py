@@ -443,7 +443,7 @@ def get_common_parser(parser):
                         default=argparse.SUPPRESS,
                         help="evaluate model (use it for inference)")
 
-    parser.add_argument("--timeout", dest='timeout', action="store",
+    parser.add_argument("--timeout", dest='timeout', type=int, action="store",
                     default=argparse.SUPPRESS,
                     help="seconds allowed to train model (default: no timeout)")
 

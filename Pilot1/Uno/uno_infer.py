@@ -8,7 +8,7 @@ import keras
 
 from uno_data import DataFeeder
 from uno_baseline_keras2 import evaluate_prediction
-import candle_keras
+import candle
 
 
 def log_evaluation(metric_outputs, description='Comparing y_true and y_pred:'):
@@ -34,7 +34,7 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    candle_keras.register_permanent_dropout()
+    candle.register_permanent_dropout()
     if args.model_file.split('.')[-1] == 'json':
         with open(args.model_file, 'r') as model_file:
             model_json = model_file.read()

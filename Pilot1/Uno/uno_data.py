@@ -997,10 +997,11 @@ class DataFeeder(keras.utils.Sequence):
 class CombinedDataGenerator(keras.utils.Sequence):
     """Generate training, validation or testing batches from loaded data
     """
-    def __init__(self, data, partition='train', fold=0, source=None, batch_size=32, shuffle=True, rank=0, total_ranks=1):
+    def __init__(self, data, partition='train', fold=0, source=None, batch_size=32, shuffle=True, single=False, rank=0, total_ranks=1):
         self.data = data
         self.partition = partition
         self.batch_size = batch_size
+        self.single = single
 
         if partition == 'train':
             index = data.train_indexes[fold]
@@ -1031,7 +1032,7 @@ class CombinedDataGenerator(keras.utils.Sequence):
 
     def __getitem__(self, idx):
         shard = self.index[idx * self.batch_size:(idx + 1) * self.batch_size]
-        x_list, y = self.get_slice(self.batch_size, partial_index=shard)
+        x_list, y = self.get_slice(self.batch_size, single=self.single, partial_index=shard)
         return x_list, y
 
     def reset(self):
