@@ -1,4 +1,5 @@
 import argparse
+import os
 import json
 import pandas as pd
 import numpy as np
@@ -36,8 +37,8 @@ def build_masks(args, df):
     for partition in ['train', 'val']:
         _mask = df['Sample'] == None
         for i, element in enumerate(plan[partition]):
-            cl_filter = element['CELL']
-            dr_filter = element['DRUG']
+            cl_filter = element['cell']
+            dr_filter = element['drug']
             __mask = df['Sample'].isin(cl_filter) & df['Drug1'].isin(dr_filter)
             _mask = _mask | __mask
         mask[partition] = _mask
@@ -49,7 +50,7 @@ def training_mask(df):
     return np.random.rand(len(df)) < 0.8
 
 
-def read_dataframe(args):
+def read_dataframe_from_csv(args):
     df = pd.read_csv(args.dataframe_from, low_memory=False, na_values='na').fillna(0)
     df.rename(columns={'SAMPLE': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
     df_y = df[['AUC', 'Sample', 'Drug1']]
@@ -64,8 +65,28 @@ def read_dataframe(args):
     return df_y, df_cl, df_dd
 
 
+def read_dataframe_from_hdf(args):
+    store = pd.HDFStore(args.dataframe_from, 'r')
+    df = store.get('df')
+    df.rename(columns={'CELL': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
+    df_y = df[['AUC', 'Sample', 'Drug1']]
+
+    cols = df.columns.to_list()
+    cl_columns = list(filter(lambda x: x.startswith('GE_'), cols))
+    dd_columns = list(filter(lambda x: x.startswith('DD_'), cols))
+
+    df_cl = df.loc[:, cl_columns]
+    df_dd = df.loc[:, dd_columns]
+
+    return df_y, df_cl, df_dd
+
+
 def build_dataframe(args):
-    df_y, df_cl, df_dd = read_dataframe(args)
+    _, ext = os.path.splitext(args.dataframe_from)
+    if ext == '.h5' or ext == '.hdf5':
+        df_y, df_cl, df_dd = read_dataframe_from_hdf(args)
+    else:
+        df_y, df_cl, df_dd = read_dataframe_from_csv(args)
 
     # mask = training_mask(df_y)
     train_mask, val_mask = build_masks(args, df_y)
