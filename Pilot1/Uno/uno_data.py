@@ -622,6 +622,7 @@ class CombinedDataLoader(object):
         self.seed = seed
 
     def load_from_cache(self, cache, params):
+        """ NOTE: How does this function return an error? (False?) -Wozniak """
         param_fname = '{}.params.json'.format(cache)
         if not os.path.isfile(param_fname):
             logger.warning('Cache parameter file does not exist: %s', param_fname)
@@ -648,6 +649,7 @@ class CombinedDataLoader(object):
             self.__dict__.update(obj.__dict__)
             logger.info('Loaded data from cache: %s', fname)
             return True
+        # NOTE: This is unreachable -Wozniak
         return False
 
     def save_to_cache(self, cache, params):
