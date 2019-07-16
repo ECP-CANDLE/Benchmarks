@@ -636,7 +636,7 @@ class CombinedDataLoader(object):
         ignore_keys = ['cache', 'partition_by', 'single']
         equal, diffs = dict_compare(params, cached_params, ignore_keys)
         if not equal:
-            logger.warning('Cache parameter mismatch: %s\nSaved: %s\nAttemptd to load: %s', diffs, cached_params, params)
+            logger.warning('Cache parameter mismatch: %s\nSaved: %s\nAttempted to load: %s', diffs, cached_params, params)
             logger.warning('\nRemove %s to rebuild data cache.\n', param_fname)
             raise ValueError('Could not load from a cache with incompatible keys:', diffs)
         else:
