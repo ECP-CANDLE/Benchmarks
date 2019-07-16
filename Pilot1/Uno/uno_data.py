@@ -654,6 +654,10 @@ class CombinedDataLoader(object):
         for k in ['self', 'cache', 'single']:
             if k in params:
                 del params[k]
+        dirname = os.path.dirname(cache)
+        if not os.path.exists(dirname):
+            logger.debug('Creating directory for cache: %s', dirname)
+            os.mkdir(dirname)
         param_fname = '{}.params.json'.format(cache)
         with open(param_fname, 'w') as param_file:
             json.dump(params, param_file, sort_keys=True)
