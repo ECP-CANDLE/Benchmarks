@@ -403,7 +403,7 @@ def run(params):
 
         template_model = build_model(loader, args, silent=True)
         if args.initial_weights:
-            logger.info("Loading weights from {}".format(args.initial_weights))
+            logger.info("Loading initial weights from {}".format(args.initial_weights))
             template_model.load_weights(args.initial_weights)
 
         if len(args.gpus) > 1:
@@ -444,6 +444,7 @@ def run(params):
         if args.tb:
             callbacks.append(tensorboard)
         if args.save_weights:
+            logger.info("Will save weights to: " + args.save_weights)
             callbacks.append(MultiGPUCheckpoint(args.save_weights))
 
         if args.use_exported_data is not None:
