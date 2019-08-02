@@ -74,16 +74,16 @@ def build_dataframe(args):
 
     # store
     store = pd.HDFStore('topN.uno.h5', 'w')
-    store.put('y_train', y_train)
-    store.put('y_val', y_val)
-    store.put('x_train_0', x_train_0)
-    store.put('x_train_1', x_train_1)
-    store.put('x_train_2', x_train_2)
-    store.put('x_train_3', x_train_3)
-    store.put('x_val_0', x_val_0)
-    store.put('x_val_1', x_val_1)
-    store.put('x_val_2', x_val_2)
-    store.put('x_val_3', x_val_3)
+    store.put('y_train', y_train, format='t')
+    store.put('y_val', y_val, format='t')
+    store.put('x_train_0', x_train_0, format='t')
+    store.put('x_train_1', x_train_1, format='t')
+    store.put('x_train_2', x_train_2, format='t')
+    store.put('x_train_3', x_train_3, format='t')
+    store.put('x_val_0', x_val_0, format='t')
+    store.put('x_val_1', x_val_1, format='t')
+    store.put('x_val_2', x_val_2, format='t')
+    store.put('x_val_3', x_val_3, format='t')
 
 
 if __name__ == '__main__':
