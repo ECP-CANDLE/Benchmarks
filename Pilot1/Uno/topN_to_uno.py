@@ -30,7 +30,9 @@ def read_plan(filename, node):
 
 def build_masks(args, df):
     if args.node is None:
-        raise Exception('Node id is not given')
+        print('node is None. Generate Random split')
+        mask = np.random.rand(len(df)) < 0.8
+        return mask, ~mask
 
     plan = read_plan(args.plan, args.node)
     mask = {}
@@ -96,18 +98,20 @@ def build_dataframe(args):
 
     x_train_0 = df_cl[train_mask].reset_index(drop=True)
     x_train_1 = df_dd[train_mask].reset_index(drop=True)
+    x_train_1.columns = [''] * len(x_train_1.columns)
 
     x_val_0 = df_cl[val_mask].reset_index(drop=True)
     x_val_1 = df_dd[val_mask].reset_index(drop=True)
+    x_val_1.columns = [''] * len(x_val_1.columns)
 
     # store
-    store = pd.HDFStore('topN.uno.h5', 'w')
-    store.put('y_train', y_train)
-    store.put('y_val', y_val)
-    store.put('x_train_0', x_train_0)
-    store.put('x_train_1', x_train_1)
-    store.put('x_val_0', x_val_0)
-    store.put('x_val_1', x_val_1)
+    store = pd.HDFStore('topN.uno.h5', 'w', complevel=9, complib='blosc:snappy')
+    store.put('y_train', y_train, format='table')
+    store.put('y_val', y_val, format='table')
+    store.put('x_train_0', x_train_0, format='table')
+    store.put('x_train_1', x_train_1, format='table')
+    store.put('x_val_0', x_val_0, format='table')
+    store.put('x_val_1', x_val_1, format='table')
 
 
 if __name__ == '__main__':
