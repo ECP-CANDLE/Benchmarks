@@ -36,4 +36,4 @@ single=True
 
 [Monitor_Params]
 solr_root=''
-timeout=3600
+timeout=-1
