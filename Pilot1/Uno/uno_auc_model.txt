@@ -42,4 +42,3 @@ timeout=-1
 
 [Monitor_Params]
 solr_root=''
-
