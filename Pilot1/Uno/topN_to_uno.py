@@ -31,13 +31,13 @@ def read_plan(filename, node):
 def build_masks(args, df):
     if args.node is None:
         print('node is None. Generate Random split')
-        mask = np.random.rand(len(df)) < 0.8
+        mask = training_mask(df)
         return mask, ~mask
 
     plan = read_plan(args.plan, args.node)
     mask = {}
     for partition in ['train', 'val']:
-        _mask = df['Sample'] == None
+        _mask = df['Sample'] is None
         for i, element in enumerate(plan[partition]):
             cl_filter = element['cell']
             dr_filter = element['drug']
