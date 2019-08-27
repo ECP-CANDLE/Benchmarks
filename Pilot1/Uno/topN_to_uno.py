@@ -93,7 +93,22 @@ def training_mask(df):
 
 def read_dataframe_from_csv(args):
     df = pd.read_csv(args.dataframe_from, low_memory=False, na_values='na').fillna(0)
-    df.rename(columns={'SAMPLE': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
+    df.rename(columns={'CELL': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
+    df_y = df[['AUC', 'Sample', 'Drug1']]
+
+    cols = df.columns.to_list()
+    cl_columns = list(filter(lambda x: x.startswith('GE_'), cols))
+    dd_columns = list(filter(lambda x: x.startswith('DD_'), cols))
+
+    df_cl = df.loc[:, cl_columns]
+    df_dd = df.loc[:, dd_columns]
+
+    return df_y, df_cl, df_dd
+
+
+def read_dataframe_from_feather(args):
+    df = pd.read_feather(args.dataframe_from).fillna(0)
+    df.rename(columns={'CELL': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
     df_y = df[['AUC', 'Sample', 'Drug1']]
 
     cols = df.columns.to_list()
@@ -126,6 +141,8 @@ def build_dataframe(args):
     _, ext = os.path.splitext(args.dataframe_from)
     if ext == '.h5' or ext == '.hdf5':
         df_y, df_cl, df_dd = read_dataframe_from_hdf(args)
+    elif ext == '.feather':
+        df_y, df_cl, df_dd = read_dataframe_from_feather(args)
     else:
         df_y, df_cl, df_dd = read_dataframe_from_csv(args)
 
