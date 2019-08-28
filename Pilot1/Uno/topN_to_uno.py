@@ -69,7 +69,7 @@ def build_masks(args, df):
     _, _, ids['train'], ids['val'] = plangen.get_subplan_features(plan, args.node, args.incremental)
 
     for partition in ['train', 'val']:
-        _mask = df['Sample'] is None
+        _mask = df['Sample'] == None
         for i in range(len(ids[partition]['cell'])):
             if 'cell' in ids[partition] and 'drug' in ids[partition]:
                 cl_filter = ids[partition]['cell'][i]
@@ -81,7 +81,6 @@ def build_masks(args, df):
             elif 'drug' in ids[partition]:
                 dr_filter = ids[partition]['drug'][i]
                 __mask = df['Drug1'].isin(dr_filter)
-
             _mask = _mask | __mask
         mask[partition] = _mask
     return mask['train'], mask['val']
@@ -152,15 +151,15 @@ def build_dataframe(args):
         tr_idx = tr_id.iloc[:, 0].dropna().values.astype(int).tolist()
         vl_idx = vl_id.iloc[:, 0].dropna().values.astype(int).tolist()
 
-        y_train = df_y.iloc[tr_idx, :]
-        y_val = df_y.iloc[vl_idx, :]
+        y_train = df_y.iloc[tr_idx, :].reset_index(drop=True)
+        y_val = df_y.iloc[vl_idx, :].reset_index(drop=True)
 
-        x_train_0 = df_cl.iloc[tr_idx, :]
-        x_train_1 = df_dd.iloc[tr_idx, :]
+        x_train_0 = df_cl.iloc[tr_idx, :].reset_index(drop=True)
+        x_train_1 = df_dd.iloc[tr_idx, :].reset_index(drop=True)
         x_train_1.columns = [''] * len(x_train_1.columns)
 
-        x_val_0 = df_cl.iloc[vl_idx, :]
-        x_val_1 = df_dd.iloc[vl_idx, :]
+        x_val_0 = df_cl.iloc[vl_idx, :].reset_index(drop=True)
+        x_val_1 = df_dd.iloc[vl_idx, :].reset_index(drop=True)
         x_val_1.columns = [''] * len(x_val_1.columns)
     else:
         train_mask, val_mask = build_masks(args, df_y)
