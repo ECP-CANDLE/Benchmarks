@@ -4,13 +4,13 @@ test_sources=['train']
 cell_types=None
 cell_features=['rnaseq']
 drug_features=['descriptors']
-dense=[1000, 1000, 1000]
+dense=[1000, 1000, 1000, 1000, 1000]
 dense_feature_layers=[1000, 1000, 1000]
 activation='relu'
 loss='mse'
-optimizer='sgd'
+optimizer='adamax'
 scaling='std'
-drop=0
+drop=.1
 epochs=50
 batch_size=32
 validation_split=0.2
@@ -18,22 +18,28 @@ cv=1
 max_val_loss=1.0
 learning_rate=0.0001
 base_lr=None
+agg_dose='AUC'
 residual=False
-reduce_lr=False
-warmup_lr=False
+reduce_lr=True
+warmup_lr=True
 batch_normalization=False
 feature_subsample=0
 rng_seed=2018
-save_path='save/uno'
 no_gen=False
 verbose=False
-no_response_source=True
-no_feature_source=True
-use_landmark_genes=True
-agg_dose='AUC'
+
+
 preprocess_rnaseq='source_scale'
+gpus=1
+use_landmark_genes=True
+no_feature_source=True
+no_response_source=True
+cp=True
+save_path='/ccs/home/brettin/project_work/brettin/milestone13/save/uno'
+
 single=True
+timeout=-1
 
 [Monitor_Params]
 solr_root=''
-timeout=-1
+
