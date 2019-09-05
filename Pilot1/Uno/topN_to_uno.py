@@ -183,6 +183,7 @@ def build_dataframe(args):
     store.put('x_train_1', x_train_1, format='table')
     store.put('x_val_0', x_val_0, format='table')
     store.put('x_val_1', x_val_1, format='table')
+    store.close()
 
 
 if __name__ == '__main__':
