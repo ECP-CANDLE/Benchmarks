@@ -17,6 +17,8 @@ def parse_arguments():
                         help='True for building dataset incrementally')
     parser.add_argument('--fold', type=str, default=None,
                         help='pre-calculated indexes for cross fold validation')
+    parser.add_argument('--output', type=str, default='topN.uno.h5',
+                        help='output filename')
 
     args, unparsed = parser.parse_known_args()
     return args, unparsed
@@ -176,7 +178,7 @@ def build_dataframe(args):
         x_val_1.columns = [''] * len(x_val_1.columns)
 
     # store
-    store = pd.HDFStore('topN.uno.h5', 'w', complevel=9, complib='blosc:snappy')
+    store = pd.HDFStore(args.output, 'w', complevel=9, complib='blosc:snappy')
     store.put('y_train', y_train, format='table')
     store.put('y_val', y_val, format='table')
     store.put('x_train_0', x_train_0, format='table')
