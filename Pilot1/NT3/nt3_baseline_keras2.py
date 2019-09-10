@@ -138,29 +138,21 @@ def run(gParameters):
     model.add(Dense(gParameters['classes']))
     model.add(Activation(gParameters['out_act']))
 
-#Reference case
-#model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
-#model.add(Activation('relu'))
-#model.add(MaxPooling1D(pool_size=1))
-#model.add(Conv1D(filters=128, kernel_size=10, strides=1, padding='valid'))
-#model.add(Activation('relu'))
-#model.add(MaxPooling1D(pool_size=10))
-#model.add(Flatten())
-#model.add(Dense(200))
-#model.add(Activation('relu'))
-#model.add(Dropout(0.1))
-#model.add(Dense(20))
-#model.add(Activation('relu'))
-#model.add(Dropout(0.1))
-#model.add(Dense(CLASSES))
-#model.add(Activation('softmax'))
-
     kerasDefaults = candle.keras_default_config()
 
     # Define optimizer
     optimizer = candle.build_optimizer(gParameters['optimizer'],
                                                 gParameters['learning_rate'],
                                                 kerasDefaults)
+
+    if args.mixed_precision:
+        print("using mixed precision mode")
+        optimizer = tf.keras.optimizers.deserialize({'class_name': gParameters['optimizer'], 'config': {}})
+        optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
+    
+    if args.learning_rate:
+        K.set_value(optimizer.lr, gParameters['learning_rate'])
+
 
     model.summary()
     model.compile(loss=gParameters['loss'],
