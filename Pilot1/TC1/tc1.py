@@ -18,6 +18,10 @@ additional_definitions = [
        'nargs':'+',
        'type': int,
        'help':'network structure of shared layer'},
+    {'name': 'mixed_precision',
+        'type': candle.str2bool,
+        'default': False,
+        'help': 'use mixed precision'}
 ]
 
 required = [
@@ -66,7 +70,6 @@ def load_data(params):
         usecols = list(range(params['feature_subsample']))
     else:
         usecols = None
-
 
     return candle.load_Xy_data_noheader(train_path, test_path, params['classes'], usecols,
                                         scaling='maxabs',dtype=params['datatype'])

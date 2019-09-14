@@ -199,7 +199,11 @@ additional_definitions = [
     {'name' : 'save_weights',
         'type': str,
         'default' : None,
-        'help': 'name of file to save weights to' }
+        'help': 'name of file to save weights to' },
+    {'name': 'mixed_precision',
+        'type': candle.str2bool,
+        'default': False,
+        'help': 'use mixed precision'}
 ]
 
 required = [

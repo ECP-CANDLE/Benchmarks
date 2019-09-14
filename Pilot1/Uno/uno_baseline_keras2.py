@@ -403,7 +403,7 @@ def run(params):
 
         template_model = build_model(loader, args, silent=True)
         if args.initial_weights:
-            logger.info("Loading weights from {}".format(args.initial_weights))
+            logger.info("Loading initial weights from {}".format(args.initial_weights))
             template_model.load_weights(args.initial_weights)
 
         if len(args.gpus) > 1:
@@ -414,11 +414,14 @@ def run(params):
         else:
             model = template_model
 
-        optimizer = optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
+        optimizer = tf.keras.optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
         base_lr = args.base_lr or K.get_value(optimizer.lr)
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
 
+        if args.mixed_precision:
+            print("using mixed precision mode")
+            optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
 
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 
@@ -444,7 +447,8 @@ def run(params):
         if args.tb:
             callbacks.append(tensorboard)
         if args.save_weights:
-            callbacks.append(SimpleWeightSaver(args.save_path + '/' + args.save_weights))
+            logger.info("Will save weights to: " + args.save_weights)
+            callbacks.append(MultiGPUCheckpoint(args.save_weights))
 
         if args.use_exported_data is not None:
             train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)

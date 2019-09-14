@@ -13,7 +13,11 @@ additional_definitions = [
     'type':str},
 {'name':'classes',
     'type':int,
-    'default':2}
+    'default':2},
+{'name':'mixed_precision',
+    'type': candle.str2bool,
+    'default': False,
+    'help': 'Turns on mixed_precision on cuda 10'}
 ]
 
 required = [

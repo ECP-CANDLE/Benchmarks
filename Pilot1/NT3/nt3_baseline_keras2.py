@@ -6,18 +6,21 @@ import os
 import sys
 import gzip
 
+import tensorflow as tf
+from tensorflow import keras
+sys.modules['keras'] = keras
+
 from keras import backend as K
 
 from keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
 from keras.optimizers import SGD, Adam, RMSprop
 from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.utils import np_utils
 from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
-#TIMEOUT=3600 # in sec; set this to -1 for no timeout 
+#TIMEOUT=3600 # in sec; set this to -1 for no timeout
 
 import nt3 as bmk
 import candle
@@ -37,8 +40,11 @@ def initialize_parameters():
 def load_data(train_path, test_path, gParameters):
 
     print('Loading data...')
-    df_train = (pd.read_csv(train_path,header=None).values).astype('float32')
-    df_test = (pd.read_csv(test_path,header=None).values).astype('float32')
+    df_hdr = pd.read_csv(train_path, nrows=1)
+    features = df_hdr.shape[1] - 1
+    # features = 1000 - 1
+    df_train = (pd.read_csv(train_path,usecols=list(range(features+1)),header=None).values).astype('float32')
+    df_test = (pd.read_csv(test_path,usecols=list(range(features+1)),header=None).values).astype('float32')
     print('done')
 
     print('df_train shape:', df_train.shape)
@@ -49,14 +55,11 @@ def load_data(train_path, test_path, gParameters):
     df_y_train = df_train[:,0].astype('int')
     df_y_test = df_test[:,0].astype('int')
 
-    Y_train = np_utils.to_categorical(df_y_train,gParameters['classes'])
-    Y_test = np_utils.to_categorical(df_y_test,gParameters['classes'])
+    Y_train = keras.utils.to_categorical(df_y_train,gParameters['classes'])
+    Y_test = keras.utils.to_categorical(df_y_test,gParameters['classes'])
 
     df_x_train = df_train[:, 1:seqlen].astype(np.float32)
     df_x_test = df_test[:, 1:seqlen].astype(np.float32)
-
-#        X_train = df_x_train.as_matrix()
-#        X_test = df_x_test.as_matrix()
 
     X_train = df_x_train
     X_test = df_x_test
@@ -138,29 +141,17 @@ def run(gParameters):
     model.add(Dense(gParameters['classes']))
     model.add(Activation(gParameters['out_act']))
 
-#Reference case
-#model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
-#model.add(Activation('relu'))
-#model.add(MaxPooling1D(pool_size=1))
-#model.add(Conv1D(filters=128, kernel_size=10, strides=1, padding='valid'))
-#model.add(Activation('relu'))
-#model.add(MaxPooling1D(pool_size=10))
-#model.add(Flatten())
-#model.add(Dense(200))
-#model.add(Activation('relu'))
-#model.add(Dropout(0.1))
-#model.add(Dense(20))
-#model.add(Activation('relu'))
-#model.add(Dropout(0.1))
-#model.add(Dense(CLASSES))
-#model.add(Activation('softmax'))
-
     kerasDefaults = candle.keras_default_config()
 
     # Define optimizer
     optimizer = candle.build_optimizer(gParameters['optimizer'],
-                                                gParameters['learning_rate'],
-                                                kerasDefaults)
+                                       gParameters['learning_rate'],
+                                       kerasDefaults)
+
+    if gParameters['mixed_precision']:
+        print("using mixed precision mode")
+        optimizer = tf.keras.optimizers.deserialize({'class_name': gParameters['optimizer'], 'config': {}})
+        optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
 
     model.summary()
     model.compile(loss=gParameters['loss'],
@@ -188,7 +179,7 @@ def run(gParameters):
                     epochs=gParameters['epochs'],
                     verbose=1,
                     validation_data=(X_test, Y_test),
-                    callbacks = [csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor])
+                    callbacks = [csv_logger, candleRemoteMonitor, timeoutMonitor])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
