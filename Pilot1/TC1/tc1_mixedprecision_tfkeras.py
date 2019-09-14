@@ -29,6 +29,10 @@ sys.path.append(lib_path2)
 import tc1 as bmk
 import candle
 
+import logging
+logging.basicConfig(format='%(asctime)s - %(message)s', level=logging.INFO)
+logging.info('This is an info message')
+
 
 def initialize_parameters():
 
@@ -153,6 +157,8 @@ def run(gParameters):
 
 
     # train the model
+    logging.info('Calling model.fit')
+
     history = model.fit(X_train, Y_train,
                     batch_size=gParameters['batch_size'],
                     epochs=gParameters['epochs'],
@@ -161,7 +167,12 @@ def run(gParameters):
                     # callbacks = [checkpointer, csv_logger, reduce_lr])
                 )
 
-    score = model.evaluate(X_test, Y_test, verbose=0)
+    logging.info('Done calling model.fit')
+    logging.info('Calling model.evaluate')
+
+    score = model.evaluate(X_test, Y_test, verbose=1)
+
+    logging.info('Done calling model.evaluate')
 
     print('Test score:', score[0])
     print('Test accuracy:', score[1])
