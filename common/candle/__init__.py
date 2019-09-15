@@ -85,6 +85,10 @@ elif 'torch' in sys.modules:
     from pytorch_utils import mse
     from pytorch_utils import set_parallelism_threads # for compatibility
 
+elif 'tensorflow' in sys.modules:
+    print('Importing candle utils for tensorflow')
+    from tensorflow_utils import set_parallelism_threads
+
 else:
     raise Exception('No backend has been specified.')
 
