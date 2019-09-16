@@ -11,12 +11,17 @@ import numpy as np
 import pandas as pd
 
 import tensorflow as tf
+from tensorflow.python.keras.utils.data_utils import Sequence
+
 from tensorflow.keras import backend as K
 from tensorflow.keras import optimizers
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Dropout
 from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+from scipy.stats.stats import pearsonr
+
+from tensorflow.keras.utils import plot_model
 
 # For non-interactive plotting
 import matplotlib as mpl
@@ -230,7 +235,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
             encoded = fea_input
         encoded_inputs.append(encoded)
 
-    merged = keras.layers.concatenate(encoded_inputs)
+    merged = tf.keras.layers.concatenate(encoded_inputs)
 
     h = merged
     for i, layer in enumerate(args.dense):
@@ -401,13 +406,140 @@ def run(params):
         else:
             model = template_model
 
-        optimizer = tf.keras.optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
+        optimizer = tf.keras.optimizers.deserialize({'class_name': args.optimizer, 'config': {'learning_rate':0.0000064}})
+        base_lr = args.base_lr or K.get_value(optimizer.lr)
+        if args.learning_rate:
+            K.set_value(optimizer.lr, args.learning_rate)
+
+        if args.mixed_precision:
+            print("using mixed precision mode")
+            optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
+
+        model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
+
+        # calculate trainable and non-trainable params
+        params.update(candle.compute_trainable_params(model))
+
+        # These need to be made available for tensorflow based models
+        # candle_monitor = candle.CandleRemoteMonitor(params=params)
+        # timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
+
+        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
+        warmup_lr = LearningRateScheduler(warmup_scheduler)
+        checkpointer = MultiGPUCheckpoint(prefix + cv_ext + '.model.h5', save_best_only=True)
+        tensorboard = TensorBoard(log_dir="tb/{}{}{}".format(args.tb_prefix, ext, cv_ext))
+        history_logger = LoggingCallback(logger.debug)
+
+        # set up callback list
+        # callbacks = [candle_monitor, timeout_monitor, history_logger]
+        callbacks = [history_logger]
+
+        #if args.reduce_lr:
+            #callbacks.append(reduce_lr)
+        #if args.warmup_lr:
+            #callbacks.append(warmup_lr)
+        if args.cp:
+            callbacks.append(checkpointer)
+        if args.tb:
+            callbacks.append(tensorboard)
+        if args.save_weights:
+            logger.info("Will save weights to: " + args.save_weights)
+            callbacks.append(MultiGPUCheckpoint(args.save_weights))
+
+        if args.use_exported_data is not None:
+            train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
+            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
+        else:
+            train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
+            val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
+
+        df_val = val_gen.get_response(copy=True)
+        y_val = df_val[target].values
+        y_shuf = np.random.permutation(y_val)
+        log_evaluation(evaluate_prediction(y_val, y_shuf),
+                       description='Between random pairs in y_val:')
 
 
+        if args.no_gen:
+            x_train_list, y_train = train_gen.get_slice(size=train_gen.size, single=args.single)
+            x_val_list, y_val = val_gen.get_slice(size=val_gen.size, single=args.single)
+            history = model.fit(x_train_list, y_train,
+                                batch_size=args.batch_size,
+                                epochs=args.epochs,
+                                callbacks=callbacks,
+                                validation_data=(x_val_list, y_val))
+        else:
+            logger.info('Data points per epoch: train = %d, val = %d', train_gen.size, val_gen.size)
+            logger.info('Steps per epoch: train = %d, val = %d', train_gen.steps, val_gen.steps)
+            history = model.fit_generator(train_gen, train_gen.steps,
+                                          epochs=args.epochs,
+                                          callbacks=callbacks,
+                                          validation_data=val_gen,
+                                          validation_steps=val_gen.steps)
 
+        if args.no_gen:
+            y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
+        else:
+            val_gen.reset()
+            y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
+            y_val_pred = y_val_pred[:val_gen.size]
 
+        y_val_pred = y_val_pred.flatten()
 
+        scores = evaluate_prediction(y_val, y_val_pred)
+        log_evaluation(scores)
 
+        # df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred - y_val)
+        df_val['Predicted' + target] = y_val_pred
+        df_val[target + 'Error'] = y_val_pred - y_val
+        df_pred_list.append(df_val)
+
+        if hasattr(history, 'loss'):
+            plot_history(prefix, history, 'loss')
+        if hasattr(history, 'r2'):
+            plot_history(prefix, history, 'r2')
+
+    pred_fname = prefix + '.predicted.tsv'
+    df_pred = pd.concat(df_pred_list)
+    if args.agg_dose:
+        if args.single:
+            df_pred.sort_values(['Sample', 'Drug1', target], inplace=True)
+        else:
+            df_pred.sort_values(['Source', 'Sample', 'Drug1', 'Drug2', target], inplace=True)
+    else:
+        if args.single:
+            df_pred.sort_values(['Sample', 'Drug1', 'Dose1', 'Growth'], inplace=True)
+        else:
+            df_pred.sort_values(['Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
+    df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
+
+    if args.cv > 1:
+        scores = evaluate_prediction(df_pred[target], df_pred['Predicted' + target])
+        log_evaluation(scores, description='Combining cross validation folds:')
+
+    for test_source in loader.test_sep_sources:
+        test_gen = CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size, source=test_source)
+        df_test = test_gen.get_response(copy=True)
+        y_test = df_test[target].values
+        n_test = len(y_test)
+        if n_test == 0:
+            continue
+        if args.no_gen:
+            x_test_list, y_test = test_gen.get_slice(size=test_gen.size, single=args.single)
+            y_test_pred = model.predict(x_test_list, batch_size=args.batch_size)
+        else:
+            y_test_pred = model.predict_generator(test_gen.flow(single=args.single), test_gen.steps)
+            y_test_pred = y_test_pred[:test_gen.size]
+        y_test_pred = y_test_pred.flatten()
+        scores = evaluate_prediction(y_test, y_test_pred)
+        log_evaluation(scores, description='Testing on data from {} ({})'.format(test_source, n_test))
+
+    if K.backend() == 'tensorflow':
+        K.clear_session()
+
+    logger.handlers = []
+
+    return history
 
 
 
