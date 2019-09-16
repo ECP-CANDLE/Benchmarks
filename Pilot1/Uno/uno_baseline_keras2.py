@@ -414,14 +414,11 @@ def run(params):
         else:
             model = template_model
 
-        optimizer = tf.keras.optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
+        optimizer = optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
         base_lr = args.base_lr or K.get_value(optimizer.lr)
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
 
-        if args.mixed_precision:
-            print("using mixed precision mode")
-            optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(optimizer)
 
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 
