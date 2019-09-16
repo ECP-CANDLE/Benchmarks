@@ -9,7 +9,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-import keras
+import tensorflow.keras
 
 from itertools import cycle, islice
 
@@ -947,7 +947,7 @@ class CombinedDataLoader(object):
             self.save_to_cache(cache, params)
 
 
-class DataFeeder(keras.utils.Sequence):
+class DataFeeder(tensorflow.keras.utils.Sequence):
     """Read from pre-joined dataset (HDF5 format) and feed data to the model.
     """
     def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False, single=False, agg_dose=None):
@@ -1004,7 +1004,7 @@ class DataFeeder(keras.utils.Sequence):
         self.store.close()
 
 
-class CombinedDataGenerator(keras.utils.Sequence):
+class CombinedDataGenerator(tensorflow.keras.utils.Sequence):
     """Generate training, validation or testing batches from loaded data
     """
     def __init__(self, data, partition='train', fold=0, source=None, batch_size=32, shuffle=True, single=False, rank=0, total_ranks=1):
