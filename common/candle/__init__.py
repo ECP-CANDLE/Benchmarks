@@ -88,6 +88,7 @@ elif 'torch' in sys.modules:
 elif 'tensorflow' in sys.modules:
     print('Importing candle utils for tensorflow')
     from tensorflow_utils import set_parallelism_threads
+    from solr_keras import compute_trainable_params
 
 else:
     raise Exception('No backend has been specified.')
