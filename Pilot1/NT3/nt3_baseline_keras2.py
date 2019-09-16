@@ -1,14 +1,10 @@
 from __future__ import print_function
+
 import pandas as pd
 import numpy as np
 import os
 import sys
 import gzip
-import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 from keras import backend as K
 
@@ -21,101 +17,31 @@ from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
-TIMEOUT=3600 # in sec; set this to -1 for no timeout 
-file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
-sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
+#TIMEOUT=3600 # in sec; set this to -1 for no timeout 
 
-import data_utils
-import p1_common, p1_common_keras
-from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
-
-
-#url_nt3 = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/'
-#file_train = 'nt_train2.csv'
-#file_test = 'nt_test2.csv'
-
-#EPOCH = 400
-#BATCH = 20
-#CLASSES = 2
-
-#PL = 60484   # 1 + 60483 these are the width of the RNAseq datasets
-#P     = 60483   # 60483
-#DR    = 0.1      # Dropout rate
-
-def common_parser(parser):
-
-    parser.add_argument("--config_file", dest='config_file', type=str,
-                        default=os.path.join(file_path, 'nt3_default_model.txt'),
-                        help="specify model configuration file")
-
-    # Parse has been split between arguments that are common with the default neon parser
-    # and all the other options
-    parser = p1_common.get_default_neon_parse(parser)
-    parser = p1_common.get_p1_common_parser(parser)
-
-    return parser
-
-def get_nt3_parser():
-
-	parser = argparse.ArgumentParser(prog='nt3_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description='Train Autoencoder - Pilot 1 Benchmark NT3')
-
-	return common_parser(parser)
-
-def read_config_file(file):
-    config = configparser.ConfigParser()
-    config.read(file)
-    section = config.sections()
-    fileParams = {}
-
-    fileParams['data_url'] = eval(config.get(section[0],'data_url'))
-    fileParams['train_data'] = eval(config.get(section[0],'train_data'))
-    fileParams['test_data'] = eval(config.get(section[0],'test_data'))
-    fileParams['model_name'] = eval(config.get(section[0],'model_name'))
-    fileParams['conv'] = eval(config.get(section[0],'conv'))
-    fileParams['dense'] = eval(config.get(section[0],'dense'))
-    fileParams['activation'] = eval(config.get(section[0],'activation'))
-    fileParams['out_act'] = eval(config.get(section[0],'out_act'))
-    fileParams['loss'] = eval(config.get(section[0],'loss'))
-    fileParams['optimizer'] = eval(config.get(section[0],'optimizer'))
-    fileParams['metrics'] = eval(config.get(section[0],'metrics'))
-    fileParams['epochs'] = eval(config.get(section[0],'epochs'))
-    fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
-    fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
-    fileParams['drop'] = eval(config.get(section[0],'drop'))
-    fileParams['classes'] = eval(config.get(section[0],'classes'))
-    fileParams['pool'] = eval(config.get(section[0],'pool'))
-    fileParams['save'] = eval(config.get(section[0], 'save'))
-
-    # parse the remaining values
-    for k,v in config.items(section[0]):
-        if not k in fileParams:
-            fileParams[k] = eval(v)
-
-    return fileParams
+import nt3 as bmk
+import candle
 
 def initialize_parameters():
-    # Get command-line parameters
-    parser = get_nt3_parser()
-    args = parser.parse_args()
-    #print('Args:', args)
-    # Get parameters from configuration file
-    fileParameters = read_config_file(args.config_file)
-    #print ('Params:', fileParameters)
-    # Consolidate parameter set. Command-line parameters overwrite file configuration
-    gParameters = p1_common.args_overwrite_config(args, fileParameters)
+
+    # Build benchmark object
+    nt3Bmk = bmk.BenchmarkNT3(bmk.file_path, 'nt3_default_model.txt', 'keras',
+    prog='nt3_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
+
+    # Initialize parameters
+    gParameters = candle.initialize_parameters(nt3Bmk)
+    #benchmark.logger.info('Params: {}'.format(gParameters))
+
     return gParameters
 
-
 def load_data(train_path, test_path, gParameters):
-
+    import time
     print('Loading data...')
-    df_train = (pd.read_csv(train_path,header=None).values).astype('float32')
-    df_test = (pd.read_csv(test_path,header=None).values).astype('float32')
+    start = time.time()
+    df_train = (pd.read_csv(train_path,header=None,low_memory=False).values).astype('float32')
+    df_test = (pd.read_csv(test_path,header=None,low_memory=False).values).astype('float32')
     print('done')
+    print("LOAD TIME: %f" % (time.time()- start))
 
     print('df_train shape:', df_train.shape)
     print('df_test shape:', df_test.shape)
@@ -125,11 +51,49 @@ def load_data(train_path, test_path, gParameters):
     df_y_train = df_train[:,0].astype('int')
     df_y_test = df_test[:,0].astype('int')
 
+    df_comp_train = df_train[0:,1:]
+    df_comp_test = df_test[0:,1:]
+
+    x_noise_level = float(gParameters['x_noise_level']) / 100.0
+    y_noise_level = float(gParameters['y_noise_level']) / 100.0
+
+    # x_noise_level = 0.5
+    print("x or flipping start, noise level = ", x_noise_level)
+
+
+    flips = 0
+    import random
+    #introduce x noise
+    for i in range(0,df_y_train.shape[0]):
+        if random.random() < x_noise_level:
+            print("x flipping ", i)
+            flips += 1
+            df_y_train[i] = int(not df_y_train[i])
+
+    print("flips: %i / %i" % (flips, df_y_train.shape[0]));
+    print("x flipping done")
+
+    # introduce y noise
+    print("y noise introduction starts, noise level = ", y_noise_level)
+
+    for i in range(0,df_y_train.shape[0]):
+        if random.random() < y_noise_level:
+            print("y noise for ", i)
+            for j in range(0, df_comp_train.shape[1] ):
+                tmp1 = df_comp_train[i][j]
+                tmp2 = (df_comp_train.shape[1])*(random.random())
+                tmp2 = int(tmp2)
+                df_comp_train[i][j] = df_comp_train[i][tmp2]
+                df_comp_train[i][tmp2] = tmp1    
+    print("y noise: %i / %i" % (flips, df_y_train.shape[0]));
+    print(" y noise stop")
+
     Y_train = np_utils.to_categorical(df_y_train,gParameters['classes'])
     Y_test = np_utils.to_categorical(df_y_test,gParameters['classes'])
 
-    df_x_train = df_train[:, 1:seqlen].astype(np.float32)
-    df_x_test = df_test[:, 1:seqlen].astype(np.float32)
+    # df_x_train = df_train[:, 1:seqlen].astype(np.float32)
+    df_x_train = df_comp_train
+    df_x_test = df_comp_test
 
 #        X_train = df_x_train.as_matrix()
 #        X_test = df_x_test.as_matrix()
@@ -155,8 +119,8 @@ def run(gParameters):
     file_test = gParameters['test_data']
     url = gParameters['data_url']
 
-    train_file = data_utils.get_file(file_train, url+file_train, cache_subdir='Pilot1')
-    test_file = data_utils.get_file(file_test, url+file_test, cache_subdir='Pilot1')
+    train_file = candle.get_file(file_train, url+file_train, cache_subdir='Pilot1')
+    test_file = candle.get_file(file_test, url+file_test, cache_subdir='Pilot1')
 
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
@@ -231,10 +195,10 @@ def run(gParameters):
 #model.add(Dense(CLASSES))
 #model.add(Activation('softmax'))
 
-    kerasDefaults = p1_common.keras_default_config()
+    kerasDefaults = candle.keras_default_config()
 
     # Define optimizer
-    optimizer = p1_common_keras.build_optimizer(gParameters['optimizer'],
+    optimizer = candle.build_optimizer(gParameters['optimizer'],
                                                 gParameters['learning_rate'],
                                                 kerasDefaults)
 
@@ -249,7 +213,7 @@ def run(gParameters):
         os.makedirs(output_dir)
 
     # calculate trainable and non-trainable params
-    gParameters.update(compute_trainable_params(model))
+    gParameters.update(candle.compute_trainable_params(model))
 
     # set up a bunch of callbacks to do work during model training..
     model_name = gParameters['model_name']
@@ -257,8 +221,8 @@ def run(gParameters):
     # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
-    candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
-    timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
+    candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
+    timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
     history = model.fit(X_train, Y_train,
                     batch_size=gParameters['batch_size'],
                     epochs=gParameters['epochs'],
@@ -268,9 +232,10 @@ def run(gParameters):
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
+    print('Test score:', score[0])
+    print('Test accuracy:', score[1])
+
     if False:
-        print('Test score:', score[0])
-        print('Test accuracy:', score[1])
         # serialize model to JSON
         model_json = model.to_json()
         with open("{}/{}.model.json".format(output_dir, model_name), "w") as json_file:
@@ -282,7 +247,7 @@ def run(gParameters):
             yaml_file.write(model_yaml)
 
         # serialize weights to HDF5
-        model.save_weights("{}/{}.model.h5".format(output_dir, model_name))
+        model.save_weights("{}/{}.weights.h5".format(output_dir, model_name))
         print("Saved model to disk")
 
         # load json and create model
@@ -300,7 +265,7 @@ def run(gParameters):
 
 
         # load weights into new model
-        loaded_model_json.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
+        loaded_model_json.load_weights('{}/{}.weights.h5'.format(output_dir, model_name))
         print("Loaded json model from disk")
 
         # evaluate json loaded model on test data
@@ -315,7 +280,7 @@ def run(gParameters):
         print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1]*100))
 
         # load weights into new model
-        loaded_model_yaml.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
+        loaded_model_yaml.load_weights('{}/{}.weights.h5'.format(output_dir, model_name))
         print("Loaded yaml model from disk")
 
         # evaluate loaded model on test data
