@@ -406,7 +406,7 @@ def run(params):
         else:
             model = template_model
 
-        optimizer = tf.keras.optimizers.deserialize({'class_name': args.optimizer, 'config': {'learning_rate':0.0000064}})
+        optimizer = tf.keras.optimizers.deserialize({'class_name': args.optimizer, 'config': {}})
         base_lr = args.base_lr or K.get_value(optimizer.lr)
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
@@ -434,10 +434,10 @@ def run(params):
         # callbacks = [candle_monitor, timeout_monitor, history_logger]
         callbacks = [history_logger]
 
-        #if args.reduce_lr:
-            #callbacks.append(reduce_lr)
-        #if args.warmup_lr:
-            #callbacks.append(warmup_lr)
+        if args.reduce_lr and args.mixed_precision==False:
+            callbacks.append(reduce_lr)
+        if args.warmup_lr and args.mixed_precision==False:
+            callbacks.append(warmup_lr)
         if args.cp:
             callbacks.append(checkpointer)
         if args.tb:
