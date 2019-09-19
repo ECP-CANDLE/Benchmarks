@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class Model(nn.Module):
-    """ Class representing sampleable neural network model """
+    """ Abstract class for Pytorch models """
 
     def num_params(self):
         """ Get the number of model parameters. """
