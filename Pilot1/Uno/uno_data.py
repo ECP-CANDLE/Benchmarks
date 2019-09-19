@@ -967,7 +967,11 @@ class DataFeeder(keras.utils.Sequence):
         y = self.store.select('y_{}'.format(self.partition))
         self.index = y.index
         self.size = len(self.index)
-        self.steps = self.size // self.batch_size
+        if self.size >= self.batch_size:
+            self.steps = self.size // self.batch_size
+        else:
+            self.steps = 1
+            self.batch_size = self.size
         self.index_map = np.arange(self.steps)
         if self.shuffle:
             np.random.shuffle(self.index_map)
