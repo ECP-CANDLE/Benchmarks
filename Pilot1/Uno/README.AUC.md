@@ -1,8 +1,8 @@
 # Training with static datafile
-Use static datafile prebuilt and shared at `/vol/ml/hsyoo/shared/top_21_auc_1fold.uno.h5`
+Use static datafile prebuilt and shared at `http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc_1fold.uno.h5`
 
 ```
-python uno_baseline_keras2.py --config_file uno_auc_model.txt --cache cache/top6_auc --use_exported_data /vol/ml/hsyoo/shared/top_21_auc_1fold.uno.h5
+python uno_baseline_keras2.py --config_file uno_auc_model.txt --cache cache/top6_auc --use_exported_data top_21_auc_1fold.uno.h5
 ```
 
 The log will look like below,
@@ -110,7 +110,7 @@ Params:
  'timeout': -1,
  'train_bool': True,
  'train_sources': ['CCLE'],
- 'use_exported_data': '/vol/ml/hsyoo/shared/top_21_auc_1fold.uno.h5',
+ 'use_exported_data': 'top_21_auc_1fold.uno.h5',
  'use_filtered_genes': False,
  'use_landmark_genes': True,
  'validation_split': 0.2,
