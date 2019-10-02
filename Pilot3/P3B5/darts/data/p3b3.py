@@ -12,7 +12,7 @@ class P3B3(Dataset):
 
         partition: str
             dataset partition to be loaded.
-            Either 'train', 'validation', or 'test'.
+            Must be either 'train' or 'test'.
     """
     training_data_file = 'train_X.npy'
     training_label_file = 'train_Y.npy'
@@ -42,6 +42,14 @@ class P3B3(Dataset):
 
         self.data = np.load(os.path.join(self.root, data_file))
         self.targets = self.get_targets(label_file)
+
+    def __repr__(self):
+        fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
+        fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())
+        tmp = self.partition
+        fmt_str += '    Split: {}\n'.format(tmp)
+        fmt_str += '    Root Location: {}\n'.format(self.root)
+        return fmt_str
 
     def __len__(self):
         return len(self.data)
@@ -92,11 +100,3 @@ class P3B3(Dataset):
             targets[key] = subset
 
         return document, targets
-
-    def __repr__(self):
-        fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
-        fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())
-        tmp = self.partition
-        fmt_str += '    Split: {}\n'.format(tmp)
-        fmt_str += '    Root Location: {}\n'.format(self.root)
-        return fmt_str
