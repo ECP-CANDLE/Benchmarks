@@ -4,6 +4,7 @@ import argparse
 from loguru import logger
 
 import candle
+import p3b5 as bmk
 
 import torch
 import torch.nn as nn
@@ -28,38 +29,6 @@ lib_path = os.path.abspath(os.path.join(file_path, '..'))
 sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='P3B3 Darts Example')
-    parser.add_argument('--batch_size', type=int, default=100, metavar='N',
-                        help='input batch size for training (default: 128)')
-    parser.add_argument('--lr', type=float, default=0.025, 
-                        help='init learning rate')
-    parser.add_argument('--lr_min', type=float, default=0.001, 
-                        help='min learning rate')
-    parser.add_argument('--momentum', type=float, default=0.9, 
-                        help='momentum')
-    parser.add_argument('--wd', type=float, default=3e-4, 
-                        help='weight decay')
-    parser.add_argument('--grad_clip', type=float, default=5, 
-                        help='gradient clipping range')
-    parser.add_argument('--epochs', type=int, default=1, metavar='N',
-                        help='number of epochs to train (default: 10)')
-    parser.add_argument('--no_cuda', action='store_true', default=False,
-                        help='enables CUDA training')
-    parser.add_argument('--gpu_id', type=int, default=0,
-                        help='cuda device id for torch.device')
-    parser.add_argument('--seed', type=int, default=1, metavar='S',
-                        help='random seed (default: 1)')
-    parser.add_argument('--log_interval', type=int, default=10, metavar='N',
-                        help='how many batches to wait before logging training status')
-    parser.add_argument('--datapath', type=str, default='/Users/yngtodd/data',
-                        help='path to the dataset')
-    parser.add_argument('--unrolled', action='store_true', default=False, 
-                        help='use one-step unrolled validation loss')
-    args = parser.parse_args()
-    return args
 
 
 def main():
