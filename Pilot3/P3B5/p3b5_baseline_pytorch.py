@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from darts.api.config import banner
+from darts.data.p3b3 import P3B3
 from darts.modules.network import Network
 from darts.architecture import Architecture
 from darts.functional import multitask_loss
@@ -55,8 +56,9 @@ def run(params):
     device = torch.device(f'cuda' if args.cuda else "cpu")
     banner(device=device)
 
-    train_data = P3B3(args.datapath, 'train', download=True)
-    valid_data = P3B3(args.datapath, 'test')
+    datapath = fetch_data(params)
+    train_data = P3B3(datapath, 'train')
+    valid_data = P3B3(datapath, 'test')
 
     trainloader = DataLoader(train_data, batch_size=args.batch_size)
     validloader = DataLoader(valid_data, batch_size=args.batch_size)
