@@ -1,5 +1,5 @@
 import candle
-import p3b5_darts as bmk
+import p3b5 as bmk
 
 import torch
 import torch.nn as nn
@@ -22,7 +22,7 @@ from p3b5_darts import train, infer
 def initialize_parameters():
     """ Initialize the parameters for the P3B5 benchmark """
 
-    p3b5_bench = bmk.BenchmarkP3B3(
+    p3b5_bench = bmk.BenchmarkP3B5(
         bmk.file_path,
         'p3b5_default_model.txt',
         'pytorch',
@@ -52,7 +52,7 @@ def fetch_data(gParameters):
 
 def run(params):
     args = candle.ArgumentStruct(**params)
-    args.cuda = not args.no_cuda and torch.cuda.is_available()
+    args.cuda = torch.cuda.is_available()
 
     device = torch.device(f'cuda' if args.cuda else "cpu")
     banner(device=device)
