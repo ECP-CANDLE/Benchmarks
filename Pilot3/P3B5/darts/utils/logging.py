@@ -1,7 +1,9 @@
-from loguru import logger
+import logger
 
 
-logger.add("darts_p3b3.log", format="{time:YYYY-MM-DD at HH:mm:ss} | {level} | {message}", level="INFO")
+logger = logging.getLogger('DARTS')
+fh = logging.FileHandler('darts_accuracy.log')
+logger.addHandler(fh)
 
 
 def log_accuracy(accuracy, split: str='train'):

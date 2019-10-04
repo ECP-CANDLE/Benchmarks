@@ -11,9 +11,10 @@ from darts.api.config import banner
 from darts.data.p3b3 import P3B3
 from darts.modules.network import Network
 from darts.architecture import Architecture
+from darts.storage.genotype import GenotypeStorage 
 from darts.functional import multitask_loss
 from darts.meters.accuracy import MultitaskAccuracyMeter
-from darts.utils.logging import log_accurac
+from darts.utils.logging import log_accuracy
 
 from p3b5_darts import train, infer
 
@@ -88,6 +89,9 @@ def run(params):
         eta_min=args.learning_rate_min,
     )
 
+    genotype_store = GenotypeStorage(root=args.savepath)
+
+    min_loss = 9999
     for epoch in range(args.epochs):
 
         scheduler.step()
@@ -98,7 +102,7 @@ def run(params):
         logger.info(f'Genotype: {genotype}')
 
         # training
-        train_acc, train_obj = train(
+        train_acc, train_loss = train(
             trainloader, 
             validloader, 
             model, 
@@ -112,7 +116,11 @@ def run(params):
         )
        
         # validation
-        valid_acc, valid_obj = infer(validloader, model, criterion, args, tasks, device)
+        valid_acc, valid_loss = infer(validloader, model, criterion, args, tasks, device)
+
+        if valid_loss < min_loss:
+            genotype_store.save_genotype(genotype)
+            min_loss = valid_loss
 
         logger.info(f'\nEpoch {epoch} stats:')
         log_accuracy(train_acc, 'train')
