@@ -1,8 +1,6 @@
 import os
 import sys
 import argparse
-from loguru import logger
-
 import candle
 import p3b5 as bmk
 
@@ -12,14 +10,11 @@ from torch import optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-from datastore.data import P3B3
-from hammer.metrics import multitask_accuracy_topk
-from hammer.meters.average import AverageMeter
-
 from darts.api.config import banner
 from darts.modules.network import Network
 from darts.architecture import Architecture
-from darts.functional import multitask_loss
+from darts.meteters.average import AverageMeter
+from darts.functional import multitask_loss, multitask_accuracy
 from darts.meters.accuracy import MultitaskAccuracyMeter
 from darts.utils.logging import log_accuracy
 
@@ -29,80 +24,6 @@ lib_path = os.path.abspath(os.path.join(file_path, '..'))
 sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
-
-
-def main():
-    args = parse_args()
-    args.cuda = not args.no_cuda and torch.cuda.is_available()
-
-    device = torch.device(f'cuda:{args.gpu_id}' if args.cuda else "cpu")
-    banner(device=device)
-
-    train_data = P3B3(args.datapath, 'train', download=True)
-    valid_data = P3B3(args.datapath, 'test')
-
-    trainloader = DataLoader(train_data, batch_size=args.batch_size)
-    validloader = DataLoader(valid_data, batch_size=args.batch_size)
-
-    criterion = nn.CrossEntropyLoss().to(device)
-
-    tasks = {
-        'subsite': 6,
-        'laterality': 2,
-        'behavior': 2,
-        'grade': 3
-    }
-
-    model = Network(tasks=tasks, criterion=criterion, device=device).to(device)
-    architecture = Architecture(model, args, device=device)
-
-    optimizer = optim.SGD(
-        model.parameters(), 
-        args.lr, 
-        momentum=args.momentum, 
-        weight_decay=args.wd
-    )
-
-    scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, 
-        float(args.epochs), 
-        eta_min=args.lr_min
-    )
-
-    for epoch in range(args.epochs):
-
-        scheduler.step()
-        lr = scheduler.get_lr()[0]
-        logger.info(f'\nEpoch: {epoch} lr: {lr}')
-
-        genotype = model.genotype()
-        logger.info(f'Genotype: {genotype}')
-
-        #logger.debug(F.softmax(model.alphas_normal, dim=-1))
-        #logger.debug(F.softmax(model.alphas_reduce, dim=-1))
-
-        # training
-        train_acc, train_obj = train(
-            trainloader, 
-            validloader, 
-            model, 
-            architecture, 
-            criterion, 
-            optimizer, 
-            lr, 
-            args, 
-            tasks,
-            device
-        )
-       
-        # validation
-        valid_acc, valid_obj = infer(validloader, model, criterion, args, tasks, device)
-
-        logger.info(f'\nEpoch {epoch} stats:')
-        log_accuracy(train_acc, 'train')
-        log_accuracy(valid_acc, 'valid')
-
-        #utils.save(model, os.path.join(args.exp_path, 'search.pt'))
 
 
 def train(trainloader, validloader, model, architecture, criterion, optimizer, lr, args, tasks, device):
@@ -139,7 +60,7 @@ def train(trainloader, validloader, model, architecture, criterion, optimizer, l
         )
 
         logits = model(data)
-        loss = multitask_loss(logits, target, criterion, reduce='mean')
+        loss = multitask_loss(target, logits, criterion, reduce='mean')
 
         # 2. update weight
         optimizer.zero_grad()
@@ -147,12 +68,12 @@ def train(trainloader, validloader, model, architecture, criterion, optimizer, l
         nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
         optimizer.step()
 
-        prec1 = multitask_accuracy_topk(logits, target, topk=(1,))
+        prec1 = multitask_accuracy(target, logits)
         losses.update(loss.item(), batch_size)
         top1.update(prec1, batch_size)
 
         if step % args.log_interval == 0:
-            logger.info(f'Step: {step} loss: {losses.avg:.4}')
+            print(f'Step: {step} loss: {losses.avg:.4}')
             log_accuracy(top1)
 
     return top1, losses.avg
@@ -174,14 +95,14 @@ def infer(validloader, model, criterion, args, tasks, device):
             batch_size = data.size(0)
 
             logits = model(data)
-            loss = multitask_loss(logits, target, criterion, reduce='mean')
+            loss = multitask_loss(target, logits, criterion, reduce='mean')
 
-            prec1 = multitask_accuracy_topk(logits, target, topk=(1,))
+            prec1 = multitask_accuracy(target, logits)
             losses.update(loss.item(), batch_size)
             top1.update(prec1, batch_size)
 
             if step % args.log_interval == 0:
-                logger.info(f'>> Validation: {step} loss: {losses.avg:.4}')
+                print(f'>> Validation: {step} loss: {losses.avg:.4}')
                 log_accuracy(top1, 'valid')
 
     return top1, losses.avg
