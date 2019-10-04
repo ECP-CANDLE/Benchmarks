@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from darts.api.config import banner
 from darts.modules.network import Network
 from darts.architecture import Architecture
-from darts.meteters.average import AverageMeter
+from darts.meters.average import AverageMeter
 from darts.functional import multitask_loss, multitask_accuracy
 from darts.meters.accuracy import MultitaskAccuracyMeter
 from darts.utils.logging import log_accuracy
