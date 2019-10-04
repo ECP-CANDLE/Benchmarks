@@ -96,10 +96,10 @@ def run(params):
 
         scheduler.step()
         lr = scheduler.get_lr()[0]
-        logger.info(f'\nEpoch: {epoch} lr: {lr}')
+        print(f'\nEpoch: {epoch} lr: {lr}')
 
         genotype = model.genotype()
-        logger.info(f'Genotype: {genotype}')
+        print(f'Genotype: {genotype}')
 
         # training
         train_acc, train_loss = train(
@@ -122,7 +122,7 @@ def run(params):
             genotype_store.save_genotype(genotype)
             min_loss = valid_loss
 
-        logger.info(f'\nEpoch {epoch} stats:')
+        print(f'\nEpoch {epoch} stats:')
         log_accuracy(train_acc, 'train')
         log_accuracy(valid_acc, 'valid')
 
