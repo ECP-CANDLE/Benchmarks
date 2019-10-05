@@ -67,10 +67,10 @@ def run(params):
     criterion = nn.CrossEntropyLoss().to(device)
 
     tasks = {
-        'subsite': 6,
-        'laterality': 2,
-        'behavior': 2,
-        'grade': 3
+        'subsite': 15,
+        'laterality': 3,
+        'behavior': 3,
+        'grade': 3,
     }
 
     model = Network(tasks=tasks, criterion=criterion, device=device).to(device)
