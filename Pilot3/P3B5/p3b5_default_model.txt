@@ -2,6 +2,8 @@
 model_name = 'p3b5'
 unrolled = True
 data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/'
+savepath = '/gpfs/alpine/proj-shared/med107/yngtodd/src/checkout/Benchmarks/Pilot3/P3B5'
+log_interval = 10
 train_data = 'P3B3_data.tar.gz'
 learning_rate = 0.01
 learning_rate_min = 0.001

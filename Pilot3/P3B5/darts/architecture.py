@@ -13,7 +13,7 @@ class Architecture:
 
     def __init__(self, model, args, hyperparams=Hyperparameters(), device='cpu'):
         self.momentum = args.momentum # momentum for optimizer of theta
-        self.wd = args.wd # weight decay for optimizer of model's theta
+        self.wd = args.weight_decay # weight decay for optimizer of model's theta
         self.model = model # main model with respect to theta and alpha
         self.device = device
 
