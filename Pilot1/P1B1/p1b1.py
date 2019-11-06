@@ -160,7 +160,7 @@ def load_data(params, seed):
     train_path = candle.fetch_file(params['url_p1b1'] + params['file_train'], 'Pilot1')
     test_path = candle.fetch_file(params['url_p1b1'] + params['file_test'], 'Pilot1')
 
-    return candle.load_csv_data(train_path, test_path,
+    csv = candle.load_csv_data(train_path, test_path,
                                    x_cols=x_cols,
                                    y_cols=y_cols,
                                    drop_cols=drop_cols,
@@ -173,6 +173,7 @@ def load_data(params, seed):
                                    return_dataframe=False,
                                    return_header=True,
                                    seed=seed)
+    return csv
 
 
 def load_data_orig(params, seed):

@@ -5,8 +5,8 @@ from datetime import datetime
 
 import numpy as np
 import requests
-from keras import backend as K
-from keras.callbacks import Callback
+from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import Callback
 
 
 def compute_trainable_params(model):

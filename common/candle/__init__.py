@@ -28,7 +28,8 @@ from viz_utils import plot_scatter
 
 # import benchmark-dependent utils
 import sys
-if 'keras' in sys.modules:
+# if 'keras' in sys.modules:
+if True:
     print ('Importing candle utils for keras')
     #import from keras_utils
     #from keras_utils import dense

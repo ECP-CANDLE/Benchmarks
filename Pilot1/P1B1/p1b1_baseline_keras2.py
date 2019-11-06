@@ -2,13 +2,13 @@ from __future__ import print_function
 
 import numpy as np
 
-import keras
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model
-from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from keras.metrics import binary_crossentropy, mean_squared_error
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from tensorflow.keras.metrics import binary_crossentropy, mean_squared_error
 from scipy.stats.stats import pearsonr
 from sklearn.manifold import TSNE
 
@@ -113,6 +113,7 @@ def initialize_parameters():
     # Initialize parameters
     gParameters = candle.initialize_parameters(p1b1Bmk)
     #p1b1.logger.info('Params: {}'.format(gParameters))
+    print('Params P1B1: {}'.format(gParameters))
 
     return gParameters
 

@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 
 
-from keras import backend as K
-from keras import optimizers
-from keras import initializers
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras import initializers
 
-from keras.layers import Dropout
-from keras.callbacks import Callback
-from keras.utils import get_custom_objects
-from keras.metrics import binary_crossentropy, mean_squared_error
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.utils import get_custom_objects
+from tensorflow.keras.metrics import binary_crossentropy, mean_squared_error
 
 from scipy.stats.stats import pearsonr
 

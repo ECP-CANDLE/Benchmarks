@@ -795,6 +795,10 @@ def load_csv_data(train_path, test_path=None, sep=',', nrows=None,
         on the options selected.
     """
 
+    import sys
+    import p1b1
+    print(f"load_csv_data(train_path={train_path}, test_path={test_path}) ...")
+    
     if x_cols is None and drop_cols is None and n_cols is None:
         usecols = None
         y_names = None
