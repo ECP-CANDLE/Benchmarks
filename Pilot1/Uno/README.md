@@ -258,3 +258,12 @@ Current time ....23512.750
 ```
 python uno_infer.py --data All.h5 --model_file model.h5 --n_pred 30
 ```
+
+
+Data requirements
+
+In: http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1, get:
+
+* combo/rescaled_combined_single_drug_growth
+* combo/ComboDrugGrowth_Nov2017.csv
+* combo/NCI60_CELLNAME_to_Combo.txt
