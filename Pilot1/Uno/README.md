@@ -258,3 +258,17 @@ Current time ....23512.750
 ```
 python uno_infer.py --data All.h5 --model_file model.h5 --n_pred 30
 ```
+
+
+### Required data
+
+This data is required in the Data/Pilot1 directory (or the Benchmark will try to
+retrieve it from FTP):
+
+```
+$ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/combined_rnaseq_data_lincs1000_source_scale # 96 MB
+$ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/combined_single_response_agg # 419 MB
+$ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/drug_info # 81 KB
+$ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/Combined_PubChem_dragon7_descriptors.tsv # 9.2 MB
+$ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/NCI60_dragon7_descriptors.tsv # 926 MB
+```
