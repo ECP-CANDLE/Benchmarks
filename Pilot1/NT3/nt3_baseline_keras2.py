@@ -22,14 +22,14 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 import nt3 as bmk
 import candle
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'nt3_default_model.txt'):
 
     # Build benchmark object
-    nt3Bmk = bmk.BenchmarkNT3(bmk.file_path, 'nt3_default_model.txt', 'keras',
+    nt3Bmk = bmk.BenchmarkNT3(bmk.file_path, default_model, 'keras',
     prog='nt3_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(nt3Bmk)
+    gParameters = candle.finalize_parameters(nt3Bmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

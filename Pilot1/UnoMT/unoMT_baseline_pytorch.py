@@ -21,16 +21,16 @@ import candle
 np.set_printoptions(precision=4)
 
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'unoMT_default_model.txt'):
 
     # Build benchmark object
-    unoMTb = unoMT.unoMTBk(unoMT.file_path, 'unoMT_default_model.txt', 'pytorch',
+    unoMTb = unoMT.unoMTBk(unoMT.file_path, default_model, 'pytorch',
     prog='unoMT_baseline', desc='Multi-task combined single and combo drug prediction for cross-study data - Pilot 1')
     
     print("Created unoMT benchmark")
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unoMTb)
+    gParameters = candle.finalize_parameters(unoMTb)
     print("Parameters initialized")
 
 

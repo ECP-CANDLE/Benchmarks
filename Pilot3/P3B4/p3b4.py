@@ -14,8 +14,6 @@ sys.path.append(lib_path2)
 
 import candle
 
-
-
 required = [
     'learning_rate', 'batch_size', 'epochs', 'dropout', \
     'optimizer', 'wv_len', \

@@ -14,14 +14,14 @@ from sklearn.metrics import f1_score
 import p3b1 as bmk
 import candle
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p3b1_default_model.txt'):
 
     # Build benchmark object
-    p3b1Bmk = bmk.BenchmarkP3B1(bmk.file_path, 'p3b1_default_model.txt', 'keras',
+    p3b1Bmk = bmk.BenchmarkP3B1(bmk.file_path, default_model, 'keras',
     prog='p3b1_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
     
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p3b1Bmk)
+    gParameters = candle.finalize_parameters(p3b1Bmk)
     #bmk.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
