@@ -268,10 +268,10 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
 def initialize_parameters():
 
     # Build benchmark object
-    #mymodel_common = candle.Benchmark(file_path,os.getenv("DEFAULT_PARAMS_FILE"),'keras',prog='myprog',desc='My model')
-    #unoBmk = benchmark.BenchmarkUno(benchmark.file_path, 'uno_default_model.txt', 'keras',
-    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, os.getenv("DEFAULT_PARAMS_FILE"), 'keras',
-    prog='uno_baseline', desc='Build neural network based models to predict tumor response to single and paired drugs.')
+    mymodel_common = candle.Benchmark(file_path,os.getenv("DEFAULT_PARAMS_FILE"),'keras',prog='myprog',desc='My model')
+    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, 'uno_default_model.txt', 'keras',
+    #unoBmk = benchmark.BenchmarkUno(benchmark.file_path, os.getenv("DEFAULT_PARAMS_FILE"), 'keras',
+    #prog='uno_baseline', desc='Build neural network based models to predict tumor response to single and paired drugs.')
     
     # Initialize parameters
     gParameters = candle.initialize_parameters(unoBmk)
