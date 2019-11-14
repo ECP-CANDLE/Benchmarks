@@ -34,14 +34,14 @@ import argparse
 
 
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p3b3_default_model.txt'):
 
     # Build benchmark object
-    p3b3Bmk = bmk.BenchmarkP3B3(bmk.file_path, 'p3b3_default_model.txt', 'keras',
+    p3b3Bmk = bmk.BenchmarkP3B3(bmk.file_path, default_model, 'keras',
     prog='p3b3_baseline', desc='Multi-task CNN for data extraction from clinical reports - Pilot 3 Benchmark 3')
     
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p3b3Bmk)
+    gParameters = candle.finalize_parameters(p3b3Bmk)
     #bmk.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

@@ -24,8 +24,8 @@ sys.path.append('/raid/brettin/Benchmarks/common')
 import candle
 
 # candle
-def initialize_parameters():
-    t29_common = candle.Benchmark(file_path, 't29_default_model.txt','keras',
+def initialize_parameters(default_model = 't29_default_model.txt'):
+    t29_common = candle.Benchmark(file_path, default_model,'keras',
                             prog='t29res.py',desc='resnet')
 
     # Need a pointer to the docs showing what is provided
@@ -41,7 +41,7 @@ def initialize_parameters():
          'help':'Residual connection distance between dense layers.'}
     ]
     t29_common.additional_definitions = additional_definitions
-    gParameters = candle.initialize_parameters(t29_common)
+    gParameters = candle.finalize_parameters(t29_common)
     return gParameters
 
 

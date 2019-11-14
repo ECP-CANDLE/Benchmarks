@@ -17,14 +17,14 @@ from keras.regularizers import l2
 import p1b2
 import candle
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p1b2_default_model.txt):
 
     # Build benchmark object
-    p1b2Bmk = p1b2.BenchmarkP1B2(p1b2.file_path, 'p1b2_default_model.txt', 'keras',
+    p1b2Bmk = p1b2.BenchmarkP1B2(p1b2.file_path, default_model, 'keras',
     prog='p1b2_baseline', desc='Train Classifier - Pilot 1 Benchmark 2')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p1b2Bmk)
+    gParameters = candle.finalize_parameters(p1b2Bmk)
     #p1b2.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
