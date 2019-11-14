@@ -271,4 +271,6 @@ $ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/combined
 $ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/drug_info # 81 KB
 $ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/Combined_PubChem_dragon7_descriptors.tsv # 9.2 MB
 $ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/NCI60_dragon7_descriptors.tsv # 926 MB
+$ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/Combined_PubChem_dragon7_ECFP.tsv # 1.1 MB
+$ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/Combined_PubChem_dragon7_PFP.tsv # 1.1 MB
 ```
