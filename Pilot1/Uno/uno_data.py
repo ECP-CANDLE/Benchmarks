@@ -958,12 +958,9 @@ class DataFeeder(keras.utils.Sequence):
         self.single = single
         self.agg_dose = agg_dose
         self.target = agg_dose if agg_dose is not None else 'Growth'
-        # 4 inputs for single drug model (cell, dose1, descriptor, fingerprint)
-        # 7 inputs for drug pair model (cell, dose1, dose1, dr1.descriptor, dr1.fingerprint, dr2.descriptor, dr2.fingerprint)
-        self.input_size = 4 if self.single else 7
-        self.input_size = 2 if agg_dose else self.input_size
 
         self.store = pd.HDFStore(filename, mode='r')
+        self.input_size = len(list(filter(lambda x: x.startswith('/x_train'), self.store.keys())))
         y = self.store.select('y_{}'.format(self.partition))
         self.index = y.index
         self.size = len(self.index)
