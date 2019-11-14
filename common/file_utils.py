@@ -39,7 +39,8 @@ else:
 
 
 def get_file(fname, origin, untar=False,
-             md5_hash=None, cache_subdir='common'):
+            md5_hash=None, datadir='../Data/common'):
+             #md5_hash=None, cache_subdir='common', datadir='../Data/common'):
     """ Downloads a file from a URL if it not already in the cache.
         Passing the MD5 hash will verify the file after download as well
         as if it is already present in the cache.
@@ -62,9 +63,9 @@ def get_file(fname, origin, untar=False,
         Path to the downloaded file
     """
 
-    file_path = os.path.dirname(os.path.realpath(__file__))
-    datadir_base = os.path.expanduser(os.path.join(file_path, '..', 'Data'))
-    datadir = os.path.join(datadir_base, cache_subdir)
+    #file_path = os.path.dirname(os.path.realpath(__file__))
+    #datadir_base = os.path.expanduser(os.path.join(file_path, '..', 'Data'))
+    #datadir = os.path.join(datadir_base, cache_subdir)
     if not os.path.exists(datadir):
         os.makedirs(datadir)
 

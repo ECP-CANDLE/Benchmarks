@@ -47,6 +47,7 @@ from uq_utils import bining_for_calibration
 from uq_utils import computation_of_valid_calibration_interval
 from uq_utils import applying_calibration
 from uq_utils import overprediction_check
+from uq_utils import generate_index_distribution
 
 
 # import benchmark-dependent utils
