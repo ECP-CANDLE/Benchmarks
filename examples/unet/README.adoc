@@ -1,0 +1,216 @@
+[[u-net-example]]
+U-NET Example
+-------------
+
+The U-Net is a convolutional network architecture designed for image
+segmentation. This architecture captures context and localization
+features precisely and outperforms the traditional convolutional
+networks. The U-NET won the ISBI cell tracking challenge 2015. Please
+refer https://lmb.informatik.uni-freiburg.de/people/ronneber/u-net/[the
+website] or https://arxiv.org/abs/1505.04597[paper] for more detail. In
+this document, we will use biomedical images to train unet network and
+demonstrate how to run the U-NET with CANDLE library.
+
+[[before-getting-started]]
+Before Getting Started
+~~~~~~~~~~~~~~~~~~~~~~
+
+Please read
+https://github.com/ECP-CANDLE/Supervisor/blob/master/docs/user_guide.adoc[CANDLE
+Library User Guide]. This guide explains how to embed your neural
+network in CANDLE compliant way. We provide CANDLE compliant unet
+example. `unet.py` contains base class definition and helper methods,
+and `unet_candle.py` presents mandatory methods as an example.
+
+[source,python]
+----
+# in unet.py
+
+additional_definitions = None
+required = ['activation', 'optimizer', 'batch_size', 'epochs', 'kernel_initializer']
+
+class UNET(candle.Benchmark):
+    def set_locals(self):
+        if required is not None:
+            self.required = set(required)
+        if additional_definitions is not None:
+            self.additional_definitions = additional_definitions
+----
+
+[source,python]
+----
+# in unet_candle.py
+
+import unet
+import candle_keras as candle
+
+def initialize_parameters():
+    unet_common = unet.UNET(unet.file_path,
+        'unet_params.txt',
+        'keras',
+        prog='unet_example',
+        desc='UNET example'
+    )
+
+    # Initialize parameters
+    gParameters = candle.initialize_parameters(unet_common)
+    return gParameters
+----
+
+[source,python]
+----
+# in unet_candle.py
+
+def run(gParameters):
+    # load data
+    x_train, y_train = unet.load_data()
+
+    # example has 420 x 580
+    model = unet.build_model(420, 580, gParameters['activation'], gParameters['kernel_initializer'])
+
+    model.summary()
+    model.compile(optimizer=gParameters['optimizer'], loss='binary_crossentropy', metrics=['accuracy'])
+
+    model_chkpoint = ModelCheckpoint('unet.hdf5', monitor='loss', verbose=1, save_best_only=True)
+    history = model.fit(x_train, y_train,
+        batch_size=gParameters['batch_size'],
+        epochs=gParameters['epochs'],
+        verbose=1,
+        validation_split=0.3,
+        shuffle=True,
+        callbacks=[model_chkpoint]
+    )
+
+    return history
+----
+
+[[download-data-and-pre-process]]
+Download data and pre-process
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Before we start training unet, we need training images. We will use
+Kaggle Competition images. Go to
+https://www.kaggle.com/c/ultrasound-nerve-segmentation[Ultrasound Nerve
+Segmentation] and download images. You may need an account to download.
+Once you download `train.zip`, unzip it and you will see image files
+named like `x_xx.tif` `x_xx.mask.tif`. This is a pair of ultrasound
+nerve image and its annotated masks. Here is a pre-processing script.
+This basically reads all the images and store as an numpy array in
+`imgs_train.npy` and `imgs_mask_train.npy` respectively.
+
+[source,python]
+----
+# pre-process.py
+
+import os
+import glob
+import numpy as np
+from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
+
+i = 0
+rows = 420
+cols = 580
+
+imgs = glob.glob("./train/*_mask.tif")
+img_data = np.ndarray((len(imgs), rows, cols, 1), dtype=np.uint8)
+img_mask = np.ndarray((len(imgs), rows, cols, 1), dtype=np.uint8)
+for img_name in imgs:
+    img_name = img_name[img_name.rindex("/") + 1:]
+    img_name = img_name[:img_name.rindex("_")]
+
+    img = load_img(os.path.join("./train/", img_name + '.tif'), grayscale = True)
+    mask = load_img(os.path.join("./train/", img_name + '_mask.tif'), grayscale = True)
+
+    img = img_to_array(img)
+    mask = img_to_array(mask)
+
+    img_data[i] = img
+    img_mask[i] = mask
+    i += 1
+
+np.save(os.path.join("./npydata/", 'imgs_train.npy'), img_data)
+np.save(os.path.join("./npydata/", 'imgs_mask_train.npy'), img_mask)
+----
+
+[[running-unet-example-on-theta]]
+Running UNET example on Theta
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Once we have data files ready, we need to setup CANDLE framework. You
+will need to clone Benchmarks and Supervisor repositories, and modify
+some evironmental variables to run. Please read
+https://github.com/ECP-CANDLE/Supervisor/blob/master/docs/user_guide.adoc[CANDLE
+User Guide] for more detail information with regard to workflows that
+CANDLE provides. This tutorial will run CANDLE's UPF workflow.
+
+[source,bash]
+----
+# clone Supervisor
+$ git clone https://github.com/ECP-CANDLE/Supervisor.git
+$ cd Supervisor
+$ git checkout master
+
+# clone Benchmark
+$ git clone https://github.com/ECP-CANDLE/Benchmarks.git
+$ cd Benchmarks
+$ git checkout release_01
+----
+
+place nypdata and update file path in `unet.py`. It is recommended to
+use full path (starting from `/`).
+
+[source,python]
+----
+# Benchmarks/examples/unet/unet.py
+
+import numpy as np
+def load_data():
+    path = 'npydata'
+    x_train = np.load(os.path.join(path, 'imgs_train.npy'))
+    y_train = np.load(os.path.join(path, 'imgs_mask_train.npy'))
+----
+
+[[step1.-go-to-workflow-directory.]]
+Step1. Go to workflow directory.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[source,bash]
+----
+cd $SUPERVISOR/workflows/upf
+----
+
+[[step-2.-update-cfg-sys-1.sh-to-config-env-variables.]]
+Step 2. Update `cfg-sys-1.sh` to config env variables.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+[source,bash]
+----
+# Uncomment below to use custom python script to run
+# Use file name without .py (e.g, my_script.py)
+MODEL_PYTHON_SCRIPT=unet_candle
+BENCHMARK_DIR=/projects/CSC249ADOA01/hsyoo/candle_lib/Benchmarks/examples/unet/
+----
+
+[[step-3.-update-upf-1.txt]]
+Step 3. Update `upf-1.txt`
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Each line is a json doc, and you can modify params like below. This
+example will run 3 training jobs with varying `activation` method and
+`optimizer`.
+
+[source,json]
+----
+{"id":"test0", "epoches":1, "activation": "relu", "optimizer": "adam"}
+{"id":"test1", "epoches":1, "activation": "sigmoid", "optimizer": "adam"}
+{"id":"test2", "epoches":1, "activation": "relu", "optimizer": "sgd"}
+----
+
+[[step-4.-submit]]
+Step 4. Submit
+^^^^^^^^^^^^^^
+
+[source,bash]
+----
+$ QUEUE=default PROCS=4 WALLTIME=02:00:00 ./test/upf-1.sh theta
+----

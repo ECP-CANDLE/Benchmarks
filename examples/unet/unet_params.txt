@@ -1,0 +1,6 @@
+[Global_Params]
+epochs=5
+batch_size=4
+activation='relu'
+kernel_initializer='he_normal'
+optimizer='adam'

@@ -17,19 +17,19 @@ from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
-#TIMEOUT=3600 # in sec; set this to -1 for no timeout 
+#TIMEOUT=3600 # in sec; set this to -1 for no timeout
 
 import nt3 as bmk
 import candle
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'nt3_default_model.txt'):
 
     # Build benchmark object
-    nt3Bmk = bmk.BenchmarkNT3(bmk.file_path, 'nt3_default_model.txt', 'keras',
+    nt3Bmk = bmk.BenchmarkNT3(bmk.file_path, default_model, 'keras',
     prog='nt3_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(nt3Bmk)
+    gParameters = candle.finalize_parameters(nt3Bmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
@@ -84,7 +84,7 @@ def load_data(train_path, test_path, gParameters):
                 tmp2 = (df_comp_train.shape[1])*(random.random())
                 tmp2 = int(tmp2)
                 df_comp_train[i][j] = df_comp_train[i][tmp2]
-                df_comp_train[i][tmp2] = tmp1    
+                df_comp_train[i][tmp2] = tmp1
     print("y noise: %i / %i" % (flips, df_y_train.shape[0]));
     print(" y noise stop")
 
