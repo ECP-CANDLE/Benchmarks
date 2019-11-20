@@ -40,14 +40,14 @@ def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
 
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p2b1_default_model.txt'):
 
     # Build benchmark object
-    p2b1Bmk = p2b1.BenchmarkP2B1(p2b1.file_path, 'p2b1_default_model.txt', 'keras',
+    p2b1Bmk = p2b1.BenchmarkP2B1(p2b1.file_path, default_model, 'keras',
     prog='p2b1_baseline', desc='Train Molecular Frame Autoencoder - Pilot 2 Benchmark 1')
 
     # Initialize parameters
-    GP = candle.initialize_parameters(p2b1Bmk)
+    GP = candle.finalize_parameters(p2b1Bmk)
     #p2b1.logger.info('Params: {}'.format(gParameters))
 
     print ('\nTraining parameters:')
