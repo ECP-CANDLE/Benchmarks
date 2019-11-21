@@ -48,7 +48,7 @@ additional_definitions = [
         'help': 'use rnaseq cell line feature set or none at all'},
     {'name': 'drug_features',
         'nargs': '+',
-        'choices': ['descriptors', 'fingerprints', 'none'],
+        'choices': ['descriptors', 'fingerprints', 'none', 'mordred'],
         'help': 'use dragon7 descriptors or fingerprint descriptors for drug features or none at all'},
     {'name': 'by_cell',
         'type': str,

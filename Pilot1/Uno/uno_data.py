@@ -281,6 +281,38 @@ def load_drug_data(ncols=None, scaling='std', imputing='mean', dropna=None, add_
     return df_desc, df_fp
 
 
+def load_mordred_descriptors(ncols=None, scaling='std', imputing='mean', dropna=None, add_prefix=True, feature_subset=None):
+    path = get_file(DATA_URL + 'extended_combined_mordred_descriptors')
+
+    df = pd.read_csv(path, engine='c', sep='\t', na_values=['na', '-', ''])
+    df.iloc[:, 1:] = df.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+    df.iloc[:, 1:] = df.iloc[:, 1:].astype(np.float32)
+
+    df1 = pd.DataFrame(df.loc[:, 'DRUG'])
+    df1.rename(columns={'DRUG': 'Drug'}, inplace=True)
+
+    df2 = df.drop('DRUG', 1)
+    if add_prefix:
+        df2 = df2.add_prefix('mordred.')
+
+    df2 = impute_and_scale(df2, scaling, imputing)
+
+    df_desc = pd.concat([df1, df2], axis=1)
+
+    df1 = pd.DataFrame(df_desc.loc[:, 'Drug'])
+    df2 = df_desc.drop('Drug', 1)
+    if add_prefix:
+        df2 = df2.add_prefix('mordred.')
+    if feature_subset:
+        df2 = df2[[x for x in df2.columns if x in feature_subset]]
+    df2 = impute_and_scale(df2, scaling=scaling, imputing=imputing, dropna=dropna)
+    df_desc = pd.concat([df1, df2], axis=1)
+
+    logger.info('Loaded Mordred drug descriptors: %s', df_desc.shape)
+
+    return df_desc
+
+
 def load_drug_descriptors(ncols=None, scaling='std', imputing='mean', dropna=None, add_prefix=True, feature_subset=None):
     df_info = load_drug_info()
     df_info['Drug'] = df_info['PUBCHEM']
@@ -878,13 +910,17 @@ class CombinedDataLoader(object):
                 df_drug_desc = load_drug_descriptors(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
             elif fea == 'fingerprints':
                 df_drug_fp = load_drug_fingerprints(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
+            elif fea == 'mordred' :
+                df_drug_mordred = load_mordred_descriptors(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
+
 
         # df_drug_desc, df_drug_fp = load_drug_data(ncols=ncols, scaling=scaling, dropna=dropna)
 
         cell_df_dict = {'rnaseq': 'df_cell_rnaseq'}
 
         drug_df_dict = {'descriptors': 'df_drug_desc',
-                        'fingerprints': 'df_drug_fp'}
+                        'fingerprints': 'df_drug_fp',
+                        'mordred' : 'df_drug_mordred'}
 
         # df_cell_ids = df_cell_rnaseq[['Sample']].drop_duplicates()
         # df_drug_ids = pd.concat([df_drug_desc[['Drug']], df_drug_fp[['Drug']]]).drop_duplicates()
