@@ -293,7 +293,7 @@ def load_mordred_descriptors(ncols=None, scaling='std', imputing='mean', dropna=
 
     df2 = df.drop('DRUG', 1)
     if add_prefix:
-        df2 = df2.add_prefix('dragon7.')
+        df2 = df2.add_prefix('mordred.')
 
     df2 = impute_and_scale(df2, scaling, imputing)
 
@@ -302,7 +302,7 @@ def load_mordred_descriptors(ncols=None, scaling='std', imputing='mean', dropna=
     df1 = pd.DataFrame(df_desc.loc[:, 'Drug'])
     df2 = df_desc.drop('Drug', 1)
     if add_prefix:
-        df2 = df2.add_prefix('dragon7.')
+        df2 = df2.add_prefix('mordred.')
     if feature_subset:
         df2 = df2[[x for x in df2.columns if x in feature_subset]]
     df2 = impute_and_scale(df2, scaling=scaling, imputing=imputing, dropna=dropna)
