@@ -318,7 +318,7 @@ def set_seed(seed):
     random.seed(seed)
 
 
-def initialize_parameters(bmk):
+def finalize_parameters(bmk):
     """Utility to parse parameters in common as well as parmeters
         particular to each benchmark.
 
@@ -570,6 +570,10 @@ def get_common_parser(parser):
                         default=[], type=int,
                         help="set IDs of GPUs to use")
 
+    # profiling flags
+    parser.add_argument("-p", "--profiling", type=str2bool,
+                        default = 'false',
+                        help="Turn profiling on or off")
 
     return parser
 

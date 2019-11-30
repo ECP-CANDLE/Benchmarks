@@ -265,16 +265,18 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
     return Model(inputs, output)
 
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'uno_default_model.txt'):
 
     # Build benchmark object
-    mymodel_common = candle.Benchmark(file_path,os.getenv("DEFAULT_PARAMS_FILE"),'keras',prog='myprog',desc='My model')
-    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, 'uno_default_model.txt', 'keras',
-    #unoBmk = benchmark.BenchmarkUno(benchmark.file_path, os.getenv("DEFAULT_PARAMS_FILE"), 'keras',
-    #prog='uno_baseline', desc='Build neural network based models to predict tumor response to single and paired drugs.')
-    
+#    mymodel_common = candle.Benchmark(file_path,os.getenv("DEFAULT_PARAMS_FILE"),'keras',prog='myprog',desc='My model')
+#    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, 'uno_default_model.txt', 'keras',
+#    #unoBmk = benchmark.BenchmarkUno(benchmark.file_path, os.getenv("DEFAULT_PARAMS_FILE"), 'keras',
+#    #prog='uno_baseline', desc='Build neural network based models to predict tumor response to single and paired drugs.')
+    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, default_model, 'keras',
+                                    prog='uno_baseline', desc='Build neural network based models to predict tumor response to single and paired drugs.')
+
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unoBmk)
+    gParameters = candle.finalize_parameters(unoBmk)
     # benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

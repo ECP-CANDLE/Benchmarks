@@ -15,14 +15,14 @@ import sys
 import p3b2 as bmk
 import candle
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p3b2_default_model.txt'):
 
     # Build benchmark object
-    p3b2Bmk = bmk.BenchmarkP3B2(bmk.file_path, 'p3b2_default_model.txt', 'keras',
+    p3b2Bmk = bmk.BenchmarkP3B2(bmk.file_path, default_model, 'keras',
     prog='p3b2_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
     
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p3b2Bmk)
+    gParameters = candle.finalize_parameters(p3b2Bmk)
     #bmk.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

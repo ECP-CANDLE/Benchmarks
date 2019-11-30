@@ -104,14 +104,14 @@ def build_type_classifier(x_train, y_train, x_test, y_test):
     print(acc)
     return clf
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p1b1_default_model.txt'):
 
     # Build benchmark object
-    p1b1Bmk = p1b1.BenchmarkP1B1(p1b1.file_path, 'p1b1_default_model.txt', 'keras',
+    p1b1Bmk = p1b1.BenchmarkP1B1(p1b1.file_path, default_model, 'keras',
     prog='p1b1_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p1b1Bmk)
+    gParameters = candle.finalize_parameters(p1b1Bmk)
     #p1b1.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

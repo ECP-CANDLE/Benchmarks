@@ -18,7 +18,7 @@ from file_utils import get_file
 from default_utils import ArgumentStruct
 from default_utils import Benchmark
 from default_utils import str2bool
-from default_utils import initialize_parameters
+from default_utils import finalize_parameters
 from default_utils import fetch_file
 from default_utils import verify_path
 from default_utils import keras_default_config
@@ -49,6 +49,9 @@ from uq_utils import applying_calibration
 from uq_utils import overprediction_check
 from uq_utils import generate_index_distribution
 
+#profiling
+from profiling_utils import start_profiling
+from profiling_utils import stop_profiling
 
 # import benchmark-dependent utils
 import sys
