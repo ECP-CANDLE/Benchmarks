@@ -18,7 +18,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 #TIMEOUT=3600 # in sec; set this to -1 for no timeout
-
+  
 import nt3 as bmk
 import candle
 
@@ -70,7 +70,7 @@ def load_data(train_path, test_path, gParameters):
             flips += 1
             df_y_train[i] = int(not df_y_train[i])
 
-    print("flips: %i / %i" % (flips, df_y_train.shape[0]));
+    print("flips: %i / %i" % (flips, df_y_train.shape[0]))
     print("x flipping done")
 
     # introduce y noise

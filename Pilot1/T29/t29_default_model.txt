@@ -10,4 +10,5 @@ learning_rate=0.002
 momentum=0.42
 loss='categorical_crossentropy'
 activation='relu'
+logfile='model.log'
 CHECK=1

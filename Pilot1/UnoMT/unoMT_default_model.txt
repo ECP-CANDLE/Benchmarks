@@ -89,6 +89,7 @@ epochs=1000
 # no_cuda=True
 rng_seed=0
 save_path='save/unoMT'
+logfile='model.log'
 
 [Monitor_Params]
 solr_root=''

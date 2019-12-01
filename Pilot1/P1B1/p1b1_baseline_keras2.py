@@ -151,6 +151,7 @@ def run(params):
     ext = p1b1.extension_from_parameters(params, '.keras')
     candle.verify_path(params['save_path'])
     prefix = '{}{}'.format(params['save_path'], ext)
+    print(prefix)
     logfile = params['logfile'] if params['logfile'] else prefix+'.log'
     candle.set_up_logger(logfile, p1b1.logger, params['verbose'])
     p1b1.logger.info('Params: {}'.format(params))

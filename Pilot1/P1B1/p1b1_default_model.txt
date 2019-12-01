@@ -5,7 +5,7 @@ file_test = 'P1B1.dev.test.csv'
 model_name='p1b1'
 dense=[2000, 600]
 batch_size=100
-epochs=100
+epochs=10
 activation='relu'
 loss='mse'
 optimizer='adam'
@@ -24,7 +24,6 @@ feature_subsample=0
 batch_normalization=False
 alpha_dropout=False
 save_path='save'
-
 [Monitor_Params]
 solr_root=''
 timeout=3600

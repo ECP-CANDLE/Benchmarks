@@ -28,6 +28,8 @@ from file_utils import get_file
 DEFAULT_SEED = 7102
 DEFAULT_TIMEOUT = -1 # no timeout
 DEFAULT_DATATYPE = np.float32
+DEFAULT_X_NOISE = 0.0
+DEFAULT_Y_NOISE = 0.0
 
 
 #### IO UTILS
@@ -379,8 +381,9 @@ def get_default_neon_parser(parser):
     # Logging Level
     parser.add_argument("-v", "--verbose", type=str2bool,
                         help="increase output verbosity")
-    parser.add_argument("-l", "--log", dest='logfile',
-                        default=None,
+                        
+    parser.add_argument("-l", "--logfile", dest='logfile',
+                        default=argparse.SUPPRESS,
                         help="log file")
                         
     # Logging utilities
@@ -616,6 +619,11 @@ def args_overwrite_config(args, config):
     if 'timeout' not in params:
         params['timeout'] = DEFAULT_TIMEOUT
 
+    if 'x_noise_level' not in params:
+        params['x_noise_level'] = DEFAULT_X_NOISE
+
+    if 'y_noise_level' not in params:
+        params['y_noise_level'] = DEFAULT_Y_NOISE      
 
     return params
 
