@@ -48,6 +48,9 @@ from uq_utils import computation_of_valid_calibration_interval
 from uq_utils import applying_calibration
 from uq_utils import overprediction_check
 
+#profiling
+from profiling_utils import start_profiling
+from profiling_utils import stop_profiling
 
 # import benchmark-dependent utils
 import sys

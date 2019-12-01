@@ -570,6 +570,10 @@ def get_common_parser(parser):
                         default=[], type=int,
                         help="set IDs of GPUs to use")
 
+    # profiling flags
+    parser.add_argument("-p", "--profiling", type=str2bool,
+                        default = 'false',
+                        help="Turn profiling on or off")
 
     return parser
 

@@ -1,11 +1,11 @@
-import candle
-import p3b5 as bmk
-
 import torch
 import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+
+import p3b5 as bmk
+import candle
 
 from darts.api.config import banner
 from darts.data.p3b3 import P3B3
@@ -31,7 +31,7 @@ def initialize_parameters():
     )
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p3b5_bench)
+    gParameters = candle.finalize_parameters(p3b5_bench)
     #bmk.logger.info('Params: {}'.format(gParameters))
     return gParameters
 
