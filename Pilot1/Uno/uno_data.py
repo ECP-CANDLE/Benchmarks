@@ -281,6 +281,38 @@ def load_drug_data(ncols=None, scaling='std', imputing='mean', dropna=None, add_
     return df_desc, df_fp
 
 
+def load_mordred_descriptors(ncols=None, scaling='std', imputing='mean', dropna=None, add_prefix=True, feature_subset=None):
+    path = get_file(DATA_URL + 'extended_combined_mordred_descriptors')
+
+    df = pd.read_csv(path, engine='c', sep='\t', na_values=['na', '-', ''])
+    df.iloc[:, 1:] = df.iloc[:, 1:].apply(pd.to_numeric, errors='coerce')
+    df.iloc[:, 1:] = df.iloc[:, 1:].astype(np.float32)
+
+    df1 = pd.DataFrame(df.loc[:, 'DRUG'])
+    df1.rename(columns={'DRUG': 'Drug'}, inplace=True)
+
+    df2 = df.drop('DRUG', 1)
+    if add_prefix:
+        df2 = df2.add_prefix('mordred.')
+
+    df2 = impute_and_scale(df2, scaling, imputing)
+
+    df_desc = pd.concat([df1, df2], axis=1)
+
+    df1 = pd.DataFrame(df_desc.loc[:, 'Drug'])
+    df2 = df_desc.drop('Drug', 1)
+    if add_prefix:
+        df2 = df2.add_prefix('mordred.')
+    if feature_subset:
+        df2 = df2[[x for x in df2.columns if x in feature_subset]]
+    df2 = impute_and_scale(df2, scaling=scaling, imputing=imputing, dropna=dropna)
+    df_desc = pd.concat([df1, df2], axis=1)
+
+    logger.info('Loaded Mordred drug descriptors: %s', df_desc.shape)
+
+    return df_desc
+
+
 def load_drug_descriptors(ncols=None, scaling='std', imputing='mean', dropna=None, add_prefix=True, feature_subset=None):
     df_info = load_drug_info()
     df_info['Drug'] = df_info['PUBCHEM']
@@ -622,6 +654,7 @@ class CombinedDataLoader(object):
         self.seed = seed
 
     def load_from_cache(self, cache, params):
+        """ NOTE: How does this function return an error? (False?) -Wozniak """
         param_fname = '{}.params.json'.format(cache)
         if not os.path.isfile(param_fname):
             logger.warning('Cache parameter file does not exist: %s', param_fname)
@@ -635,7 +668,7 @@ class CombinedDataLoader(object):
         ignore_keys = ['cache', 'partition_by', 'single']
         equal, diffs = dict_compare(params, cached_params, ignore_keys)
         if not equal:
-            logger.warning('Cache parameter mismatch: %s\nSaved: %s\nAttemptd to load: %s', diffs, cached_params, params)
+            logger.warning('Cache parameter mismatch: %s\nSaved: %s\nAttempted to load: %s', diffs, cached_params, params)
             logger.warning('\nRemove %s to rebuild data cache.\n', param_fname)
             raise ValueError('Could not load from a cache with incompatible keys:', diffs)
         else:
@@ -648,12 +681,17 @@ class CombinedDataLoader(object):
             self.__dict__.update(obj.__dict__)
             logger.info('Loaded data from cache: %s', fname)
             return True
+        # NOTE: This is unreachable -Wozniak
         return False
 
     def save_to_cache(self, cache, params):
         for k in ['self', 'cache', 'single']:
             if k in params:
                 del params[k]
+        dirname = os.path.dirname(cache)
+        if not os.path.exists(dirname):
+            logger.debug('Creating directory for cache: %s', dirname)
+            os.mkdir(dirname)
         param_fname = '{}.params.json'.format(cache)
         with open(param_fname, 'w') as param_file:
             json.dump(params, param_file, sort_keys=True)
@@ -872,13 +910,17 @@ class CombinedDataLoader(object):
                 df_drug_desc = load_drug_descriptors(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
             elif fea == 'fingerprints':
                 df_drug_fp = load_drug_fingerprints(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
+            elif fea == 'mordred' :
+                df_drug_mordred = load_mordred_descriptors(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
+
 
         # df_drug_desc, df_drug_fp = load_drug_data(ncols=ncols, scaling=scaling, dropna=dropna)
 
         cell_df_dict = {'rnaseq': 'df_cell_rnaseq'}
 
         drug_df_dict = {'descriptors': 'df_drug_desc',
-                        'fingerprints': 'df_drug_fp'}
+                        'fingerprints': 'df_drug_fp',
+                        'mordred' : 'df_drug_mordred'}
 
         # df_cell_ids = df_cell_rnaseq[['Sample']].drop_duplicates()
         # df_drug_ids = pd.concat([df_drug_desc[['Drug']], df_drug_fp[['Drug']]]).drop_duplicates()
@@ -952,16 +994,17 @@ class DataFeeder(keras.utils.Sequence):
         self.single = single
         self.agg_dose = agg_dose
         self.target = agg_dose if agg_dose is not None else 'Growth'
-        # 4 inputs for single drug model (cell, dose1, descriptor, fingerprint)
-        # 7 inputs for drug pair model (cell, dose1, dose1, dr1.descriptor, dr1.fingerprint, dr2.descriptor, dr2.fingerprint)
-        self.input_size = 4 if self.single else 7
-        self.input_size = 3 if agg_dose else self.input_size
 
         self.store = pd.HDFStore(filename, mode='r')
+        self.input_size = len(list(filter(lambda x: x.startswith('/x_train'), self.store.keys())))
         y = self.store.select('y_{}'.format(self.partition))
         self.index = y.index
         self.size = len(self.index)
-        self.steps = self.size // self.batch_size
+        if self.size >= self.batch_size:
+            self.steps = self.size // self.batch_size
+        else:
+            self.steps = 1
+            self.batch_size = self.size
         self.index_map = np.arange(self.steps)
         if self.shuffle:
             np.random.shuffle(self.index_map)
@@ -973,7 +1016,7 @@ class DataFeeder(keras.utils.Sequence):
         start = self.index_map[idx] * self.batch_size
         stop = (self.index_map[idx] + 1) * self.batch_size
         x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
-        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop, columns=[self.target])
+        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop)[self.target]
         return x, y
 
     def reset(self):
@@ -982,8 +1025,12 @@ class DataFeeder(keras.utils.Sequence):
         pass
 
     def get_response(self, copy=False):
-        self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
-        df = self.store.get('y_{}'.format(self.partition)).iloc[self.index,:]
+        if self.shuffle:
+            self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
+            df = self.store.get('y_{}'.format(self.partition)).iloc[self.index,:]
+        else:
+            df = self.store.get('y_{}'.format(self.partition))
+
         if self.agg_dose is None:
             df['Dose1'] = self.store.get('x_{}_0'.format(self.partition)).iloc[self.index,:]
             if not self.single:

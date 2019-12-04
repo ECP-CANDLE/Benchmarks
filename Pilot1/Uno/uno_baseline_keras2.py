@@ -403,7 +403,7 @@ def run(params):
 
         template_model = build_model(loader, args, silent=True)
         if args.initial_weights:
-            logger.info("Loading weights from {}".format(args.initial_weights))
+            logger.info("Loading initial weights from {}".format(args.initial_weights))
             template_model.load_weights(args.initial_weights)
 
         if len(args.gpus) > 1:
@@ -427,6 +427,7 @@ def run(params):
 
         candle_monitor = candle.CandleRemoteMonitor(params=params)
         timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
+        es_monitor = keras.callbacks.EarlyStopping(patience=10, verbose=1)
 
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
@@ -435,6 +436,8 @@ def run(params):
         history_logger = LoggingCallback(logger.debug)
             
         callbacks = [candle_monitor, timeout_monitor, history_logger]
+        if args.es:
+            callbacks.append(es_monitor)
         if args.reduce_lr:
             callbacks.append(reduce_lr)
         if args.warmup_lr:
@@ -444,7 +447,8 @@ def run(params):
         if args.tb:
             callbacks.append(tensorboard)
         if args.save_weights:
-            callbacks.append(SimpleWeightSaver(args.save_path + '/' + args.save_weights))
+            logger.info("Will save weights to: " + args.save_weights)
+            callbacks.append(MultiGPUCheckpoint(args.save_weights))
 
         if args.use_exported_data is not None:
             train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
