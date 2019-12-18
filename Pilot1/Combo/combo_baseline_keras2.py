@@ -644,15 +644,15 @@ def build_model(loader, args, verbose=False):
 
     return Model(inputs, output)
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'combo_default_model.txt'):
 
     # Build benchmark object
-    comboBmk = combo.BenchmarkCombo(combo.file_path, 'combo_default_model.txt', 'keras',
+    comboBmk = combo.BenchmarkCombo(combo.file_path, default_model, 'keras',
         prog='combo_baseline',
         desc = 'Build neural network based models to predict tumor response to drug pairs.')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(comboBmk)
+    gParameters = candle.finalize_parameters(comboBmk)
     #combo.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

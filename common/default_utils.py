@@ -318,7 +318,7 @@ def set_seed(seed):
     random.seed(seed)
 
 
-def initialize_parameters(bmk):
+def finalize_parameters(bmk):
     """Utility to parse parameters in common as well as parameters
         particular to each benchmark.
 

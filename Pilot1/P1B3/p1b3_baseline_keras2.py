@@ -28,14 +28,14 @@ import candle
 
 #np.set_printoptions(threshold=np.nan)
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p1b3_default_model.txt'):
 
     # Build benchmark object
-    p1b3Bmk = benchmark.BenchmarkP1B3(benchmark.file_path, 'p1b3_default_model.txt', 'keras',
+    p1b3Bmk = benchmark.BenchmarkP1B3(benchmark.file_path, default_model, 'keras',
     prog='p1b3_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
     
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p1b3Bmk)
+    gParameters = candle.finalize_parameters(p1b3Bmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

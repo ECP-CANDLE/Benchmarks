@@ -30,14 +30,14 @@ import tc1 as bmk
 import candle
 
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'tc1_default_model.txt'):
 
     # Build benchmark object
-    tc1Bmk = bmk.BenchmarkTC1(file_path, 'tc1_default_model.txt', 'keras',
+    tc1Bmk = bmk.BenchmarkTC1(file_path, default_model, 'keras',
     prog='tc1_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(tc1Bmk)
+    gParameters = candle.finalize_parameters(tc1Bmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

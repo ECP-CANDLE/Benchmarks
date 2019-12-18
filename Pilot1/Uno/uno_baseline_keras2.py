@@ -265,14 +265,14 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
     return Model(inputs, output)
 
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'uno_default_model.txt'):
 
     # Build benchmark object
-    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, 'uno_default_model.txt', 'keras',
+    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, default_model, 'keras',
                                     prog='uno_baseline', desc='Build neural network based models to predict tumor response to single and paired drugs.')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unoBmk)
+    gParameters = candle.finalize_parameters(unoBmk)
     # benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
@@ -427,6 +427,7 @@ def run(params):
 
         candle_monitor = candle.CandleRemoteMonitor(params=params)
         timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
+        es_monitor = keras.callbacks.EarlyStopping(patience=10, verbose=1)
 
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
@@ -435,6 +436,8 @@ def run(params):
         history_logger = LoggingCallback(logger.debug)
             
         callbacks = [candle_monitor, timeout_monitor, history_logger]
+        if args.es:
+            callbacks.append(es_monitor)
         if args.reduce_lr:
             callbacks.append(reduce_lr)
         if args.warmup_lr:
