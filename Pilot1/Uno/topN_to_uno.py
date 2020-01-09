@@ -37,26 +37,6 @@ def read_plan(filename, node):
             raise Exception('Node index "{}" was not found in plan file'.format(node))
 
 
-# def build_masks(args, df):
-#     if args.node is None:
-#        print('node is None. Generate Random split')
-#        mask = training_mask(df)
-#        return mask, ~mask
-#
-#    plan = read_plan(args.plan, args.node)
-#    mask = {}
-#    for partition in ['train', 'val']:
-#        _mask = df['Sample'] is None
-#        for i, element in enumerate(plan[partition]):
-#            cl_filter = element['cell']
-#            dr_filter = element['drug']
-#            __mask = df['Sample'].isin(cl_filter) & df['Drug1'].isin(dr_filter)
-#            _mask = _mask | __mask
-#        mask[partition] = _mask
-#
-#    return mask['train'], mask['val']
-
-
 def build_masks(args, df):
     if args.node is None:
         print('node is None. Generate Random split')
@@ -122,6 +102,21 @@ def read_dataframe_from_feather(args):
     return df_y, df_cl, df_dd
 
 
+def read_dataframe_from_parquet(args):
+    df = pd.read_parquet(args.dataframe_from).fillna(0)
+    df.rename(columns={'CELL': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
+    df_y = df[['AUC', 'Sample', 'Drug1']]
+
+    cols = df.columns.to_list()
+    cl_columns = list(filter(lambda x: x.startswith('GE_'), cols))
+    dd_columns = list(filter(lambda x: x.startswith('DD_'), cols))
+
+    df_cl = df.loc[:, cl_columns]
+    df_dd = df.loc[:, dd_columns]
+
+    return df_y, df_cl, df_dd
+
+
 def read_dataframe_from_hdf(args):
     store = pd.HDFStore(args.dataframe_from, 'r')
     df = store.get('df')
@@ -144,6 +139,8 @@ def build_dataframe(args):
         df_y, df_cl, df_dd = read_dataframe_from_hdf(args)
     elif ext == '.feather':
         df_y, df_cl, df_dd = read_dataframe_from_feather(args)
+    elif ext == '.parquet':
+        df_y, df_cl, df_dd = read_dataframe_from_parquet(args)
     else:
         df_y, df_cl, df_dd = read_dataframe_from_csv(args)
 
