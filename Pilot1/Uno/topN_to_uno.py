@@ -118,9 +118,11 @@ def build_dataframe(args):
         vl_id = pd.read_csv('{}_vl_id.csv'.format(args.fold))
         tr_idx = tr_id.iloc[:, 0].dropna().values.astype(int).tolist()
         vl_idx = vl_id.iloc[:, 0].dropna().values.astype(int).tolist()
+        tr_vl_idx = tr_idx + vl_idx
 
         y_train = df_y.iloc[tr_idx, :].reset_index(drop=True)
         y_val = df_y.iloc[vl_idx, :].reset_index(drop=True)
+        y_test = df_y.loc[~df_y.index.isin(tr_vl_idx), :].reset_index(drop=True)
 
         x_train_0 = df_cl.iloc[tr_idx, :].reset_index(drop=True)
         x_train_1 = df_dd.iloc[tr_idx, :].reset_index(drop=True)
@@ -129,6 +131,10 @@ def build_dataframe(args):
         x_val_0 = df_cl.iloc[vl_idx, :].reset_index(drop=True)
         x_val_1 = df_dd.iloc[vl_idx, :].reset_index(drop=True)
         x_val_1.columns = [''] * len(x_val_1.columns)
+
+        x_test_0 = df_cl.iloc[~df_cl.index.isin(tr_vl_idx), :].reset_index(drop=True)
+        x_test_1 = df_dd.iloc[~df_dd.index.isin(tr_vl_idx), :].reset_index(drop=True)
+        x_test_1.columns = [''] * len(x_val_1.columns)
     else:
         train_mask, val_mask = build_masks(args, df_y)
 
@@ -151,6 +157,10 @@ def build_dataframe(args):
     store.put('x_train_1', x_train_1, format='table')
     store.put('x_val_0', x_val_0, format='table')
     store.put('x_val_1', x_val_1, format='table')
+    if y_test is not None:
+        store.put('y_test', y_test, format='table')
+        store.put('x_test_0', x_test_0, format='table')
+        store.put('x_test_1', x_test_1, format='table')
     store.close()
 
 
