@@ -17,6 +17,10 @@ def parse_arguments():
                         help='True for building dataset incrementally')
     parser.add_argument('--fold', type=str, default=None,
                         help='pre-calculated indexes for cross fold validation')
+    parser.add_argument('--cell_feature_selection', default=None,
+                        help='Plain text list for cell feature filtering. one item per line')
+    parser.add_argument('--drug_feature_selection', default=None,
+                        help='Plain text list for drug feature filtering. one item per line')
     parser.add_argument('--output', type=str, default='topN.uno.h5',
                         help='output filename')
 
@@ -91,6 +95,14 @@ def read_dataframe(args):
     cols = df.columns.to_list()
     cl_columns = list(filter(lambda x: x.startswith('GE_'), cols))
     dd_columns = list(filter(lambda x: x.startswith('DD_'), cols))
+
+    if args.cell_feature_selection is not None:
+        features = set(pd.read_csv(args.cell_feature_selection, skip_blank_lines=True, header=None)[0].to_list())
+        cl_columns = list(filter(lambda x: x in features, cl_columns))
+
+    if args.drug_feature_selection is not None:
+        features = set(pd.read_csv(args.drug_feature_selection, skip_blank_lines=True, header=None)[0].to_list())
+        dd_columns = list(filter(lambda x: x in features, dd_columns))
 
     df_cl = df.loc[:, cl_columns]
     df_dd = df.loc[:, dd_columns]
