@@ -25,8 +25,8 @@ from sklearn.preprocessing import LabelEncoder
 
 SEED = 0
 
-# DATAPATH = '../top_21.res_reg.cf_rnaseq.dd_dragon7.labeled.hdf5'
-DATAPATH = './top_21.res_reg.cf_rnaseq.dd_dragon7.labled.parquet'
+DATAPATH = '/ccs/home/brettin/Benchmarks/top_21.res_reg.cf_rnaseq.dd_dragon7.labled.hdf5'
+# DATAPATH = './top_21.res_reg.cf_rnaseq.dd_dragon7.labled.parquet'
 outdir = Path('./')
 
 # File path
@@ -201,8 +201,8 @@ def plot_hist(x, var_name, fit=None, bins=100, path='hist.png'):
 def make_split(args):
 
     # Load data
-    data = pd.read_parquet( DATAPATH ) 
-
+    # data = pd.read_parquet( DATAPATH ) 
+    data = pd.read_hdf( DATAPATH )
     # Data splits
     # te_method = args['te_method']
     # cv_method = args['cv_method']
