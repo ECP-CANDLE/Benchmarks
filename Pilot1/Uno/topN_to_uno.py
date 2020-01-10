@@ -40,7 +40,7 @@ def read_plan(filename, node):
 def build_masks(args, df):
     if args.node is None:
         print('node is None. Generate Random split')
-        mask = training_mask(df)
+        mask = get_random_mask(df)
         return mask, ~mask
 
     print('from new build_mask: {} {} {}'.format(args.plan, args.node, args.incremental))
@@ -68,58 +68,23 @@ def build_masks(args, df):
     return mask['train'], mask['val']
 
 
-def training_mask(df):
+def get_random_mask(df):
     return np.random.rand(len(df)) < 0.8
 
 
-def read_dataframe_from_csv(args):
-    df = pd.read_csv(args.dataframe_from, low_memory=False, na_values='na').fillna(0)
-    df.rename(columns={'CELL': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
-    df_y = df[['AUC', 'Sample', 'Drug1']]
+def read_dataframe(args):
+    _, ext = os.path.splitext(args.dataframe_from)
+    if ext == '.h5' or ext == '.hdf5':
+        store = pd.HDFStore(args.dataframe_from, 'r')
+        df = store.get('df')
+        store.close()
+    elif ext == '.feather':
+        df = pd.read_feather(args.dataframe_from).fillna(0)
+    elif ext == '.parquet':
+        df = pd.read_parquet(args.dataframe_from).fillna(0)
+    else:
+        df = pd.read_csv(args.dataframe_from, low_memory=False, na_values='na').fillna(0)
 
-    cols = df.columns.to_list()
-    cl_columns = list(filter(lambda x: x.startswith('GE_'), cols))
-    dd_columns = list(filter(lambda x: x.startswith('DD_'), cols))
-
-    df_cl = df.loc[:, cl_columns]
-    df_dd = df.loc[:, dd_columns]
-
-    return df_y, df_cl, df_dd
-
-
-def read_dataframe_from_feather(args):
-    df = pd.read_feather(args.dataframe_from).fillna(0)
-    df.rename(columns={'CELL': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
-    df_y = df[['AUC', 'Sample', 'Drug1']]
-
-    cols = df.columns.to_list()
-    cl_columns = list(filter(lambda x: x.startswith('GE_'), cols))
-    dd_columns = list(filter(lambda x: x.startswith('DD_'), cols))
-
-    df_cl = df.loc[:, cl_columns]
-    df_dd = df.loc[:, dd_columns]
-
-    return df_y, df_cl, df_dd
-
-
-def read_dataframe_from_parquet(args):
-    df = pd.read_parquet(args.dataframe_from).fillna(0)
-    df.rename(columns={'CELL': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
-    df_y = df[['AUC', 'Sample', 'Drug1']]
-
-    cols = df.columns.to_list()
-    cl_columns = list(filter(lambda x: x.startswith('GE_'), cols))
-    dd_columns = list(filter(lambda x: x.startswith('DD_'), cols))
-
-    df_cl = df.loc[:, cl_columns]
-    df_dd = df.loc[:, dd_columns]
-
-    return df_y, df_cl, df_dd
-
-
-def read_dataframe_from_hdf(args):
-    store = pd.HDFStore(args.dataframe_from, 'r')
-    df = store.get('df')
     df.rename(columns={'CELL': 'Sample', 'DRUG': 'Drug1'}, inplace=True)
     df_y = df[['AUC', 'Sample', 'Drug1']]
 
@@ -134,15 +99,7 @@ def read_dataframe_from_hdf(args):
 
 
 def build_dataframe(args):
-    _, ext = os.path.splitext(args.dataframe_from)
-    if ext == '.h5' or ext == '.hdf5':
-        df_y, df_cl, df_dd = read_dataframe_from_hdf(args)
-    elif ext == '.feather':
-        df_y, df_cl, df_dd = read_dataframe_from_feather(args)
-    elif ext == '.parquet':
-        df_y, df_cl, df_dd = read_dataframe_from_parquet(args)
-    else:
-        df_y, df_cl, df_dd = read_dataframe_from_csv(args)
+    df_y, df_cl, df_dd = read_dataframe(args)
 
     if args.fold is not None:
         tr_id = pd.read_csv('{}_tr_id.csv'.format(args.fold))
