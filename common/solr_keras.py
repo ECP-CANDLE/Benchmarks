@@ -136,7 +136,7 @@ class CandleRemoteMonitor(Callback):
         """Save log_messages to file
         """
         # path = os.getenv('TURBINE_OUTPUT') if 'TURBINE_OUTPUT' in os.environ else '.'
-        path = self.global_params['save'] if 'save' in self.global_params else '.'
+        path = self.global_params['save_path'] if 'save_path' in self.global_params else '.'
         if not os.path.exists(path):
             os.makedirs(path)
 
