@@ -837,7 +837,7 @@ class CombinedDataLoader(object):
              cell_feature_subset_path=None, drug_feature_subset_path=None,
              drug_lower_response=1, drug_upper_response=-1, drug_response_span=0,
              drug_median_response_min=-1, drug_median_response_max=1,
-             use_landmark_genes=False, use_filtered_genes=False,
+             use_landmark_genes=False, use_filtered_genes=False, use_exported_data=None,
              preprocess_rnaseq=None, single=False,
              # train_sources=['GDSC', 'CTRP', 'ALMANAC', 'NCI60'],
              train_sources=['GDSC', 'CTRP', 'ALMANAC'],
@@ -858,6 +858,18 @@ class CombinedDataLoader(object):
         if cache and self.load_from_cache(cache, params):
             self.build_feature_list(single=single)
             return
+
+        # rebuild cache equivalent from the exported dataset
+        if use_exported_data is not None:
+            with pd.HDFStore(use_exported_data, 'r') as store:
+                if '/model' in store.keys():
+                    self.input_features = store.get_storer('model').attrs.input_features
+                    self.feature_shapes = store.get_storer('model').attrs.feature_shapes
+                    self.input_dim = sum([np.prod(self.feature_shapes[x]) for x in self.input_features.values()])
+                    return
+                else:
+                    logger.warning('\nExported dataset does not have model info. Please rebuild the dataset.\n')
+                    raise ValueError('Could not load model info from the dataset:', use_exported_data)
 
         logger.info('Loading data from scratch ...')
 

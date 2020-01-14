@@ -1,6 +1,7 @@
 import argparse
 import os
 import json
+from collections import OrderedDict
 import pandas as pd
 import numpy as np
 
@@ -157,6 +158,14 @@ def build_dataframe(args):
     store.put('x_train_1', x_train_1, format='table')
     store.put('x_val_0', x_val_0, format='table')
     store.put('x_val_1', x_val_1, format='table')
+
+    # keep input feature list and shape
+    cl_width = len(df_cl.columns)
+    dd_width = len(df_dd.columns)
+    store.put('model', pd.DataFrame())
+    store.get_storer('model').attrs.input_features = OrderedDict([('cell.rnaseq', 'cell.rnaseq'), ('drug1.descriptors', 'drug.descriptors')])
+    store.get_storer('model').attrs.feature_shapes = OrderedDict([('cell.rnaseq', (cl_width,)), ('drug.descriptors', (dd_width,))])
+
     if y_test is not None:
         store.put('y_test', y_test, format='table')
         store.put('x_test_0', x_test_0, format='table')

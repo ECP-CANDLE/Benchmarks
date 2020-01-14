@@ -318,6 +318,7 @@ def run(params):
                 test_sources=args.test_sources,
                 embed_feature_source=not args.no_feature_source,
                 encode_response_source=not args.no_response_source,
+                use_exported_data=args.use_exported_data,
                 )
 
     target = args.agg_dose or 'Growth'
@@ -366,13 +367,20 @@ def run(params):
                 store.append('y_{}'.format(partition), y.astype({target: 'float32'}), format='table', data_column=True,
                              min_itemsize=config_min_itemsize)
                 logger.info('Generating {} dataset. {} / {}'.format(partition, i, gen.steps))
+
+        # save input_features and feature_shapes from loader
+        store.put('model', pd.DataFrame())
+        store.get_storer('model').attrs.input_features = loader.input_features
+        store.get_storer('model').attrs.feature_shapes = loader.feature_shapes
+
         store.close()
         logger.info('Completed generating {}'.format(fname))
         return
 
-    loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
-                          cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug,
-                          cell_subset_path=args.cell_subset_path, drug_subset_path=args.drug_subset_path)
+    if args.use_exported_data is None:
+        loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
+                              cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug,
+                              cell_subset_path=args.cell_subset_path, drug_subset_path=args.drug_subset_path)
 
     model = build_model(loader, args)
     logger.info('Combined model:')
