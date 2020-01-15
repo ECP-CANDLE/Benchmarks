@@ -665,7 +665,7 @@ class CombinedDataLoader(object):
             except json.JSONDecodeError as e:
                 logger.warning('Could not decode parameter file %s: %s', param_fname, e)
                 return False
-        ignore_keys = ['cache', 'partition_by', 'single']
+        ignore_keys = ['cache', 'partition_by', 'single', 'use_exported_data']
         equal, diffs = dict_compare(params, cached_params, ignore_keys)
         if not equal:
             logger.warning('Cache parameter mismatch: %s\nSaved: %s\nAttempted to load: %s', diffs, cached_params, params)
