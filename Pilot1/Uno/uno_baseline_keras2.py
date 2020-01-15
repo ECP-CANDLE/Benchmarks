@@ -223,8 +223,15 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
     for fea_type, shape in loader.feature_shapes.items():
         base_type = fea_type.split('.')[0]
         if base_type in ['cell', 'drug']:
+            if args.dense_cell_feature_layers is not None and base_type == 'cell':
+                dense_feature_layers = args.dense_cell_feature_layers
+            elif args.dense_drug_feature_layers is not None and base_type == 'drug':
+                dense_feature_layers = args.dense_drug_feature_layers
+            else:
+                dense_feature_layers = args.dense_feature_layers
+
             box = build_feature_model(input_shape=shape, name=fea_type,
-                                      dense_layers=args.dense_feature_layers,
+                                      dense_layers=dense_feature_layers,
                                       dropout_rate=dropout_rate, permanent_dropout=permanent_dropout)
             if not silent:
                 logger.debug('Feature encoding submodel for %s:', fea_type)
