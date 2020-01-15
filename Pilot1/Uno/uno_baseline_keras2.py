@@ -468,6 +468,7 @@ def run(params):
         if args.use_exported_data is not None:
             train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
             val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
+            test_gen = DataFeeder(partition='test', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
         else:
             train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
             val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
@@ -487,20 +488,27 @@ def run(params):
                                 callbacks=callbacks,
                                 validation_data=(x_val_list, y_val))
         else:
-            logger.info('Data points per epoch: train = %d, val = %d', train_gen.size, val_gen.size)
-            logger.info('Steps per epoch: train = %d, val = %d', train_gen.steps, val_gen.steps)
+            logger.info('Data points per epoch: train = %d, val = %d, test = %d', train_gen.size, val_gen.size, test_gen.size)
+            logger.info('Steps per epoch: train = %d, val = %d, test = %d', train_gen.steps, val_gen.steps, test_gen.steps)
             history = model.fit_generator(train_gen, train_gen.steps,
                                           epochs=args.epochs,
                                           callbacks=callbacks,
                                           validation_data=val_gen,
                                           validation_steps=val_gen.steps)
 
-        if args.no_gen:
-            y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
+        # prediction on holdout(test) when exists or use validation set
+        if len(test_gen) > 0:
+            df_val = test_gen.get_response(copy=True)
+            y_val = df_val[target].values
+            y_val_pred = model.predict_generator(test_gen, test_gen.steps + 1)
+            y_val_pred = y_val_pred[:test_gen.size]
         else:
-            val_gen.reset()
-            y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
-            y_val_pred = y_val_pred[:val_gen.size]
+            if args.no_gen:
+                y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
+            else:
+                val_gen.reset()
+                y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
+                y_val_pred = y_val_pred[:val_gen.size]
 
         y_val_pred = y_val_pred.flatten()
 

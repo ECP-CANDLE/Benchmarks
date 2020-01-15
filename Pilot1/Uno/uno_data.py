@@ -866,6 +866,7 @@ class CombinedDataLoader(object):
                     self.input_features = store.get_storer('model').attrs.input_features
                     self.feature_shapes = store.get_storer('model').attrs.feature_shapes
                     self.input_dim = sum([np.prod(self.feature_shapes[x]) for x in self.input_features.values()])
+                    self.test_sep_sources = []
                     return
                 else:
                     logger.warning('\nExported dataset does not have model info. Please rebuild the dataset.\n')
@@ -1009,8 +1010,12 @@ class DataFeeder(keras.utils.Sequence):
 
         self.store = pd.HDFStore(filename, mode='r')
         self.input_size = len(list(filter(lambda x: x.startswith('/x_train'), self.store.keys())))
-        y = self.store.select('y_{}'.format(self.partition))
-        self.index = y.index
+        try:
+            y = self.store.select('y_{}'.format(self.partition))
+            self.index = y.index
+        except KeyError:
+            self.index = []
+
         self.size = len(self.index)
         if self.size >= self.batch_size:
             self.steps = self.size // self.batch_size
