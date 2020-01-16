@@ -483,7 +483,7 @@ def run(params):
                                           validation_steps=val_gen.steps)
 
         # prediction on holdout(test) when exists or use validation set
-        if len(test_gen) > 0:
+        if test_gen.size > 0:
             df_val = test_gen.get_response(copy=True)
             y_val = df_val[target].values
             y_val_pred = model.predict_generator(test_gen, test_gen.steps + 1)
