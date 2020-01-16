@@ -73,6 +73,7 @@ if 'keras' in sys.modules:
     from keras_utils import mae
     from keras_utils import mse
         
+    from viz_utils import plot_metrics
 
     from solr_keras import CandleRemoteMonitor
     from solr_keras import compute_trainable_params

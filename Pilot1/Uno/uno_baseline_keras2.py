@@ -506,10 +506,7 @@ def run(params):
         df_val[target + 'Error'] = y_val_pred - y_val
         df_pred_list.append(df_val)
 
-        if hasattr(history, 'loss'):
-            candle.plot_history(prefix, history, 'loss')
-        if hasattr(history, 'r2'):
-            candle.plot_history(prefix, history, 'r2')
+        candle.plot_metrics(history, title=None, skip_ep=0, outdir='./save/', add_lr=True)
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
