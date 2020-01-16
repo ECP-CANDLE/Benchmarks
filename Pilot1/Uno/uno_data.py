@@ -1071,7 +1071,7 @@ class CombinedDataGenerator(keras.utils.Sequence):
         elif partition == 'val':
             index = data.val_indexes[fold]
         else:
-            index = data.test_indexes[fold]
+            index = data.test_indexes[fold] if hasattr(data, 'test_indexes') else []
 
         if source:
             df = data.df_response[['Source']].iloc[index, :]
