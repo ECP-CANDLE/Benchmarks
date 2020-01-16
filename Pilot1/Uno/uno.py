@@ -206,14 +206,14 @@ additional_definitions = [
         'type': int,
         'default': 0,
         'help': 'number of bins to use when discretizing growth response'},
-    {'name' : 'initial_weights',
-        'type' : str,
-        'default': None,
-        'help' : 'file name of initial weights'},
-    {'name' : 'save_weights',
+    {'name': 'initial_weights',
         'type': str,
-        'default' : None,
-        'help': 'name of file to save weights to' }
+        'default': None,
+        'help': 'file name of initial weights'},
+    {'name': 'save_weights',
+        'type': str,
+        'default': None,
+        'help': 'name of file to save weights to'}
 ]
 
 required = [

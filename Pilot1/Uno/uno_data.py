@@ -923,9 +923,8 @@ class CombinedDataLoader(object):
                 df_drug_desc = load_drug_descriptors(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
             elif fea == 'fingerprints':
                 df_drug_fp = load_drug_fingerprints(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
-            elif fea == 'mordred' :
+            elif fea == 'mordred':
                 df_drug_mordred = load_mordred_descriptors(ncols=ncols, scaling=scaling, dropna=dropna, feature_subset=drug_feature_subset)
-
 
         # df_drug_desc, df_drug_fp = load_drug_data(ncols=ncols, scaling=scaling, dropna=dropna)
 
@@ -933,7 +932,7 @@ class CombinedDataLoader(object):
 
         drug_df_dict = {'descriptors': 'df_drug_desc',
                         'fingerprints': 'df_drug_fp',
-                        'mordred' : 'df_drug_mordred'}
+                        'mordred': 'df_drug_mordred'}
 
         # df_cell_ids = df_cell_rnaseq[['Sample']].drop_duplicates()
         # df_drug_ids = pd.concat([df_drug_desc[['Drug']], df_drug_fp[['Drug']]]).drop_duplicates()
@@ -1044,14 +1043,14 @@ class DataFeeder(keras.utils.Sequence):
     def get_response(self, copy=False):
         if self.shuffle:
             self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
-            df = self.store.get('y_{}'.format(self.partition)).iloc[self.index,:]
+            df = self.store.get('y_{}'.format(self.partition)).iloc[self.index, :]
         else:
             df = self.store.get('y_{}'.format(self.partition))
 
         if self.agg_dose is None:
-            df['Dose1'] = self.store.get('x_{}_0'.format(self.partition)).iloc[self.index,:]
+            df['Dose1'] = self.store.get('x_{}_0'.format(self.partition)).iloc[self.index, :]
             if not self.single:
-                df['Dose2'] = self.store.get('x_{}_1'.format(self.partition)).iloc[self.index,:]
+                df['Dose2'] = self.store.get('x_{}_1'.format(self.partition)).iloc[self.index, :]
         return df.copy() if copy else df
 
     def close(self):

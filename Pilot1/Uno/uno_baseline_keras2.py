@@ -18,10 +18,6 @@ from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, Learni
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from scipy.stats.stats import pearsonr
 
-# For non-interactive plotting
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-
 import uno as benchmark
 import candle
 
@@ -29,7 +25,6 @@ import uno_data
 from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
 
 
-mpl.use('Agg')
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -187,7 +182,8 @@ def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
     model = Model(x_input, h, name=name)
     return model
 
-class SimpleWeightSaver(Callback):    
+
+class SimpleWeightSaver(Callback):
 
     def __init__(self, fname):
         self.fname = fname
@@ -200,7 +196,6 @@ class SimpleWeightSaver(Callback):
 
     def on_train_end(self, logs={}):
         self.model.save_weights(self.fname)
-    
 
 
 def build_model(loader, args, permanent_dropout=True, silent=False):
@@ -258,7 +253,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
     return Model(inputs, output)
 
 
-def initialize_parameters(default_model = 'uno_default_model.txt'):
+def initialize_parameters(default_model='uno_default_model.txt'):
 
     # Build benchmark object
     unoBmk = benchmark.BenchmarkUno(benchmark.file_path, default_model, 'keras',
@@ -282,7 +277,7 @@ def run(params):
     ext = extension_from_parameters(args)
     verify_path(args.save_path)
     prefix = args.save_path + ext
-    logfile = args.logfile if args.logfile else prefix+'.log'
+    logfile = args.logfile if args.logfile else prefix + '.log'
     set_up_logger(logfile, args.verbose)
     logger.info('Params: {}'.format(params))
 
@@ -420,7 +415,6 @@ def run(params):
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
 
-
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 
         # calculate trainable and non-trainable params
@@ -435,7 +429,7 @@ def run(params):
         checkpointer = MultiGPUCheckpoint(prefix + cv_ext + '.model.h5', save_best_only=True)
         tensorboard = TensorBoard(log_dir="tb/{}{}{}".format(args.tb_prefix, ext, cv_ext))
         history_logger = LoggingCallback(logger.debug)
-            
+
         callbacks = [candle_monitor, timeout_monitor, history_logger]
         if args.es:
             callbacks.append(es_monitor)
