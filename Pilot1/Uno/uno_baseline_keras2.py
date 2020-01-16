@@ -135,20 +135,6 @@ def log_evaluation(metric_outputs, description='Comparing y_true and y_pred:'):
         logger.info('  {}: {:.4f}'.format(metric, value))
 
 
-#def plot_history(out, history, metric='loss', title=None):
-#    title = title or 'model {}'.format(metric)
-#    val_metric = 'val_{}'.format(metric)
-#    plt.figure(figsize=(8, 6))
-#    plt.plot(history.history[metric], marker='o')
-#    plt.plot(history.history[val_metric], marker='d')
-#    plt.title(title)
-#    plt.ylabel(metric)
-#    plt.xlabel('epoch')
-#    plt.legend(['train_{}'.format(metric), 'val_{}'.format(metric)], loc='upper center')
-#    png = '{}.plot.{}.png'.format(out, metric)
-#    plt.savefig(png, bbox_inches='tight')
-#
-
 class LoggingCallback(Callback):
     def __init__(self, print_fcn=print):
         Callback.__init__(self)
@@ -521,9 +507,9 @@ def run(params):
         df_pred_list.append(df_val)
 
         if hasattr(history, 'loss'):
-            plot_history(prefix, history, 'loss')
+            candle.plot_history(prefix, history, 'loss')
         if hasattr(history, 'r2'):
-            plot_history(prefix, history, 'r2')
+            candle.plot_history(prefix, history, 'r2')
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
