@@ -263,8 +263,8 @@ class Candle_Molecular_Train():
 
             num_frames = X.shape[0]
 
-            xt_all = np.array([])
-            yt_all = np.array([])
+            xt_all = []
+            yt_all = []
 
             num_active_frames = random.sample(range(num_frames), int(self.sampling_density*num_frames))
 
@@ -298,12 +298,11 @@ class Candle_Molecular_Train():
                         exit()
                     yt = xt.copy()
 
-                if not len(xt_all):
-                    xt_all = np.expand_dims(xt, axis=0)
-                    yt_all = np.expand_dims(yt, axis=0)
-                else:
-                    xt_all = np.append(xt_all, np.expand_dims(xt, axis=0), axis=0)
-                    yt_all = np.append(yt_all, np.expand_dims(yt, axis=0), axis=0)
+                xt_all.append(np.expand_dims(xt, axis=0))
+                yt_all.append(np.expand_dims(yt, axis=0))
+
+            xt_all = np.concatenate(xt_all)
+            yt_all = np.concatenate(yt_all)
 
             yield files[f_ind], xt_all, yt_all
 
