@@ -6,13 +6,22 @@ import os
 import sys
 import gzip
 
-from keras import backend as K
+try:
+    from keras import backend as K
 
-from keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
-from keras.optimizers import SGD, Adam, RMSprop
-from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.utils import np_utils
-from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
+    from keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
+    from keras.optimizers import SGD, Adam, RMSprop
+    from keras.models import Sequential, Model, model_from_json, model_from_yaml
+    from keras.utils import to_categorical
+    from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
+except:
+    from tensorflow.keras import backend as K
+
+    from tensorflow.keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
+    from tensorflow.keras.optimizers import SGD, Adam, RMSprop
+    from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
+    from tensorflow.keras.utils import to_categorical
+    from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
@@ -49,8 +58,8 @@ def load_data(train_path, test_path, gParameters):
     df_y_train = df_train[:,0].astype('int')
     df_y_test = df_test[:,0].astype('int')
 
-    Y_train = np_utils.to_categorical(df_y_train,gParameters['classes'])
-    Y_test = np_utils.to_categorical(df_y_test,gParameters['classes'])
+    Y_train = to_categorical(df_y_train,gParameters['classes'])
+    Y_test = to_categorical(df_y_test,gParameters['classes'])
 
     df_x_train = df_train[:, 1:seqlen].astype(np.float32)
     df_x_test = df_test[:, 1:seqlen].astype(np.float32)

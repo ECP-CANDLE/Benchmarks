@@ -5,9 +5,12 @@ from datetime import datetime
 
 import numpy as np
 import requests
-from keras import backend as K
-from keras.callbacks import Callback
-
+try:
+    from keras import backend as K
+    from keras.callbacks import Callback
+except:
+    from tensorflow.keras import backend as K
+    from tensorflow.keras.callbacks import Callback
 
 def compute_trainable_params(model):
     """ Extract number of parameters from the given Keras model
@@ -21,9 +24,9 @@ def compute_trainable_params(model):
         python dictionary that contains trainable_params, non_trainable_params and total_params
     """
     trainable_count = int(
-        np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
+        np.sum([K.count_params(p) for p in model.trainable_weights]))
     non_trainable_count = int(
-        np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+        np.sum([K.count_params(p) for p in model.non_trainable_weights]))
 
     return {'trainable_params': trainable_count,
             'non_trainable_params': non_trainable_count,
