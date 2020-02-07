@@ -1,6 +1,7 @@
 import argparse
 import os
 import json
+from pathlib import Path
 from collections import OrderedDict
 import pandas as pd
 import numpy as np
@@ -119,11 +120,17 @@ def build_dataframe(args):
         vl_id = pd.read_csv('{}_vl_id.csv'.format(args.fold))
         tr_idx = tr_id.iloc[:, 0].dropna().values.astype(int).tolist()
         vl_idx = vl_id.iloc[:, 0].dropna().values.astype(int).tolist()
-        tr_vl_idx = tr_idx + vl_idx
+        if Path('{}_te_id.csv').is_file:
+            print('reading test partition from file')
+            te_id = pd.read_csv('{}_te_id.csv'.format(args.fold))
+            te_idx = te_id.iloc[:, 0].dropna().values.astype(int).tolist()
+        else:
+            tr_vl_idx = tr_idx + vl_idx
+            te_idx = ~df_y.index.isin(tr_vl_idx)
 
         y_train = df_y.iloc[tr_idx, :].reset_index(drop=True)
         y_val = df_y.iloc[vl_idx, :].reset_index(drop=True)
-        y_test = df_y.loc[~df_y.index.isin(tr_vl_idx), :].reset_index(drop=True)
+        y_test = df_y.loc[te_idx, :].reset_index(drop=True)
 
         x_train_0 = df_cl.iloc[tr_idx, :].reset_index(drop=True)
         x_train_1 = df_dd.iloc[tr_idx, :].reset_index(drop=True)
@@ -133,8 +140,8 @@ def build_dataframe(args):
         x_val_1 = df_dd.iloc[vl_idx, :].reset_index(drop=True)
         x_val_1.columns = [''] * len(x_val_1.columns)
 
-        x_test_0 = df_cl.iloc[~df_cl.index.isin(tr_vl_idx), :].reset_index(drop=True)
-        x_test_1 = df_dd.iloc[~df_dd.index.isin(tr_vl_idx), :].reset_index(drop=True)
+        x_test_0 = df_cl.iloc[te_idx, :].reset_index(drop=True)
+        x_test_1 = df_dd.iloc[te_idx, :].reset_index(drop=True)
         x_test_1.columns = [''] * len(x_val_1.columns)
     else:
         train_mask, val_mask = build_masks(args, df_y)
