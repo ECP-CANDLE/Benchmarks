@@ -33,7 +33,14 @@ class hcan(object):
         #doc input
         self.doc_input = tf.placeholder(tf.int32, shape=[None,max_sents,max_words]) # batch x sents x words
         batch_size = tf.shape(self.doc_input)[0]
-        doc_input_reshape = tf.reshape(self.doc_input,(-1,max_words)) # batch*sents x words 
+        
+        words_per_sent = tf.reduce_sum(tf.sign(self.doc_input),2) # batch X sents
+        max_words_ = tf.reduce_max(words_per_sent)
+        sents_per_doc = tf.reduce_sum(tf.sign(words_per_sent),1) # batch 
+        max_sents_ = tf.reduce_max(sents_per_doc)
+        doc_input_reduced = self.doc_input[:,:max_sents_,:max_words_] #clip
+        
+        doc_input_reshape = tf.reshape(doc_input_reduced,(-1,max_words_)) # batch*sents x words 
 
         #word embeddings
         word_embeds = tf.gather(tf.get_variable('embeddings',initializer=self.embedding_matrix,
@@ -55,19 +62,18 @@ class hcan(object):
         outputs = tf.matmul(outputs,V) # batch*sents x words x attention_size
 
         #word target attention
-        Q = tf.get_variable('word_Q',(1,self.attention_size,1),
+        Q = tf.get_variable('word_Q',(1,1,self.attention_size),
             tf.float32,tf.orthogonal_initializer())
-        Q = tf.tile(Q,[batch_size*max_sents,1,1])
+        Q = tf.tile(Q,[batch_size*max_sents_,1,1])
         V = outputs
 
-        outputs = tf.matmul(outputs,Q) # batch*sents x words x 1
+        outputs = tf.matmul(Q,tf.transpose(outputs,[0, 2, 1]))
         outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
         outputs = tf.where(tf.equal(outputs,0),tf.ones_like(outputs)*-1000,outputs)
         outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
-        outputs = tf.expand_dims(tf.squeeze(outputs,[2]),1) # batch*sents x 1 x words
         outputs = tf.matmul(outputs,V) # batch*sents x 1 x attention_size
         
-        sent_embeds = tf.reshape(outputs,(-1,max_sents,self.attention_size))
+        sent_embeds = tf.reshape(outputs,(-1,max_sents_,self.attention_size))
         sent_embeds = tf.nn.dropout(sent_embeds,self.dropout) # batch x sents x attention_size
 
         #sent self attention
@@ -85,16 +91,15 @@ class hcan(object):
         outputs = tf.matmul(outputs,V) # batch x sents x attention_size
 
         #sent target attention       
-        Q = tf.get_variable('sent_Q',(1,self.attention_size,1),
+        Q = tf.get_variable('sent_Q',(1,1,self.attention_size),
             tf.float32,tf.orthogonal_initializer())
         Q = tf.tile(Q,[batch_size,1,1])
         V = outputs
 
-        outputs = tf.matmul(outputs,Q) # batch x sents x 1
+        outputs = tf.matmul(Q,tf.transpose(outputs,[0, 2, 1]))
         outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
         outputs = tf.where(tf.equal(outputs,0),tf.ones_like(outputs)*-1000,outputs)
         outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
-        outputs = tf.expand_dims(tf.squeeze(outputs,[2]),1) # batch x 1 x sents
         outputs = tf.matmul(outputs,V) # batch x 1 x attention_size
         doc_embeds = tf.nn.dropout(tf.squeeze(outputs,[1]),self.dropout) # batch x attention_size
 
