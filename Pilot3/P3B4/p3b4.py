@@ -17,7 +17,7 @@ import candle
 required = [
     'learning_rate', 'batch_size', 'epochs', 'dropout', \
     'optimizer', 'wv_len', \
-    'attention_size']
+    'attention_size', 'embed_train']
 
 
 
