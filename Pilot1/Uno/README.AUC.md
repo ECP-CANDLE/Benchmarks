@@ -11,7 +11,7 @@ $ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc
 ## Training
 ```
 python uno_baseline_keras2.py --config_file uno_auc_model.txt \
-  --use_exported_data top_21_auc_1fold.uno.h5
+  --use_exported_data top_21_auc_1fold.uno.h5 --es True
 
 ...
 Params:
@@ -22,7 +22,7 @@ Params:
  'batch_size': 32,
  'by_cell': None,
  'by_drug': None,
- 'cache': 'cache/top6_auc',
+ 'cache': None,
  'cell_feature_subset_path': '',
  'cell_features': ['rnaseq'],
  'cell_subset_path': '',
@@ -32,6 +32,8 @@ Params:
  'cv': 1,
  'datatype': <class 'numpy.float32'>,
  'dense': [1000, 1000, 1000, 1000, 1000],
+ 'dense_cell_feature_layers': None,
+ 'dense_drug_feature_layers': None,
  'dense_feature_layers': [1000, 1000, 1000],
  'drop': 0.1,
  'drug_feature_subset_path': '',
@@ -40,6 +42,7 @@ Params:
  'drug_median_response_min': -1,
  'drug_subset_path': '',
  'epochs': 50,
+ 'es': True,
  'experiment_id': 'EXP000',
  'export_csv': None,
  'export_data': None,
@@ -59,6 +62,7 @@ Params:
  'output_dir': '/ssd1/homes/hsyoo/projects/CANDLE/Benchmarks/Pilot1/Uno/Output/EXP000/RUN000',
  'partition_by': None,
  'preprocess_rnaseq': 'source_scale',
+ 'profiling': False,
  'reduce_lr': True,
  'residual': False,
  'rng_seed': 2018,
@@ -92,8 +96,8 @@ Between random pairs in y_val:
   mae: 0.1619
   r2: -1.0103
   corr: -0.0051
-Data points per epoch: train = 423952, val = 52994
-Steps per epoch: train = 13248, val = 1656
+Data points per epoch: train = 423952, val = 52994, test = 52994
+Steps per epoch: train = 13248, val = 1656, test = 1656
 Epoch 1/50
 13248/13248 [==============================] - 102s 8ms/step - loss: 0.0268 - mae: 0.0794 - r2: -0.2754 - val_loss: 0.0092 - val_mae: 0.0725 - val_r2: 0.5657
 Current time ....101.892
