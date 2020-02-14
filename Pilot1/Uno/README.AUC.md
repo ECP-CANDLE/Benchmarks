@@ -1,22 +1,16 @@
 # Predicting AUC values for Top21 cancer types
 
 ## Data prep
-A static dataset is prebuilt and available at `http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc_1fold.uno.h5`. Along with the datset file, you will also need a cache file (a byproduct of data-building process) to skip the data-building process.
+A static dataset is prebuilt and available at `http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc_1fold.uno.h5`.
 
 ```
 $ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc_1fold.uno.h5
-$ mkdir -p cache
-$ cd cache
-$ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top6.cache.tgz
-$ tar xvzf top6.cache.tgz
-$ cd -
 ```
 
 
 ## Training
 ```
 python uno_baseline_keras2.py --config_file uno_auc_model.txt \
-  --cache cache/top6_auc \
   --use_exported_data top_21_auc_1fold.uno.h5
 
 ...
