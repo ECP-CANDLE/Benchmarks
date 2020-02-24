@@ -77,6 +77,8 @@ def generate_index_distribution_from_fraction(numTrain, numTest, numValidation, 
             Indices for data in testing (if merging)
     """
 
+    tol = 1e-7
+
     # Extract required parameters
     fractionTrain = params['uq_train_fr']
     fractionValidation = params['uq_valid_fr']
@@ -90,7 +92,8 @@ def generate_index_distribution_from_fraction(numTrain, numTest, numValidation, 
         raise ValueError('uq_test_fr is not in (0, 1) range. uq_test_fr: ', fractionTest)
 
     fractionSum = fractionTrain + fractionValidation + fractionTest
-    if (fractionSum > 1.) or (fractionSum < 1.):
+    #if (fractionSum > 1.) or (fractionSum < 1.):
+    if abs(fractionSum-1.) > tol:
         raise ValueError('Specified UQ fractions (uq_train_fr, uq_valid_fr, uq_test_fr) do not add up to 1. No cross-validation partition is computed ! sum:', fractionSum)
 
     # Determine data size and block size

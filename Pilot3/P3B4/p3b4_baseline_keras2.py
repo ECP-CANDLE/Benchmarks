@@ -52,7 +52,7 @@ def run(gParameters):
     batch_size = gParameters[ 'batch_size' ]
     epochs = gParameters[ 'epochs' ]
     dropout = gParameters[ 'dropout' ]
-
+    embed_train = gParameters[ 'embed_train' ]
 
     optimizer = gParameters[ 'optimizer' ]
     if optimizer == 0:
@@ -121,7 +121,8 @@ def run(gParameters):
                   attention_size= attention_size,
                   dropout_rate = dropout,
                   lr = learning_rate,
-                  optimizer= optimizer 
+                  optimizer= optimizer,
+                  embed_train = embed_train 
             )
 
     ret = model.train(

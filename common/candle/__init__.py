@@ -47,7 +47,11 @@ from uq_utils import bining_for_calibration
 from uq_utils import computation_of_valid_calibration_interval
 from uq_utils import applying_calibration
 from uq_utils import overprediction_check
+from uq_utils import generate_index_distribution
 
+#profiling
+from profiling_utils import start_profiling
+from profiling_utils import stop_profiling
 
 # import benchmark-dependent utils
 import sys
@@ -69,6 +73,7 @@ if 'keras' in sys.modules:
     from keras_utils import mae
     from keras_utils import mse
         
+    from viz_utils import plot_metrics
 
     from solr_keras import CandleRemoteMonitor
     from solr_keras import compute_trainable_params

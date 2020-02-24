@@ -17,7 +17,7 @@ from keras.regularizers import l2
 import p1b2
 import candle
 
-def initialize_parameters(default_model = 'p1b2_default_model.txt):
+def initialize_parameters(default_model = 'p1b2_default_model.txt'):
 
     # Build benchmark object
     p1b2Bmk = p1b2.BenchmarkP1B2(p1b2.file_path, default_model, 'keras',
