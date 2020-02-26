@@ -27,14 +27,6 @@ additional_definitions = [
     'action':'store',
     'type': int, 
     'help':'latent dimensions'},
-{'name':'model', 
-    'default':'ae',
-    'choices':['ae', 'vae', 'cvae'],
-    'help':'model to use: ae, vae, cvae'},
-{'name':'use_landmark_genes', 
-    'type': candle.str2bool,
-    'default': False,
-    'help':'use the 978 landmark genes from LINCS (L1000) as expression features'},
 {'name':'residual', 
     'type': candle.str2bool,
     'default': False,
@@ -80,14 +72,11 @@ required = [
     'initialization',
     'learning_rate',
     'loss',
-    'noise_factor',
     'optimizer',
     'rng_seed',
-    'model',
     'scaling',
     'validation_split',
     'latent_dim',
-    'feature_subsample',
     'batch_normalization',
     'epsilon_std',
     'solr_root',
@@ -111,7 +100,6 @@ class BenchmarkAttn(candle.Benchmark):
 def extension_from_parameters(params, framework=''):
     """Construct string for saving model with annotation of parameters"""
     ext = framework
-    ext += '.{}'.format(params['model'])
     for i, n in enumerate(params['dense']):
         if n:
             ext += '.D{}={}'.format(i+1, n)
@@ -220,49 +208,3 @@ def load_data(params, seed):
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
 
-
-
-
-def load_data_orig(params, seed):
-    if params['with_type']:
-        drop_cols = ['case_id']
-        onehot_cols = ['cancer_type']
-    else:
-        drop_cols = ['case_id', 'cancer_type']
-        onehot_cols = None
-
-    if params['use_landmark_genes']:
-        lincs_file = 'lincs1000.tsv'
-        lincs_path = candle.fetch_file(url_p1b1 + lincs_file)
-        df_l1000 = pd.read_csv(lincs_path, sep='\t')
-        usecols = df_l1000['gdc']
-        drop_cols = None
-    else:
-        usecols = None
-
-    return candle.load_X_data(params['url_attn'], params['file_train'], params['file_test'],
-                                 drop_cols=drop_cols,
-                                 onehot_cols=onehot_cols,
-                                 usecols=usecols,
-                                 n_cols=params['feature_subsample'],
-                                 shuffle=params['shuffle'],
-                                 scaling=params['scaling'],
-                                 validation_split=params['validation_split'],
-                                 dtype=params['datatype'],
-                                 seed=seed)
-
-
-def evaluate_autoencoder(y_pred, y_test):
-    try:
-        mse = mean_squared_error(y_pred, y_test)
-        r2 = r2_score(y_test, y_pred)
-        corr, _ = pearsonr(y_pred.flatten(), y_test.flatten())
-        # print('Mean squared error: {}%'.format(mse))
-    except:
-        #when nan or something else breaks mean_squared_error computation
-        # we may check earlier before computation also:
-        #np.isnan(y_pred).any() or np.isnan(y_test).any()):
-        r2 = 0
-        mse = 0
-        corr = 0
-    return {'mse': mse, 'r2_score': r2, 'correlation': corr}
