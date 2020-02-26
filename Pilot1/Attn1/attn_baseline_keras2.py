@@ -1,28 +1,5 @@
 from __future__ import print_function
 
-import numpy as np
-
-import keras
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model
-from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from keras.metrics import binary_crossentropy, mean_squared_error
-from scipy.stats.stats import pearsonr
-from sklearn.manifold import TSNE
-
-import warnings
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from sklearn.metrics import r2_score
-    from sklearn.metrics import accuracy_score
-
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
-
-## Imports from actual
 import itertools
 import pandas as pd
 import numpy as np
@@ -47,23 +24,18 @@ from keras.optimizers import SGD, Adam, RMSprop, Adadelta
 from keras.models import Sequential, Model, model_from_json, model_from_yaml
 from keras.utils import np_utils, multi_gpu_model
 
-from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
+from keras.callbacks import Callback, ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, roc_auc_score, confusion_matrix, balanced_accuracy_score, classification_report
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 from sklearn.metrics import recall_score, auc, roc_curve, f1_score, precision_recall_curve
-###
-
-
-
 
 import attn
 import candle
 
 np.set_printoptions(precision=4)
-
 
 def r2(y_true, y_pred):
     SS_res =  K.sum(K.square(y_true - y_pred))
@@ -181,11 +153,6 @@ def load_cache(cache_file):
 
 
 def run(params):
-##
-    nb_classes = 2
-##
-
-
     args = candle.ArgumentStruct(**params)
     seed = args.rng_seed
     candle.set_seed(seed)
@@ -224,11 +191,11 @@ def run(params):
     print('Examples:\n    Total: {}\n    Positive: {} ({:.2f}% of total)\n'.format(
         total, pos, 100 * pos / total))
 
+    nb_classes = params['nb_classes']
+
     Y_train = np_utils.to_categorical(Y_train,nb_classes)
     Y_test = np_utils.to_categorical(Y_test,nb_classes)
     Y_val = np_utils.to_categorical(Y_val,nb_classes)
-
-    # ----------------------- from stack overflow
 
     y_integers = np.argmax(Y_train, axis=1)
     class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
@@ -242,7 +209,10 @@ def run(params):
 
     PS=X_train.shape[1]
     inputs = Input(shape=(PS,))
+
     DR = params['drop']
+
+    #TODO: specify dense and activation via hyperparameters
     x = Dense(1000, activation='relu')(inputs)
     x = BatchNormalization()(x)
 
@@ -282,7 +252,7 @@ def run(params):
     #parallel_model.compile(loss='mean_squared_error',
     #         optimizer=SGD(lr=0.0001, momentum=0.9),
     #              metrics=['mae',r2])
-
+    # TODO: specify optimizer via hyperparameters
     model.compile(loss=params['loss'],
                 optimizer=SGD(lr=0.00001, momentum=0.9),
     #             optimizer=Adam(lr=0.00001),
@@ -316,7 +286,6 @@ def run(params):
     if params['early_stop']:
         callbacks.append(early_stop)
 
-    #history = parallel_model.fit(X_train, Y_train,
     epochs = params['epochs']
     batch_size=params['batch_size']
     history = model.fit(X_train, Y_train, class_weight=d_class_weights,
@@ -331,9 +300,9 @@ def run(params):
 
     Y_predict = model.predict(X_test)
 
+    # see big fuction below, creates plots etc.
+    # TODO: Break post_process into multiple functions
     post_process(params, X_train, X_test, Y_test, _Y_test, Y_predict, pos, total, score, history, model)
-
-    ###
 
     attn.logger.handlers = []
 
@@ -415,9 +384,6 @@ def post_process(params, X_train, X_test, Y_test, _Y_test, Y_predict, pos, total
     pr_keras = pr_auc
     precision_keras = precision
     recall_keras = recall
-
-    print
-    print
 
     print('f1=%.3f auroc=%.3f aucpr=%.3f' % (f1, auc_keras, pr_keras))
 

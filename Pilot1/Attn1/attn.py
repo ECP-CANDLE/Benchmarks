@@ -109,6 +109,7 @@ def extension_from_parameters(params, framework=''):
     ext += '.L={}'.format(params['latent_dim'])
     ext += '.LR={}'.format(params['learning_rate'])
     ext += '.S={}'.format(params['scaling'])
+
     if params['epsilon_std'] != 1.0:
         ext += '.EPS={}'.format(params['epsilon_std'])
     if params['drop']:

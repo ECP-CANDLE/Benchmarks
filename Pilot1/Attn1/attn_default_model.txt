@@ -22,6 +22,7 @@ cp=True
 early_stop=True
 reduce_lr=True
 feature_subsample=0
+nb_classes=2
 
 [Monitor_Params]
 solr_root=''
