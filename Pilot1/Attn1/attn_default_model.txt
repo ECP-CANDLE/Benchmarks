@@ -7,7 +7,8 @@ activation='relu'
 loss='categorical_crossentropy'
 optimizer='sgd'
 drop=0.2
-learning_rate=None
+learning_rate=0.00001
+momentum=0.9
 scaling='minmax'
 validation_split=0.1
 epsilon_std=1.0
@@ -15,14 +16,14 @@ rng_seed=2017
 initialization='glorot_uniform'
 latent_dim=2
 batch_normalization=False
-in='top_21_1fold_001.h5'
 save_path='candle_save'
-save_dir='./save/001/'
-cp=True
+use_cp=False
 early_stop=True
 reduce_lr=True
 feature_subsample=0
 nb_classes=2
+save_dir='./save/001/'
+in='top_21_1fold_001.h5'
 
 [Monitor_Params]
 solr_root=''

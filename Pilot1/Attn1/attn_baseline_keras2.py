@@ -252,7 +252,17 @@ def run(params):
     #parallel_model.compile(loss='mean_squared_error',
     #         optimizer=SGD(lr=0.0001, momentum=0.9),
     #              metrics=['mae',r2])
-    # TODO: specify optimizer via hyperparameters
+    if params['optimizer'] == 'sgd':
+        optimizer = SGD(params, lr=params['learning_rate'], momentum=params['momentum'])
+    elif params['optimizer'] == 'adam':
+        optimizer = Adam(params, lr=params['learning_rate'])
+    elif params['optimizer'] == 'rmsprop':
+        optimizer = RMSProp(params, lr=params['learning_rate'])
+    elif params['optimizer'] == 'adadelta':
+        optimizer = Adadelta()
+    else:
+        optimizer=SGD(lr=0.00001, momentum=0.9)
+
     model.compile(loss=params['loss'],
                 optimizer=SGD(lr=0.00001, momentum=0.9),
     #             optimizer=Adam(lr=0.00001),
@@ -273,6 +283,8 @@ def run(params):
 
     candle_monitor = candle.CandleRemoteMonitor(params=params)
     timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
+    tensorboard = TensorBoard(log_dir="tb/tb{}".format(ext))
+
     history_logger = LoggingCallback(attn.logger.debug)
 
     callbacks = [candle_monitor, timeout_monitor, csv_logger, history_logger]
@@ -280,9 +292,10 @@ def run(params):
     if params['reduce_lr']:
         callbacks.append(reduce_lr)
 
-    if params['cp']:
+    if params['use_cp']:
         callbacks.append(checkpointer)
-
+    if params['use_tb']:
+        callbacks.append(tensorboard)
     if params['early_stop']:
         callbacks.append(early_stop)
 
