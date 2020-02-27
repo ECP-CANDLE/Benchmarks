@@ -252,19 +252,16 @@ def run(params):
     #parallel_model.compile(loss='mean_squared_error',
     #         optimizer=SGD(lr=0.0001, momentum=0.9),
     #              metrics=['mae',r2])
-    if params['optimizer'] == 'sgd':
-        optimizer = SGD(params, lr=params['learning_rate'], momentum=params['momentum'])
-    elif params['optimizer'] == 'adam':
-        optimizer = Adam(params, lr=params['learning_rate'])
-    elif params['optimizer'] == 'rmsprop':
-        optimizer = RMSProp(params, lr=params['learning_rate'])
-    elif params['optimizer'] == 'adadelta':
-        optimizer = Adadelta()
-    else:
-        optimizer=SGD(lr=0.00001, momentum=0.9)
+    kerasDefaults = candle.keras_default_config()
+    if params['momentum']:
+        callbacks.append(checkpointer)
+    kerasDefaults['momentum_sgd'] = params['momentum']
 
+    optimizer = candle.build_optimizer(params['optimizer'], params['learning_rate'], params['momentum'], kerasDefaults)
+    
     model.compile(loss=params['loss'],
-                optimizer=SGD(lr=0.00001, momentum=0.9),
+                optimizer=optimizer,
+    #                       SGD(lr=0.00001, momentum=0.9),
     #             optimizer=Adam(lr=0.00001),
     #             optimizer=RMSprop(lr=0.0001),
     #             optimizer=Adadelta(),
