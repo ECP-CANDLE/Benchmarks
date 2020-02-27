@@ -254,11 +254,10 @@ def run(params):
     #              metrics=['mae',r2])
     kerasDefaults = candle.keras_default_config()
     if params['momentum']:
-        callbacks.append(checkpointer)
-    kerasDefaults['momentum_sgd'] = params['momentum']
+        kerasDefaults['momentum_sgd'] = params['momentum']
 
-    optimizer = candle.build_optimizer(params['optimizer'], params['learning_rate'], params['momentum'], kerasDefaults)
-    
+    optimizer = candle.build_optimizer(params['optimizer'], params['learning_rate'], kerasDefaults)
+
     model.compile(loss=params['loss'],
                 optimizer=optimizer,
     #                       SGD(lr=0.00001, momentum=0.9),
