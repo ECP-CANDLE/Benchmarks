@@ -1,10 +1,10 @@
 The Pilot1 Attn Benchmark requires an hdf5 file specified by the hyperparameter "in", name of this file for default case is: top_21_1fold_001.h5
+
 Any file of the form top_21_1fold_"ijk".h5 can be used as input
 
 ## Sample run:
 ```
 python attn_baseline_keras2.py
-```
 Params: {'model_name': 'attn', 'dense': [2000, 600], 'batch_size': 32, 'epochs': 1, 'activation': 'relu', 'loss': 'categorical_crossentropy', 'optimizer': 'sgd', 'drop': 0.2, 'learning_rate': 1e-05, 'momentum': 0.7, 'scaling': 'minmax', 'validation_split': 0.1, 'epsilon_std': 1.0, 'rng_seed': 2017, 'initialization': 'glorot_uniform', 'latent_dim': 2, 'batch_normalization': False, 'in': 'top_21_1fold_001.h5', 'save_path': 'candle_save', 'save_dir': './save/001/', 'use_cp': False, 'early_stop': True, 'reduce_lr': True, 'feature_subsample': 0, 'nb_classes': 2, 'solr_root': '', 'timeout': 3600, 'verbose': None, 'logfile': None, 'train_bool': True, 'experiment_id': 'EXP000', 'run_id': 'RUN000', 'shuffle': False, 'gpus': [], 'profiling': False, 'residual': False, 'warmup_lr': False, 'use_tb': False, 'tsne': False, 'datatype': <class 'numpy.float32'>, 'output_dir': '/nfs2/jain/Benchmarks/Pilot1/Attn/Output/EXP000/RUN000'}
 ...
 ...
@@ -126,3 +126,4 @@ yaml Validation accuracy: 0.8367118835449219
 yaml accuracy: 83.67%
 Yaml_train_shape: (271915, 2)
 Yaml_test_shape: (33989, 2)
+```
