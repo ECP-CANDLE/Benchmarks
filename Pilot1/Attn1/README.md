@@ -1,11 +1,12 @@
 The Pilot1 Attn Benchmark requires an hdf5 file specified by the hyperparameter "in", name of this file for default case is: top_21_1fold_001.h5
 
-Download the file here:
-wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_1fold_001.h5 (~4GB)
+Benchmark auto downloads the file below:
+http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_1fold_001.h5 (~4GB)
 
-Any file of the form top_21_1fold_"ijk".h5 can be used as input
+Any file of the form top*21_1fold*"ijk".h5 can be used as input
 
 ## Sample run:
+
 ```
 python attn_baseline_keras2.py
 Params: {'model_name': 'attn', 'dense': [2000, 600], 'batch_size': 32, 'epochs': 1, 'activation': 'relu', 'loss': 'categorical_crossentropy', 'optimizer': 'sgd', 'drop': 0.2, 'learning_rate': 1e-05, 'momentum': 0.7, 'scaling': 'minmax', 'validation_split': 0.1, 'epsilon_std': 1.0, 'rng_seed': 2017, 'initialization': 'glorot_uniform', 'latent_dim': 2, 'batch_normalization': False, 'in': 'top_21_1fold_001.h5', 'save_path': 'candle_save', 'save_dir': './save/001/', 'use_cp': False, 'early_stop': True, 'reduce_lr': True, 'feature_subsample': 0, 'nb_classes': 2, 'solr_root': '', 'timeout': 3600, 'verbose': None, 'logfile': None, 'train_bool': True, 'experiment_id': 'EXP000', 'run_id': 'RUN000', 'shuffle': False, 'gpus': [], 'profiling': False, 'residual': False, 'warmup_lr': False, 'use_tb': False, 'tsne': False, 'datatype': <class 'numpy.float32'>, 'output_dir': '/nfs2/jain/Benchmarks/Pilot1/Attn/Output/EXP000/RUN000'}
@@ -27,54 +28,54 @@ Instructions for updating:
 If using Keras pass *_constraint arguments to layers.
 Model: "model_1"
 __________________________________________________________________________________________________
-Layer (type)                    Output Shape         Param #     Connected to                     
+Layer (type)                    Output Shape         Param #     Connected to
 ==================================================================================================
-input_1 (InputLayer)            (None, 6212)         0                                            
+input_1 (InputLayer)            (None, 6212)         0
 __________________________________________________________________________________________________
-dense_1 (Dense)                 (None, 1000)         6213000     input_1[0][0]                    
+dense_1 (Dense)                 (None, 1000)         6213000     input_1[0][0]
 __________________________________________________________________________________________________
-batch_normalization_1 (BatchNor (None, 1000)         4000        dense_1[0][0]                    
+batch_normalization_1 (BatchNor (None, 1000)         4000        dense_1[0][0]
 __________________________________________________________________________________________________
-dense_2 (Dense)                 (None, 1000)         1001000     batch_normalization_1[0][0]      
+dense_2 (Dense)                 (None, 1000)         1001000     batch_normalization_1[0][0]
 __________________________________________________________________________________________________
-batch_normalization_2 (BatchNor (None, 1000)         4000        dense_2[0][0]                    
+batch_normalization_2 (BatchNor (None, 1000)         4000        dense_2[0][0]
 __________________________________________________________________________________________________
-dense_3 (Dense)                 (None, 1000)         1001000     batch_normalization_1[0][0]      
+dense_3 (Dense)                 (None, 1000)         1001000     batch_normalization_1[0][0]
 __________________________________________________________________________________________________
-multiply_1 (Multiply)           (None, 1000)         0           batch_normalization_2[0][0]      
-                                                                 dense_3[0][0]                    
+multiply_1 (Multiply)           (None, 1000)         0           batch_normalization_2[0][0]
+                                                                 dense_3[0][0]
 __________________________________________________________________________________________________
-dense_4 (Dense)                 (None, 500)          500500      multiply_1[0][0]                 
+dense_4 (Dense)                 (None, 500)          500500      multiply_1[0][0]
 __________________________________________________________________________________________________
-batch_normalization_3 (BatchNor (None, 500)          2000        dense_4[0][0]                    
+batch_normalization_3 (BatchNor (None, 500)          2000        dense_4[0][0]
 __________________________________________________________________________________________________
-dropout_1 (Dropout)             (None, 500)          0           batch_normalization_3[0][0]      
+dropout_1 (Dropout)             (None, 500)          0           batch_normalization_3[0][0]
 __________________________________________________________________________________________________
-dense_5 (Dense)                 (None, 250)          125250      dropout_1[0][0]                  
+dense_5 (Dense)                 (None, 250)          125250      dropout_1[0][0]
 __________________________________________________________________________________________________
-batch_normalization_4 (BatchNor (None, 250)          1000        dense_5[0][0]                    
+batch_normalization_4 (BatchNor (None, 250)          1000        dense_5[0][0]
 __________________________________________________________________________________________________
-dropout_2 (Dropout)             (None, 250)          0           batch_normalization_4[0][0]      
+dropout_2 (Dropout)             (None, 250)          0           batch_normalization_4[0][0]
 __________________________________________________________________________________________________
-dense_6 (Dense)                 (None, 125)          31375       dropout_2[0][0]                  
+dense_6 (Dense)                 (None, 125)          31375       dropout_2[0][0]
 __________________________________________________________________________________________________
-batch_normalization_5 (BatchNor (None, 125)          500         dense_6[0][0]                    
+batch_normalization_5 (BatchNor (None, 125)          500         dense_6[0][0]
 __________________________________________________________________________________________________
-dropout_3 (Dropout)             (None, 125)          0           batch_normalization_5[0][0]      
+dropout_3 (Dropout)             (None, 125)          0           batch_normalization_5[0][0]
 __________________________________________________________________________________________________
-dense_7 (Dense)                 (None, 60)           7560        dropout_3[0][0]                  
+dense_7 (Dense)                 (None, 60)           7560        dropout_3[0][0]
 __________________________________________________________________________________________________
-batch_normalization_6 (BatchNor (None, 60)           240         dense_7[0][0]                    
+batch_normalization_6 (BatchNor (None, 60)           240         dense_7[0][0]
 __________________________________________________________________________________________________
-dropout_4 (Dropout)             (None, 60)           0           batch_normalization_6[0][0]      
+dropout_4 (Dropout)             (None, 60)           0           batch_normalization_6[0][0]
 __________________________________________________________________________________________________
-dense_8 (Dense)                 (None, 30)           1830        dropout_4[0][0]                  
+dense_8 (Dense)                 (None, 30)           1830        dropout_4[0][0]
 __________________________________________________________________________________________________
-batch_normalization_7 (BatchNor (None, 30)           120         dense_8[0][0]                    
+batch_normalization_7 (BatchNor (None, 30)           120         dense_8[0][0]
 __________________________________________________________________________________________________
-dropout_5 (Dropout)             (None, 30)           0           batch_normalization_7[0][0]      
+dropout_5 (Dropout)             (None, 30)           0           batch_normalization_7[0][0]
 __________________________________________________________________________________________________
-dense_9 (Dense)                 (None, 2)            62          dropout_5[0][0]                  
+dense_9 (Dense)                 (None, 2)            62          dropout_5[0][0]
 ==================================================================================================
 
 Total params: 8,893,437

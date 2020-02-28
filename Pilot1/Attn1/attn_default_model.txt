@@ -1,4 +1,6 @@
 [Global_Params]
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/'
+in='top_21_1fold_001.h5'
 model_name='attn'
 dense=[2000, 600]
 batch_size=32
@@ -23,7 +25,6 @@ reduce_lr=True
 feature_subsample=0
 nb_classes=2
 save_dir='./save/001/'
-in='top_21_1fold_001.h5'
 
 [Monitor_Params]
 solr_root=''
