@@ -1,5 +1,8 @@
 The Pilot1 Attn Benchmark requires an hdf5 file specified by the hyperparameter "in", name of this file for default case is: top_21_1fold_001.h5
 
+Download the file here:
+wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_1fold_001.h5
+
 Any file of the form top_21_1fold_"ijk".h5 can be used as input
 
 ## Sample run:
