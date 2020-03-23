@@ -309,12 +309,12 @@ def run(params):
     # set up a bunch of callbacks to do work during model training..
 
     checkpointer = ModelCheckpoint(
-        filepath="agg_adrp.autosave.model.h5",
+        filepath=params["save_path"] + "agg_adrp.autosave.model.h5",
         verbose=1,
         save_weights_only=False,
         save_best_only=True,
     )
-    csv_logger = CSVLogger("agg_adrp.training.log")
+    csv_logger = CSVLogger(params["save_path"] + "agg_adrp.training.log")
     reduce_lr = ReduceLROnPlateau(
         monitor="val_loss",
         factor=0.75,
@@ -357,6 +357,8 @@ def run(params):
 
 
 def post_process(params, X_train, X_test, Y_test, score, history, model):
+    save_path = params["save_path"]
+    print("saving to path: ", save_path)
 
     # summarize history for MAE
     plt.plot(history.history["mae"])
@@ -366,8 +368,8 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     plt.xlabel("epoch")
     plt.legend(["train", "test"], loc="upper left")
 
-    plt.savefig("agg_adrp.mae.png", bbox_inches="tight")
-    plt.savefig("agg_adrp.mae.pdf", bbox_inches="tight")
+    plt.savefig(save_path + "agg_adrp.mae.png", bbox_inches="tight")
+    plt.savefig(save_path + "agg_adrp.mae.pdf", bbox_inches="tight")
 
     plt.close()
 
@@ -379,8 +381,8 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     plt.xlabel("epoch")
     plt.legend(["train", "test"], loc="upper left")
 
-    plt.savefig("agg_adrp.loss.png", bbox_inches="tight")
-    plt.savefig("agg_adrp.loss.pdf", bbox_inches="tight")
+    plt.savefig(save_path + "agg_adrp.loss.png", bbox_inches="tight")
+    plt.savefig(save_path + "agg_adrp.loss.pdf", bbox_inches="tight")
 
     plt.close()
 
@@ -391,34 +393,34 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
 
     # serialize model to JSON
     model_json = model.to_json()
-    with open("agg_adrp.model.json", "w") as json_file:
+    with open(save_path + "agg_adrp.model.json", "w") as json_file:
         json_file.write(model_json)
 
     # serialize model to YAML
     model_yaml = model.to_yaml()
-    with open("agg_adrp.model.yaml", "w") as yaml_file:
+    with open(save_path + "agg_adrp.model.yaml", "w") as yaml_file:
         yaml_file.write(model_yaml)
 
     # serialize weights to HDF5
-    model.save_weights("agg_adrp.model.h5")
+    model.save_weights(save_path + "agg_adrp.model.h5")
     print("Saved model to disk")
 
     exit()
 
     # load json and create model
-    json_file = open("agg_adrp.model.json", "r")
+    json_file = open(save_path + "agg_adrp.model.json", "r")
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model_json = model_from_json(loaded_model_json)
 
     # load yaml and create model
-    yaml_file = open("agg_adrp.model.yaml", "r")
+    yaml_file = open(save_path + "agg_adrp.model.yaml", "r")
     loaded_model_yaml = yaml_file.read()
     yaml_file.close()
     loaded_model_yaml = model_from_yaml(loaded_model_yaml)
 
     # load weights into new model
-    loaded_model_json.load_weights("agg_adrp.model.h5")
+    loaded_model_json.load_weights(save_path + "agg_adrp.model.h5")
     print("Loaded json model from disk")
 
     # evaluate json loaded model on test data
@@ -433,7 +435,7 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1] * 100))
 
     # load weights into new model
-    loaded_model_yaml.load_weights("agg_adrp.model.h5")
+    loaded_model_yaml.load_weights(save_path + "agg_adrp.model.h5")
     print("Loaded yaml model from disk")
 
     # evaluate loaded model on test data
@@ -459,17 +461,27 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     predict_yaml_train_classes = np.argmax(predict_yaml_train, axis=1)
     predict_yaml_test_classes = np.argmax(predict_yaml_test, axis=1)
 
-    np.savetxt("predict_yaml_train.csv", predict_yaml_train, delimiter=",", fmt="%.3f")
-    np.savetxt("predict_yaml_test.csv", predict_yaml_test, delimiter=",", fmt="%.3f")
+    np.savetxt(
+        save_path + "predict_yaml_train.csv",
+        predict_yaml_train,
+        delimiter=",",
+        fmt="%.3f",
+    )
+    np.savetxt(
+        save_path + "predict_yaml_test.csv",
+        predict_yaml_test,
+        delimiter=",",
+        fmt="%.3f",
+    )
 
     np.savetxt(
-        "predict_yaml_train_classes.csv",
+        save_path + "predict_yaml_train_classes.csv",
         predict_yaml_train_classes,
         delimiter=",",
         fmt="%d",
     )
     np.savetxt(
-        "predict_yaml_test_classes.csv",
+        save_path + "predict_yaml_test_classes.csv",
         predict_yaml_test_classes,
         delimiter=",",
         fmt="%d",
