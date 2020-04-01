@@ -16,6 +16,16 @@ PRIMITIVES = [
 ]
 
 
+LINEAR_PRIMITIVES = [
+     'linear_block',
+     'skip_connect',
+     'linear_conv',
+     'linear_drop',
+     'encoder',
+     'none',
+]
+
+
 AmoebaNet = Genotype(
     normal=[
         ('avg_pool_3', 0),
