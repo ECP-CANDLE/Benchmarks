@@ -49,9 +49,24 @@ from uq_utils import applying_calibration
 from uq_utils import overprediction_check
 from uq_utils import generate_index_distribution
 
-#profiling
+# import from profiling_utils
 from profiling_utils import start_profiling
 from profiling_utils import stop_profiling
+
+# import from data_preprocessing_utils
+from data_preprocessing_utils import quantile_normalization
+from data_preprocessing_utils import generate_cross_validation_partition
+
+# feature selection
+from feature_selection_utils import select_features_by_missing_values
+from feature_selection_utils import select_features_by_variation
+from feature_selection_utils import select_decorrelated_features
+
+# P1-specific
+from P1_utils import coxen_single_drug_gene_selection
+from P1_utils import coxen_multi_drug_gene_selection
+from P1_utils import generate_gene_set_data
+from P1_utils import combat_batch_effect_removal
 
 # import benchmark-dependent utils
 import sys
