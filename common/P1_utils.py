@@ -1,11 +1,13 @@
 import sys
-import pandas as pd
 import numpy as np
-import patsy
 import numpy.linalg as la
+import pandas as pd
+import patsy
 from sklearn.feature_selection import mutual_info_regression
+from sklearn.preprocessing import StandardScaler
 import statsmodels.api as sm
 
+from  feature_selection_utils import select_features_by_variation
 
 ################### Auxiliary functions of COXEN start here ####################
 
