@@ -216,7 +216,7 @@ class AbstentionAdapt_Callback(Callback):
                     new_mu_val *= self.scale_factor
 
                 K.set_value(mu, new_mu_val)
-                self.muvalues.append( new_mu_val )
+        self.muvalues.append( new_mu_val )
 
         #print('epoch: %d, mu: %f' % (epoch, new_mu_val))
 

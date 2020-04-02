@@ -104,7 +104,7 @@ def extension_from_parameters(params, framework=''):
     for i, n in enumerate(params['dense']):
         if n:
             ext += '.D{}={}'.format(i+1, n)
-    ext += '.A={}'.format(params['activation'])
+    ext += '.A={}'.format(params['activation'][0])
     ext += '.B={}'.format(params['batch_size'])
     ext += '.E={}'.format(params['epochs'])
     ext += '.L={}'.format(params['latent_dim'])

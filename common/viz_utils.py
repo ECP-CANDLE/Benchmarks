@@ -17,6 +17,7 @@ def plot_history(out, history, metric='loss', title=None, width=8, height=6):
     plt.legend(['train_{}'.format(metric), 'val_{}'.format(metric)], loc='upper center')
     png = '{}.plot.{}.png'.format(out, metric)
     plt.savefig(png, bbox_inches='tight')
+    plt.close()
 
 def plot_scatter(data, classes, out, width=10, height=8):
     cmap = plt.cm.get_cmap('gist_rainbow')
@@ -25,6 +26,7 @@ def plot_scatter(data, classes, out, width=10, height=8):
     plt.colorbar()
     png = '{}.png'.format(out)
     plt.savefig(png, bbox_inches='tight')
+    plt.close()
 
 def plot_error(y_true, y_pred, batch, file_ext, file_pre='output_dir', subsample=1000):
     if batch % 10:
