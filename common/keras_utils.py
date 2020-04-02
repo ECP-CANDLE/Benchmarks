@@ -48,7 +48,10 @@ def set_seed(seed):
 
     if K.backend() == 'tensorflow':
         import tensorflow as tf
-        tf.set_random_seed(seed)
+        if tf.__version__ < "2.0.0":
+            tf.set_random_seed(seed)
+        else:
+            tf.random.set_seed(seed)
 
 
 def get_function(name):
