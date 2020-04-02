@@ -49,23 +49,23 @@ print(data)
 print('Testing select_features_by_missing values')
 print('Threshold - 0.1')
 id = candle.select_features_by_missing_values(data, threshold=0.1)
-print(id)
+print('Column IDs', id)
 print('Threshold - 0.3')
 id = candle.select_features_by_missing_values(data.values, threshold=0.3)
-print(id)
+print('Column IDs', id)
 
 # Select features based on variation
 
 #data = pd.read_csv(unique_samples, sep='\t', engine='c',
 #                   na_values=['na', '-', ''], header=0, index_col=0, low_memory=False)
 print('Testing select_features_by_variation')
-print('Variabce, 100')
+print('Variance, 100')
 id = candle.select_features_by_variation(data, variation_measure='var', threshold=100, portion=None,
                              draw_histogram=False)
-print(id)
+print('Column IDs', id)
 print('std, 0.2')
 id = candle.select_features_by_variation(data, variation_measure='std', portion=0.2)
-print(id)
+print('Column IDs', id)
 
 
 
@@ -76,15 +76,16 @@ print(id)
 print('Testing select_decorrelated_features')
 print('Pearson')
 id = candle.select_decorrelated_features(data, method='pearson', threshold=None, random_seed=None)
-print(id)
+print('Column IDs', id)
 print('Spearman')
 id = candle.select_decorrelated_features(data, method='spearman', threshold=0.8, random_seed=10)
-print(id)
+print('Column IDs', id)
 
 
 
 # Generate cross-validation partitions of data
 
+print('Testing generate_cross_validation_partition')
 data = pd.read_csv(response_data,
                    sep='\t', engine='c', na_values=['na', '-', ''], header=0, index_col=None, low_memory=False)
 p = candle.generate_cross_validation_partition(range(10), n_folds=5, n_repeats=2, portions=None, random_seed=None)
@@ -94,6 +95,7 @@ p = candle.generate_cross_validation_partition(data.CELL, n_folds=5, n_repeats=1
 
 # Generate gene-set-level data
 
+print('Testing generate_gene_set_data')
 data = pd.read_csv(gene_expression, sep='\t', engine='c',
                    na_values=['na', '-', ''], header=0, index_col=[0, 1], low_memory=False)
 data = data.iloc[:5000, :]
@@ -106,6 +108,7 @@ gene_set_data = candle.generate_gene_set_data(np.transpose(data.values), [i[1] f
 
 # Quantile normalization of gene expression data
 
+print('Testing quantile_normalization')
 data = pd.read_csv(gene_expression, sep='\t', engine='c',
                    na_values=['na', '-', ''], header=0, index_col=[0, 1], low_memory=False)
 norm_data = candle.quantile_normalization(np.transpose(data))
@@ -114,6 +117,7 @@ norm_data = candle.quantile_normalization(np.transpose(data))
 
 # Combat batch normalization on gene expression data
 
+print('Testing combat_batch_effect_removal')
 data = pd.read_csv(ccle_nci60,
                    sep='\t', engine='c', na_values=['na', '-', ''], header=0, index_col=[0, 1], low_memory=False)
 
