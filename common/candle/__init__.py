@@ -78,6 +78,14 @@ if 'keras' in sys.modules:
     from solr_keras import CandleRemoteMonitor
     from solr_keras import compute_trainable_params
     from solr_keras import TerminateOnTimeOut
+    
+    from uq_keras_utils import abstention_variable_initialization
+    from uq_keras_utils import abstention_loss
+    from uq_keras_utils import abs_acc
+    from uq_keras_utils import acc_class1
+    from uq_keras_utils import abs_acc_class1
+    from uq_keras_utils import modify_labels
+    from uq_keras_utils import AbstentionAdapt_Callback
 
 elif 'torch' in sys.modules:
     print ('Importing candle utils for pytorch')

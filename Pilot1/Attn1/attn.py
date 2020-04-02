@@ -97,6 +97,7 @@ class BenchmarkAttn(candle.Benchmark):
         if additional_definitions is not None:
             self.additional_definitions = additional_definitions
 
+
 def extension_from_parameters(params, framework=''):
     """Construct string for saving model with annotation of parameters"""
     ext = framework
