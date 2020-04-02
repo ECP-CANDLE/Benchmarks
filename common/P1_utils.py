@@ -307,7 +307,7 @@ def coxen_multi_drug_gene_selection(source_data, target_data, drug_response_data
     return np.sort(indices)
 
 def generate_gene_set_data(data, genes, gene_name_type='entrez', gene_set_category='c6.all', metric='mean',
-                           standardize=False):
+                           standardize=False, data_dir='../../Data/examples/Gene_Sets/MSigDB.v7.0/'):
     '''
     This function generates genomic data summarized at the gene set level.
 
@@ -354,7 +354,7 @@ def generate_gene_set_data(data, genes, gene_name_type='entrez', gene_set_catego
         gene_set_category = gene_set_category + '.v7.0.entrez.gmt'
     if gene_name_type == 'symbols':
         gene_set_category = gene_set_category + '.v7.0.symbols.gmt'
-    f = open('../../Data/examples/Gene_Sets/MSigDB.v7.0/' + gene_set_category, 'r')
+    f = open(data_dir  + gene_set_category, 'r')
     x = f.readlines()
     gene_sets = {}
     for i in range(len(x)):

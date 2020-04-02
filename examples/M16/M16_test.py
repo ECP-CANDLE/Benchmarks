@@ -35,34 +35,51 @@ for gene_set_category in ['c2.cgp','c2.cp.biocarta','c2.cp.kegg','c2.cp.pid','c2
     for gene_name_type in ['entrez', 'symbols']:
         file_name = gene_set_category+'.v7.0.'+gene_name_type+'.gmt'
         local_file = candle.get_file(file_name, data_url+file_name, cache_subdir='examples/Gene_Sets/MSigDB.v7.0')
-
+# extract base directory for gene_set data files
+data_dir = local_file.split(file_name)[0]
+print('Gene Set data is locally stored at ',data_dir)
 
 # Select features based on_missing_values
 
-
+print('Original dataframe')
 data = pd.read_csv(unique_samples, sep='\t', engine='c',
                    na_values=['na', '-', ''], header=0, index_col=0, low_memory=False)
+print(data)
+
+print('Testing select_features_by_missing values')
+print('Threshold - 0.1')
 id = candle.select_features_by_missing_values(data, threshold=0.1)
+print(id)
+print('Threshold - 0.3')
 id = candle.select_features_by_missing_values(data.values, threshold=0.3)
-
-
+print(id)
 
 # Select features based on variation
 
-data = pd.read_csv(unique_samples, sep='\t', engine='c',
-                   na_values=['na', '-', ''], header=0, index_col=0, low_memory=False)
+#data = pd.read_csv(unique_samples, sep='\t', engine='c',
+#                   na_values=['na', '-', ''], header=0, index_col=0, low_memory=False)
+print('Testing select_features_by_variation')
+print('Variabce, 100')
 id = candle.select_features_by_variation(data, variation_measure='var', threshold=100, portion=None,
                              draw_histogram=False)
+print(id)
+print('std, 0.2')
 id = candle.select_features_by_variation(data, variation_measure='std', portion=0.2)
+print(id)
 
 
 
 # Select uncorrelated features
 
-data = pd.read_csv(unique_samples, sep='\t', engine='c',
-                   na_values=['na', '-', ''], header=0, index_col=0, low_memory=False)
+#data = pd.read_csv(unique_samples, sep='\t', engine='c',
+#                   na_values=['na', '-', ''], header=0, index_col=0, low_memory=False)
+print('Testing select_decorrelated_features')
+print('Pearson')
 id = candle.select_decorrelated_features(data, method='pearson', threshold=None, random_seed=None)
+print(id)
+print('Spearman')
 id = candle.select_decorrelated_features(data, method='spearman', threshold=0.8, random_seed=10)
+print(id)
 
 
 
@@ -81,9 +98,9 @@ data = pd.read_csv(gene_expression, sep='\t', engine='c',
                    na_values=['na', '-', ''], header=0, index_col=[0, 1], low_memory=False)
 data = data.iloc[:5000, :]
 gene_set_data = candle.generate_gene_set_data(np.transpose(data), [i[0] for i in data.index], gene_name_type='entrez',
-                                       gene_set_category='c6.all', metric='mean', standardize=False)
-gene_set_data = candle.generate_gene_set_data(np.transpose(data.values), [i[1] for i in data.index], gene_name_type='symbol',
-                                       gene_set_category='c2.cp.kegg', metric='sum', standardize=False)
+                                       gene_set_category='c6.all', metric='mean', standardize=False, data_dir=data_dir)
+gene_set_data = candle.generate_gene_set_data(np.transpose(data.values), [i[1] for i in data.index], gene_name_type='symbols',
+                                       gene_set_category='c2.cp.kegg', metric='sum', standardize=False, data_dir=data_dir)
 
 
 
