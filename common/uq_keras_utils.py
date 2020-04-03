@@ -272,6 +272,27 @@ def modify_labels(numclasses_out, ytrain, ytest, yval):
 ###################################################################
 
 def add_model_output(modelIn, mode=None, num_add=None, activation=None):
+    """ This function modifies the last dense layer in the passed keras model. The modification includes adding units and optionally changing the activation function.
+    
+    Parameters
+    ----------
+    modelIn : keras model
+        Keras model to be modified.
+    mode : string
+        Mode to modify the layer. It could be:
+        'abstain' for adding an arbitrary number of units for the abstention optimization strategy.
+        'qtl' for quantile regression which needs the outputs to be tripled.
+        'het' for heteroscedastic regression which needs the outputs to be doubled. (current implicit default: 'het')
+    num_add : integer
+        Number of units to add. This only applies to the 'abstain' mode.
+    activation : string
+        String with keras specification of activation function (e.g. 'relu', 'sigomid', 'softmax', etc.)
+        
+    Return
+    ----------
+    modelOut : keras model
+        Keras model after last dense layer has been modified as specified. If there is no mode specified it returns the same model.
+    """
 
     if mode is None:
         return modelIn
