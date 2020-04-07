@@ -32,6 +32,8 @@ import candle
 
 import attn_viz_utils as attnviz
 
+from attn_baseline_keras2 import build_attention_model
+
 np.set_printoptions(precision=4)
 
 additional_definitions = [
@@ -177,33 +179,6 @@ def extension_from_parameters(params, framework=''):
     return ext
 
 
-def build_attention_model_with_abstention(params, PS):
-    
-    assert (len(params['dense']) == len(params['activation']))
-    assert (len(params['dense']) > 3)
-
-    DR = params['drop']
-    inputs = Input(shape=(PS,))
-    x = Dense(params['dense'][0], activation=params['activation'][0])(inputs)
-    x = BatchNormalization()(x)
-    a = Dense(params['dense'][1], activation=params['activation'][1])(x)
-    a = BatchNormalization()(a)
-    b = Dense(params['dense'][2], activation=params['activation'][2])(x)
-    x = ke.layers.multiply([a,b])
-    
-    for i in range(3, len(params['dense'])-1):
-        x = Dense(params['dense'][i], activation=params['activation'][i])(x)
-        x = BatchNormalization()(x)
-        x = Dropout(DR)(x)
-        
-    # Abstention part
-    outputs = Dense(params['dense'][-1]+1, activation='sigmoid')(x)
-    model = Model(inputs=inputs, outputs=outputs)
-    model.summary()
-
-    return model
-
-
 def run(params):
     args = candle.ArgumentStruct(**params)
     seed = args.rng_seed
@@ -261,7 +236,10 @@ def run(params):
     print('Y_test shape:', Y_test.shape)
 
     PS = X_train.shape[1]
-    model = build_attention_model_with_abstention(params, PS)
+    model = build_attention_model(params, PS)
+    model = candle.add_model_output(model, mode='abstain', num_add=1, activation='sigmoid')
+    print('Model after modifying layer for abstention')
+    model.summary()
     
     # Configure abstention model
     mask_ = np.zeros(nb_classes+1)

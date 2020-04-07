@@ -5,6 +5,9 @@ from keras import backend as K
 
 from keras.callbacks import Callback
 
+from keras.models import Model
+from keras.layers import Dense
+
 from keras.utils import np_utils
 
 import numpy as np
@@ -267,3 +270,71 @@ def modify_labels(numclasses_out, ytrain, ytest, yval):
     return labels_train, labels_test, labels_val
 
 ###################################################################
+
+def add_model_output(modelIn, mode=None, num_add=None, activation=None):
+    """ This function modifies the last dense layer in the passed keras model. The modification includes adding units and optionally changing the activation function.
+    
+    Parameters
+    ----------
+    modelIn : keras model
+        Keras model to be modified.
+    mode : string
+        Mode to modify the layer. It could be:
+        'abstain' for adding an arbitrary number of units for the abstention optimization strategy.
+        'qtl' for quantile regression which needs the outputs to be tripled.
+        'het' for heteroscedastic regression which needs the outputs to be doubled. (current implicit default: 'het')
+    num_add : integer
+        Number of units to add. This only applies to the 'abstain' mode.
+    activation : string
+        String with keras specification of activation function (e.g. 'relu', 'sigomid', 'softmax', etc.)
+        
+    Return
+    ----------
+    modelOut : keras model
+        Keras model after last dense layer has been modified as specified. If there is no mode specified it returns the same model.
+    """
+
+    if mode is None:
+        return modelIn
+
+    numlayers = len(modelIn.layers)
+    # Find last dense layer
+    i = -1
+    while 'dense' not in (modelIn.layers[i].name) and ((i+numlayers) > 0):
+        i -= 1
+    # Minimal verification about the validity of the layer found
+    assert ((i + numlayers) >= 0)
+    assert ('dense' in modelIn.layers[i].name)
+
+    # Compute new output size
+    if mode is 'abstain':
+        assert num_add is not None
+        new_output_size = modelIn.layers[i].output_shape[-1] + num_add
+    elif mode is 'qtl': # for quantile UQ
+        new_output_size = 3 * modelIn.layers[i].output_shape[-1]
+    else: # for heteroscedastic UQ
+        new_output_size = 2 * modelIn.layers[i].output_shape[-1]
+
+    # Recover current layer options
+    config = modelIn.layers[i].get_config()
+    # Update number of units
+    config['units'] = new_output_size
+    # Update activation function if requested
+    if activation is not None:
+        config['activation'] = activation
+    # Create new Dense layer
+    reconstructed_layer = Dense.from_config(config)
+    # Connect new Dense last layer to previous one-before-last layer
+    additional = reconstructed_layer(modelIn.layers[i-1].output)
+    # If the layer to replace is not the last layer, add the remainder layers
+    if i < -1:
+        for j in range(i+1, 0):
+            config_j = modelIn.layers[j].get_config()
+            aux_j = layers.deserialize({'class_name': modelIn.layers[j].__class__.__name__,
+                        'config': config_j})
+            reconstructed_layer = aux_j.from_config(config_j)
+            additional = reconstructed_layer(additional)
+
+    modelOut = Model(modelIn.input, additional)
+
+    return modelOut

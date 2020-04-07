@@ -100,6 +100,7 @@ if 'keras' in sys.modules:
     from uq_keras_utils import acc_class1
     from uq_keras_utils import abs_acc_class1
     from uq_keras_utils import modify_labels
+    from uq_keras_utils import add_model_output
     from uq_keras_utils import AbstentionAdapt_Callback
 
 elif 'torch' in sys.modules:
