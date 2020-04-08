@@ -76,7 +76,7 @@ def initialize_parameters():
     prog='uno_trainUQ', desc='Build neural network based models to predict tumor response to single and paired drugs, including UQ analysis.')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unoUQBmk)
+    gParameters = candle.finalize_parameters(unoUQBmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

@@ -25,7 +25,7 @@ def initialize_parameters():
     prog='uno_holdoutUQ_data', desc='Build data split for UQ analysis in the problem of prediction of tumor response to drug pairs.')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unoBmk)
+    gParameters = candle.finalize_parameters(unoBmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

@@ -68,7 +68,7 @@ def initialize_parameters():
     unoBmk.required = unoBmk.required.union(required_local)
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unoBmk)
+    gParameters = candle.finalize_parameters(unoBmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
