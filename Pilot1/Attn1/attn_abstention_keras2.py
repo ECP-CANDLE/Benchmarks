@@ -51,13 +51,13 @@ required = [
             'activation',
             'batch_size',
             'dense',
-            'drop',
+            'dropout',
             'epochs',
             'learning_rate',
             'loss',
             'optimizer',
             'rng_seed',
-            'validation_split',
+            'val_split',
             'solr_root',
             'timeout',
             'target_abs_acc']
@@ -167,8 +167,8 @@ def extension_from_parameters(params, framework=''):
     ext += '.E={}'.format(params['epochs'])
     ext += '.LR={}'.format(params['learning_rate'])
 
-    if params['drop']:
-        ext += '.DR={}'.format(params['drop'])
+    if params['dropout']:
+        ext += '.DR={}'.format(params['dropout'])
     if params['warmup_lr']:
         ext += '.WU_LR'
     if params['reduce_lr']:

@@ -154,7 +154,7 @@ def build_attention_model(params, PS):
     assert (len(params['dense']) == len(params['activation']))
     assert (len(params['dense']) > 3)
 
-    DR = params['drop']
+    DR = params['dropout']
     inputs = Input(shape=(PS,))
     x = Dense(params['dense'][0], activation=params['activation'][0])(inputs)
     x = BatchNormalization()(x)
