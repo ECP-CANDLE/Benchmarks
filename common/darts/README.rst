@@ -10,9 +10,9 @@ Notes
 
 The following steps should be finished before merging the PR:
 
-[] Expert level `Network` with user defined primitives and stem
-[] Examples
-[] README overview of the library
+- [  ] Expert level `Network` with user defined primitives and stem
+- [  ] Examples
+- [  ] README overview of the library
 
 Expert Level Network
 --------------------
