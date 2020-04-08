@@ -4,6 +4,9 @@ DARTS
 
 Differentiable architecture search
 
+This is an adaptation of Hanxiao Liu et al's DARTS algorithm, extending 
+the work to handle convolutional neural networks for NLP problems and more. 
+Details of the original authors' approach can be found in their 2019 ICLR paper_.
 
 Notes
 -----
@@ -28,7 +31,10 @@ Draft
 
 .. code-block:: python
 
-    class Network(stem, primitives, ops):
+    class Network:
+        """ Expert mode network """
+
+    def __init__(self, stem, primitives, ops):
         self.stem = stem
         self.primitives = primitives
         self ops = ops
@@ -36,4 +42,9 @@ Draft
     def _helper_init(self, ...):
         """ Helper to construct the private member variables """
         raise NotImplementedError
+
+
+.. References
+.. ----------
+.. _paper: https://openreview.net/forum?id=S1eYHoC5FX
 
