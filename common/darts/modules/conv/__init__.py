@@ -1,4 +1,4 @@
 from .cell import Cell
-from .network import Network
+from .network import ConvNetwork
 from .mixed_layer import MixedLayer
 
