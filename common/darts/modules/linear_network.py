@@ -14,14 +14,13 @@ class Hyperparameters:
     num_cells = 3
     channel_multiplier = 1
     stem_channel_multiplier = 1
-    input_dim = 5270
     intermediate_dim = 100
 
 
 class Network(Model):
     """ Collection of cells """
 
-    def __init__(self, tasks, criterion, device='cpu', hyperparams=Hyperparameters()):
+    def __init__(self, input_dim, tasks, criterion, device='cpu', hyperparams=Hyperparameters()):
         super(Network, self).__init__()
         self.tasks = tasks
         self.criterion = criterion
@@ -34,10 +33,10 @@ class Network(Model):
         # stem_multiplier is for stem network,
         # and multiplier is for general cell
         c_curr = hyperparams.stem_channel_multiplier * self.c
-        # stem network, convert 3 channel to c_curr
+
         self.stem = nn.Sequential(
             nn.Linear(
-                hyperparams.input_dim, hyperparams.intermediate_dim
+                input_dim, hyperparams.intermediate_dim
             ),
         ).to(self.device)
 
@@ -201,16 +200,3 @@ class Network(Model):
 
         return genotype
 
-
-def new(c, num_classes, num_layers, criterion, device, steps=4, multiplier=4, stem_multiplier=3):
-    """
-    create a new model and initialize it with current alpha parameters.
-    However, its weights are left untouched.
-    :return:
-    """
-    model = Network(c, num_classes, num_layers, criterion, steps, multiplier, stem_multiplier).to(device)
-
-    for x, y in zip(model_new.arch_parameters(), self.arch_parameters()):
-        x.data.copy_(y.data)
-
-    return model
