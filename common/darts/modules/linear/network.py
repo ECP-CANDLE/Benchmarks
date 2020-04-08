@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from darts.api import Model
-from darts.modules.linear.linear_cell import Cell
+from darts.modules.linear.cell import Cell
 from darts.modules.classifier import MultitaskClassifier
 from darts.genotypes import LINEAR_PRIMITIVES, Genotype
 
@@ -17,7 +17,7 @@ class Hyperparameters:
     intermediate_dim = 100
 
 
-class Network(Model):
+class LinearNetwork(Model):
     """ Collection of cells """
 
     def __init__(self, input_dim, tasks, criterion, device='cpu', hyperparams=Hyperparameters()):

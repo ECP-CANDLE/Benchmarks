@@ -18,7 +18,7 @@ class Hyperparameters:
     embedding_dim = 1500 
 
 
-class Network(Model):
+class ConvNetwork(Model):
     """ Collection of cells """
 
     def __init__(self, tasks, criterion, device='cpu', hyperparams=Hyperparameters()):
