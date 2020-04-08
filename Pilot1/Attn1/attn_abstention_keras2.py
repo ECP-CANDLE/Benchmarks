@@ -404,9 +404,11 @@ def evaluate_abstention(params, root_fname, nb_classes, Y_test, _Y_test, Y_predi
     class_names=['Non-Response','Response', 'Abstain']
     fname = params['save_path'] + root_fname + '.confusion_without_norm.pdf'
     attnviz.plot_confusion_matrix(cnf_matrix, fname, classes=class_names, title='Confusion matrix, without normalization')
+    print('NOTE: Confusion matrix above has zeros in the last row since the ground-truth does not include samples in the abstaining class.')
     # Plot normalized confusion matrix
     fname = params['save_path'] + root_fname + '.confusion_with_norm.pdf'
     attnviz.plot_confusion_matrix(cnf_matrix, fname, classes=class_names, normalize=True, title='Normalized confusion matrix')
+    print('NOTE: Normalized confusion matrix above has NaNs in the last row since the ground-truth does not include samples in the abstaining class.')
 
 
     print('Examples:\n    Total: {}\n    Positive: {} ({:.2f}% of total)\n'.format(total, pos, 100 * pos / total))
