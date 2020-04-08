@@ -34,14 +34,14 @@ Draft
     class Network:
         """ Expert mode network """
 
-    def __init__(self, stem, primitives, ops):
-        self.stem = stem
-        self.primitives = primitives
-        self ops = ops
+        def __init__(self, stem, primitives, ops):
+            self.stem = stem
+            self.primitives = primitives
+            self ops = ops
 
-    def _helper_init(self, ...):
-        """ Helper to construct the private member variables """
-        raise NotImplementedError
+        def _helper_init(self, ...):
+            """ Helper to construct the private member variables """
+            raise NotImplementedError
 
 
 .. References
