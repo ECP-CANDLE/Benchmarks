@@ -31,7 +31,7 @@ DEFAULT_TIMEOUT = -1 # no timeout
 DEFAULT_DATATYPE = np.float32
 
 
-PARAMETERS_CANDLE = ['config_file', 'verbose', 'logfile', 'save_path', 'model_file', 'data_type', 'dense', 'rng_seed', 'epochs', 'batch_size', 'train_bool', 'eval_bool', 'timeout', 'home_dir', 'train_data', 'test_data', 'output_dir', 'data_url', 'experiment_id', 'run_id', 'conv', 'locally_connected', 'activation', 'out_activation', 'lstm_size', 'recurrent_dropout', 'drop', 'pool', 'batch_normalization', 'loss', 'optimizer', 'metrics', 'scaling', 'shuffle', 'feature_subsample', 'learning_rate', 'initialization', 'val_split', 'train_steps', 'val_steps', 'test_steps', 'train_samples', 'val_samples', 'gpus', 'profiling']
+PARAMETERS_CANDLE = ['config_file', 'verbose', 'logfile', 'save_path', 'model_file', 'data_type', 'dense', 'rng_seed', 'epochs', 'batch_size', 'train_bool', 'eval_bool', 'timeout', 'home_dir', 'train_data', 'test_data', 'output_dir', 'data_url', 'experiment_id', 'run_id', 'conv', 'locally_connected', 'activation', 'out_activation', 'lstm_size', 'recurrent_dropout', 'dropout', 'pool', 'batch_normalization', 'loss', 'optimizer', 'metrics', 'scaling', 'shuffle', 'feature_subsample', 'learning_rate', 'early_stop', 'momentum', 'initialization', 'val_split', 'train_steps', 'val_steps', 'test_steps', 'train_samples', 'val_samples', 'gpus', 'profiling']
 
 #### IO UTILS
 
@@ -544,7 +544,7 @@ def get_common_parser(parser):
                         
                         
     # Processing between layers
-    parser.add_argument("--drop", type=float,
+    parser.add_argument("--dropout", type=float,
                         default=argparse.SUPPRESS,
                         help="ratio of dropout used in fully connected layers")
     parser.add_argument("--pool", type=int,
@@ -584,7 +584,13 @@ def get_common_parser(parser):
     parser.add_argument("--learning_rate",
                         default= argparse.SUPPRESS, type=float,
                         help="overrides the learning rate for training")
-    
+    parser.add_argument("--early_stop", type=str2bool,
+                        default= argparse.SUPPRESS,
+                        help="activates keras callback for early stopping of training in function of the monitored variable specified")
+    parser.add_argument("--momentum",
+                        default= argparse.SUPPRESS, type=float,
+                        help="overrides the momentum to use in the SGD optimizer when training")
+
     parser.add_argument("--initialization",
                         default=argparse.SUPPRESS,
                         choices=['constant', 'uniform', 'normal', 'glorot_uniform', 'lecun_uniform', 'he_normal'],
