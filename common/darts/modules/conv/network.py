@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from darts.api import Model
-from darts.modules.cell import Cell
+from darts.modules.conv.cell import Cell
 from darts.modules.classifier import MultitaskClassifier
 from darts.genotypes import PRIMITIVES, Genotype
 
