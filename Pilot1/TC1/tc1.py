@@ -69,4 +69,4 @@ def load_data(params):
 
 
     return candle.load_Xy_data_noheader(train_path, test_path, params['classes'], usecols,
-                                        scaling='maxabs',dtype=params['datatype'])
+                                        scaling='maxabs',dtype=params['data_type'])

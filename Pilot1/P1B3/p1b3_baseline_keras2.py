@@ -259,7 +259,7 @@ def run(gParameters):
     seed = gParameters['rng_seed']
 
     # Build dataset loader object
-    loader = benchmark.DataLoader(seed=seed, dtype=gParameters['datatype'],
+    loader = benchmark.DataLoader(seed=seed, dtype=gParameters['data_type'],
                              val_split=gParameters['validation_split'],
                              test_cell_split=gParameters['test_cell_split'],
                              cell_features=gParameters['cell_features'],

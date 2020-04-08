@@ -168,7 +168,7 @@ def load_data(params, seed):
                                    n_cols=params['feature_subsample'],
                                    shuffle=params['shuffle'],
                                    scaling=params['scaling'],
-                                   dtype=params['datatype'],
+                                   dtype=params['data_type'],
                                    validation_split=params['validation_split'],
                                    return_dataframe=False,
                                    return_header=True,
@@ -200,7 +200,7 @@ def load_data_orig(params, seed):
                                  shuffle=params['shuffle'],
                                  scaling=params['scaling'],
                                  validation_split=params['validation_split'],
-                                 dtype=params['datatype'],
+                                 dtype=params['data_type'],
                                  seed=seed)
 
 

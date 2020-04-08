@@ -94,7 +94,7 @@ def load_data_one_hot(params, seed):
                                            shuffle=params['shuffle'],
                                            scaling=params['scaling'],
                                            validation_split=params['validation_split'],
-                                           dtype=params['datatype'],
+                                           dtype=params['data_type'],
                                            seed=seed)
 
 
@@ -109,7 +109,7 @@ def load_data(params, seed):
                                   shuffle=params['shuffle'],
                                   scaling=params['scaling'],
                                   validation_split=params['validation_split'],
-                                  dtype=params['datatype'],
+                                  dtype=params['data_type'],
                                   seed=seed)
 
 
