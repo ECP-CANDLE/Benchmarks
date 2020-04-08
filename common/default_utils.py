@@ -320,13 +320,15 @@ def set_seed(seed):
 
     random.seed(seed)
 
-def check_file_parameters_exists(params_parser, params_file):
+def check_file_parameters_exists(params_parser, params_benchmark, params_file):
     """Functionality to verify that the parameters defined in the configuraion file are recognizable by the command line parser (i.e. no uknown keywords are used in the configuration file).
  
     Parameters
     ----------
     params_parser : python dictionary
         Includes parameters set via the command line.
+    params_benchmark : python list
+        Includes additional parameters defined in the benchmark.
     params_file : python dictionary
         Includes parameters read from the configuration file.
         
@@ -337,10 +339,16 @@ def check_file_parameters_exists(params_parser, params_file):
     # Get keywords from arguments coming via command line (and CANDLE supervisor)
     args_dict = vars(params_parser)
     args_set = set(args_dict.keys())
+    # Get keywords from benchmark definition
+    bmk_keys = []
+    for item in params_benchmark:
+        bmk_keys.append( item['name'] )
+    bmk_set = set(bmk_keys)
     # Get core CANDLE keywords
     candle_set = set(PARAMETERS_CANDLE)
-    # Consolidate keywords from CANDLE core, command line and CANDLE supervisor
+    # Consolidate keywords from CANDLE core, command line, CANDLE supervisor and benchmark
     candle_set = candle_set.union(args_set)
+    candle_set = candle_set.union(bmk_set)
     # Get keywords used in config_file
     file_set = set(params_file.keys())
     # Compute keywords that come from the config_file that are not in the CANDLE specs
@@ -391,7 +399,8 @@ def finalize_parameters(bmk):
     args = bmk.parser.parse_args()
     #print ('Params:', fileParameters)
     # Check keywords from file against CANDLE common and module definitions
-    check_file_parameters_exists(args, fileParameters)
+    bmk_dict = bmk.additional_definitions
+    check_file_parameters_exists(args, bmk_dict, fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = args_overwrite_config(args, fileParameters)
     # Check that required set of parameters has been defined
