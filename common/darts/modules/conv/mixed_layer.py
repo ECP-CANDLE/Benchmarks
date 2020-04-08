@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from darts.api import Model
 from darts.genotypes import PRIMITIVES
-from darts.modules.operations.convolution import OPS
+from darts.modules.operations.conv import OPS
 
 
 class MixedLayer(Model):
