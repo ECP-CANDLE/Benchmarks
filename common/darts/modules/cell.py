@@ -3,7 +3,7 @@ import torch.nn as nn
 
 from darts.api import Model
 from darts.modules.mixed_layer import MixedLayer
-from darts.modules.operations.original import ConvBlock, FactorizedReduce
+from darts.modules.operations.convolution import ConvBlock, FactorizedReduce
 
 
 class Cell(Model):
