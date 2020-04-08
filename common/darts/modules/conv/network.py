@@ -3,19 +3,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from darts.api import Model
-from darts.modules.conv.cell import Cell
+from darts.modules.conv import Cell
 from darts.modules.classifier import MultitaskClassifier
 from darts.genotypes import PRIMITIVES, Genotype
 
 
 class Hyperparameters:
-    c = 8 
-    num_nodes = 2 
-    num_cells = 3 
-    channel_multiplier = 2 
-    stem_channel_multiplier = 2 
+    c = 8
+    num_nodes = 2
+    num_cells = 3
+    channel_multiplier = 2
+    stem_channel_multiplier = 2
     num_embeddings = 35095 # vocab size
-    embedding_dim = 1500 
+    embedding_dim = 1500
 
 
 class ConvNetwork(Model):
