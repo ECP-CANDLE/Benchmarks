@@ -9,14 +9,12 @@ from darts.genotypes import LINEAR_PRIMITIVES, Genotype
 
 
 class Hyperparameters:
-    c = 100 # 8
-    num_nodes = 2 
-    num_cells = 3 
-    channel_multiplier = 2 
-    stem_channel_multiplier = 2 
-#    input_dim = 5270 
+    c = 100
+    num_nodes = 2
+    num_cells = 3
+    channel_multiplier = 1
+    stem_channel_multiplier = 1
     input_dim = 5270
-#    gene_dim = 942
     intermediate_dim = 100
 
 
@@ -35,7 +33,7 @@ class Network(Model):
 
         # stem_multiplier is for stem network,
         # and multiplier is for general cell
-        c_curr = hyperparams.stem_channel_multiplier * self.c # 3*16
+        c_curr = hyperparams.stem_channel_multiplier * self.c
         # stem network, convert 3 channel to c_curr
         self.stem = nn.Sequential(
             nn.Linear(
@@ -49,7 +47,6 @@ class Network(Model):
         self.cells = nn.ModuleList()
         reduction_prev = False
         for i in range(hyperparams.num_cells):
-
             # for layer in the middle [1/3, 2/3], reduce via stride=2
             if i in [hyperparams.num_cells // 3, 2 * hyperparams.num_cells // 3]:
                 c_curr *= 2
@@ -60,12 +57,12 @@ class Network(Model):
             # [cp, h, h] => [multiplier*c_curr, h/h//2, h/h//2]
             # the output channels = multiplier * c_curr
             cell = Cell(
-                hyperparams.num_nodes, 
-                hyperparams.channel_multiplier, 
-                cpp, 
-                cp, 
-                c_curr, 
-                reduction, 
+                hyperparams.num_nodes,
+                hyperparams.channel_multiplier,
+                cpp,
+                cp,
+                c_curr,
+                reduction,
                 reduction_prev
             ).to(self.device)
             # update reduction_prev
@@ -73,21 +70,12 @@ class Network(Model):
             self.cells += [cell]
             cpp, cp = cp, hyperparams.channel_multiplier * c_curr
 
-        # adaptive pooling output size to 1x1
-        # since cp records last cell's output channels
-        # it indicates the input channel number
-        # self.classifier = self.fc_layers(cp, tasks)
-        #self.classifier = MultitaskClassifier(cp, tasks)
-        self.classifier = MultitaskClassifier(500, tasks) # 500
+        self.classifier = MultitaskClassifier(hyperparams.intermediate_dim, tasks)
 
-        # k is the total number of edges inside single cell, 14
+        # k is the total number of edges inside single cell
         k = sum(1 for i in range(self.num_nodes) for j in range(2 + i))
         num_ops = len(LINEAR_PRIMITIVES) # 8
 
-        # TODO
-        # this kind of implementation will add alpha into self.parameters()
-        # it has num k of alpha parameters, and each alpha shape: [num_ops]
-        # it requires grad and can be converted to cpu/gpu automatically
         self.alpha_normal = nn.Parameter(torch.randn(k, num_ops))
         self.alpha_reduce = nn.Parameter(torch.randn(k, num_ops))
 
@@ -106,7 +94,7 @@ class Network(Model):
         fc_layers = {}
         for task, dim in tasks.items():
             fc_layers[task] = nn.Linear(cp, dim).to(self.device)
-        return fc_layers 
+        return fc_layers
 
     def new(self):
         """ Create a new model initialzed with current alpha parameters.
@@ -119,7 +107,7 @@ class Network(Model):
             New model initialized with current alpha.
         """
         model = Network(
-            self.tasks, 
+            self.tasks,
             self.criterion
         ).to(self.device)
 
@@ -129,27 +117,8 @@ class Network(Model):
         return model
 
     def forward(self, x):
-        """
-        in: torch.Size([3, 3, 32, 32])
-        stem: torch.Size([3, 48, 32, 32])
-        cell: 0 torch.Size([3, 64, 32, 32]) False
-        cell: 1 torch.Size([3, 64, 32, 32]) False
-        cell: 2 torch.Size([3, 128, 16, 16]) True
-        cell: 3 torch.Size([3, 128, 16, 16]) False
-        cell: 4 torch.Size([3, 128, 16, 16]) False
-        cell: 5 torch.Size([3, 256, 8, 8]) True
-        cell: 6 torch.Size([3, 256, 8, 8]) False
-        cell: 7 torch.Size([3, 256, 8, 8]) False
-        pool:   torch.Size([16, 256, 1, 1])
-        linear: [b, 10]
-        :param x:
-        :return:
-        """
-        #print('network in:', x.shape)
         # s0 & s1 means the last cells' output
         s0 = s1 = self.stem(x) # [b, 3, 32, 32] => [b, 48, 32, 32]
-        #print('network stem:', s0.shape)
-        #print('network stem1:', s1.shape)
 
         for i, cell in enumerate(self.cells):
             # weights are shared across all reduction cell or normal cell
@@ -161,16 +130,9 @@ class Network(Model):
                 weights = F.softmax(self.alpha_normal, dim=-1) # [14, 8]
             # execute cell() firstly and then assign s0=s1, s1=result
             s0, s1 = s1, cell(s0, s1, weights) # [40, 64, 32, 32]
-            #print('cell:',i, s1.shape, cell.reduction, cell.reduction_prev)
-            #print('\n')
 
         # s1 is the last cell's output
-        #out = self.global_pooling(s1)
-        out = s1
-        # logits = {}
-        # for task, fc in self.classifier.items():
-        #     logits[task] = fc(out.view(out.size(0), -1))
-        logits = self.classifier(out.view(out.size(0), -1))
+        logits = self.classifier(s1.view(s1.size(0), -1))
 
         return logits
 
