@@ -44,7 +44,7 @@ def train(trainloader, validloader, model, architecture, criterion, optimizer, l
 
         x_search, target_search = next(valid_iter)
         x_search = x_search.to(device)
-       
+
         for task, label in target_search.items():
             target_search[task] = target_search[task].to(device)
 
