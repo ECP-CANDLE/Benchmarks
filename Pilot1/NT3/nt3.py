@@ -24,17 +24,17 @@ required = [
     'conv',
     'dense',
     'activation',
-    'out_act',
+    'out_activation',
     'loss',
     'optimizer',
     'metrics',
     'epochs',
     'batch_size',
     'learning_rate',
-    'drop',
+    'dropout',
     'classes',
     'pool',
-    'save',
+    'save_path',
     'timeout'
 ]
 
