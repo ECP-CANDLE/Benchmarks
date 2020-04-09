@@ -189,7 +189,7 @@ def run(params):
     latent_dim = params['latent_dim']
 
     activation = params['activation']
-    dropout = params['drop']
+    dropout = params['dropout']
     dense_layers = params['dense']
     dropout_layer = keras.layers.noise.AlphaDropout if params['alpha_dropout'] else Dropout
 

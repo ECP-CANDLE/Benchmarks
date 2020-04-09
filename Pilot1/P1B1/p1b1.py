@@ -27,6 +27,10 @@ additional_definitions = [
     'action':'store',
     'type': int, 
     'help':'latent dimensions'},
+{'name':'model_name',
+    'default':'p1b1',
+    'type':str,
+    'help':'prefix for file to save model'},
 {'name':'model', 
     'default':'ae',
     'choices':['ae', 'vae', 'cvae'],
@@ -75,7 +79,7 @@ required = [
     'activation',
     'batch_size',
     'dense',
-    'drop',
+    'dropout',
     'epochs',
     'initialization',
     'learning_rate',
@@ -125,8 +129,8 @@ def extension_from_parameters(params, framework=''):
         ext += '.EPS={}'.format(params['epsilon_std'])
     if params['feature_subsample'] > 0:
         ext += '.FS={}'.format(params['feature_subsample'])
-    if params['drop']:
-        ext += '.DR={}'.format(params['drop'])
+    if params['dropout']:
+        ext += '.DR={}'.format(params['dropout'])
     if params['alpha_dropout']:
         ext += '.AD'
     if params['batch_normalization']:
