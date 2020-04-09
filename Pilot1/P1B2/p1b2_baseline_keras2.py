@@ -88,8 +88,8 @@ def run(gParameters):
                           bias_initializer=initializer_bias,
                           kernel_regularizer=l2(gParameters['penalty']),
                           activity_regularizer=l2(gParameters['penalty']))(x)
-            if gParameters['drop']:
-                x = Dropout(gParameters['drop'])(x)
+            if gParameters['dropout']:
+                x = Dropout(gParameters['dropout'])(x)
         output = Dense(output_dim, activation=activation,
                        kernel_initializer=initializer_weights,
                        bias_initializer=initializer_bias)(x)

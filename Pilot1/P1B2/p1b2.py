@@ -38,7 +38,7 @@ required = [
     'activation',
     'batch_size',
     'dense',
-    'drop',
+    'dropout',
     'epochs',
     'feature_subsample',
     'initialization',
@@ -48,7 +48,7 @@ required = [
     'penalty',
     'rng_seed',
     'scaling',
-    'validation_split',
+    'val_split',
     'shuffle'
 ]
 
@@ -71,7 +71,7 @@ def extension_from_parameters(params, framework):
     ext = framework
     ext += '.A={}'.format(params['activation'])
     ext += '.B={}'.format(params['batch_size'])
-    ext += '.D={}'.format(params['drop'])
+    ext += '.D={}'.format(params['dropout'])
     ext += '.E={}'.format(params['epochs'])
     if params['feature_subsample']:
         ext += '.F={}'.format(params['feature_subsample'])
@@ -93,7 +93,7 @@ def load_data_one_hot(params, seed):
                                            n_cols=params['feature_subsample'],
                                            shuffle=params['shuffle'],
                                            scaling=params['scaling'],
-                                           validation_split=params['validation_split'],
+                                           validation_split=params['val_split'],
                                            dtype=params['data_type'],
                                            seed=seed)
 
@@ -108,7 +108,7 @@ def load_data(params, seed):
                                   n_cols=params['feature_subsample'],
                                   shuffle=params['shuffle'],
                                   scaling=params['scaling'],
-                                  validation_split=params['validation_split'],
+                                  validation_split=params['val_split'],
                                   dtype=params['data_type'],
                                   seed=seed)
 
