@@ -68,7 +68,11 @@ additional_definitions = [
 {'name':'tsne', 
     'type': candle.str2bool,
     'default': False, 
-    'help':'generate tsne plot of the latent representation'}
+    'help':'generate tsne plot of the latent representation'},
+{'name':'alpha_dropout',
+    'type': candle.str2bool,
+    'default': False,
+    'help':'use the AlphaDropout layer from keras instead of regular Dropout'}
 ]
 
 required = [
