@@ -8,15 +8,15 @@ sys.path.append(lib_path2)
 import candle
 
 REQUIRED = [
-    'learning_rate', 
+    'learning_rate',
     'learning_rate_min',
     'momentum',
     'weight_decay',
     'grad_clip',
     'seed',
     'unrolled',
-    'batch_size', 
-    'epochs', 
+    'batch_size',
+    'epochs',
 ]
 
 
@@ -26,7 +26,7 @@ class BenchmarkP3B5(candle.Benchmark):
     def set_locals(self):
         """ Set parameters for the benchmark.
 
-        Args: 
+        Args:
             required: set of required parameters for the benchmark.
         """
         if REQUIRED is not None:
