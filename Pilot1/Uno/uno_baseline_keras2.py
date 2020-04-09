@@ -200,7 +200,7 @@ class SimpleWeightSaver(Callback):
 
 def build_model(loader, args, permanent_dropout=True, silent=False):
     input_models = {}
-    dropout_rate = args.drop
+    dropout_rate = args.dropout
     for fea_type, shape in loader.feature_shapes.items():
         base_type = fea_type.split('.')[0]
         if base_type in ['cell', 'drug']:
