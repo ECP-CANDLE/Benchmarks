@@ -34,10 +34,10 @@ def run(gParameters):
     
     # Construct extension to save model
     ext = p1b2.extension_from_parameters(gParameters, '.keras')
-    candle.verify_path(params['save_path'])
-    prefix = '{}{}'.format(params['save_path'], ext)
+    candle.verify_path(gParameters['save_path'])
+    prefix = '{}{}'.format(gParameters['save_path'], ext)
     logfile = gParameters['logfile'] if gParameters['logfile'] else prefix+'.log'
-    candle.set_up_logger(logfile, p1b2.logger, params['verbose'])
+    candle.set_up_logger(logfile, p1b2.logger, gParameters['verbose'])
     p1b2.logger.info('Params: {}'.format(gParameters))
 
     # Get default parameters for initialization and optimizer functions
