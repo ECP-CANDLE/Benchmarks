@@ -129,7 +129,7 @@ def load_data(params, seed):
 
     # start change #
     if params['train_data'].endswith('h5') or params['train_data'].endswith('hdf5'):
-        print ('processing h5 in file {}'.format(params['in']))
+        print ('processing h5 in file {}'.format(params['train_data']))
 
         url = params['data_url']
         file_train = params['train_data']

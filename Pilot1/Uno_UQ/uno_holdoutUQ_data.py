@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-def initialize_parameters():
+def initialize_parameters(default_model='uno_defaultUQ_model.txt'):
 
     # Build benchmark object
-    unoBmk = uno.BenchmarkUno(uno.file_path, 'uno_default_model.txt', 'keras',
+    unoBmk = uno.BenchmarkUno(uno.file_path, default_model, 'keras',
     prog='uno_holdoutUQ_data', desc='Build data split for UQ analysis in the problem of prediction of tumor response to drug pairs.')
 
     # Initialize parameters
