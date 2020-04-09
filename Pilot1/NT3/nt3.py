@@ -35,7 +35,7 @@ required = [
     'dropout',
     'classes',
     'pool',
-    'save_path',
+    'output_dir',
     'timeout'
 ]
 

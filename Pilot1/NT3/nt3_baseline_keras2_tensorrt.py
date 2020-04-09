@@ -258,7 +258,7 @@ def run(gParameters):
                   optimizer=optimizer,
                   metrics=[gParameters['metrics']])
 
-    output_dir = gParameters['save_path']
+    output_dir = gParameters['output_dir']
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
