@@ -47,12 +47,12 @@ def multitask_loss(target, logits, criterion, reduce='mean'):
 
 
 def accuracy(target: torch.tensor, output: torch.tensor,):
-    """ Computes accuracy 
-    
+    """ Computes accuracy
+
     Args:
         output: logits of the model
         target: true labels
-    
+
     Returns:
         accuracy of the predictions
     """

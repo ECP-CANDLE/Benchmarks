@@ -22,7 +22,7 @@ class ConvNetwork(Model):
     """ Collection of cells """
 
     def __init__(self, tasks, criterion, device='cpu', hyperparams=Hyperparameters()):
-        super(Network, self).__init__()
+        super(ConvNetwork, self).__init__()
         self.tasks = tasks
         self.criterion = criterion
         self.device = device
@@ -37,7 +37,7 @@ class ConvNetwork(Model):
         # stem network, convert 3 channel to c_curr
         self.stem = nn.Sequential(
             nn.Embedding(
-                num_embeddings=hyperparams.num_embeddings, 
+                num_embeddings=hyperparams.num_embeddings,
                 embedding_dim=hyperparams.embedding_dim
             ),
             nn.Conv1d(hyperparams.embedding_dim, c_curr, 3, padding=1, bias=False),
@@ -61,12 +61,12 @@ class ConvNetwork(Model):
             # [cp, h, h] => [multiplier*c_curr, h/h//2, h/h//2]
             # the output channels = multiplier * c_curr
             cell = Cell(
-                hyperparams.num_nodes, 
-                hyperparams.channel_multiplier, 
-                cpp, 
-                cp, 
-                c_curr, 
-                reduction, 
+                hyperparams.num_nodes,
+                hyperparams.channel_multiplier,
+                cpp,
+                cp,
+                c_curr,
+                reduction,
                 reduction_prev
             ).to(self.device)
             # update reduction_prev
@@ -78,17 +78,12 @@ class ConvNetwork(Model):
         self.global_pooling = nn.AdaptiveAvgPool1d(1)
         # since cp records last cell's output channels
         # it indicates the input channel number
-        # self.classifier = self.fc_layers(cp, tasks)
         self.classifier = MultitaskClassifier(cp, tasks)
 
         # k is the total number of edges inside single cell, 14
         k = sum(1 for i in range(self.num_nodes) for j in range(2 + i))
         num_ops = len(PRIMITIVES) # 8
 
-        # TODO
-        # this kind of implementation will add alpha into self.parameters()
-        # it has num k of alpha parameters, and each alpha shape: [num_ops]
-        # it requires grad and can be converted to cpu/gpu automatically
         self.alpha_normal = nn.Parameter(torch.randn(k, num_ops))
         self.alpha_reduce = nn.Parameter(torch.randn(k, num_ops))
 
@@ -119,7 +114,7 @@ class ConvNetwork(Model):
         model : Network
             New model initialized with current alpha.
         """
-        model = Network(
+        model = ConvNetwork(
             self.tasks, 
             self.criterion
         ).to(self.device)

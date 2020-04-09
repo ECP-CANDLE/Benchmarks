@@ -9,11 +9,8 @@ lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common',))
 sys.path.append(lib_path2)
 
 
-from darts import Architecture
-from darts import ConvNetwork
-from darts.genotypes import Genotype
+import darts
 
 
-print(Architecture)
-print(ConvNetwork)
-print(Genotype)
+print(darts.Architecture)
+print(darts.ConvNetwork)

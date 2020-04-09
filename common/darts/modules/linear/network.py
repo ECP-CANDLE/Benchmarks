@@ -21,7 +21,7 @@ class LinearNetwork(Model):
     """ Collection of cells """
 
     def __init__(self, input_dim, tasks, criterion, device='cpu', hyperparams=Hyperparameters()):
-        super(Network, self).__init__()
+        super(LinearNetwork, self).__init__()
         self.tasks = tasks
         self.criterion = criterion
         self.device = device
@@ -105,7 +105,7 @@ class LinearNetwork(Model):
         model : Network
             New model initialized with current alpha.
         """
-        model = Network(
+        model = LinearNetwork(
             self.tasks,
             self.criterion
         ).to(self.device)

@@ -6,15 +6,7 @@ from torch.utils.data import DataLoader
 
 import p3b5 as bmk
 import candle
-
-from darts.api.config import banner
-from darts.data.p3b3 import P3B3
-from darts.modules.network import Network
-from darts.architecture import Architecture
-from darts.storage.genotype import GenotypeStorage 
-from darts.functional import multitask_loss
-from darts.meters.accuracy import MultitaskAccuracyMeter
-from darts.utils.logging import log_accuracy
+import darts
 
 from p3b5_darts import train, infer
 
@@ -55,11 +47,11 @@ def run(params):
     args.cuda = torch.cuda.is_available()
 
     device = torch.device(f'cuda' if args.cuda else "cpu")
-    banner(device=device)
+    darts.banner(device=device)
 
     datapath = fetch_data(params)
-    train_data = P3B3(datapath, 'train')
-    valid_data = P3B3(datapath, 'test')
+    train_data = darts.P3B3(datapath, 'train')
+    valid_data = darts.P3B3(datapath, 'test')
 
     trainloader = DataLoader(train_data, batch_size=args.batch_size)
     validloader = DataLoader(valid_data, batch_size=args.batch_size)
@@ -73,23 +65,23 @@ def run(params):
         'grade': 3,
     }
 
-    model = Network(tasks=tasks, criterion=criterion, device=device).to(device)
-    architecture = Architecture(model, args, device=device)
+    model = darts.ConvNetwork(tasks=tasks, criterion=criterion, device=device).to(device)
+    architecture = darts.Architecture(model, args, device=device)
 
     optimizer = optim.SGD(
-        model.parameters(), 
-        args.learning_rate, 
-        momentum=args.momentum, 
+        model.parameters(),
+        args.learning_rate,
+        momentum=args.momentum,
         weight_decay=args.weight_decay,
     )
 
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, 
-        float(args.epochs), 
+        optimizer,
+        float(args.epochs),
         eta_min=args.learning_rate_min,
     )
 
-    genotype_store = GenotypeStorage(root=args.savepath)
+    genotype_store = darts.GenotypeStorage(root=args.savepath)
 
     min_loss = 9999
     for epoch in range(args.epochs):
@@ -103,18 +95,18 @@ def run(params):
 
         # training
         train_acc, train_loss = train(
-            trainloader, 
-            validloader, 
-            model, 
-            architecture, 
-            criterion, 
-            optimizer, 
-            lr, 
-            args, 
+            trainloader,
+            validloader,
+            model,
+            architecture,
+            criterion,
+            optimizer,
+            lr,
+            args,
             tasks,
             device
         )
-       
+
         # validation
         valid_acc, valid_loss = infer(validloader, model, criterion, args, tasks, device)
 
@@ -123,8 +115,8 @@ def run(params):
             min_loss = valid_loss
 
         print(f'\nEpoch {epoch} stats:')
-        log_accuracy(train_acc, 'train')
-        log_accuracy(valid_acc, 'valid')
+        darts.log_accuracy(train_acc, 'train')
+        darts.log_accuracy(valid_acc, 'valid')
 
 
 def main():
