@@ -76,21 +76,21 @@ def run(params):
 
     print('partition_by: ', args.partition_by)
     if args.partition_by == 'drug_pair':
-        fname_drugs = 'infer_drug_ids'
+        fname_drugs = args.save_path + 'infer_drug_ids'
         pds = loader.get_drugs_in_val()
         with open(fname_drugs, 'w') as f:
             for item in pds:
                 f.write('%s\n' % item)
         logger.info('Drug IDs in holdout set written in file: {}'.format(fname_drugs))
     elif args.partition_by == 'cell':
-        fname_cells = 'infer_cell_ids'
+        fname_cells = args.save_path + 'infer_cell_ids'
         pcs = loader.get_cells_in_val()
         with open(fname_cells, 'w') as f:
             for item in pcs:
                 f.write('%s\n' % item)
         logger.info('Cell IDs in holdout set written in file: {}'.format(fname_cells))
     else : #
-        fname_index = 'infer_index_ids'
+        fname_index = args.save_path + 'infer_index_ids'
         pins = loader.get_index_in_val()
         with open(fname_index, 'w') as f:
             for item in pins:

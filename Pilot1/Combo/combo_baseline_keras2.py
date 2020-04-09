@@ -673,7 +673,7 @@ def run(params):
     logger.info('Params: {}'.format(params))
 
     loader = ComboDataLoader(seed=args.rng_seed,
-                             val_split=args.validation_split,
+                             val_split=args.val_split,
                              cell_features=args.cell_features,
                              drug_features=args.drug_features,
                              use_mean_growth=args.use_mean_growth,
