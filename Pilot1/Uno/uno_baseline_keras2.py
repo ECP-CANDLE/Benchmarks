@@ -76,8 +76,8 @@ def extension_from_parameters(args):
     ext += '.DF={}'.format(''.join([x[0] for x in sorted(args.drug_features)]))
     if args.feature_subsample > 0:
         ext += '.FS={}'.format(args.feature_subsample)
-    if args.drop > 0:
-        ext += '.DR={}'.format(args.drop)
+    if args.dropout > 0:
+        ext += '.DR={}'.format(args.dropout)
     if args.warmup_lr:
         ext += '.wu_lr'
     if args.reduce_lr:
@@ -310,7 +310,7 @@ def run(params):
                 )
 
     target = args.agg_dose or 'Growth'
-    val_split = args.validation_split
+    val_split = args.val_split
     train_split = 1 - val_split
 
     if args.export_csv:

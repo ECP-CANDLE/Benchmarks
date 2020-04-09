@@ -221,7 +221,7 @@ required = [
     'batch_size',
     'dense',
     'dense_feature_layers',
-    'drop',
+    'dropout',
     'epochs',
     'feature_subsample',
     'learning_rate',
@@ -231,7 +231,7 @@ required = [
     'rng_seed',
     'save_path',
     'scaling',
-    'validation_split',
+    'val_split',
     'solr_root',
     'timeout'
 ]
