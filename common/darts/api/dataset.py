@@ -71,3 +71,25 @@ class InMemoryDataset(Dataset):
             self.labels = frame.to_dict()
         else:
             self.labels = frame['labels']
+
+
+class Subset(InMemoryDataset):
+    """Subset of a dataset at specified indices.
+
+    Args:
+        dataset (Dataset): The dataset to be subsetted
+        indices (sequence): Indices in the whole set selected for subset
+    """
+    def __init__(self, dataset, indices):
+        self.dataset = dataset
+        self.indices = indices
+
+    def __getitem__(self, idx):
+        return self.dataset[self.indices[idx]]
+
+    def __len__(self):
+        return len(self.indices)
+
+    def load_data(self):
+        return self.dataset[self.indices]
+
