@@ -8,9 +8,10 @@ sys.path.append(lib_path2)
 import candle
 
 additional_definitions = [
-{'name':'model_name',
+{'name':'model_prefix',
     'default':'nt3',
-    'type':str},
+    'type':str,
+    'help':'prefix to build model name for saving'},
 {'name':'classes',
     'type':int,
     'default':2}
@@ -20,7 +21,7 @@ required = [
     'data_url',
     'train_data',
     'test_data',
-    'model_name',
+    'model_prefix',
     'conv',
     'dense',
     'activation',
