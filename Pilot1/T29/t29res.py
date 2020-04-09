@@ -91,8 +91,8 @@ def load_data(nb_classes, PL, gParameters):
 def f(x, gParameters, distance=1):
     input = x 
     for i in range(distance):
-        if 'drop' in gParameters:
-            x = Dropout(gParameters['drop'])(x)
+        if 'dropout' in gParameters:
+            x = Dropout(gParameters['dropout'])(x)
         x = Dense(1000, activation=gParameters['activation'])(x)
     y = ke.layers.add([input,x])
     return y
@@ -105,7 +105,7 @@ def run(gParameters):
     EPOCH = gParameters['epochs']
     BATCH = gParameters['batch_size']
     nb_classes = gParameters['classes']
-    DR = gParameters['drop']
+    DR = gParameters['dropout']
     ACTIVATION = gParameters['activation']
     kerasDefaults = candle.keras_default_config()
     kerasDefaults['momentum_sgd'] = gParameters['momentum']
