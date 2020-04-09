@@ -29,7 +29,12 @@ import candle
 
 logger = logging.getLogger(__name__)
 
-additional_definitions = []
+additional_definitions = [
+{'name':'reg_l2',
+'type': float,
+'default': 0.,
+'help':'weight of regularization for l2 norm of nn weights'}
+]
 
 required = [
     'data_url',
@@ -45,7 +50,7 @@ required = [
     'learning_rate',
     'loss',
     'optimizer',
-    'penalty',
+    'reg_l2',
     'rng_seed',
     'scaling',
     'val_split',

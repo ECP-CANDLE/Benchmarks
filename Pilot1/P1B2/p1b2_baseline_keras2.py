@@ -80,14 +80,14 @@ def run(gParameters):
                 x = Dense(l, activation=activation,
                           kernel_initializer=initializer_weights,
                           bias_initializer=initializer_bias,
-                          kernel_regularizer=l2(gParameters['penalty']),
-                          activity_regularizer=l2(gParameters['penalty']))(input_vector)
+                          kernel_regularizer=l2(gParameters['reg_l2']),
+                          activity_regularizer=l2(gParameters['reg_l2']))(input_vector)
             else:
                 x = Dense(l, activation=activation,
                           kernel_initializer=initializer_weights,
                           bias_initializer=initializer_bias,
-                          kernel_regularizer=l2(gParameters['penalty']),
-                          activity_regularizer=l2(gParameters['penalty']))(x)
+                          kernel_regularizer=l2(gParameters['reg_l2']),
+                          activity_regularizer=l2(gParameters['reg_l2']))(x)
             if gParameters['dropout']:
                 x = Dropout(gParameters['dropout'])(x)
         output = Dense(output_dim, activation=activation,
