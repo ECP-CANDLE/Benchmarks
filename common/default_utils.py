@@ -31,7 +31,7 @@ DEFAULT_TIMEOUT = -1 # no timeout
 DEFAULT_DATATYPE = np.float32
 
 
-PARAMETERS_CANDLE = ['config_file', 'verbose', 'logfile', 'save_path', 'model_file', 'data_type', 'dense', 'rng_seed', 'epochs', 'batch_size', 'train_bool', 'eval_bool', 'timeout', 'home_dir', 'train_data', 'test_data', 'output_dir', 'data_url', 'experiment_id', 'run_id', 'conv', 'locally_connected', 'activation', 'out_activation', 'lstm_size', 'recurrent_dropout', 'dropout', 'pool', 'batch_normalization', 'loss', 'optimizer', 'metrics', 'scaling', 'shuffle', 'feature_subsample', 'learning_rate', 'early_stop', 'momentum', 'initialization', 'val_split', 'train_steps', 'val_steps', 'test_steps', 'train_samples', 'val_samples', 'gpus', 'profiling']
+PARAMETERS_CANDLE = ['config_file', 'verbose', 'logfile', 'save_path', 'model_name', 'data_type', 'dense', 'rng_seed', 'epochs', 'batch_size', 'train_bool', 'eval_bool', 'timeout', 'home_dir', 'train_data', 'test_data', 'output_dir', 'data_url', 'experiment_id', 'run_id', 'conv', 'locally_connected', 'activation', 'out_activation', 'lstm_size', 'recurrent_dropout', 'dropout', 'pool', 'batch_normalization', 'loss', 'optimizer', 'metrics', 'scaling', 'shuffle', 'feature_subsample', 'learning_rate', 'early_stop', 'momentum', 'initialization', 'val_split', 'train_steps', 'val_steps', 'test_steps', 'train_samples', 'val_samples', 'gpus', 'profiling']
 
 #### IO UTILS
 
@@ -433,9 +433,9 @@ def get_default_neon_parser(parser):
                         help="file path to save model snapshots")
 
     # General behavior
-    parser.add_argument("--model_file", dest='model_file', type=str,
+    parser.add_argument("--model_name", dest='model_name', type=str,
                         default=argparse.SUPPRESS,
-                        help="specify trained model Pickle file")
+                        help="specify model name to use when building filenames for saving")
     parser.add_argument("-d", "--data_type", dest='data_type',
                         default=argparse.SUPPRESS,
                         choices=['f16', 'f32', 'f64'],

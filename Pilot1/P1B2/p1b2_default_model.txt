@@ -2,7 +2,7 @@
 data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B2/'
 train_data = 'P1B2.train.csv'
 test_data = 'P1B2.test.csv'
-model_prefix='p1b2'
+model_name='p1b2'
 dense=[1024, 512, 256]
 batch_size=60
 epochs=1

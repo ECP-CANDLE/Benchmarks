@@ -2,7 +2,7 @@
 data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/'
 train_data = 'nt_train2.csv'
 test_data = 'nt_test2.csv'
-model_prefix = 'nt3'
+model_name = 'nt3'
 conv = [128, 20, 1, 128, 10, 1]
 dense = [200,20]
 activation = 'relu'

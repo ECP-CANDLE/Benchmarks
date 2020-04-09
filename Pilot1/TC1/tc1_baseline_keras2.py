@@ -122,8 +122,8 @@ def run(gParameters):
         os.makedirs(output_dir)
     
     # set up callbacks to do work during model training..
-    model_prefix = gParameters['model_prefix']
-    path = '{}/{}.autosave.model.h5'.format(output_dir, model_prefix)
+    model_name = gParameters['model_name']
+    path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
     checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
@@ -142,35 +142,35 @@ def run(gParameters):
 
     # serialize model to JSON
     model_json = model.to_json()
-    with open("{}/{}.model.json".format(output_dir, model_prefix), "w") as json_file:
+    with open("{}/{}.model.json".format(output_dir, model_name), "w") as json_file:
         json_file.write(model_json)
 
     # serialize model to YAML
     model_yaml = model.to_yaml()
-    with open("{}/{}.model.yaml".format(output_dir, model_prefix), "w") as yaml_file:
+    with open("{}/{}.model.yaml".format(output_dir, model_name), "w") as yaml_file:
         yaml_file.write(model_yaml)
 
 
     # serialize weights to HDF5
-    model.save_weights("{}/{}.model.h5".format(output_dir, model_prefix))
+    model.save_weights("{}/{}.model.h5".format(output_dir, model_name))
     print("Saved model to disk")
 
     # load json and create model
-    json_file = open('{}/{}.model.json'.format(output_dir, model_prefix), 'r')
+    json_file = open('{}/{}.model.json'.format(output_dir, model_name), 'r')
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model_json = model_from_json(loaded_model_json)
 
 
     # load yaml and create model
-    yaml_file = open('{}/{}.model.yaml'.format(output_dir, model_prefix), 'r')
+    yaml_file = open('{}/{}.model.yaml'.format(output_dir, model_name), 'r')
     loaded_model_yaml = yaml_file.read()
     yaml_file.close()
     loaded_model_yaml = model_from_yaml(loaded_model_yaml)
 
 
     # load weights into new model
-    loaded_model_json.load_weights('{}/{}.model.h5'.format(output_dir, model_prefix))
+    loaded_model_json.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
     print("Loaded json model from disk")
 
     # evaluate json loaded model on test data
@@ -187,7 +187,7 @@ def run(gParameters):
 
 
     # load weights into new model
-    loaded_model_yaml.load_weights('{}/{}.model.h5'.format(output_dir, model_prefix))
+    loaded_model_yaml.load_weights('{}/{}.model.h5'.format(output_dir, model_name))
     print("Loaded yaml model from disk")
 
     # evaluate loaded model on test data

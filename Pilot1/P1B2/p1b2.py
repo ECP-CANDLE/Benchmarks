@@ -30,10 +30,6 @@ import candle
 logger = logging.getLogger(__name__)
 
 additional_definitions = [
-{'name':'model_prefix',
-    'default':'p1b2',
-    'type':str,
-    'help':'prefix to build model name for saving'},
 {'name':'reg_l2',
 'type': float,
 'default': 0.,
