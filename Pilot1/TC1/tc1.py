@@ -18,27 +18,34 @@ additional_definitions = [
        'nargs':'+',
        'type': int,
        'help':'network structure of shared layer'},
+    {'name':'model_prefix',
+        'default':'tc1',
+        'type':str,
+        'help':'prefix to build model name for saving'},
+    {'name':'classes',
+        'type':int,
+        'default':36}
 ]
 
 required = [
     'data_url',
     'train_data',
     'test_data',
-    'model_name',
+    'model_prefix',
     'conv',
     'dense',
     'activation',
-    'out_act',
+    'out_activation',
     'loss',
     'optimizer',
     'feature_subsample',
     'metrics',
     'epochs',
     'batch_size',
-    'drop',
+    'dropout',
     'classes',
     'pool',
-    'save'
+    'output_dir'
 ]
 
 
