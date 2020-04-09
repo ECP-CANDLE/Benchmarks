@@ -130,7 +130,7 @@ def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
 
 def build_homoscedastic_model(loader, args, logger=None, permanent_dropout=True, silent=False):
     input_models = {}
-    dropout_rate = args.drop
+    dropout_rate = args.dropout
     reg_l2 =  args.reg_l2
     for fea_type, shape in loader.feature_shapes.items():
         base_type = fea_type.split('.')[0]
@@ -183,7 +183,7 @@ def build_homoscedastic_model(loader, args, logger=None, permanent_dropout=True,
 
 def build_heteroscedastic_model(loader, args, logger=None, permanent_dropout=True, silent=False):
     input_models = {}
-    dropout_rate = args.drop
+    dropout_rate = args.dropout
     reg_l2 =  args.reg_l2
     for fea_type, shape in loader.feature_shapes.items():
         base_type = fea_type.split('.')[0]
@@ -235,7 +235,7 @@ def build_heteroscedastic_model(loader, args, logger=None, permanent_dropout=Tru
 
 def build_quantile_model(loader, args, logger=None, permanent_dropout=True, silent=False):
     input_models = {}
-    dropout_rate = args.drop
+    dropout_rate = args.dropout
     reg_l2 =  args.reg_l2
     for fea_type, shape in loader.feature_shapes.items():
         base_type = fea_type.split('.')[0]

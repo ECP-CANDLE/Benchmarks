@@ -62,8 +62,8 @@ def extension_from_parameters(args):
     ext += '.DF={}'.format(''.join([x[0] for x in sorted(args.drug_features)]))
     if args.feature_subsample > 0:
         ext += '.FS={}'.format(args.feature_subsample)
-    if args.drop > 0:
-        ext += '.DR={}'.format(args.drop)
+    if args.dropout > 0:
+        ext += '.DR={}'.format(args.dropout)
     if args.warmup_lr:
         ext += '.wu_lr'
     if args.reduce_lr:
@@ -337,7 +337,7 @@ required = [
     'batch_size',
     'dense',
     'dense_feature_layers',
-    'drop',
+    'dropout',
     'epochs',
     'feature_subsample',
     'learning_rate',
