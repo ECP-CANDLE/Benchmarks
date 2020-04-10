@@ -27,18 +27,18 @@ class Architecture:
 
     def comp_unrolled_model(self, data, target, eta, optimizer):
         """ Loss on train set and then update w_pi, not-in-place
-        
+
         Parameters
         ----------
         data : torch.tensor
-        
+
         target : torch.tensor
 
         eta : float
 
         optimizer : torch.optim.optimizer
              optimizer of theta, not optimizer of alpha
-            
+
         Returns
         -------
         model_unrolled
@@ -98,7 +98,7 @@ class Architecture:
         :param target_valid:
         :return:
         """
-        loss = self.model.loss(x_valid, target_valid)
+        _, loss = self.model.loss(x_valid, target_valid, reduce='mean')
         # both alpha and theta require grad but only alpha optimizer will
         # step in current phase.
         loss.backward()

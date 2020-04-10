@@ -20,7 +20,7 @@ from .utils.tensor import to_device
 from .utils.random import SeedControl
 
 from .functional import (
-    multitask_loss, multitask_loss, multitask_accuracy
+    multitask_loss, multitask_accuracy, multitask_accuracy_topk
 )
 
 __all__ = [
