@@ -7,16 +7,34 @@ sys.path.append(lib_path2)
 
 import candle
 
-REQUIRED = [
-    'learning_rate', 
+additional_definitions = [
+{'name':'learning_rate_min',
+    'action':'store',
+    'type':float},
+{'name':'log_interval',
+    'action':'store',
+    'type':int},
+{'name':'weight_decay',
+    'action':'store',
+    'type':float},
+{'name':'grad_clip',
+    'action':'store',
+    'type':int},
+{'name':'unrolled',
+    'action':'store',
+    'type':candle.str2bool},
+]
+
+required = [
+    'learning_rate',
     'learning_rate_min',
     'momentum',
     'weight_decay',
     'grad_clip',
-    'seed',
+    'rng_seed',
     'unrolled',
-    'batch_size', 
-    'epochs', 
+    'batch_size',
+    'epochs',
 ]
 
 
@@ -26,8 +44,12 @@ class BenchmarkP3B5(candle.Benchmark):
     def set_locals(self):
         """ Set parameters for the benchmark.
 
-        Args: 
+        Args:
             required: set of required parameters for the benchmark.
+            additional_definitions: list of dictionaries describing the additional parameters for the
+            benchmark.
         """
-        if REQUIRED is not None:
-            self.required = set(REQUIRED)
+        if required is not None:
+            self.required = set(required)
+        if additional_definitions is not None:
+                    self.additional_definitions = additional_definitions
