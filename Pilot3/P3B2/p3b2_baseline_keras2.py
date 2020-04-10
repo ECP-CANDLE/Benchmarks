@@ -62,7 +62,7 @@ def run(gParameters):
     rnn_size = gParameters['rnn_size']
     n_layers = gParameters['n_layers']
     learning_rate = gParameters['learning_rate']
-    dropout = gParameters['drop']
+    dropout = gParameters['dropout']
     recurrent_dropout = gParameters['recurrent_dropout']
     n_epochs = gParameters['epochs']
     data_train = data_path+'/data.pkl'
