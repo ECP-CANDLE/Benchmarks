@@ -17,6 +17,13 @@ from .meters.average import AverageMeter
 from .meters.accuracy import MultitaskAccuracyMeter
 from .utils.logging import log_accuracy
 
+from darts.meters.epoch import EpochMeter
+from darts.meters.accuracy import MultitaskAccuracyMeter
+from darts.utils.tensor import to_device
+from darts.utils.random import SeedControl
+from darts.utils.logging import log_accuracy
+from darts.utils.tensor import to_device
+
 from .functional import (
     multitask_loss, multitask_loss, multitask_accuracy
 )

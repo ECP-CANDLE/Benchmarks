@@ -1,3 +1,6 @@
+import os
+import pandas as pd
+
 from darts.meters.average import AverageMeter
 
 
@@ -25,5 +28,15 @@ class MultitaskAccuracyMeter:
 
     def update(self, accuracies, batch_size):
         for task, acc in accuracies.items():
-            self.meters[task].update(acc, batch_size)
+            self.meters[task].update(acc[0].item(), batch_size)
+
+    def dataframe(self):
+        """ Get a dataframe of all task accuracies """
+        avg_accuracy = {k: v.avgs for (k, v) in self.meters.items()}
+        return pd.DataFrame(avg_accuracy)
+
+    def save(self, path, filename):
+        """ Save the task accuracies as a csv """
+        path = os.path.join(path, f'{filename}_accuracy.csv')
+        self.dataframe().to_csv(path, index=False)
 
