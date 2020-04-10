@@ -3,11 +3,9 @@ import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
 
+import example_setup as bmk
 import darts
 import candle
-import example_setup as bmk
-
-from uno_darts import train, validate
 
 
 def initialize_parameters():
@@ -15,15 +13,29 @@ def initialize_parameters():
 
     uno_example = bmk.UnoExample(
         bmk.file_path,
-        'uno_default_model.txt',
+        'default_model.txt',
         'pytorch',
         prog='uno_example',
         desc='Differentiable Architecture Search - Uno example',
     )
 
     # Initialize parameters
-    gParameters = candle.finalize_parameters(p3b5_bench)
+    gParameters = candle.finalize_parameters(uno_example)
     return gParameters
+
+
+def fetch_data(gParameters):
+    """ Download and untar data
+
+    Args:
+        gParameters: parameters from candle
+
+    Returns:
+        path to where the data is located
+    """
+    path = gParameters['data_url']
+    fpath = candle.fetch_file(path + gParameters['train_data'], 'UnoExample')
+    return fpath
 
 
 def run(params):
@@ -33,10 +45,12 @@ def run(params):
     device = torch.device(f"cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
-    train_data = darts.Uno(args.datapath, 'train', download=True)
-    valid_data = darts.Uno(args.datapath, 'test')
+    #datapath = fetch_data(params)
+    datapath = params['data_url'] + params['train_data']
+    train_data = darts.Uno(datapath, 'train', download=True)
+    valid_data = darts.Uno(datapath, 'test')
 
-    train_data = sample(train_data, len(valid_data))
+    train_data = darts.sample(train_data, len(valid_data))
 
     trainloader = DataLoader(train_data, batch_size=args.batch_size)
     validloader = DataLoader(valid_data, batch_size=args.batch_size)
@@ -148,7 +162,7 @@ def train(trainloader,
             logger.info(f'Step: {step} loss: {meters.loss_meter.avg:.4}')
 
     meters.update_epoch()
-    meters.save(args.results_path)
+    meters.save(args.savepath)
 
 
 def validate(validloader, model, criterion, args, tasks, meters, device):
@@ -172,7 +186,7 @@ def validate(validloader, model, criterion, args, tasks, meters, device):
                 logger.info(f'>> Validation: {step} loss: {meters.loss_meter.avg:.4}')
 
     meters.update_epoch()
-    meters.save(args.results_path)
+    meters.save(args.savepath)
 
 
 def main():
