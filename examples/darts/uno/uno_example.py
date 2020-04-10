@@ -1,14 +1,13 @@
 import torch
 import torch.nn as nn
 from torch import optim
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
-import uno as bmk
-import candle
 import darts
+import candle
+import example_setup as bmk
 
-from uno_darts import train, infer
+from uno_darts import train, validate
 
 
 def initialize_parameters():
@@ -34,8 +33,8 @@ def run(params):
     device = torch.device(f"cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
-    train_data = Uno(args.datapath, 'train', download=True)
-    valid_data = Uno(args.datapath, 'test')
+    train_data = darts.Uno(args.datapath, 'train', download=True)
+    valid_data = darts.Uno(args.datapath, 'test')
 
     train_data = sample(train_data, len(valid_data))
 
@@ -67,8 +66,8 @@ def run(params):
         eta_min=args.lr_min
     )
 
-    train_meter = EpochMeter(tasks, 'train')
-    valid_meter = EpochMeter(tasks, 'valid')
+    train_meter = darts.EpochMeter(tasks, 'train')
+    valid_meter = darts.EpochMeter(tasks, 'valid')
 
     for epoch in range(args.epochs):
 
@@ -81,7 +80,6 @@ def run(params):
 
         train(
             trainloader,
-            validloader,
             model,
             architecture,
             criterion,
@@ -150,7 +148,7 @@ def train(trainloader,
             logger.info(f'Step: {step} loss: {meters.loss_meter.avg:.4}')
 
     meters.update_epoch()
-    meters.save(args.experimentpath)
+    meters.save(args.results_path)
 
 
 def validate(validloader, model, criterion, args, tasks, meters, device):
@@ -174,7 +172,7 @@ def validate(validloader, model, criterion, args, tasks, meters, device):
                 logger.info(f'>> Validation: {step} loss: {meters.loss_meter.avg:.4}')
 
     meters.update_epoch()
-    meters.save(args.experimentpath)
+    meters.save(args.results_path)
 
 
 def main():
