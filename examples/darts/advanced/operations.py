@@ -1,14 +1,18 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 """ DARTS operations contstructor """
 OPS = {
-    'mlp'  : lambda c, stride, affine: MLP(c, c),
-    'conv' : lambda c, stride, affine: ConvBlock(c, c, 3, stride, 1, affine=affine),
+    'conv_3'  : lambda c, stride, affine: ConvBlock(c, c, 3, stride),
+    'dil_conv': lambda c, stride, affine: DilConv(c, c, 3, stride, 2, 2, affine=affine)
 }
 
 
-class StemNet(nn.Module):
+PRIMITIVES = ['conv_3', 'dil_conv']
+
+
+class Stem(nn.Module):
     """ Network stem
 
     This will always be the beginning of the network.
@@ -22,39 +26,57 @@ class StemNet(nn.Module):
         cell_dim: the intermediate dimension size for
                   the remaining modules of the network.
     """
-    def __init__(self, input_dim: int=250, cell_dim: int=100):
-        super(StemNet, self).__init__()
-        self.fc = nn.Linear(input_dim, cell_dim)
+    def __init__(self, in_channels: int=1, cell_dim: int=100, kernel_size=3):
+        super(Stem, self).__init__()
+        self.stem = nn.Conv2d(in_channels, cell_dim, kernel_size)
 
     def forward(self, x):
-        return self.fc(x)
-
-
-class MLP(nn.Module):
-    """ Multi-layer perceptron """
-
-    def __init__(self, cell_dim, hidden_dim):
-        super(MLP, self).__init__()
-        self.fc1 = nn.Linear(cell_dim, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, cell_dim)
-
-    def forward(self, x):
-        return self.fc2(self.fc1(F.relu(x)))
+        return self.stem(x)
 
 
 class ConvBlock(nn.Module):
-    """ ReLu -> Conv1d -> BatchNorm """
+    """ ReLu -> Conv1d """
+
+    def __init__(self, c_in, c_out, kernel_size, stride, affine=True):
+        super(ConvBlock, self).__init__()
+        self.conv = nn.Conv2d(
+            c_in, c_out, kernel_size=kernel_size, stride=stride
+        )
+
+    def forward(self, x):
+        return self.conv(F.relu(x))
+
+
+class DilConv(nn.Module):
+    """ ReLU Dilated Convolution """
 
     def __init__(self, c_in, c_out, kernel_size,
-                 stride, padding, affine=True):
-        super(ConvBlock, self).__init__()
+                 stride, padding, dilation, affine=True):
+        super(DilConv, self).__init__()
 
         self.op = nn.Sequential(
-            #nn.ReLU(inplace=False),
+            nn.ReLU(inplace=False),
+
             nn.Conv2d(
-                c_in, c_out, kernel_size,
-                stride=stride, padding=padding, bias=False),
-            nn.BatchNorm1d(c_out, affine=affine)
+                c_in,
+                c_in,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                dilation=dilation,
+                groups=c_in,
+                bias=False
+            ),
+
+            nn.Conv2d(
+                c_in,
+                c_out,
+                kernel_size=1,
+                padding=0,
+                bias=False
+            ),
+
+            nn.BatchNorm2d(c_out, affine=affine),
         )
 
     def forward(self, x):

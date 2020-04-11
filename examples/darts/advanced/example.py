@@ -8,6 +8,10 @@ import example_setup as bmk
 import darts
 import candle
 
+from operations import (
+    Stem, OPS, PRIMITIVES
+)
+
 
 def initialize_parameters():
     """ Initialize the parameters for the Uno example """
@@ -25,27 +29,6 @@ def initialize_parameters():
     return gParameters
 
 
-class StemNet(nn.Module):
-    """ Network stem
-
-    This will always be the beginning of the network.
-    DARTS will only recompose modules after the stem.
-    For this reason, we define this separate from the
-    other modules in the network.
-
-    Args:
-        input_dim: the input dimension for your data
-        cell_dim: the intermediate dimension size for
-        the remaining modules of the network.
-    """
-    def __init__(self, input_dim: int=250, cell_dim: int=100):
-        super(StemNet, self).__init__()
-        self.fc = nn.Linear(input_dim, cell_dim)
-
-    def forward(self, x):
-        return self.fc(x)
-
-
 def run(params):
     args = candle.ArgumentStruct(**params)
 
@@ -53,20 +36,35 @@ def run(params):
     device = torch.device(f"cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
+    train_loader = torch.utils.data.DataLoader(
+        datasets.MNIST(
+            '../data', train=True, download=True,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])),
+            batch_size=args.batch_size, shuffle=True)
+
+    valid_loader = torch.utils.data.DataLoader(
+        datasets.MNIST(
+            '../data', train=Fale, download=True,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])),
+            batch_size=args.batch_size, shuffle=True)
+
     tasks = {
-        'task0': 5,
-        'task1': 2
+        'digits': 10,
     }
-
-    train_data = darts.RandomData(x_dim=250, num_samples=50, tasks=tasks)
-    valid_data = darts.RandomData(x_dim=250, num_samples=50, tasks=tasks)
-
-    trainloader = DataLoader(train_data, batch_size=args.batch_size)
-    validloader = DataLoader(valid_data, batch_size=args.batch_size)
 
     criterion = nn.CrossEntropyLoss().to(device)
 
+    stem = Stem(cell_dim=100)
+
     model = darts.Network(
+        stem, cell_dim=100, primitives=PRIMITIVES, ops=OPS,
+        tasks=tasks, criterion=criterion, device=device
     ).to(device)
 
     architecture = darts.Architecture(model, args, device=device)
