@@ -3,7 +3,19 @@ import torch.nn as nn
 
 from darts.api import Model
 from darts.modules.mixed_layer import MixedLayer
-from darts.modules.operations.conv import ConvBlock
+
+
+class ConvBlock(Model):
+    """ ReLu -> Conv2d """
+
+    def __init__(self, c_in, c_out, kernel_size, stride, padding, affine=True):
+        super(ConvBlock, self).__init__()
+        self.conv = nn.Conv2d(
+            c_in, c_out, kernel_size=kernel_size, stride=stride, padding=padding
+        )
+
+    def forward(self, x):
+        return self.conv(x)
 
 
 class Cell(Model):

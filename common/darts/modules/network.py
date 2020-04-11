@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Callable
 
 import torch
 import torch.nn as nn
@@ -23,14 +23,12 @@ class Network(Model):
     def __init__(self,
                  stem: nn.Module,
                  cell_dim: int,
-                 primitives: List[str],
-                 ops: Dict[],
+                 ops: Dict[str, Callable[[int, int, bool], nn.Module]],
                  tasks: Dict[str, int],
                  criterion,
-                 device: str = 'cpu',
+                 device="cpu",
                  hyperparams=Hyperparameters()):
         super(Network, self).__init__()
-        self.primitives = primitives
         self.ops = ops
         self.cell_dim = cell_dim
         self.tasks = tasks
@@ -38,12 +36,14 @@ class Network(Model):
         self.device = device
         self.num_cells = hyperparams.num_cells
         self.num_nodes = hyperparams.num_nodes
-
+        self.primitives = list(ops.keys())
         self.stem = stem
+        self.channel_multiplier = hyperparams.channel_multiplier
+        self.c = hyperparams.c
 
         # c_curr means a factor of the output channels of current cell
-        c_curr = cell_dim * hyperparams.channel_multiplier * hyperparams.c
-        cpp, cp, c_curr = c_curr, c_curr, self.c
+        c_curr = cell_dim * self.channel_multiplier * hyperparams.c
+        cpp, cp, c_curr = c_curr, c_curr, hyperparams.c
         self.cells = nn.ModuleList()
         for i in range(hyperparams.num_cells):
 
@@ -52,12 +52,15 @@ class Network(Model):
                 hyperparams.channel_multiplier,
                 cpp,
                 cp,
-                c_curr
+                c_curr,
+                self.primitives,
+                self.ops
             ).to(self.device)
 
             self.cells += [cell]
 
-        self.classifier = MultitaskClassifier(cell_dim, tasks)
+        # TODO(Todd): Find a way to calculate the output of the ops
+        self.classifier = MultitaskClassifier(676, tasks)
 
         # k is the total number of edges inside single cell, 14
         k = sum(1 for i in range(self.num_nodes) for j in range(2 + i))
@@ -86,7 +89,6 @@ class Network(Model):
         model = Network(
             self.stem,
             self.cell_dim,
-            self.primitives,
             self.ops,
             self.tasks,
             self.criterion
@@ -110,17 +112,13 @@ class Network(Model):
 
         return logits
 
-    def loss(self, data, target, reduce='mean'):
+    def loss_value(self, x_data, y_true, y_pred, reduce='mean'):
         """ Calculate a value of loss function """
-        logits = self(data)
-
-        for task, logit in logits.items():
-            logits[task] = logit.to(self.device)
+        y_pred = self(x_data)
 
         losses = {}
-        for task, label in target.items():
-            label = label.to(self.device)
-            losses[task] = self.criterion(logits[task], label)
+        for key, value in y_true.items():
+            losses[key] = F.nll_loss(F.log_softmax(y_pred[key], dim=1), y_true[key])
 
         if reduce:
             total = 0
@@ -131,8 +129,6 @@ class Network(Model):
                 losses = total / len(losses)
             elif reduce == "sum":
                 losses = total
-            else:
-                raise ValueError('Reduced loss must use either `mean` or `sum`!')
 
         return losses
 

@@ -23,8 +23,8 @@ REQUIRED = [
 ]
 
 
-class UnoExample(candle.Benchmark):
-    """ Example for Uno """
+class AdvancedExample(candle.Benchmark):
+    """ Example for Advanced use of DARTS """
 
     def set_locals(self):
         """ Set parameters for the benchmark.

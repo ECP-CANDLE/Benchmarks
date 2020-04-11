@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
+from torchvision import datasets, transforms
+
 from loguru import logger
 
 import example_setup as bmk
@@ -9,19 +11,19 @@ import darts
 import candle
 
 from operations import (
-    Stem, OPS, PRIMITIVES
+    Stem, OPS
 )
 
 
 def initialize_parameters():
-    """ Initialize the parameters for the Uno example """
+    """ Initialize the parameters for the Advanced example """
 
-    uno_example = bmk.UnoExample(
+    uno_example = bmk.AdvancedExample(
         bmk.file_path,
         'default_model.txt',
         'pytorch',
-        prog='uno_example',
-        desc='Differentiable Architecture Search - Uno example',
+        prog='advanced_example',
+        desc='Differentiable Architecture Search - Advanced example',
     )
 
     # Initialize parameters
@@ -36,18 +38,18 @@ def run(params):
     device = torch.device(f"cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
-    train_loader = torch.utils.data.DataLoader(
+    trainloader = torch.utils.data.DataLoader(
         datasets.MNIST(
-            '../data', train=True, download=True,
+            './data', train=True, download=True,
             transform=transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
             batch_size=args.batch_size, shuffle=True)
 
-    valid_loader = torch.utils.data.DataLoader(
+    validloader = torch.utils.data.DataLoader(
         datasets.MNIST(
-            '../data', train=Fale, download=True,
+            './data', train=False, download=True,
             transform=transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307,), (0.3081,))
@@ -63,8 +65,7 @@ def run(params):
     stem = Stem(cell_dim=100)
 
     model = darts.Network(
-        stem, cell_dim=100, primitives=PRIMITIVES, ops=OPS,
-        tasks=tasks, criterion=criterion, device=device
+        stem, cell_dim=100, ops=OPS, tasks=tasks, criterion=criterion
     ).to(device)
 
     architecture = darts.Architecture(model, args, device=device)
@@ -124,14 +125,14 @@ def train(trainloader,
     valid_iter = iter(trainloader)
 
     for step, (data, target) in enumerate(trainloader):
-
         batch_size = data.size(0)
         model.train()
-
+        target = _wrap_target(target)
         data = darts.to_device(data, device)
         target = darts.to_device(target, device)
 
         x_search, target_search = next(valid_iter)
+        target_search = _wrap_target(target_search)
         x_search = darts.to_device(x_search, device)
         target_search = darts.to_device(target_search, device)
 
@@ -170,6 +171,7 @@ def validate(validloader, model, criterion, args, tasks, meter, device):
     model.eval()
     with torch.no_grad():
         for step, (data, target) in enumerate(validloader):
+            target = _wrap_target(target)
 
             data = darts.to_device(data, device)
             target = darts.to_device(target, device)
@@ -188,6 +190,12 @@ def validate(validloader, model, criterion, args, tasks, meter, device):
 
     meter.update_epoch()
     meter.save(args.savepath)
+
+
+def _wrap_target(target):
+    """ Wrap the MNIST target in a dictionary """
+    return {'digits': target}
+
 
 
 def main():

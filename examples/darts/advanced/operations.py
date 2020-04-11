@@ -4,12 +4,10 @@ import torch.nn.functional as F
 
 """ DARTS operations contstructor """
 OPS = {
+    'none'    : lambda c, stride, affine: Identity(),
     'conv_3'  : lambda c, stride, affine: ConvBlock(c, c, 3, stride),
     'dil_conv': lambda c, stride, affine: DilConv(c, c, 3, stride, 2, 2, affine=affine)
 }
-
-
-PRIMITIVES = ['conv_3', 'dil_conv']
 
 
 class Stem(nn.Module):
@@ -35,7 +33,7 @@ class Stem(nn.Module):
 
 
 class ConvBlock(nn.Module):
-    """ ReLu -> Conv1d """
+    """ ReLu -> Conv2d """
 
     def __init__(self, c_in, c_out, kernel_size, stride, affine=True):
         super(ConvBlock, self).__init__()
@@ -81,3 +79,14 @@ class DilConv(nn.Module):
 
     def forward(self, x):
         return self.op(x)
+
+
+class Identity(nn.Module):
+    """ Identity module """
+
+    def __init__(self):
+        super(Identity, self).__init__()
+
+    def forward(self, x):
+        return x
+

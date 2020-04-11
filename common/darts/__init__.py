@@ -6,6 +6,7 @@ __version__ = '0.1.0'
 
 # Essential pieces
 from .architecture import Architecture
+from .modules.network import Network
 from .modules.conv.network import ConvNetwork
 from .modules.linear.network import LinearNetwork
 from .storage.genotype import GenotypeStorage
@@ -13,7 +14,7 @@ from .storage.genotype import GenotypeStorage
 # Utilities that are not neccessary
 from .datasets.p3b3 import P3B3
 from .datasets.uno import Uno
-from .datasets.random RandomData
+from .datasets.random import RandomData
 from .datasets.sample import sample
 from .api.config import banner
 from .meters.average import AverageMeter
@@ -28,6 +29,7 @@ from .functional import (
 
 __all__ = [
     "Architecture",
+    "Network",
     "ConvNetwork",
     "LinearNetwork",
 ]

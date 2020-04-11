@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+
 from darts.api import Model
 
 
@@ -13,7 +15,7 @@ class MixedLayer(Model):
         super(MixedLayer, self).__init__()
         self.reset(c, stride, primitives, ops)
 
-    def reset(self, c, stride):
+    def reset(self, c, stride, primitives, ops):
         self.layers = nn.ModuleList()
 
         for primitive in primitives:
@@ -24,15 +26,32 @@ class MixedLayer(Model):
 
             self.layers.append(layer)
 
+    def pad(self, tensors):
+        """ Pad with zeros for mixed layers """
+        prev = tensors[0]
+        padded = []
+        for tensor in tensors:
+            if tensor.shape < prev.shape:
+                tensor_pad = F.pad(
+                    input=tensor, pad=(1, 1, 1, 1), mode='constant', value=0
+                )
+                padded.append(tensor_pad)
+            else:
+                padded.append(tensor)
+            prev = tensor
+
+        return padded
+
     def forward(self, x, weights):
         """
         Parameters
         ----------
-        x : torch.tensor 
+        x : torch.tensor
             Data
 
         Weights : torch.tensor
             alpha, [op_num:8], the output = sum of alpha * op(x)
         """
         x = [w * layer(x) for w, layer in zip(weights, self.layers)]
-        return sum(x) 
+        x = self.pad(x)
+        return sum(x)
