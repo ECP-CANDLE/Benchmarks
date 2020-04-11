@@ -13,6 +13,7 @@ from .storage.genotype import GenotypeStorage
 # Utilities that are not neccessary
 from .datasets.p3b3 import P3B3
 from .datasets.uno import Uno
+from .datasets.random RandomData
 from .datasets.sample import sample
 from .api.config import banner
 from .meters.average import AverageMeter
