@@ -21,9 +21,7 @@ sys.path.append(lib_path2)
 import darts
 
 
-def train(trainloader, validloader, model, architecture, criterion, optimizer, lr, args, tasks, device):
-    losses = darts.AverageMeter('LossMeter')
-    top1 = darts.MultitaskAccuracyMeter(tasks)
+def train(trainloader, validloader, model, architecture, criterion, optimizer, lr, args, tasks, device, meter):
 
     valid_iter = iter(trainloader)
 
@@ -45,12 +43,12 @@ def train(trainloader, validloader, model, architecture, criterion, optimizer, l
 
         # 1. update alpha
         architecture.step(
-            data, 
-            target, 
-            x_search, 
-            target_search, 
-            lr, 
-            optimizer, 
+            data,
+            target,
+            x_search,
+            target_search,
+            lr,
+            optimizer,
             unrolled=args.unrolled
         )
 
@@ -63,21 +61,20 @@ def train(trainloader, validloader, model, architecture, criterion, optimizer, l
         nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
         optimizer.step()
 
-        prec1 = darts.multitask_accuracy(target, logits)
-        losses.update(loss.item(), batch_size)
-        top1.update(prec1, batch_size)
+        prec1 = darts.multitask_accuracy_topk(logits, target)
+        meter.update_batch_loss(loss.item(), batch_size)
+        meter.update_batch_accuracy(prec1, batch_size)
 
         if step % args.log_interval == 0:
             print(f'Step: {step} loss: {losses.avg:.4}')
-            darts.log_accuracy(top1)
+            #darts.log_accuracy(top1)
 
+    meter.update_epoch()
+    meter.save(args.savepath)
     return top1, losses.avg
 
 
-def infer(validloader, model, criterion, args, tasks, device):
-    losses = darts.AverageMeter('LossMeter')
-    top1 = darts.MultitaskAccuracyMeter(tasks) 
-
+def infer(validloader, model, criterion, args, tasks, device, meter):
     model.eval()
 
     with torch.no_grad():
@@ -92,14 +89,16 @@ def infer(validloader, model, criterion, args, tasks, device):
             logits = model(data)
             loss = darts.multitask_loss(target, logits, criterion, reduce='mean')
 
-            prec1 = darts.multitask_accuracy(target, logits)
-            losses.update(loss.item(), batch_size)
-            top1.update(prec1, batch_size)
+            prec1 = darts.multitask_accuracy_topk(logits, target)
+            meter.update_batch_loss(loss.item(), batch_size)
+            meter.update_batch_accuracy(prec1, batch_size)
 
             if step % args.log_interval == 0:
                 print(f'>> Validation: {step} loss: {losses.avg:.4}')
-                darts.log_accuracy(top1, 'valid')
+                #darts.log_accuracy(top1, 'valid')
 
+    meter.update_epoch()
+    meter.save(args.savepath)
     return top1, losses.avg
 
 

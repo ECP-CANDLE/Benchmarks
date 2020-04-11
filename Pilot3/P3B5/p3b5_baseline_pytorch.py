@@ -65,6 +65,9 @@ def run(params):
         'grade': 3,
     }
 
+    train_meter = darts.EpochMeter(tasks, 'train')
+    valid_meter = darts.EpochMeter(tasks, 'valid')
+
     model = darts.ConvNetwork(tasks=tasks, criterion=criterion, device=device).to(device)
     architecture = darts.Architecture(model, args, device=device)
 
@@ -104,19 +107,20 @@ def run(params):
             lr,
             args,
             tasks,
-            device
+            device,
+            train_meter
         )
 
         # validation
-        valid_acc, valid_loss = infer(validloader, model, criterion, args, tasks, device)
+        valid_acc, valid_loss = infer(validloader, model, criterion, args, tasks, device, valid_meter)
 
         if valid_loss < min_loss:
             genotype_store.save_genotype(genotype)
             min_loss = valid_loss
 
         print(f'\nEpoch {epoch} stats:')
-        darts.log_accuracy(train_acc, 'train')
-        darts.log_accuracy(valid_acc, 'valid')
+       # darts.log_accuracy(train_acc, 'train')
+       # darts.log_accuracy(valid_acc, 'valid')
 
 
 def main():

@@ -15,6 +15,8 @@ from .datasets.p3b3 import P3B3
 from .datasets.uno import Uno
 from .datasets.sample import sample
 from .api.config import banner
+from .meters.average import AverageMeter
+from .meters.accuracy import MultitaskAccuracyMeter
 from .meters.epoch import EpochMeter
 from .utils.tensor import to_device
 from .utils.random import SeedControl
