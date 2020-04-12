@@ -42,9 +42,10 @@ were originally designed for a vision task, and largely consist of convolution t
 We have since adapted these types for the `P3B5` benchmark, creating 1D convolution types for
 our NLP tasks. If you would like to see how these primitives are defined, along with their 
 necessary constructors used by DARTS, you can find them in 
-:doc:`Darts.modules.operations.conv.py<../../../common/darts/modules/operations/conv.py`.
+`Darts.modules.operations.conv.py`_ 
 
 
 .. References
 .. ----------
 .. _paper: https://openreview.net/forum?id=S1eYHoC5FX
+.. _Darts.modules.operations.conv.py: ../../../common/darts/modules/operations/conv.py
