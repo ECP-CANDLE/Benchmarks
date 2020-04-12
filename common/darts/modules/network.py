@@ -18,11 +18,38 @@ class Hyperparameters:
 
 
 class Network(Model):
-    """ Collection of cells """
+    """ Collection of cells
+
+    Args:
+        stem: nn.Module that takes the input data
+              and outputs `cell_dim` number of features
+
+        classifier_dim: number of features from
+              Darts.modules.mixed_layer.MixedLayer. This
+              depends upon the choice of primitives specified
+              by `ops`.
+
+        ops: Constructor for all of the primitive nn.Modules. This
+             should be a dictionary of lambda function used to construct
+             your nn.Modules. The parameters of the lamdas must be `c`, the
+             number of input channels of each primitive, `stride`, the stride for
+             convolution blocks, and `affine`, whether to use `affine` in
+             batch norm.
+
+        tasks: a dictionary whose keys are the names of the classification
+               tasks, and whose keys are the number of classes in each task.
+
+        criterion: Pytorch loss criterion
+
+        device: Either "cpu" or "gpu
+
+        hyperparams: instance of Hyperparameters. This hyperparamters for DARTS.
+        """
 
     def __init__(self,
                  stem: nn.Module,
                  cell_dim: int,
+                 classifier_dim: int,
                  ops: Dict[str, Callable[[int, int, bool], nn.Module]],
                  tasks: Dict[str, int],
                  criterion,
@@ -59,8 +86,7 @@ class Network(Model):
 
             self.cells += [cell]
 
-        # TODO(Todd): Find a way to calculate the output of the ops
-        self.classifier = MultitaskClassifier(676, tasks)
+        self.classifier = MultitaskClassifier(classifier_dim, tasks)
 
         # k is the total number of edges inside single cell, 14
         k = sum(1 for i in range(self.num_nodes) for j in range(2 + i))

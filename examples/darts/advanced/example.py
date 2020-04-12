@@ -65,7 +65,8 @@ def run(params):
     stem = Stem(cell_dim=100)
 
     model = darts.Network(
-        stem, cell_dim=100, ops=OPS, tasks=tasks, criterion=criterion
+        stem, cell_dim=100, classifier_dim=676,
+        ops=OPS, tasks=tasks, criterion=criterion, device=device
     ).to(device)
 
     architecture = darts.Architecture(model, args, device=device)
@@ -193,9 +194,13 @@ def validate(validloader, model, criterion, args, tasks, meter, device):
 
 
 def _wrap_target(target):
-    """ Wrap the MNIST target in a dictionary """
-    return {'digits': target}
+    """ Wrap the MNIST target in a dictionary
 
+    The multitask classifier of DARTS expects a
+    dictionary of target tasks. Here we simply wrap
+    MNIST's target in a dictionary.
+    """
+    return {'digits': target}
 
 
 def main():

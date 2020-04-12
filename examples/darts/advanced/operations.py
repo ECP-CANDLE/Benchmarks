@@ -29,7 +29,9 @@ class Stem(nn.Module):
         self.stem = nn.Conv2d(in_channels, cell_dim, kernel_size)
 
     def forward(self, x):
-        return self.stem(x)
+        x = self.stem(x)
+#        print(f'stem: {x.shape}')
+        return x
 
 
 class ConvBlock(nn.Module):
@@ -42,7 +44,9 @@ class ConvBlock(nn.Module):
         )
 
     def forward(self, x):
-        return self.conv(F.relu(x))
+        x = self.conv(F.relu(x))
+#        print(f'convblock: {x.shape}')
+        return x
 
 
 class DilConv(nn.Module):
@@ -78,7 +82,9 @@ class DilConv(nn.Module):
         )
 
     def forward(self, x):
-        return self.op(x)
+        x = self.op(x)
+#        print(f'dilconv: {x.shape}')
+        return x
 
 
 class Identity(nn.Module):
