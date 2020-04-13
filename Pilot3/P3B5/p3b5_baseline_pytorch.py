@@ -84,7 +84,7 @@ def run(params):
         eta_min=args.learning_rate_min,
     )
 
-    genotype_store = GenotypeStorage(root=args.save_path)
+    genotype_store = darts.GenotypeStorage(root=args.save_path)
 
     min_loss = 9999
     for epoch in range(args.epochs):
