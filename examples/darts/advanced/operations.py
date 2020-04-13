@@ -44,9 +44,7 @@ class ConvBlock(nn.Module):
         )
 
     def forward(self, x):
-        x = self.conv(F.relu(x))
-#        print(f'convblock: {x.shape}')
-        return x
+        return self.conv(F.relu(x))
 
 
 class DilConv(nn.Module):
@@ -82,9 +80,7 @@ class DilConv(nn.Module):
         )
 
     def forward(self, x):
-        x = self.op(x)
-#        print(f'dilconv: {x.shape}')
-        return x
+        return self.op(x)
 
 
 class Identity(nn.Module):
