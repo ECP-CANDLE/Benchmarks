@@ -2,7 +2,7 @@
 model_name = 'darts_uno'
 unrolled = False 
 data_url = 'ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/' 
-savepath = '.'
+savepath = './results'
 log_interval = 10
 train_data = 'top_21_auc_1fold.uno.h5'
 learning_rate = 0.01
