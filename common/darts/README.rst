@@ -1,6 +1,6 @@
-==============
-DARTS Advanced
-==============
+=====
+DARTS
+=====
 
 
 Differentiable architecture search
