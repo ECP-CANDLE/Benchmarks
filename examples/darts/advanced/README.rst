@@ -132,65 +132,51 @@ A Constructor for our Primitives
 Since DARTS does not control what primitives you define, we need to provide it with a constructor for those
 primitives. By convention, this is handled by a dictionary of lambda functions called *OPS*. The keys of this 
 dictionary are the names of our primitives, and the values of the dictionary are lambda functions that 
-construct those primitives. Let's take a look at the example's *OPS*
-
-****************
-
-There are two main abstractions that we need to instantiate in order to get up and running:
-
-* **LinearNetwork**:
+construct those primitives. Let's take a look at the example's *OPS*:
 
 .. code-block:: python
 
-    LinearNetwork(input_dim, tasks, criterion, device)
+    """ DARTS operations contstructor """
+    OPS = {
+        'none'    : lambda c, stride, affine: Identity(),
+        'conv_3'  : lambda c, stride, affine: ConvBlock(c, c, 3, stride),
+        'dil_conv': lambda c, stride, affine: DilConv(c, c, 3, stride, 2, 2, affine=affine)
+    }
 
-The *LinearNetwork* takes a few parameters:
+As mentioned, the keys of *OPS* are the names we give to each of our primitives. These keys will be 
+what DARTS uses when defining *Genotypes*. Note that the the lambda functions take three parameters: 
+1. *c*, the number of channels (or features) of the layer; 2. *stride*, the stride for convolutions; and
+3. *affine* whether to use affine transforms in batch normalization. These parameters are the default 
+implementation of DARTS, and must be present. Any other hyperparameters of our custom primitives must be
+given default values. One last thing to note: in order to keep things consistent, DARTS reserves the keyword
+*none* for the *Identity* primitive. Again, this primitive must be included in any custom primitive set, and
+it's key must be *none*. This method of constructing our primitives could be changed in future versions of 
+DARTS to better acccommodate fancier primitives. As always, pull requests are welcome!
 
-1. *input_dim* (int): the data input dimension
-2. *tasks* (Dict[str, int]): a dictionary of classification tasks where the keys are the task names
-   and the values are the number of classes for that task.
-3. *criterion*: a Pytorch loss function
-4. *device* (str): either "cpu" or "gpu"
+Putting it all Together
+-----------------------
 
-* **Architecture**:
-
-.. code-block:: python
-
-    Architecture(model, args, device)
-
-The *Architecture* expects the following arguments:
-
-1. *model*: and instance of the *LinearNetwork*
-2. *args*: an instance of argparse args containing the weight decay and momentum parameters for the 
-   *Architecture*'s optimizer controlling the Hessian optimization.
-3. *device* (str): "cpu" or "gpu"
-
-Model training should familiar to those that are accustomed to using Pytorch with one small difference:
+Once we have defined our stem, primitives, and our *OPS* constructor, we can that hand them over to DARTS:
 
 .. code-block:: python
 
-    # ...
-    for step, (data, target) in enumerate(trainloader):
-        #...
-        architecture.step(
-            data, target, x_search, target_search, lr, optimizer, unrolled
-        )
-        # ...
-    # ...
+    model = darts.Network(
+        stem, cell_dim=100, classifier_dim=676,
+        ops=OPS, tasks=tasks, criterion=criterion, device=device
+    ).to(device)
 
-To understand what is going on here, recall that DARTS is a bi-level optimization procedure, 
-where there are two Pytorch optimizers, one for the normal gradient step for our model weights, 
-and another to for our *Architecture* to step in the composition of our neural net's nodes. The 
-*architecture.step* function is then taking that composition step. It expects that we pass it our 
-data and labels of the training set, but also the data and labels of our validation set. For 
-simplicity of this tutorial, *x_search* and *target_search* are from our training set, but these 
-would normally use a separate validation set.
+    architecture = darts.Architecture(model, args, device=device)
+
+Note that we must specify the *classifier_dim* the number of input features from our primitives. Since each 
+of the primitives must have the same number of input and output features, this will be the flattned number 
+of features from any of your primitives. Since DARTS cannot know ahead of time what your primitives will be,
+we must specify how many features will go into our final fully connected layer of the network.
 
 Finally, to run this example:
 
 .. code-block::
 
-    python uno_example.py
+    python example.py
 
 .. References
 .. ----------
