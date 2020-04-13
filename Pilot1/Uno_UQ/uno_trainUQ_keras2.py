@@ -69,14 +69,14 @@ class UQUno(candle.Benchmark):
 
 
 
-def initialize_parameters():
+def initialize_parameters(default_model='uno_defaultUQ_model.txt'):
 
     # Build benchmark object
-    unoUQBmk = UQUno(uno.file_path, 'uno_defaultUQ_model.txt', 'keras',
+    unoUQBmk = UQUno(uno.file_path, default_model, 'keras',
     prog='uno_trainUQ', desc='Build neural network based models to predict tumor response to single and paired drugs, including UQ analysis.')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unoUQBmk)
+    gParameters = candle.finalize_parameters(unoUQBmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

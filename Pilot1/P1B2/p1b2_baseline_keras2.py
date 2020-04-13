@@ -34,7 +34,10 @@ def run(gParameters):
     
     # Construct extension to save model
     ext = p1b2.extension_from_parameters(gParameters, '.keras')
-    logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['save_path']+ext+'.log'
+    candle.verify_path(gParameters['save_path'])
+    prefix = '{}{}'.format(gParameters['save_path'], ext)
+    logfile = gParameters['logfile'] if gParameters['logfile'] else prefix+'.log'
+    candle.set_up_logger(logfile, p1b2.logger, gParameters['verbose'])
     p1b2.logger.info('Params: {}'.format(gParameters))
 
     # Get default parameters for initialization and optimizer functions
@@ -80,16 +83,16 @@ def run(gParameters):
                 x = Dense(l, activation=activation,
                           kernel_initializer=initializer_weights,
                           bias_initializer=initializer_bias,
-                          kernel_regularizer=l2(gParameters['penalty']),
-                          activity_regularizer=l2(gParameters['penalty']))(input_vector)
+                          kernel_regularizer=l2(gParameters['reg_l2']),
+                          activity_regularizer=l2(gParameters['reg_l2']))(input_vector)
             else:
                 x = Dense(l, activation=activation,
                           kernel_initializer=initializer_weights,
                           bias_initializer=initializer_bias,
-                          kernel_regularizer=l2(gParameters['penalty']),
-                          activity_regularizer=l2(gParameters['penalty']))(x)
-            if gParameters['drop']:
-                x = Dropout(gParameters['drop'])(x)
+                          kernel_regularizer=l2(gParameters['reg_l2']),
+                          activity_regularizer=l2(gParameters['reg_l2']))(x)
+            if gParameters['dropout']:
+                x = Dropout(gParameters['dropout'])(x)
         output = Dense(output_dim, activation=activation,
                        kernel_initializer=initializer_weights,
                        bias_initializer=initializer_bias)(x)

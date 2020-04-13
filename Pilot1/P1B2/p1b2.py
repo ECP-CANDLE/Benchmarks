@@ -29,7 +29,12 @@ import candle
 
 logger = logging.getLogger(__name__)
 
-additional_definitions = []
+additional_definitions = [
+{'name':'reg_l2',
+'type': float,
+'default': 0.,
+'help':'weight of regularization for l2 norm of nn weights'}
+]
 
 required = [
     'data_url',
@@ -38,17 +43,17 @@ required = [
     'activation',
     'batch_size',
     'dense',
-    'drop',
+    'dropout',
     'epochs',
     'feature_subsample',
     'initialization',
     'learning_rate',
     'loss',
     'optimizer',
-    'penalty',
+    'reg_l2',
     'rng_seed',
     'scaling',
-    'validation_split',
+    'val_split',
     'shuffle'
 ]
 
@@ -71,7 +76,7 @@ def extension_from_parameters(params, framework):
     ext = framework
     ext += '.A={}'.format(params['activation'])
     ext += '.B={}'.format(params['batch_size'])
-    ext += '.D={}'.format(params['drop'])
+    ext += '.D={}'.format(params['dropout'])
     ext += '.E={}'.format(params['epochs'])
     if params['feature_subsample']:
         ext += '.F={}'.format(params['feature_subsample'])
@@ -93,8 +98,8 @@ def load_data_one_hot(params, seed):
                                            n_cols=params['feature_subsample'],
                                            shuffle=params['shuffle'],
                                            scaling=params['scaling'],
-                                           validation_split=params['validation_split'],
-                                           dtype=params['datatype'],
+                                           validation_split=params['val_split'],
+                                           dtype=params['data_type'],
                                            seed=seed)
 
 
@@ -108,8 +113,8 @@ def load_data(params, seed):
                                   n_cols=params['feature_subsample'],
                                   shuffle=params['shuffle'],
                                   scaling=params['scaling'],
-                                  validation_split=params['validation_split'],
-                                  dtype=params['datatype'],
+                                  validation_split=params['val_split'],
+                                  dtype=params['data_type'],
                                   seed=seed)
 
 

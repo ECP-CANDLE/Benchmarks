@@ -101,7 +101,7 @@ def main():
                 rng_seed=seed,
                 device_id=args.device_id,
                 batch_size=gParameters['batch_size'],
-                datatype=gParameters['datatype'],
+                datatype=gParameters['data_type'],
                 max_devices=args.max_devices,
                 compat_mode=args.compat_mode)
 
@@ -123,8 +123,8 @@ def main():
     for layer in gParameters['dense']:
         if layer:
             layers.append(Affine(nout=layer, init=initializer_weights, bias=initializer_bias, activation=activation))
-        if gParameters['drop']:
-            layers.append(Dropout(keep=(1-gParameters['drop'])))
+        if gParameters['dropout']:
+            layers.append(Dropout(keep=(1-gParameters['dropout'])))
 
     layers.append(Affine(nout=output_dim, init=initializer_weights, bias=initializer_bias, activation=activation))
 

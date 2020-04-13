@@ -6,6 +6,7 @@ from pprint import pprint
 import inspect
 
 import logging
+import warnings
 
 import os
 import sys
@@ -29,6 +30,8 @@ DEFAULT_SEED = 7102
 DEFAULT_TIMEOUT = -1 # no timeout
 DEFAULT_DATATYPE = np.float32
 
+
+PARAMETERS_CANDLE = ['config_file', 'verbose', 'logfile', 'save_path', 'model_name', 'data_type', 'dense', 'rng_seed', 'epochs', 'batch_size', 'train_bool', 'eval_bool', 'timeout', 'home_dir', 'train_data', 'test_data', 'output_dir', 'data_url', 'experiment_id', 'run_id', 'conv', 'locally_connected', 'activation', 'out_activation', 'lstm_size', 'recurrent_dropout', 'dropout', 'pool', 'batch_normalization', 'loss', 'optimizer', 'metrics', 'scaling', 'shuffle', 'feature_subsample', 'learning_rate', 'early_stop', 'momentum', 'initialization', 'val_split', 'train_steps', 'val_steps', 'test_steps', 'train_samples', 'val_samples', 'gpus', 'profiling']
 
 #### IO UTILS
 
@@ -317,6 +320,44 @@ def set_seed(seed):
 
     random.seed(seed)
 
+def check_file_parameters_exists(params_parser, params_benchmark, params_file):
+    """Functionality to verify that the parameters defined in the configuraion file are recognizable by the command line parser (i.e. no uknown keywords are used in the configuration file).
+ 
+    Parameters
+    ----------
+    params_parser : python dictionary
+        Includes parameters set via the command line.
+    params_benchmark : python list
+        Includes additional parameters defined in the benchmark.
+    params_file : python dictionary
+        Includes parameters read from the configuration file.
+        
+        Global:
+        PARAMETERS_CANDLE : python list
+            Includes all the core keywords that are specified in CANDLE.
+    """
+    # Get keywords from arguments coming via command line (and CANDLE supervisor)
+    args_dict = vars(params_parser)
+    args_set = set(args_dict.keys())
+    # Get keywords from benchmark definition
+    bmk_keys = []
+    for item in params_benchmark:
+        bmk_keys.append( item['name'] )
+    bmk_set = set(bmk_keys)
+    # Get core CANDLE keywords
+    candle_set = set(PARAMETERS_CANDLE)
+    # Consolidate keywords from CANDLE core, command line, CANDLE supervisor and benchmark
+    candle_set = candle_set.union(args_set)
+    candle_set = candle_set.union(bmk_set)
+    # Get keywords used in config_file
+    file_set = set(params_file.keys())
+    # Compute keywords that come from the config_file that are not in the CANDLE specs
+    diff_set = file_set.difference(candle_set)
+
+    if ( len(diff_set) > 0 ):
+        message = 'These keywords used in the configuration file are not defined in CANDLE: ' + str(sorted(diff_set))
+        warnings.warn(message, RuntimeWarning)
+
 
 def finalize_parameters(bmk):
     """Utility to parse parameters in common as well as parameters
@@ -352,11 +393,14 @@ def finalize_parameters(bmk):
     else: # a 'config_file' has been set --> use this file
         conffile = os.path.join(bmk.file_path, conffile_txt)
 
-    print("Configuration file: ", conffile)
+    #print("Configuration file: ", conffile)
     fileParameters = bmk.read_config_file(conffile)#aux.config_file)#args.config_file)
     # Get command-line parameters
     args = bmk.parser.parse_args()
     #print ('Params:', fileParameters)
+    # Check keywords from file against CANDLE common and module definitions
+    bmk_dict = bmk.additional_definitions
+    check_file_parameters_exists(args, bmk_dict, fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = args_overwrite_config(args, fileParameters)
     # Check that required set of parameters has been defined
@@ -389,9 +433,9 @@ def get_default_neon_parser(parser):
                         help="file path to save model snapshots")
 
     # General behavior
-    parser.add_argument("--model_file", dest='model_file', type=str,
+    parser.add_argument("--model_name", dest='model_name', type=str,
                         default=argparse.SUPPRESS,
-                        help="specify trained model Pickle file")
+                        help="specify model name to use when building filenames for saving")
     parser.add_argument("-d", "--data_type", dest='data_type',
                         default=argparse.SUPPRESS,
                         choices=['f16', 'f32', 'f64'],
@@ -500,7 +544,7 @@ def get_common_parser(parser):
                         
                         
     # Processing between layers
-    parser.add_argument("--drop", type=float,
+    parser.add_argument("--dropout", type=float,
                         default=argparse.SUPPRESS,
                         help="ratio of dropout used in fully connected layers")
     parser.add_argument("--pool", type=int,
@@ -540,7 +584,13 @@ def get_common_parser(parser):
     parser.add_argument("--learning_rate",
                         default= argparse.SUPPRESS, type=float,
                         help="overrides the learning rate for training")
-    
+    parser.add_argument("--early_stop", type=str2bool,
+                        default= argparse.SUPPRESS,
+                        help="activates keras callback for early stopping of training in function of the monitored variable specified")
+    parser.add_argument("--momentum",
+                        default= argparse.SUPPRESS, type=float,
+                        help="overrides the momentum to use in the SGD optimizer when training")
+
     parser.add_argument("--initialization",
                         default=argparse.SUPPRESS,
                         choices=['constant', 'uniform', 'normal', 'glorot_uniform', 'lecun_uniform', 'he_normal'],
@@ -599,11 +649,11 @@ def args_overwrite_config(args, config):
         params[key] = args_dict[key]
     
     
-    if 'datatype' not in params:
-        params['datatype'] = DEFAULT_DATATYPE
+    if 'data_type' not in params:
+        params['data_type'] = DEFAULT_DATATYPE
     else:
-        if params['datatype'] in set(['f16', 'f32', 'f64']):
-            params['datatype'] = get_choice(params['datatype'])
+        if params['data_type'] in set(['f16', 'f32', 'f64']):
+            params['data_type'] = get_choice(params['datatype'])
 
     if 'output_dir' not in params:
         params['output_dir'] = directory_from_parameters(params)
@@ -826,7 +876,7 @@ class Benchmark:
                     fileParams[k] = eval(v)
     
         fileParams = self.format_benchmark_config_arguments(fileParams)
-        pprint(fileParams)
+        #pprint(fileParams)
 
         return fileParams
 

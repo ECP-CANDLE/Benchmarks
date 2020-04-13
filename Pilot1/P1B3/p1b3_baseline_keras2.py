@@ -259,8 +259,8 @@ def run(gParameters):
     seed = gParameters['rng_seed']
 
     # Build dataset loader object
-    loader = benchmark.DataLoader(seed=seed, dtype=gParameters['datatype'],
-                             val_split=gParameters['validation_split'],
+    loader = benchmark.DataLoader(seed=seed, dtype=gParameters['data_type'],
+                             val_split=gParameters['val_split'],
                              test_cell_split=gParameters['test_cell_split'],
                              cell_features=gParameters['cell_features'],
                              drug_features=gParameters['drug_features'],
@@ -292,8 +292,8 @@ def run(gParameters):
                 if gParameters['batch_normalization']:
                     model.add(BatchNormalization())
                 model.add(Activation(gParameters['activation']))
-                if gParameters['drop']:
-                    model.add(Dropout(gParameters['drop']))
+                if gParameters['dropout']:
+                    model.add(Dropout(gParameters['dropout']))
     else: # Build convolutional layers
         gen_shape = 'add_1d'
         layer_list = list(range(0, len(gParameters['conv'])))

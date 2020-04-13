@@ -8,9 +8,6 @@ sys.path.append(lib_path2)
 import candle
 
 additional_definitions = [
-{'name':'model_name',
-    'default':'nt3',
-    'type':str},
 {'name':'classes',
     'type':int,
     'default':2}
@@ -24,17 +21,17 @@ required = [
     'conv',
     'dense',
     'activation',
-    'out_act',
+    'out_activation',
     'loss',
     'optimizer',
     'metrics',
     'epochs',
     'batch_size',
     'learning_rate',
-    'drop',
+    'dropout',
     'classes',
     'pool',
-    'save',
+    'output_dir',
     'timeout'
 ]
 

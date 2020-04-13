@@ -59,7 +59,7 @@ additional_definitions = [
 ]
 
 
-required = ['learning_rate', 'batch_size', 'epochs', 'drop', \
+required = ['learning_rate', 'batch_size', 'epochs', 'dropout', \
     'activation', 'out_activation', 'loss', 'optimizer', 'metrics', \
     'n_fold', 'scaling', 'initialization', 'shared_nnet_spec', \
     'ind_nnet_spec', 'feature_names']

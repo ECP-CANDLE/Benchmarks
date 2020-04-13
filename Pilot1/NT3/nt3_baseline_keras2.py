@@ -133,10 +133,10 @@ def run(gParameters):
         if layer:
             model.add(Dense(layer))
             model.add(Activation(gParameters['activation']))
-            if gParameters['drop']:
-                    model.add(Dropout(gParameters['drop']))
+            if gParameters['dropout']:
+                    model.add(Dropout(gParameters['dropout']))
     model.add(Dense(gParameters['classes']))
-    model.add(Activation(gParameters['out_act']))
+    model.add(Activation(gParameters['out_activation']))
 
 #Reference case
 #model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
@@ -167,7 +167,7 @@ def run(gParameters):
                   optimizer=optimizer,
                   metrics=[gParameters['metrics']])
 
-    output_dir = gParameters['save']
+    output_dir = gParameters['output_dir']
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)

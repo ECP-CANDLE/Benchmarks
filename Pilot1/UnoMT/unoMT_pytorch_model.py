@@ -261,7 +261,7 @@ class UnoMTModel(object):
                                 resp_num_layers_per_block=args.resp_num_layers_per_block,
                                 resp_num_blocks=args.resp_num_blocks,
                                 resp_num_layers=args.resp_num_layers,
-                                resp_dropout=args.drop,
+                                resp_dropout=args.dropout,
 
                                 resp_activation=args.resp_activation).to(device)
 
@@ -372,7 +372,7 @@ class UnoMTModel(object):
 
     def update_dropout(self, dropout_rate):
       
-        self.args.drop = dropout_rate
+        self.args.dropout = dropout_rate
   
         # Regressor for drug response
         self.resp_net = RespNet(
@@ -386,7 +386,7 @@ class UnoMTModel(object):
                                 resp_num_layers_per_block=self.args.resp_num_layers_per_block,
                                 resp_num_blocks=self.args.resp_num_blocks,
                                 resp_num_layers=self.args.resp_num_layers,
-                                resp_dropout=self.args.drop,
+                                resp_dropout=self.args.dropout,
 
 
                                 resp_activation=self.args.resp_activation).to(self.device)

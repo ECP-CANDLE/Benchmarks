@@ -88,8 +88,8 @@ def main():
         for i,l in enumerate(layers):
             net = mx.sym.FullyConnected(data=net, num_hidden=l)
             net = mx.sym.Activation(data=net, act_type=activation)
-            if gParameters['drop']:
-                net = mx.sym.Dropout(data=net, p=gParameters['drop'])
+            if gParameters['dropout']:
+                net = mx.sym.Dropout(data=net, p=gParameters['dropout'])
 
     net = mx.sym.FullyConnected(data=net, num_hidden=num_classes)# 1)
     net = mx.symbol.SoftmaxOutput(data=net, label=out)

@@ -87,17 +87,17 @@ def read_config_file(file):
     fileParams['conv'] = eval(config.get(section[0],'conv'))
     fileParams['dense'] = eval(config.get(section[0],'dense'))
     fileParams['activation'] = eval(config.get(section[0],'activation'))
-    fileParams['out_act'] = eval(config.get(section[0],'out_act'))
+    fileParams['out_activation'] = eval(config.get(section[0],'out_activation'))
     fileParams['loss'] = eval(config.get(section[0],'loss'))
     fileParams['optimizer'] = eval(config.get(section[0],'optimizer'))
     fileParams['metrics'] = eval(config.get(section[0],'metrics'))
     fileParams['epochs'] = eval(config.get(section[0],'epochs'))
     fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
     fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
-    fileParams['drop'] = eval(config.get(section[0],'drop'))
+    fileParams['dropout'] = eval(config.get(section[0],'dropout'))
     fileParams['classes'] = eval(config.get(section[0],'classes'))
     fileParams['pool'] = eval(config.get(section[0],'pool'))
-    fileParams['save'] = eval(config.get(section[0], 'save'))
+    fileParams['save_path'] = eval(config.get(section[0], 'save_path'))
 
     # parse the remaining values
     for k,v in config.items(section[0]):
@@ -219,11 +219,11 @@ def run(gParameters):
             model.add(Dense(layer))
             model.add(Activation(gParameters['activation']))
             # This has to be disabled for tensorrt otherwise I am getting an error
-            if False and gParameters['drop']: 
-                    model.add(Dropout(gParameters['drop']))
+            if False and gParameters['dropout']:
+                    model.add(Dropout(gParameters['dropout']))
     #model.add(Dense(gParameters['classes']))
-    #model.add(Activation(gParameters['out_act']), name='activation_5')
-    model.add(Dense(gParameters['classes'], activation=gParameters['out_act'], name='activation_5'))
+    #model.add(Activation(gParameters['out_activation']), name='activation_5')
+    model.add(Dense(gParameters['classes'], activation=gParameters['out_activation'], name='activation_5'))
 #Reference case
 #model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
 #model.add(Activation('relu'))
@@ -258,7 +258,7 @@ def run(gParameters):
                   optimizer=optimizer,
                   metrics=[gParameters['metrics']])
 
-    output_dir = gParameters['save']
+    output_dir = gParameters['output_dir']
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)

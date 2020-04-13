@@ -6,7 +6,7 @@ import keras
 from keras import backend as K
 from keras import optimizers
 from keras.models import Model
-from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda
+from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda, AlphaDropout
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from keras.metrics import binary_crossentropy, mean_squared_error
 from scipy.stats.stats import pearsonr
@@ -189,9 +189,9 @@ def run(params):
     latent_dim = params['latent_dim']
 
     activation = params['activation']
-    dropout = params['drop']
+    dropout = params['dropout']
     dense_layers = params['dense']
-    dropout_layer = keras.layers.noise.AlphaDropout if params['alpha_dropout'] else Dropout
+    dropout_layer = AlphaDropout if params['alpha_dropout'] else Dropout
 
     # Initialize weights and learning rule
     initializer_weights = candle.build_initializer(params['initialization'], keras_defaults, seed)

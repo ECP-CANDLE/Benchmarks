@@ -13,10 +13,6 @@ from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 from sklearn.metrics import f1_score
 '''
 
-import p3b3 as bmk
-import candle
-
-
 import os, sys, gzip
 
 import keras
@@ -32,6 +28,9 @@ import keras_mt_shared_cnn
 
 import argparse
 
+import p3b3 as bmk
+import candle
+
 
 
 def initialize_parameters(default_model = 'p3b3_default_model.txt'):
@@ -39,13 +38,12 @@ def initialize_parameters(default_model = 'p3b3_default_model.txt'):
     # Build benchmark object
     p3b3Bmk = bmk.BenchmarkP3B3(bmk.file_path, default_model, 'keras',
     prog='p3b3_baseline', desc='Multi-task CNN for data extraction from clinical reports - Pilot 3 Benchmark 3')
-    
+
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b3Bmk)
     #bmk.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
-
 
 def fetch_data(gParameters):
     """ Downloads and decompresses the data if not locally available.
@@ -55,7 +53,7 @@ def fetch_data(gParameters):
 
     path = gParameters['data_url']
     fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', untar=True)
-    
+
     return fpath
 
 
@@ -157,7 +155,6 @@ def run(gParameters):
     test_x = np.load( fpath + '/test_X.npy' )
     test_y = np.load( fpath + '/test_Y.npy' )
 
-    
     for task in range( len( train_y[ 0, : ] ) ):
         cat = np.unique( train_y[ :, task ] )
         train_y[ :, task ] = [ np.where( cat == x )[ 0 ][ 0 ] for x in train_y[ :, task ] ]

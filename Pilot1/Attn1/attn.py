@@ -67,7 +67,7 @@ required = [
     'activation',
     'batch_size',
     'dense',
-    'drop',
+    'dropout',
     'epochs',
     'initialization',
     'learning_rate',
@@ -75,7 +75,7 @@ required = [
     'optimizer',
     'rng_seed',
     'scaling',
-    'validation_split',
+    'val_split',
     'latent_dim',
     'batch_normalization',
     'epsilon_std',
@@ -97,13 +97,14 @@ class BenchmarkAttn(candle.Benchmark):
         if additional_definitions is not None:
             self.additional_definitions = additional_definitions
 
+
 def extension_from_parameters(params, framework=''):
     """Construct string for saving model with annotation of parameters"""
     ext = framework
     for i, n in enumerate(params['dense']):
         if n:
             ext += '.D{}={}'.format(i+1, n)
-    ext += '.A={}'.format(params['activation'])
+    ext += '.A={}'.format(params['activation'][0])
     ext += '.B={}'.format(params['batch_size'])
     ext += '.E={}'.format(params['epochs'])
     ext += '.L={}'.format(params['latent_dim'])
@@ -112,8 +113,8 @@ def extension_from_parameters(params, framework=''):
 
     if params['epsilon_std'] != 1.0:
         ext += '.EPS={}'.format(params['epsilon_std'])
-    if params['drop']:
-        ext += '.DR={}'.format(params['drop'])
+    if params['dropout']:
+        ext += '.DR={}'.format(params['dropout'])
     if params['batch_normalization']:
         ext += '.BN'
     if params['warmup_lr']:
@@ -127,11 +128,11 @@ def extension_from_parameters(params, framework=''):
 def load_data(params, seed):
 
     # start change #
-    if params['in'].endswith('h5') or params['in'].endswith('hdf5'):
-        print ('processing h5 in file {}'.format(params['in']))
+    if params['train_data'].endswith('h5') or params['train_data'].endswith('hdf5'):
+        print ('processing h5 in file {}'.format(params['train_data']))
 
         url = params['data_url']
-        file_train = params['in']
+        file_train = params['train_data']
         train_file = candle.get_file(file_train, url+file_train, cache_subdir='Pilot1')
 
         df_x_train_0 = pd.read_hdf(train_file, 'x_train_0').astype(np.float32)

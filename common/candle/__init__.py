@@ -49,9 +49,24 @@ from uq_utils import applying_calibration
 from uq_utils import overprediction_check
 from uq_utils import generate_index_distribution
 
-#profiling
+# import from profiling_utils
 from profiling_utils import start_profiling
 from profiling_utils import stop_profiling
+
+# import from data_preprocessing_utils
+from data_preprocessing_utils import quantile_normalization
+from data_preprocessing_utils import generate_cross_validation_partition
+
+# feature selection
+from feature_selection_utils import select_features_by_missing_values
+from feature_selection_utils import select_features_by_variation
+from feature_selection_utils import select_decorrelated_features
+
+# P1-specific
+from P1_utils import coxen_single_drug_gene_selection
+from P1_utils import coxen_multi_drug_gene_selection
+from P1_utils import generate_gene_set_data
+from P1_utils import combat_batch_effect_removal
 
 # import benchmark-dependent utils
 import sys
@@ -78,6 +93,15 @@ if 'keras' in sys.modules:
     from solr_keras import CandleRemoteMonitor
     from solr_keras import compute_trainable_params
     from solr_keras import TerminateOnTimeOut
+    
+    from uq_keras_utils import abstention_variable_initialization
+    from uq_keras_utils import abstention_loss
+    from uq_keras_utils import abs_acc
+    from uq_keras_utils import acc_class1
+    from uq_keras_utils import abs_acc_class1
+    from uq_keras_utils import modify_labels
+    from uq_keras_utils import add_model_output
+    from uq_keras_utils import AbstentionAdapt_Callback
 
 elif 'torch' in sys.modules:
     print ('Importing candle utils for pytorch')

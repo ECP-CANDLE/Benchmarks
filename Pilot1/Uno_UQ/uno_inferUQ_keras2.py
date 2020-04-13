@@ -45,7 +45,12 @@ additional_definitions_local = [
     'type': candle.str2bool,
     'default': False,
     'help':'Use given inference file to obtain indices to do inference'},
+{'name':'model_file',
+    'type':str,
+    'default':'saved.model.h5',
+    'help':'trained model file'},
 {'name':'weights_file',
+    'type':str,
     'default':'saved.weights.h5',
     'help':'trained weights file (loading model file alone sometimes does not work in keras)'},
 {'name':'n_pred',
@@ -58,17 +63,17 @@ required_local = ( 'model_file', 'weights_file', 'uq_infer_file',
              'agg_dose', 'batch_size')
 
 
-def initialize_parameters():
+def initialize_parameters(default_model='uno_defaultUQ_model.txt'):
 
     # Build benchmark object
-    unoBmk = uno.BenchmarkUno(uno.file_path, 'uno_default_model.txt', 'keras',
+    unoBmk = uno.BenchmarkUno(uno.file_path, default_model, 'keras',
     prog='uno_inferUQ', desc='Read models to predict tumor response to single and paired drugs.')
 
     unoBmk.additional_definitions += additional_definitions_local
     unoBmk.required = unoBmk.required.union(required_local)
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unoBmk)
+    gParameters = candle.finalize_parameters(unoBmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
