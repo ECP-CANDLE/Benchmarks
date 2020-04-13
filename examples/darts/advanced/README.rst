@@ -184,3 +184,4 @@ Finally, to run this example:
 .. _darts.modules.operations.conv.py: ../../../common/darts/modules/operations/conv.py
 .. _darts.modules.operations.linear.py: ../../../common/darts/modules.operations.linear.py
 .. _operations.py: ./operations.py
+.. _Uno example: ../uno
