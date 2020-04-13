@@ -25,20 +25,6 @@ def initialize_parameters():
     return gParameters
 
 
-def fetch_data(gParameters):
-    """ Download and untar data
-
-    Args:
-        gParameters: parameters from candle
-
-    Returns:
-        path to where the data is located
-    """
-    path = gParameters['data_url']
-    fpath = candle.fetch_file(path + gParameters['train_data'], 'UnoExample')
-    return fpath
-
-
 def run(params):
     args = candle.ArgumentStruct(**params)
 
@@ -46,10 +32,8 @@ def run(params):
     device = torch.device(f"cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
-    #datapath = fetch_data(params)
-    datapath = params['data_url'] + params['train_data']
-    train_data = darts.Uno(datapath, 'train', download=True)
-    valid_data = darts.Uno(datapath, 'test')
+    train_data = darts.Uno('./data', 'train', download=True)
+    valid_data = darts.Uno('./data', 'test')
 
     train_data = darts.sample(train_data, len(valid_data))
 
