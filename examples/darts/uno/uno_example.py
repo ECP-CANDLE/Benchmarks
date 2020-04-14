@@ -35,7 +35,7 @@ def run(params):
     train_data = darts.Uno('./data', 'train', download=True)
     valid_data = darts.Uno('./data', 'test')
 
-    train_data = darts.sample(train_data, len(valid_data))
+    #train_data = darts.sample(train_data, len(valid_data))
 
     trainloader = DataLoader(train_data, batch_size=args.batch_size)
     validloader = DataLoader(valid_data, batch_size=args.batch_size)
@@ -68,6 +68,8 @@ def run(params):
     train_meter = darts.EpochMeter(tasks, 'train')
     valid_meter = darts.EpochMeter(tasks, 'valid')
 
+    genotype_store = darts.GenotypeStorage(root=args.savepath)
+
     for epoch in range(args.epochs):
 
         scheduler.step()
@@ -87,6 +89,8 @@ def run(params):
             args,
             tasks,
             train_meter,
+            genotype,
+            genotype_store,
             device
         )
 
@@ -102,10 +106,12 @@ def train(trainloader,
           args,
           tasks,
           meter,
+          genotype,
+          genotype_store,
           device):
 
     valid_iter = iter(trainloader)
-
+    min_accuracy = 0.0
     for step, (data, target) in enumerate(trainloader):
 
         batch_size = data.size(0)
@@ -142,11 +148,17 @@ def train(trainloader,
         meter.update_batch_loss(loss.item(), batch_size)
         meter.update_batch_accuracy(prec1, batch_size)
 
+        accuracy_avg = meter.acc_meter.get_avg_accuracy('response')
+        if accuracy_avg > min_accuracy:
+            genotype_store.save_genotype(genotype)
+            min_accuracy = accuracy_avg
+
         if step % args.log_interval == 0:
             logger.info(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.savepath)
+
 
 
 def validate(validloader, model, criterion, args, tasks, meter, device):
