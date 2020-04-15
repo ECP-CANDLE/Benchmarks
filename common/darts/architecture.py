@@ -33,9 +33,7 @@ class Architecture:
         data : torch.tensor
 
         target : torch.tensor
-
         eta : float
-
         optimizer : torch.optim.optimizer
              optimizer of theta, not optimizer of alpha
 
@@ -44,10 +42,11 @@ class Architecture:
         model_unrolled
         """
         # forward to get loss
-        _, loss = self.model.loss(data, target, reduce='mean')
+        loss = self.model.loss(data, target)
         # flatten current weights
         theta = F.flatten(self.model.parameters()).detach()
         # theta: torch.Size([1930618])
+        # print('theta:', theta.shape)
         try:
             # fetch momentum data from theta optimizer
             moment = F.flatten(optimizer.state[v]['momentum_buffer'] for v in self.model.parameters())
