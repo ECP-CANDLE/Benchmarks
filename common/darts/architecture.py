@@ -56,7 +56,6 @@ class Architecture:
             moment = torch.zeros_like(theta)
 
         # flatten all gradients
-        gradient= autograd.grad(loss, self.model.parameters(), allow_unused=True)
         dtheta = F.flatten(autograd.grad(loss, self.model.parameters())).data
         # indeed, here we implement a simple SGD with momentum and weight decay
         # theta = theta - eta * (moment + weight decay + dtheta)
