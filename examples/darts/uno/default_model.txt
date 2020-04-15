@@ -1,6 +1,6 @@
 [Global_Params]
 model_name = 'darts_uno'
-unrolled = False 
+unrolled = True
 data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/' 
 savepath = '.'
 log_interval = 10
