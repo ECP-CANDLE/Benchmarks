@@ -155,7 +155,6 @@ def load_data(params, seed):
         df = (pd.read_csv(train_file, skiprows=1).values).astype("float32")
 
         PL = df.shape[1]
-        PL -= 1
         print("PL=", PL)
 
         PS = PL - 1
