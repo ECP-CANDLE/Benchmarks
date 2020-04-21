@@ -23,6 +23,7 @@ from default_utils import fetch_file
 from default_utils import verify_path
 from default_utils import keras_default_config
 from default_utils import set_up_logger
+from default_utils import check_flag_conflicts
 
 from generic_utils import Progbar
 
@@ -87,13 +88,13 @@ if 'keras' in sys.modules:
     from keras_utils import r2
     from keras_utils import mae
     from keras_utils import mse
-        
+
     from viz_utils import plot_metrics
 
     from solr_keras import CandleRemoteMonitor
     from solr_keras import compute_trainable_params
     from solr_keras import TerminateOnTimeOut
-    
+
     from uq_keras_utils import abstention_variable_initialization
     from uq_keras_utils import abstention_loss
     from uq_keras_utils import abs_acc
@@ -102,6 +103,10 @@ if 'keras' in sys.modules:
     from uq_keras_utils import modify_labels
     from uq_keras_utils import add_model_output
     from uq_keras_utils import AbstentionAdapt_Callback
+
+    from clr_keras_utils import CyclicLR
+    from clr_keras_utils import clr_set_args
+    from clr_keras_utils import clr_callback
 
 elif 'torch' in sys.modules:
     print ('Importing candle utils for pytorch')
