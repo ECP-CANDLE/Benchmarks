@@ -263,8 +263,8 @@ def run(params):
                     kernel_initializer=initializer_weights,
                     bias_initializer=initializer_bias,
                 )(x)
-            if params["drop"]:
-                x = Dropout(params["drop"])(x)
+            if params["dropout"]:
+                x = Dropout(params["dropout"])(x)
         output = Dense(
             output_dim,
             activation=activation,
@@ -278,17 +278,6 @@ def run(params):
             kernel_initializer=initializer_weights,
             bias_initializer=initializer_bias,
         )(inputs)
-
-    # x = Dense(250, activation=ac)(inputs)
-
-    # x = Dropout(DR)(x)
-    # x = Dense(125, activation=ac)(x)
-    # x = Dropout(DR)(x)
-    # x = Dense(60, activation=ac)(x)
-    # x = Dropout(DR)(x)
-    # x = Dense(30, activation=ac)(x)
-    # x = Dropout(DR)(x)
-    # outputs = Dense(1, activation=ac)(x)
 
     model = Model(inputs=inputs, outputs=output)
 
@@ -319,7 +308,6 @@ def run(params):
         monitor="val_loss",
         factor=0.75,
         patience=20,
-        verbose=1,
         mode="auto",
         epsilon=0.0001,
         cooldown=3,
@@ -389,8 +377,6 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     print("Test val_loss:", score[0])
     print("Test val_mae:", score[1])
 
-    exit()
-
     # serialize model to JSON
     model_json = model.to_json()
     with open(save_path + "agg_adrp.model.json", "w") as json_file:
@@ -404,8 +390,6 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     # serialize weights to HDF5
     model.save_weights(save_path + "agg_adrp.model.h5")
     print("Saved model to disk")
-
-    exit()
 
     # load json and create model
     json_file = open(save_path + "agg_adrp.model.json", "r")
