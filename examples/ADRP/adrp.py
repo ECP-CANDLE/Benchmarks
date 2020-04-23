@@ -81,7 +81,7 @@ required = [
     "activation",
     "batch_size",
     "dense",
-    "drop",
+    "dropout",
     "epochs",
     "initialization",
     "learning_rate",
@@ -127,8 +127,8 @@ def extension_from_parameters(params, framework=""):
 
     if params["epsilon_std"] != 1.0:
         ext += ".EPS={}".format(params["epsilon_std"])
-    if params["drop"]:
-        ext += ".DR={}".format(params["drop"])
+    if params["dropout"]:
+        ext += ".DR={}".format(params["dropout"])
     if params["batch_normalization"]:
         ext += ".BN"
     if params["warmup_lr"]:
