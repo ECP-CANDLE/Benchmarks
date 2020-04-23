@@ -89,11 +89,9 @@ required = [
     "optimizer",
     "rng_seed",
     "scaling",
-    "validation_split",
     "latent_dim",
     "batch_normalization",
     "epsilon_std",
-    "solr_root",
     "timeout",
 ]
 

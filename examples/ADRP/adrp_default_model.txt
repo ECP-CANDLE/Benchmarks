@@ -12,7 +12,6 @@ dropout=0.1
 learning_rate=0.0001
 momentum=0.9
 scaling='minmax'
-validation_split=0.1
 epsilon_std=1.0
 rng_seed=2017
 initialization='glorot_uniform'
@@ -23,8 +22,6 @@ use_cp=False
 early_stop=True
 reduce_lr=True
 feature_subsample=0
-nb_classes=2
 
 [Monitor_Params]
-solr_root=''
 timeout=3600
