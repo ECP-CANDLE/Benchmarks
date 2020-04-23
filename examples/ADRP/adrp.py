@@ -142,11 +142,11 @@ def extension_from_parameters(params, framework=""):
 def load_data(params, seed):
 
     # start change #
-    if params["in"].endswith("csv") or params["in"].endswith("csv"):
-        print("processing csv in file {}".format(params["in"]))
+    if params["train_data"].endswith("csv") or params["train_data"].endswith("csv"):
+        print("processing csv in file {}".format(params["train_data"]))
 
         url = params["data_url"]
-        file_train = params["in"]
+        file_train = params["train_data"]
         train_file = candle.get_file(
             file_train, url + file_train, cache_subdir="Pilot1"
         )

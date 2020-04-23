@@ -1,6 +1,6 @@
 [Global_Params]
 data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/'
-in='adrp-p1.csv'
+train_data='adrp-p1.csv'
 model_name='adrp'
 dense=[250, 125, 60, 30]
 batch_size=32
