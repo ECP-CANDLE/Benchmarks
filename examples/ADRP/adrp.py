@@ -81,7 +81,7 @@ required = [
     "activation",
     "batch_size",
     "dense",
-    "drop",
+    "dropout",
     "epochs",
     "initialization",
     "learning_rate",
@@ -89,11 +89,9 @@ required = [
     "optimizer",
     "rng_seed",
     "scaling",
-    "validation_split",
     "latent_dim",
     "batch_normalization",
     "epsilon_std",
-    "solr_root",
     "timeout",
 ]
 
@@ -127,8 +125,8 @@ def extension_from_parameters(params, framework=""):
 
     if params["epsilon_std"] != 1.0:
         ext += ".EPS={}".format(params["epsilon_std"])
-    if params["drop"]:
-        ext += ".DR={}".format(params["drop"])
+    if params["dropout"]:
+        ext += ".DR={}".format(params["dropout"])
     if params["batch_normalization"]:
         ext += ".BN"
     if params["warmup_lr"]:
@@ -144,18 +142,17 @@ def extension_from_parameters(params, framework=""):
 def load_data(params, seed):
 
     # start change #
-    if params["in"].endswith("csv") or params["in"].endswith("csv"):
-        print("processing csv in file {}".format(params["in"]))
+    if params["train_data"].endswith("csv") or params["train_data"].endswith("csv"):
+        print("processing csv in file {}".format(params["train_data"]))
 
         url = params["data_url"]
-        file_train = params["in"]
+        file_train = params["train_data"]
         train_file = candle.get_file(
             file_train, url + file_train, cache_subdir="Pilot1"
         )
         df = (pd.read_csv(train_file, skiprows=1).values).astype("float32")
 
         PL = df.shape[1]
-        PL -= 1
         print("PL=", PL)
 
         PS = PL - 1
