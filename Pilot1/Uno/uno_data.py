@@ -13,7 +13,11 @@ import keras
 
 from itertools import cycle, islice
 
-from sklearn.preprocessing import Imputer
+try:
+    from sklearn.impute import SimpleImputer as Imputer
+except ImportError:
+    from sklearn.preprocessing import Imputer
+
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 from sklearn.model_selection import ShuffleSplit, KFold
 
@@ -76,7 +80,7 @@ def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):
     if imputing is None or imputing.lower() == 'none':
         mat = df.values
     else:
-        imputer = Imputer(strategy=imputing, axis=0)
+        imputer = Imputer(strategy=imputing)
         mat = imputer.fit_transform(df)
 
     if scaling is None or scaling.lower() == 'none':
