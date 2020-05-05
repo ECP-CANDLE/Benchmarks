@@ -13,7 +13,7 @@ def initialize_parameters():
     )
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unet_common)
+    gParameters = candle.finalize_parameters(unet_common)
     return gParameters
 
 def run(gParameters):
