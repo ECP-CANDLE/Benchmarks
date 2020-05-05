@@ -48,7 +48,7 @@ def initialize_parameters():
          'help':'Number of predictions to do on each sample.'}
     ]
     t29_common.additional_definitions = additional_definitions
-    gParameters = candle.initialize_parameters(t29_common)
+    gParameters = candle.finalize_parameters(t29_common)
     return gParameters
 
 
