@@ -2,8 +2,7 @@
 # ------------------------------
 
 # Download the Anaconda installer
-# curl -o Anaconda2-4.3.1-Linux-x86_64.sh https://repo.continuum.io/archive/Anaconda2-4.3.1-Linux-x86_64.sh
-curl -o  Anaconda3-5.1.0-Linux-x86_64.sh https://repo.anaconda.com/archive/Anaconda3-5.1.0-Linux-x86_64.sh
+curl -o Anaconda3-2020.02-Linux-x86_64.sh https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh
 
 # Make the installer executable
 chmod u+x ./Anaconda3-5.1.0-Linux-x86_64.sh
@@ -15,9 +14,8 @@ chmod u+x ./Anaconda3-5.1.0-Linux-x86_64.sh
 export PATH=$HOME/anaconda3/bin:$PATH
 
 # Install additonal modules not shipped with Anaconda
-conda install -y -c conda-forge tensorflow
-conda install -y -c anaconda hdf5=1.8.17
-conda install -y -c anaconda theano
+conda install -y -c conda-forge tensorflow-gpu=1
+conda install -y -c anaconda hdf5
 conda install -y -c conda-forge keras=2
 conda install -y -c anaconda pandas
 conda install -y -c anaconda scikit-learn 
@@ -26,7 +24,6 @@ conda install -y -c conda-forge pygpu
 
 # Install additional modules for Pilot2 benchmarks
 conda install -c conda-forge opencv
-conda install -c conda-forge tqdm
 conda update -c conda-forge numpy
 
 # Download the source files for the benchmarks
