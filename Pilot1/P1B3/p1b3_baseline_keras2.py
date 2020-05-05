@@ -359,8 +359,7 @@ def run(gParameters):
                         validation_steps=val_steps,
                         verbose=0,
                         callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
-                        pickle_safe=True,
-                        workers=gParameters['workers'])
+                        )
 
     benchmark.logger.removeHandler(fh)
     benchmark.logger.removeHandler(sh)
