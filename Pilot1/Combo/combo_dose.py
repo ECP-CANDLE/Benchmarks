@@ -678,7 +678,7 @@ def initialize_parameters():
         desc = 'Build neural network based models to predict tumor response to drug pairs.')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(comboBmk)
+    gParameters = candle.finalize_parameters(comboBmk)
     #combo.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
