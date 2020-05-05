@@ -6,6 +6,7 @@ http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/ (~500MB)
 ## Sample run:
 
 ```
+$ export CUDA_VISIBLE_DEVICES=1
 $ python adrp_baseline_keras2.py
 Using TensorFlow backend.
 Importing candle utils for keras
@@ -46,7 +47,7 @@ Params:
  'dense': [250, 125, 60, 30],
  'drop': 0.1,
  'early_stop': True,
- 'epochs': 1,
+ 'epochs': 400,
  'epsilon_std': 1.0,
  'experiment_id': 'EXP000',
  'feature_subsample': 0,
@@ -71,7 +72,7 @@ Params:
  'scaling': 'minmax',
  'shuffle': False,
  'solr_root': '',
- 'timeout': 3600,
+ 'timeout': 0,
  'train_bool': True,
  'tsne': False,
  'use_cp': False,

@@ -4,7 +4,7 @@ train_data='adrp-p1.csv'
 model_name='adrp'
 dense=[250, 125, 60, 30]
 batch_size=32
-epochs=1
+epochs=400
 activation='relu'
 loss='mean_squared_error'
 optimizer='sgd'
@@ -24,4 +24,4 @@ reduce_lr=True
 feature_subsample=0
 
 [Monitor_Params]
-timeout=3600
+timeout=0
