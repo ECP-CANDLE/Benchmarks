@@ -81,6 +81,7 @@ def build_model(gParameters, kerasDefaults,
     for k in range( len( shared_nnet_spec ) ):
         layer = Dense( shared_nnet_spec[ k ], activation=gParameters['activation'],
                        name= 'shared_layer_' + str( k ) )( shared_layers[ -1 ] )
+        shared_layers.append( layer )
         if gParameters['dropout'] > 0:
             layer = Dropout( gParameters['dropout'] )( shared_layers[ -1 ] )
             shared_layers.append( layer )
