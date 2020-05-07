@@ -4,6 +4,8 @@ from torch import optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
+import logging
+
 import example_setup as bmk
 import darts
 import candle
@@ -11,6 +13,10 @@ import candle
 from operations import (
     Stem, OPS
 )
+
+
+logging.basicConfig(level = logging.INFO)
+logger = logging.getLogger("darts_advanced")
 
 
 def initialize_parameters():
@@ -89,10 +95,10 @@ def run(params):
 
         scheduler.step()
         lr = scheduler.get_lr()[0]
-        print(f'\nEpoch: {epoch} lr: {lr}')
+        logger.info(f'\nEpoch: {epoch} lr: {lr}')
 
         genotype = model.genotype()
-        print(f'Genotype: {genotype}\n')
+        logger.info(f'Genotype: {genotype}\n')
 
         train(
             trainloader,
@@ -160,7 +166,7 @@ def train(trainloader,
         meter.update_batch_accuracy(prec1, batch_size)
 
         if step % args.log_interval == 0:
-            print(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
+            logger.info(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.savepath)
@@ -185,7 +191,7 @@ def validate(validloader, model, criterion, args, tasks, meter, device):
             meter.update_batch_accuracy(prec1, batch_size)
 
             if step % args.log_interval == 0:
-                print(f'>> Validation: {step} loss: {meter.loss_meter.avg:.4}')
+                logger.info(f'>> Validation: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.savepath)
