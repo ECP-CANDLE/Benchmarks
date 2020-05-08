@@ -1,12 +1,16 @@
+import logging
+
 import torch
 import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
-from loguru import logger
 
 import example_setup as bmk
 import darts
 import candle
+
+logging.basicConfig(level = logging.INFO)
+logger = logging.getLogger("darts_uno")
 
 
 def initialize_parameters():
@@ -35,8 +39,6 @@ def run(params):
     train_data = darts.Uno('./data', 'train', download=True)
     valid_data = darts.Uno('./data', 'test')
 
-    #train_data = darts.sample(train_data, len(valid_data))
-
     trainloader = DataLoader(train_data, batch_size=args.batch_size)
     validloader = DataLoader(valid_data, batch_size=args.batch_size)
 
@@ -54,7 +56,7 @@ def run(params):
 
     optimizer = optim.SGD(
         model.parameters(),
-        args.lr,
+        args.learning_rate,
         momentum=args.momentum,
         weight_decay=args.weight_decay
     )
@@ -62,7 +64,7 @@ def run(params):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
         float(args.epochs),
-        eta_min=args.lr_min
+        eta_min=args.learning_rate_min
     )
 
     train_meter = darts.EpochMeter(tasks, 'train')
@@ -72,7 +74,6 @@ def run(params):
 
     for epoch in range(args.epochs):
 
-        scheduler.step()
         lr = scheduler.get_lr()[0]
         logger.info(f'\nEpoch: {epoch} lr: {lr}')
 
@@ -85,7 +86,7 @@ def run(params):
             architecture,
             criterion,
             optimizer,
-            lr,
+            scheduler,
             args,
             tasks,
             train_meter,
@@ -102,7 +103,7 @@ def train(trainloader,
           architecture,
           criterion,
           optimizer,
-          lr,
+          scheduler,
           args,
           tasks,
           meter,
@@ -124,6 +125,8 @@ def train(trainloader,
         x_search = darts.to_device(x_search, device)
         target_search = darts.to_device(target_search, device)
 
+        lr = scheduler.get_lr()[0]
+
         # 1. update alpha
         architecture.step(
             data,
@@ -132,7 +135,7 @@ def train(trainloader,
             target_search,
             lr,
             optimizer,
-            unrolled=args.unrolled
+            unrolled=False
         )
 
         logits = model(data)
@@ -143,6 +146,7 @@ def train(trainloader,
         loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
         optimizer.step()
+        scheduler.step()
 
         prec1 = darts.multitask_accuracy_topk(logits, target, topk=(1,))
         meter.update_batch_loss(loss.item(), batch_size)
