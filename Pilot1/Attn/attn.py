@@ -79,7 +79,6 @@ required = [
     'latent_dim',
     'batch_normalization',
     'epsilon_std',
-    'solr_root',
     'timeout'
     ]
 

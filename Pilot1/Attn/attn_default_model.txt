@@ -22,9 +22,7 @@ use_cp=False
 early_stop=True
 reduce_lr=True
 feature_subsample=0
-output_dir='./save/001/'
 save_path='./save/001/'
 
 [Monitor_Params]
-solr_root=''
 timeout=3600

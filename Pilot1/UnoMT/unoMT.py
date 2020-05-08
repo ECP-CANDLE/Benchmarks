@@ -271,7 +271,6 @@ required = [
     'epochs',
     'rng_seed',
     'val_split',
-    'solr_root',
     'timeout',
     ]
 

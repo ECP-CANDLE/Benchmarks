@@ -29,5 +29,4 @@ verbose=False
 use_landmark_genes=True
 
 [Monitor_Params]
-solr_root=''
 timeout=3600

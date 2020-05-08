@@ -94,7 +94,6 @@ required = [
     'feature_subsample',
     'batch_normalization',
     'epsilon_std',
-    'solr_root',
     'timeout'
     ]
 

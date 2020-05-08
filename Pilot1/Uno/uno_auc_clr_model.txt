@@ -41,7 +41,6 @@ single=True
 timeout=-1
 
 [Monitor_Params]
-solr_root=''
 
 [CLR_Params]
 clr_flag = True

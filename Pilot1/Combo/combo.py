@@ -93,7 +93,7 @@ additional_definitions = [
 required = [ 'activation', 'batch_size', 'dense', 'dense_feature_layers', 'dropout',
              'epochs', 'learning_rate', 'loss', 'optimizer', 'residual', 'rng_seed',
              'save_path', 'scaling', 'feature_subsample', 'val_split',
-            'solr_root', 'timeout'
+             'timeout'
 	    ]
 
 class BenchmarkCombo(candle.Benchmark):

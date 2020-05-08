@@ -58,7 +58,6 @@ required = [
             'optimizer',
             'rng_seed',
             'val_split',
-            'solr_root',
             'timeout',
             'target_abs_acc']
 

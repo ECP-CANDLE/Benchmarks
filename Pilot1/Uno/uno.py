@@ -232,6 +232,5 @@ required = [
     'save_path',
     'scaling',
     'val_split',
-    'solr_root',
     'timeout'
 ]

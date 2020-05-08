@@ -28,5 +28,4 @@ use_combo_score=False
 verbose = False
 
 [Monitor_Params]
-solr_root=''
 timeout=3600

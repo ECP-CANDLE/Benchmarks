@@ -24,5 +24,4 @@ save_path='save_abs/EXP01/'
 target_abs_acc=0.85
 
 [Monitor_Params]
-solr_root=''
 timeout=3600
