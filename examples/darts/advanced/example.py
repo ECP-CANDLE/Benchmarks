@@ -93,7 +93,6 @@ def run(params):
 
     for epoch in range(args.epochs):
 
-        scheduler.step()
         lr = scheduler.get_lr()[0]
         logger.info(f'\nEpoch: {epoch} lr: {lr}')
 
@@ -106,7 +105,7 @@ def run(params):
             architecture,
             criterion,
             optimizer,
-            lr,
+            scheduler,
             args,
             tasks,
             train_meter,
@@ -121,7 +120,7 @@ def train(trainloader,
           architecture,
           criterion,
           optimizer,
-          lr,
+          scheduler,
           args,
           tasks,
           meter,
@@ -141,6 +140,8 @@ def train(trainloader,
         x_search = darts.to_device(x_search, device)
         target_search = darts.to_device(target_search, device)
 
+        lr = scheduler.get_lr()[0]
+
         # 1. update alpha
         architecture.step(
             data,
@@ -149,7 +150,7 @@ def train(trainloader,
             target_search,
             lr,
             optimizer,
-            unrolled=args.unrolled
+            unrolled=False
         )
 
         logits = model(data)
@@ -160,6 +161,7 @@ def train(trainloader,
         loss.backward()
         nn.utils.clip_grad_norm_(model.parameters(), args.grad_clip)
         optimizer.step()
+        scheduler.step()
 
         prec1 = darts.multitask_accuracy_topk(logits, target, topk=(1,))
         meter.update_batch_loss(loss.item(), batch_size)

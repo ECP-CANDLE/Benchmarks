@@ -17,7 +17,6 @@ REQUIRED = [
     'weight_decay',
     'grad_clip',
     'seed',
-    'unrolled',
     'batch_size',
     'epochs',
 ]
