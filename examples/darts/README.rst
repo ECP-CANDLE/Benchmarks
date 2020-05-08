@@ -65,7 +65,14 @@ components as the model is training.
 As the optimization runs, the model will print the resulting loss with respect to a given *Genotype*.
 The final model will be the *Genotype* with corresponding to the lowest loss.
 
+Setup
+-----
+
+Darts makes use of Pytorch. You can find binaries for both Pytorch and Torchvision (used in the advanced
+example) at the `pytorch website`_.
+
 .. References
 .. ----------
 .. _paper: https://openreview.net/forum?id=S1eYHoC5FX
 .. _darts.modules.operations.conv.py: ../../../common/darts/modules/operations/conv.py
+.. _pytorch website: https://pytorch.org/
