@@ -22,7 +22,14 @@ conda install -y -c anaconda scikit-learn
 conda install -y -c anaconda matplotlib
 conda install -y -c conda-forge pygpu
 conda install -y -c anaconda pytorch
-pip install loguru
+conda install numba
+conda install astropy
+conda install patsy
+conda install statsmodels
+conda install requests
+conda install torch
+conda install pytorch
+conda install -c conda-forge tqdm
 conda update -c conda-forge numpy
 
 # Download the source files for the benchmarks
