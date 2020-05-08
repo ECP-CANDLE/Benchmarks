@@ -77,7 +77,7 @@ def run(params):
 
     optimizer = optim.SGD(
         model.parameters(),
-        args.lr,
+        args.learning_rate,
         momentum=args.momentum,
         weight_decay=args.weight_decay
     )
@@ -85,7 +85,7 @@ def run(params):
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
         float(args.epochs),
-        eta_min=args.lr_min
+        eta_min=args.learning_rate_min
     )
 
     train_meter = darts.EpochMeter(tasks, 'train')
