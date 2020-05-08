@@ -119,7 +119,8 @@ of the primitives must have the same number of input and output features, this w
 of features from any of your primitives. Since DARTS cannot know ahead of time what your primitives will be,
 we must specify how many features will go into our final fully connected layer of the network.
 
-Finally, to run this example:
+Run the Example
+---------------
 
 First, make sure that you can get the example data by installing `torchvision`:
 

@@ -62,7 +62,8 @@ data and labels of the training set, but also the data and labels of our validat
 simplicity of this tutorial, *x_search* and *target_search* are from our training set, but these 
 would normally use a separate validation set.
 
-Finally, to run this example:
+Run the Example
+---------------
 
 .. code-block::
 
