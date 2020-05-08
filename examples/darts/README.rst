@@ -15,6 +15,12 @@ Our recommended ordering of examples:
 2. **Advanced**: how to define our own neural network primitives to be optimized
    by DARTS.
 
+Setup
+-----
+
+Darts makes use of Pytorch. You can find binaries for both Pytorch and Torchvision (used in the advanced
+example) at the `pytorch website`_.
+
 The Algorithm
 -------------
 
@@ -64,12 +70,6 @@ components as the model is training.
 
 As the optimization runs, the model will print the resulting loss with respect to a given *Genotype*.
 The final model will be the *Genotype* with corresponding to the lowest loss.
-
-Setup
------
-
-Darts makes use of Pytorch. You can find binaries for both Pytorch and Torchvision (used in the advanced
-example) at the `pytorch website`_.
 
 .. References
 .. ----------
