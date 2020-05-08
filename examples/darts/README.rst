@@ -2,6 +2,11 @@
 DARTS Examples
 ==============
 
+Differentiable architecture search
+
+TLDR
+----
+
 Our recommended ordering of examples:
 
 1. **Uno**: learn how to use the neural network building blocks in DARTS to 
@@ -10,7 +15,8 @@ Our recommended ordering of examples:
 2. **Advanced**: how to define our own neural network primitives to be optimized
    by DARTS.
 
-Differentiable architecture search
+The Algorithm
+-------------
 
 This is an adaptation of Hanxiao Liu et al's DARTS algorithm, extending
 the work to handle convolutional neural networks for NLP problems and more.
