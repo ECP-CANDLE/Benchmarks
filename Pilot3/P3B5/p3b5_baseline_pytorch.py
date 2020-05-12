@@ -97,7 +97,7 @@ def run(params):
         print(f'Genotype: {genotype}')
 
         # training
-        train_acc, train_loss = train(
+        train(
             trainloader,
             validloader,
             model,
@@ -112,15 +112,19 @@ def run(params):
         )
 
         # validation
-        valid_acc, valid_loss = infer(validloader, model, criterion, args, tasks, device, valid_meter)
+        valid_loss = infer(
+            validloader,
+            model,
+            criterion,
+            args,
+            tasks,
+            device,
+            valid_meter
+        )
 
         if valid_loss < min_loss:
             genotype_store.save_genotype(genotype)
             min_loss = valid_loss
-
-        print(f'\nEpoch {epoch} stats:')
-       # darts.log_accuracy(train_acc, 'train')
-       # darts.log_accuracy(valid_acc, 'valid')
 
 
 def main():
