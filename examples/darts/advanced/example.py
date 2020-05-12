@@ -171,7 +171,7 @@ def train(trainloader,
             logger.info(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
-    meter.save(args.savepath)
+    meter.save(args.save_path)
 
 
 def validate(validloader, model, criterion, args, tasks, meter, device):
@@ -196,7 +196,7 @@ def validate(validloader, model, criterion, args, tasks, meter, device):
                 logger.info(f'>> Validation: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
-    meter.save(args.savepath)
+    meter.save(args.save_path)
 
 
 def _wrap_target(target):

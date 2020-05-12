@@ -45,6 +45,10 @@ def run(params):
     # Setting up random seed for reproducible and deterministic results
     seed_random_state(args.rng_seed)
  
+    # check for sufficient number of epochs to start validation
+    if params['epochs'] < params['resp_val_start_epoch']:
+        raise Exception('Number of epochs is less than validation threshold (resp_val_start_epoch)')
+
     # Construct extension to save validation results
     now = datetime.datetime.now()
     ext = '%02d%02d_%02d%02d_pytorch' \

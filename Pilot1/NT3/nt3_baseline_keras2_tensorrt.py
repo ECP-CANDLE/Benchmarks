@@ -28,11 +28,8 @@ sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-import data_utils
-import p1_common, p1_common_keras
-from solr_keras import CandleRemoteMonitor, compute_trainable_params, TerminateOnTimeOut
-
-
+import nt3 as bmk
+import candle
 
 ''' Import Tensorflow Modules '''
 import tensorflow as tf
@@ -54,6 +51,7 @@ from tensorflow.python.training import saver as saver_lib
 #P     = 60483   # 60483
 #DR    = 0.1      # Dropout rate
 
+'''
 def common_parser(parser):
 
     parser.add_argument("--config_file", dest='config_file', type=str,
@@ -117,7 +115,19 @@ def initialize_parameters():
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = p1_common.args_overwrite_config(args, fileParameters)
     return gParameters
+    '''
 
+def initialize_parameters(default_model = 'nt3_default_model.txt'):
+
+    # Build benchmark object
+    nt3Bmk = bmk.BenchmarkNT3(bmk.file_path, default_model, 'keras',
+            prog='nt3_baseline_tensorrt', desc='1D CNN to classify RNA sequence data in normal or tumor classes')
+
+    # Initialize parameters
+    gParameters = candle.finalize_parameters(nt3Bmk)
+    #benchmark.logger.info('Params: {}'.format(gParameters))
+
+    return gParameters
 
 def load_data(train_path, test_path, gParameters):
 
@@ -164,8 +174,8 @@ def run(gParameters):
     file_test = gParameters['test_data']
     url = gParameters['data_url']
 
-    train_file = data_utils.get_file(file_train, url+file_train, cache_subdir='Pilot1')
-    test_file = data_utils.get_file(file_test, url+file_test, cache_subdir='Pilot1')
+    train_file = candle.get_file(file_train, url+file_train, cache_subdir='Pilot1')
+    test_file = candle.get_file(file_test, url+file_test, cache_subdir='Pilot1')
 
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
@@ -224,6 +234,7 @@ def run(gParameters):
     #model.add(Dense(gParameters['classes']))
     #model.add(Activation(gParameters['out_activation']), name='activation_5')
     model.add(Dense(gParameters['classes'], activation=gParameters['out_activation'], name='activation_5'))
+
 #Reference case
 #model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
 #model.add(Activation('relu'))
@@ -241,10 +252,10 @@ def run(gParameters):
 #model.add(Dense(CLASSES))
 #model.add(Activation('softmax'))
 
-    kerasDefaults = p1_common.keras_default_config()
+    kerasDefaults = candle.keras_default_config()
 
     # Define optimizer
-    optimizer = p1_common_keras.build_optimizer(gParameters['optimizer'],
+    optimizer = candle.build_optimizer(gParameters['optimizer'],
                                                 gParameters['learning_rate'],
                                                 kerasDefaults)
 
@@ -264,7 +275,7 @@ def run(gParameters):
         os.makedirs(output_dir)
 
     # calculate trainable and non-trainable params
-    gParameters.update(compute_trainable_params(model))
+    gParameters.update(candle.compute_trainable_params(model))
 
     # set up a bunch of callbacks to do work during model training..
     model_name = gParameters['model_name']
@@ -272,11 +283,11 @@ def run(gParameters):
     # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
-    candleRemoteMonitor = CandleRemoteMonitor(params=gParameters)
-    timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
+    candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
+    timeoutMonitor = candle.TerminateOnTimeOut(TIMEOUT)
     history = model.fit(X_train, Y_train,
                     batch_size=gParameters['batch_size'],
-                    epochs=2, #gParameters['epochs'],
+                    epochs=gParameters['epochs'],
                     verbose=1,
                     validation_data=(X_test, Y_test),
                     callbacks = [csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor])
@@ -286,10 +297,14 @@ def run(gParameters):
     #Begin tensorrt code
     config = {
     # Where to save models (Tensorflow + TensorRT)
-    "graphdef_file": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3/nt3.pb",
-    "frozen_model_file": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3/nt3_frozen_model.pb",
-    "snapshot_dir": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3/snapshot",
-    "engine_save_dir": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3",
+    #"graphdef_file": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3/nt3.pb",
+    #"frozen_model_file": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3/nt3_frozen_model.pb",
+    #"snapshot_dir": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3/snapshot",
+    #"engine_save_dir": "/gpfs/jlse-fs0/users/pbalapra/tensorrt/Benchmarks/Pilot1/NT3",
+    "graphdef_file": "nt3.pb",
+    "frozen_model_file": "nt3_frozen_model.pb",
+    "snapshot_dir": "snapshot",
+    "engine_save_dir": ".",
     
     # Needed for TensorRT
     "inference_batch_size": 1,  # inference batch size

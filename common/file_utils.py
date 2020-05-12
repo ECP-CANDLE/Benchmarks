@@ -100,6 +100,12 @@ def get_file(fname, origin, untar=False,
     else:
         download = True
 
+    # fix ftp protocol if needed
+    if origin.startswith('ftp://'):
+        new_url = origin.replace('ftp://','http://')
+        origin = new_url
+    print('Origin = ', origin)
+
     if download:
         print('Downloading data from', origin)
         global progbar

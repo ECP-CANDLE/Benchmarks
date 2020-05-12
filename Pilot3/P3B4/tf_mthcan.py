@@ -16,12 +16,12 @@ class hcan(object):
                  attention_size=512,dropout_rate=0.9,activation=tf.nn.elu,lr=0.0001, 
                  optimizer= 'adam', embed_train = True):
 
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
 
         dropout_keep = dropout_rate
 
         self.dropout_keep = dropout_keep
-        self.dropout = tf.placeholder(tf.float32)
+        self.dropout = tf.compat.v1.placeholder(tf.float32)
         self.ms = max_sents
         self.mw = max_words
         self.embedding_matrix = embedding_matrix.astype(np.float32)
@@ -31,19 +31,19 @@ class hcan(object):
         self.embed_train = embed_train
 
         #doc input
-        self.doc_input = tf.placeholder(tf.int32, shape=[None,max_sents,max_words]) # batch x sents x words
+        self.doc_input = tf.compat.v1.placeholder(tf.int32, shape=[None,max_sents,max_words]) # batch x sents x words
         batch_size = tf.shape(self.doc_input)[0]
-        
+
         words_per_sent = tf.reduce_sum(tf.sign(self.doc_input),2) # batch X sents
         max_words_ = tf.reduce_max(words_per_sent)
         sents_per_doc = tf.reduce_sum(tf.sign(words_per_sent),1) # batch 
         max_sents_ = tf.reduce_max(sents_per_doc)
         doc_input_reduced = self.doc_input[:,:max_sents_,:max_words_] #clip
-        
+
         doc_input_reshape = tf.reshape(doc_input_reduced,(-1,max_words_)) # batch*sents x words 
 
         #word embeddings
-        word_embeds = tf.gather(tf.get_variable('embeddings',initializer=self.embedding_matrix,
+        word_embeds = tf.gather(tf.compat.v1.get_variable('embeddings',initializer=self.embedding_matrix,
                       dtype=tf.float32, trainable=self.embed_train),doc_input_reshape)
         word_embeds = tf.nn.dropout(word_embeds,self.dropout)  # batch*sents x words x attention_size
 
@@ -62,7 +62,7 @@ class hcan(object):
         outputs = tf.matmul(outputs,V) # batch*sents x words x attention_size
 
         #word target attention
-        Q = tf.get_variable('word_Q',(1,1,self.attention_size),
+        Q = tf.compat.v1.get_variable('word_Q',(1,1,self.attention_size),
             tf.float32,tf.orthogonal_initializer())
         Q = tf.tile(Q,[batch_size*max_sents_,1,1])
         V = outputs
@@ -72,7 +72,7 @@ class hcan(object):
         outputs = tf.where(tf.equal(outputs,0),tf.ones_like(outputs)*-1000,outputs)
         outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
         outputs = tf.matmul(outputs,V) # batch*sents x 1 x attention_size
-        
+
         sent_embeds = tf.reshape(outputs,(-1,max_sents_,self.attention_size))
         sent_embeds = tf.nn.dropout(sent_embeds,self.dropout) # batch x sents x attention_size
 
@@ -91,7 +91,7 @@ class hcan(object):
         outputs = tf.matmul(outputs,V) # batch x sents x attention_size
 
         #sent target attention       
-        Q = tf.get_variable('sent_Q',(1,1,self.attention_size),
+        Q = tf.compat.v1.get_variable('sent_Q',(1,1,self.attention_size),
             tf.float32,tf.orthogonal_initializer())
         Q = tf.tile(Q,[batch_size,1,1])
         V = outputs
@@ -116,27 +116,27 @@ class hcan(object):
         self.labels = []
         self.loss = 0
         for i in range(self.num_tasks):
-            label = tf.placeholder(tf.int32,shape=[None])
+            label = tf.compat.v1.placeholder(tf.int32,shape=[None])
             self.labels.append(label)
             loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits[i],labels=label))
             self.loss += loss/self.num_tasks
-        # self.optimizer = tf.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
+        # self.optimizer = tf.compat.v1.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
         if optimizer == 'adam':
-             self.optimizer = tf.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
+             self.optimizer = tf.compat.v1.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
         elif optimizer == 'sgd':
-             self.optimizer = tf.train.GradientDescentOptimizer( lr ).minimize( self.loss )
+             self.optimizer = tf.compat.v1.train.GradientDescentOptimizer( lr ).minimize( self.loss )
         elif optimizer == 'adadelta':
-             self.optimizer = tf.train.AdadeltaOptimizer( learning_rate= lr ).minimize( self.loss )
+             self.optimizer = tf.compat.v1.train.AdadeltaOptimizer( learning_rate= lr ).minimize( self.loss )
         else:
-             self.optimizer = tf.train.RMSPropOptimizer( lr ).minimize( self.loss )        
+             self.optimizer = tf.compat.v1.train.RMSPropOptimizer( lr ).minimize( self.loss )
 
         #init op
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
-        self.saver = tf.train.Saver()
-        self.sess = tf.Session(config=config)
+        self.saver = tf.compat.v1.train.Saver()
+        self.sess = tf.compat.v1.Session(config=config)
         self.sess.run(tf.global_variables_initializer())
-    
+
     def train(self,data,labels,batch_size=100,epochs=50,validation_data=None):
 
         if validation_data:
@@ -189,7 +189,7 @@ class hcan(object):
 
             #checkpoint after every epoch
             print("\ntraining time: %.2f" % (time.time()-start_time))
-            
+
             for i in range(self.num_tasks):
                 micro = f1_score(y_trues[i],y_preds[i],average='micro')
                 macro = f1_score(y_trues[i],y_preds[i],average='macro')
@@ -202,11 +202,11 @@ class hcan(object):
 
             #reset timer
             start_time = time.time()
-            
+
         return history
 
     def predict(self,data,batch_size=100):
-    
+
         y_preds = [[] for i in range(self.num_tasks)]
         for start in range(0,len(data),batch_size):
 
@@ -230,7 +230,7 @@ class hcan(object):
         return y_preds
 
     def score(self,data,labels,batch_size=16):
-        
+
         loss = []
         y_preds = [[] for i in range(self.num_tasks)]
         for start in range(0,len(data),batch_size):
@@ -246,7 +246,7 @@ class hcan(object):
                 feed_dict[self.labels[i]] = labels[i][start:stop]
             retvals = self.sess.run(self.predictions+[self.loss],feed_dict=feed_dict)
             loss.append(retvals[-1])
-            
+
             for i in range(self.num_tasks):
                 y_preds[i].append(np.argmax(retvals[i],1))
 

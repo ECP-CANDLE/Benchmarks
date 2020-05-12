@@ -26,7 +26,7 @@ def initialize_parameters(default_model = 'nt3_default_model.txt'):
 
     # Build benchmark object
     nt3Bmk = bmk.BenchmarkNT3(bmk.file_path, default_model, 'keras',
-    prog='nt3_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
+            prog='nt3_baseline', desc='1D CNN to classify RNA sequence data in normal or tumor classes')
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(nt3Bmk)

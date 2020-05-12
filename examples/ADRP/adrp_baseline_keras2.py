@@ -89,23 +89,23 @@ def auroc(y_true, y_pred):
     return score
 
 
-def covariance(x, y):
-    return K.mean(x * y) - K.mean(x) * K.mean(y)
+#def covariance(x, y):
+#    return K.mean(x * y) - K.mean(x) * K.mean(y)
 
 
 def corr(y_true, y_pred):
-    cov = covariance(y_true, y_pred)
-    var1 = covariance(y_true, y_true)
-    var2 = covariance(y_pred, y_pred)
+    cov = candle.covariance(y_true, y_pred)
+    var1 = candle.covariance(y_true, y_true)
+    var2 = candle.covariance(y_pred, y_pred)
     return cov / (K.sqrt(var1 * var2) + K.epsilon())
 
 
-def xent(y_true, y_pred):
-    return binary_crossentropy(y_true, y_pred)
+#def xent(y_true, y_pred):
+#    return binary_crossentropy(y_true, y_pred)
 
 
-def mse(y_true, y_pred):
-    return mean_squared_error(y_true, y_pred)
+#def mse(y_true, y_pred):
+#    return mean_squared_error(y_true, y_pred)
 
 
 class MetricHistory(Callback):

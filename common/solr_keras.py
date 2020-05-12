@@ -45,12 +45,6 @@ class CandleRemoteMonitor(Callback):
         super(CandleRemoteMonitor, self).__init__()
 
         self.global_params = params
-        self.has_solr_config = False
-        if 'solr_root' in params and params['solr_root'] != '':
-            self.has_solr_config = True
-            self.root = params['solr_root']
-            self.path = '/run/update?commit=true'
-            self.headers = {'Content-Type': 'application/json'}
 
         # init
         self.experiment_id = None
@@ -77,8 +71,6 @@ class CandleRemoteMonitor(Callback):
                }
         # print("on_train_begin", send)
         self.log_messages.append(send)
-        if self.has_solr_config:
-            self.submit(send)
 
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch_timestamp = datetime.now()
@@ -101,8 +93,6 @@ class CandleRemoteMonitor(Callback):
                }
         # print("on_epoch_end", send)
         self.log_messages.append(send)
-        if self.has_solr_config:
-            self.submit(send)
 
     def on_train_end(self, logs=None):
         logs = logs or {}
@@ -118,25 +108,9 @@ class CandleRemoteMonitor(Callback):
                }
         # print("on_train_end", send)
         self.log_messages.append(send)
-        if self.has_solr_config:
-            self.submit(send)
 
         # save to file when finished
         self.save()
-
-    def submit(self, send):
-        """Send json to solr
-
-        Arguments:
-        send -- json object
-        """
-        try:
-            requests.post(self.root + self.path,
-                          json=[send],
-                          headers=self.headers)
-        except requests.exceptions.RequestException:
-            warnings.warn(
-                'Warning: could not reach RemoteMonitor root server at ' + str(self.root))
 
     def save(self):
         """Save log_messages to file
