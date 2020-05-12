@@ -66,12 +66,10 @@ def train(trainloader, validloader, model, architecture, criterion, optimizer, l
         meter.update_batch_accuracy(prec1, batch_size)
 
         if step % args.log_interval == 0:
-            print(f'Step: {step} loss: {losses.avg:.4}')
-            #darts.log_accuracy(top1)
+            print(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.savepath)
-    return top1, losses.avg
 
 
 def infer(validloader, model, criterion, args, tasks, device, meter):
@@ -94,12 +92,12 @@ def infer(validloader, model, criterion, args, tasks, device, meter):
             meter.update_batch_accuracy(prec1, batch_size)
 
             if step % args.log_interval == 0:
-                print(f'>> Validation: {step} loss: {losses.avg:.4}')
-                #darts.log_accuracy(top1, 'valid')
+                print(f'>> Validation: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.savepath)
-    return top1, losses.avg
+
+    return meter.loss_meter.avg
 
 
 if __name__=='__main__':
