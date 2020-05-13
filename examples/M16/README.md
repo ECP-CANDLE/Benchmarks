@@ -2,7 +2,7 @@
 
 The code demonstrates feature selection methods that CANDLE provides.
 
-It can be run by executing '''python M16_test.py'''
+It can be run by executing ``` python M16_test.py ```
 
 ## Download data
 Code
