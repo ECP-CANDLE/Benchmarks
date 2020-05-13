@@ -12,7 +12,7 @@ except NameError:
         from importlib import reload  # Python 3.4+
     except ImportError:
         from imp import reload  # Python 3.0 - 3.3
-        
+
 TIMEOUT=3600 # in sec; set this to -1 for no timeout
 file_path = os.path.dirname(os.path.realpath(__file__))
 #lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
@@ -22,7 +22,7 @@ sys.path.append(lib_path2)
 
 from keras import backend as K
 
-import p2b1 
+import p2b1
 import candle
 
 import p2b1_AE_models as AE_models
@@ -53,7 +53,7 @@ def initialize_parameters(default_model = 'p2b1_default_model.txt'):
     print ('\nTraining parameters:')
     for key in sorted(GP):
         print ("\t%s: %s" % (key, GP[key]))
-        
+
     # print json.dumps(GP, indent=4, skipkeys=True, sort_keys=True)
 
     if GP['backend'] != 'theano' and GP['backend'] != 'tensorflow':
@@ -79,8 +79,8 @@ def initialize_parameters(default_model = 'p2b1_default_model.txt'):
 def run(GP):
 
     # set the seed
-    if GP['seed']:
-        np.random.seed(GP['seed'])
+    if GP['rng_seed']:
+        np.random.seed(GP['rng_seed'])
     else:
         np.random.seed(np.random.randint(10000))
 
@@ -211,7 +211,7 @@ def run(GP):
                                                                            nonlinearity=molecular_nonlinearity,
                                                                            hidden_layers=molecular_hidden_layers,
                                                                            l2_reg=GP['l2_reg'],
-                                                                           drop=float(GP['drop_prob']))
+                                                                           drop=float(GP['dropout']))
     elif full_conv_bool:
         molecular_model, molecular_encoder = AE_models.full_conv_mol_auto(bead_k_size=bead_kernel_size,
                                                                           mol_k_size=mol_kernel_size,
@@ -220,14 +220,14 @@ def run(GP):
                                                                           nonlinearity=molecular_nonlinearity,
                                                                           hidden_layers=molecular_hidden_layers,
                                                                           l2_reg=GP['l2_reg'],
-                                                                          drop=float(GP['drop_prob']))
+                                                                          drop=float(GP['dropout']))
 
     else:
         molecular_model, molecular_encoder = AE_models.dense_auto(weights_path=None, input_shape=(molecular_input_dim,),
                                                                   nonlinearity=molecular_nonlinearity,
                                                                   hidden_layers=molecular_hidden_layers,
                                                                   l2_reg=GP['l2_reg'],
-                                                                  drop=float(GP['drop_prob']))
+                                                                  drop=float(GP['dropout']))
 
     if GP['loss'] == 'mse':
         loss_func = 'mse'
@@ -238,7 +238,7 @@ def run(GP):
     print ('\nModel Summary: \n')
     molecular_model.summary()
     ##### set up callbacks and cooling for the molecular_model ##########
-    drop = 0.5
+    drop = GP['dropout']
     mb_epochs = GP['epochs']
     initial_lrate = GP['learning_rate']
     epochs_drop = 1+int(np.floor(mb_epochs/3))
