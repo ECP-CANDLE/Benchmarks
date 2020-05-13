@@ -70,7 +70,7 @@ def run(params):
     train_meter = darts.EpochMeter(tasks, 'train')
     valid_meter = darts.EpochMeter(tasks, 'valid')
 
-    genotype_store = darts.GenotypeStorage(root=args.savepath)
+    genotype_store = darts.GenotypeStorage(root=args.save_path)
 
     for epoch in range(args.epochs):
 
@@ -161,7 +161,7 @@ def train(trainloader,
             logger.info(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
-    meter.save(args.savepath)
+    meter.save(args.save_path)
 
 
 
@@ -186,7 +186,7 @@ def validate(validloader, model, criterion, args, tasks, meter, device):
                 logger.info(f'>> Validation: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
-    meter.save(args.savepath)
+    meter.save(args.save_path)
 
 
 def main():
