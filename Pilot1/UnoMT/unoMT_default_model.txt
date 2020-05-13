@@ -91,6 +91,5 @@ rng_seed=0
 save_path='save/unoMT'
 
 [Monitor_Params]
-solr_root=''
 timeout=3600
 
