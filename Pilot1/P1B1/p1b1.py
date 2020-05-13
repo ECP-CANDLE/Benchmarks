@@ -84,7 +84,7 @@ required = [
     'initialization',
     'learning_rate',
     'loss',
-    'noise_factor',
+    #'noise_factor',
     'optimizer',
     'rng_seed',
     'model',

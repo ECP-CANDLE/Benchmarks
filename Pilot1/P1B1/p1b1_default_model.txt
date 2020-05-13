@@ -14,7 +14,6 @@ learning_rate=None
 base_lr=None
 scaling='minmax'
 model='ae'
-noise_factor=0
 val_split=0.1
 epsilon_std=1.0
 rng_seed=2017
