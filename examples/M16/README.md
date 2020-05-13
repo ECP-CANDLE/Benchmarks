@@ -10,15 +10,15 @@ And the performance can be evaluated from multiple aspects, such as the predicti
 The data preprocessing methods can generate data partitions to enable flexible cross-validation analysis, normalize and remove batch effects from gene expression data of cancer cells, and generate genomic representations at the gene set level for cancer cells. 
 The feature selection methods can filter features based on missing values and variations, and perform feature decorrelation. 
 Features without much variation might not be useful for prediction and highly-correlated features are not necessary to be all included in the prediction model. 
-We also implement and extend the co-expression extrapolation (COXEN) gene selection method for Pilot 1 project [10], which can select predictive and generalizable genes for predicting drug response in the precision oncology applications. 
+We also implement and extend the co-expression extrapolation (COXEN) gene selection method for Pilot 1 project, which can select predictive and generalizable genes for predicting drug response in the precision oncology applications. 
 
-# General Data Preprocessing Functions
+## General Data Preprocessing Functions
 
 ```generate_cross_validation_partition```
 
 To flexibly generate data partitions for cross-validation analysis, such as partitioning of grouped samples into sets that do not share groups.
 
-# Data Preprocessing Functions Specific to Pilot 1 Applications
+## Data Preprocessing Functions Specific to Pilot 1 Applications
 
 ```quantile_normalizationa```
 
@@ -32,8 +32,31 @@ To perform ComBat analysis [9] on gene expression data to remove batch effects.
 
 To calculate genomic representations at gene set level, such as the average expression values of genes in a pathway and the total number of SNP mutations in a genetic pathway. 
 
+## General Feature Selection Functions
 
-# Feature Selection examples
+```select_features_by_missing_values```
+
+To remove features with (many) missing values.
+
+```select_features_by_variation```
+
+To remove features with no or small variations.
+
+```select_decorrelated_features``` 
+
+To select a subset of features that are not identical or highly correlated with each other.
+
+## Feature (Gene) Selection Functions Specific to Pilot 1 Applications
+
+```coxen_single_drug_gene_selection``` 
+
+To perform co-expression extrapolation (COXEN) analysis that selects predictive and generalizable genes for predicting the response of tumor cells to a specific drug.
+
+```coxen_multi_drug_gene_selection```
+
+To extend the COXEN approach for selecting genes to predict the response of tumor cells to multiple drugs in precision oncology applications.
+
+# Running the example
 
 The code demonstrates feature selection methods that CANDLE provides.
 
