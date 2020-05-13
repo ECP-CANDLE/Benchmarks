@@ -1,6 +1,8 @@
 # Feature Selection examples
 
-The code is for demonstrate feature selection methods that CANDLE provides.
+The code demonstrates feature selection methods that CANDLE provides.
+
+It can be run by executing '''python M16_test.py'''
 
 ## Download data
 Code
