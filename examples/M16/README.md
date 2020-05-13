@@ -1,3 +1,38 @@
+# Background
+
+Data preprocessing is an important front-end step in data analysis that prepares data for subsequent analysis. 
+It not only enables the subsequent analysis by processing and transforming data, but also influences the quality of subsequent analysis sometimes significantly. 
+Several common examples of data preprocessing are data standardization and normalization to remove/suppress noise, removal of batch effect to combine datasets for larger studies, and generation of new representations of data to enable new analyses. 
+Feature selection can be viewed as a kind of data preprocessing for prediction analysis. 
+Its goal is to select a (minimum) subset of available features, based on which prediction models with a good performance can be constructed. 
+And the performance can be evaluated from multiple aspects, such as the prediction accuracy and the speed of constructing the prediction model.
+
+The data preprocessing methods can generate data partitions to enable flexible cross-validation analysis, normalize and remove batch effects from gene expression data of cancer cells, and generate genomic representations at the gene set level for cancer cells. 
+The feature selection methods can filter features based on missing values and variations, and perform feature decorrelation. 
+Features without much variation might not be useful for prediction and highly-correlated features are not necessary to be all included in the prediction model. 
+We also implement and extend the co-expression extrapolation (COXEN) gene selection method for Pilot 1 project [10], which can select predictive and generalizable genes for predicting drug response in the precision oncology applications. 
+
+# General Data Preprocessing Functions
+
+```generate_cross_validation_partition```
+
+To flexibly generate data partitions for cross-validation analysis, such as partitioning of grouped samples into sets that do not share groups.
+
+# Data Preprocessing Functions Specific to Pilot 1 Applications
+
+```quantile_normalizationa```
+
+To perform quantile normalization of genomic data [8] with tolerance of missing values.
+
+```combat_batch_effect_removal```
+
+To perform ComBat analysis [9] on gene expression data to remove batch effects.
+
+```generate_gene_set_data```
+
+To calculate genomic representations at gene set level, such as the average expression values of genes in a pathway and the total number of SNP mutations in a genetic pathway. 
+
+
 # Feature Selection examples
 
 The code demonstrates feature selection methods that CANDLE provides.
@@ -184,7 +219,7 @@ Using TensorFlow backend.
 ...
 found 2 batches
 found 0 numerical covariates...
-found 0 categorical variables:	
+found 0 categorical variables:
 Standardizing Data across genes.
 Fitting L/S model and finding priors
 Finding parametric adjustments
