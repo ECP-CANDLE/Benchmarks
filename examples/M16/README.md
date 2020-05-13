@@ -22,29 +22,29 @@ To flexibly generate data partitions for cross-validation analysis, such as part
 
 ```quantile_normalizationa```
 
-To perform quantile normalization of genomic data [8] with tolerance of missing values.
+To perform quantile normalization of genomic data [8] with tolerance of missing values. [[see example code]](#quantile-normalization-of-gene-expression-data)
 
 ```combat_batch_effect_removal```
 
-To perform ComBat analysis [9] on gene expression data to remove batch effects.
+To perform ComBat analysis [9] on gene expression data to remove batch effects. [[see example code]](#combat-batch-normalization-on-gene-expression-data)
 
 ```generate_gene_set_data```
 
-To calculate genomic representations at gene set level, such as the average expression values of genes in a pathway and the total number of SNP mutations in a genetic pathway. 
+To calculate genomic representations at gene set level, such as the average expression values of genes in a pathway and the total number of SNP mutations in a genetic pathway. [[see example code]](#generate-gene-set-level-data)
 
 ## General Feature Selection Functions
 
 ```select_features_by_missing_values```
 
-To remove features with (many) missing values.
+To remove features with (many) missing values. [[see example code]](#select-features-based-on-missing-values)
 
 ```select_features_by_variation```
 
-To remove features with no or small variations.
+To remove features with no or small variations. [[see example code]](#select-features-based-on-variation)
 
 ```select_decorrelated_features``` 
 
-To select a subset of features that are not identical or highly correlated with each other.
+To select a subset of features that are not identical or highly correlated with each other. [[see example code]](#select-decorrelated-features)
 
 ## Feature (Gene) Selection Functions Specific to Pilot 1 Applications
 
