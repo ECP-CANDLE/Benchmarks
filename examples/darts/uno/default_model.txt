@@ -10,6 +10,6 @@ momentum = 0.9
 weight_decay = 3e-4
 grad_clip = 5 
 batch_size = 100
-epochs = 1
+epochs = 10
 seed = 13
 
