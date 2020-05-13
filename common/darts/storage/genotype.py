@@ -23,6 +23,7 @@ class GenotypeStorage:
             filename: name of the save file
         """
         genotype = self._replace_range(genotype)
+        os.makedirs(self.root, exist_ok=True)
         path = os.path.join(self.root, filename)
         with open(path, 'w') as outfile:
             json.dump(genotype, outfile)
