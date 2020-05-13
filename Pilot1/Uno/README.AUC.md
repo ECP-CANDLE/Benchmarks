@@ -72,7 +72,6 @@ Params:
  'scaling': 'std',
  'shuffle': False,
  'single': True,
- 'solr_root': '',
  'tb': False,
  'tb_prefix': 'tb',
  'test_sources': ['train'],

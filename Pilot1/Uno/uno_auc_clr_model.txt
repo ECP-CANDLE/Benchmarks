@@ -38,9 +38,9 @@ cp=True
 save_path='save/uno'
 
 single=True
-timeout=-1
 
 [Monitor_Params]
+timeout=-1
 
 [CLR_Params]
 clr_flag = True

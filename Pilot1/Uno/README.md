@@ -7,7 +7,7 @@ Uno can be trained with a subset of dose response data sources. Here is an comma
 uno_baseline_keras2.py --train_sources all --cache cache/all --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True
 Using TensorFlow backend.
 Params: {'activation': 'relu', 'batch_size': 32, 'dense': [1000, 1000, 1000], 'dense_feature_layers': [1000, 1000, 1000], 'drop': 0, 'epochs': 10, 'learning_rate': None, 'loss':
-'mse', 'optimizer': 'adam', 'residual': False, 'rng_seed': 2018, 'save': 'save/uno', 'scaling': 'std', 'feature_subsample': 0, 'validation_split': 0.2, 'solr_root': '', 'timeout'
+'mse', 'optimizer': 'adam', 'residual': False, 'rng_seed': 2018, 'save': 'save/uno', 'scaling': 'std', 'feature_subsample': 0, 'validation_split': 0.2, 'timeout'
 : -1, 'train_sources': ['all'], 'test_sources': ['train'], 'cell_types': None, 'cell_features': ['rnaseq'], 'drug_features': ['descriptors', 'fingerprints'], 'cv': 1, 'max_val_lo
 ss': 1.0, 'base_lr': None, 'reduce_lr': False, 'warmup_lr': False, 'batch_normalization': False, 'no_gen': False, 'config_file': '/raid/fangfang/Benchmarks/Pilot1/Uno/uno_default
 _model.txt', 'verbose': False, 'logfile': None, 'train_bool': True, 'shuffle': True, 'alpha_dropout': False, 'gpus': [], 'experiment_id': 'EXP.000', 'run_id': 'RUN.000', 'by_cell

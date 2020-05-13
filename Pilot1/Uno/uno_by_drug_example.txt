@@ -36,5 +36,4 @@ by_drug='paclitaxel'
 cache='cache.pac'
 
 [Monitor_Params]
-solr_root=''
 timeout=3600

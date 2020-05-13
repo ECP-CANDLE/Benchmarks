@@ -29,5 +29,4 @@ no_gen=False
 verbose = False
 
 [Monitor_Params]
-solr_root=''
 timeout=3600
