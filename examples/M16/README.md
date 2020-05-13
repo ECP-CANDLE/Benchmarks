@@ -10,7 +10,7 @@ And the performance can be evaluated from multiple aspects, such as the predicti
 The data preprocessing methods can generate data partitions to enable flexible cross-validation analysis, normalize and remove batch effects from gene expression data of cancer cells, and generate genomic representations at the gene set level for cancer cells. 
 The feature selection methods can filter features based on missing values and variations, and perform feature decorrelation. 
 Features without much variation might not be useful for prediction and highly-correlated features are not necessary to be all included in the prediction model. 
-We also implement and extend the co-expression extrapolation (COXEN) gene selection method for Pilot 1 project, which can select predictive and generalizable genes for predicting drug response in the precision oncology applications. 
+We also implement and extend the co-expression extrapolation (COXEN) gene selection method for Pilot 1 project [3], which can select predictive and generalizable genes for predicting drug response in the precision oncology applications. 
 
 ## General Data Preprocessing Functions
 
@@ -22,11 +22,11 @@ To flexibly generate data partitions for cross-validation analysis, such as part
 
 ```quantile_normalizationa```
 
-To perform quantile normalization of genomic data [8] with tolerance of missing values.
+To perform quantile normalization of genomic data [1] with tolerance of missing values.
 
 ```combat_batch_effect_removal```
 
-To perform ComBat analysis [9] on gene expression data to remove batch effects.
+To perform ComBat analysis [2] on gene expression data to remove batch effects.
 
 ```generate_gene_set_data```
 
@@ -50,7 +50,7 @@ To select a subset of features that are not identical or highly correlated with 
 
 ```coxen_single_drug_gene_selection``` 
 
-To perform co-expression extrapolation (COXEN) analysis that selects predictive and generalizable genes for predicting the response of tumor cells to a specific drug.
+To perform co-expression extrapolation (COXEN) analysis [3] that selects predictive and generalizable genes for predicting the response of tumor cells to a specific drug.
 
 ```coxen_multi_drug_gene_selection```
 
@@ -430,3 +430,12 @@ Average third quartile of CCLE cell lines is 4.83
 Average median of CCLE cell lines is 2.72
 Average first quartile of CCLE cell lines is 0.13
 ```
+
+# References
+
+1. Bolstad BM, Irizarry RA, Astrand M, et al. \(2003\) A comparison of normalization methods for high density oligonucleotide array data based on variance and bias. Bioinformatics. 2003 Jan 22;19\(2\):185-93.  
+
+2. Johnson WE, Rabinovic A, and Li C \(2007\) Adjusting batch effects in microarray expression data using Empirical Bayes methods. Biostatistics 8\(1\):118-127.
+
+3. Lee JK, Havaleshko DM, Cho H, et al. \(2007\) A strategy for predicting the chemosensitivity of human cancers and its application to drug discovery. Proc Natl Acad Sci USA, 2007 Aug 7; 104\(32\):13086-91. Epub 2007 Jul 31
+
