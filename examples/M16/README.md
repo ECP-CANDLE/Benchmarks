@@ -433,9 +433,9 @@ Average first quartile of CCLE cell lines is 0.13
 
 # References
 
-1. Bolstad BM, Irizarry RA, Astrand M, et al. \(2003\) A comparison of normalization methods for high density oligonucleotide array data based on variance and bias. Bioinformatics. 2003 Jan 22;19\(2\):185-93.  
+1. Bolstad BM, Irizarry RA, Astrand M, et al. \(2003\) *A comparison of normalization methods for high density oligonucleotide array data based on variance and bias* Bioinformatics. 2003 Jan 22;19\(2\):185-93.  
 
-2. Johnson WE, Rabinovic A, and Li C \(2007\) Adjusting batch effects in microarray expression data using Empirical Bayes methods. Biostatistics 8\(1\):118-127.
+2. Johnson WE, Rabinovic A, and Li C \(2007\) *Adjusting batch effects in microarray expression data using Empirical Bayes methods* Biostatistics 8\(1\):118-127.
 
-3. Lee JK, Havaleshko DM, Cho H, et al. \(2007\) A strategy for predicting the chemosensitivity of human cancers and its application to drug discovery. Proc Natl Acad Sci USA, 2007 Aug 7; 104\(32\):13086-91. Epub 2007 Jul 31
+3. Lee JK, Havaleshko DM, Cho H, et al. \(2007\) *A strategy for predicting the chemosensitivity of human cancers and its application to drug discovery* Proc Natl Acad Sci USA, 2007 Aug 7; 104\(32\):13086-91. Epub 2007 Jul 31
 
