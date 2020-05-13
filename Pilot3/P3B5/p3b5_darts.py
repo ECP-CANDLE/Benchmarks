@@ -69,7 +69,7 @@ def train(trainloader, validloader, model, architecture, criterion, optimizer, l
             print(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
-    meter.save(args.savepath)
+    meter.save(args.save_path)
 
 
 def infer(validloader, model, criterion, args, tasks, device, meter):
@@ -95,7 +95,7 @@ def infer(validloader, model, criterion, args, tasks, device, meter):
                 print(f'>> Validation: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
-    meter.save(args.savepath)
+    meter.save(args.save_path)
 
     return meter.loss_meter.avg
 
