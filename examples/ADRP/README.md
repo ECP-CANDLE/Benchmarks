@@ -34,7 +34,6 @@ Configuration file:  /home/jain/CANDLE/fork/Benchmarks/examples/ADRP/adrp_defaul
  'rng_seed': 2017,
  'save_path': './001/',
  'scaling': 'minmax',
- 'solr_root': '',
  'timeout': 3600,
  'use_cp': False,
  'validation_split': 0.1}
@@ -71,7 +70,6 @@ Params:
  'save_path': './001/',
  'scaling': 'minmax',
  'shuffle': False,
- 'solr_root': '',
  'timeout': 0,
  'train_bool': True,
  'tsne': False,
@@ -82,7 +80,7 @@ Params:
  'warmup_lr': False}
 WARNING:tensorflow:From /home/jain/CANDLE/fork/Benchmarks/common/keras_utils.py:51: The name tf.set_random_seed is deprecated. Please use tf.compat.v1.set_random_seed instead.
 
-Params: {'data_url': 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/', 'in': 'adrp-p1.csv', 'model_name': 'adrp', 'dense': [250, 125, 60, 30], 'batch_size': 32, 'epochs': 1, 'activation': 'relu', 'loss': 'mean_squared_error', 'optimizer': 'sgd', 'drop': 0.1, 'learning_rate': 0.0001, 'momentum': 0.9, 'scaling': 'minmax', 'validation_split': 0.1, 'epsilon_std': 1.0, 'rng_seed': 2017, 'initialization': 'glorot_uniform', 'latent_dim': 2, 'batch_normalization': False, 'save_path': './001/', 'use_cp': False, 'early_stop': True, 'reduce_lr': True, 'feature_subsample': 0, 'nb_classes': 2, 'solr_root': '', 'timeout': 3600, 'verbose': None, 'logfile': None, 'train_bool': True, 'experiment_id': 'EXP000', 'run_id': 'RUN000', 'shuffle': False, 'gpus': [], 'profiling': False, 'residual': False, 'warmup_lr': False, 'use_tb': False, 'tsne': False, 'datatype': <class 'numpy.float32'>, 'output_dir': '/home/jain/CANDLE/fork/Benchmarks/examples/ADRP/Output/EXP000/RUN000'}
+Params: {'data_url': 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/', 'in': 'adrp-p1.csv', 'model_name': 'adrp', 'dense': [250, 125, 60, 30], 'batch_size': 32, 'epochs': 1, 'activation': 'relu', 'loss': 'mean_squared_error', 'optimizer': 'sgd', 'drop': 0.1, 'learning_rate': 0.0001, 'momentum': 0.9, 'scaling': 'minmax', 'validation_split': 0.1, 'epsilon_std': 1.0, 'rng_seed': 2017, 'initialization': 'glorot_uniform', 'latent_dim': 2, 'batch_normalization': False, 'save_path': './001/', 'use_cp': False, 'early_stop': True, 'reduce_lr': True, 'feature_subsample': 0, 'nb_classes': 2, 'timeout': 3600, 'verbose': None, 'logfile': None, 'train_bool': True, 'experiment_id': 'EXP000', 'run_id': 'RUN000', 'shuffle': False, 'gpus': [], 'profiling': False, 'residual': False, 'warmup_lr': False, 'use_tb': False, 'tsne': False, 'datatype': <class 'numpy.float32'>, 'output_dir': '/home/jain/CANDLE/fork/Benchmarks/examples/ADRP/Output/EXP000/RUN000'}
 processing csv in file adrp-p1.csv
 PL= 1614
 X_train shape: (27447, 1613)
