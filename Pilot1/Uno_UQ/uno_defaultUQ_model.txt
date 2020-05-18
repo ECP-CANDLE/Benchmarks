@@ -36,5 +36,4 @@ use_landmark_genes=True
 partition_by='cell'
 
 [Monitor_Params]
-solr_root=''
 timeout=3600
