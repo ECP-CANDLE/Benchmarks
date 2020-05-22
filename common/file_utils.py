@@ -9,6 +9,8 @@ import hashlib
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import URLError, HTTPError
 
+import wget
+import requests
 from generic_utils import Progbar
 
 
@@ -90,7 +92,7 @@ def get_file(fname, origin, untar=False,
     fpath = os.path.join(datadir, fname)
 
     download = False
-    if os.path.exists(fpath):
+    if os.path.exists(fpath) or os.path.exists(untar_fpath):
         # file found; verify integrity if a hash was provided
         if md5_hash is not None:
             if not validate_file(fpath, md5_hash):
@@ -101,10 +103,12 @@ def get_file(fname, origin, untar=False,
         download = True
 
     # fix ftp protocol if needed
+    '''
     if origin.startswith('ftp://'):
         new_url = origin.replace('ftp://','http://')
         origin = new_url
     print('Origin = ', origin)
+    '''
 
     if download:
         print('Downloading data from', origin)
@@ -122,6 +126,7 @@ def get_file(fname, origin, untar=False,
         try:
             try:
                 urlretrieve(origin, fpath, dl_progress)
+                #fpath = wget.download(origin)
             except URLError as e:
                 raise Exception(error_msg.format(origin, e.errno, e.reason))
             except HTTPError as e:
