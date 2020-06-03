@@ -30,7 +30,7 @@ verbose=False
 
 
 preprocess_rnaseq='source_scale'
-gpus=1
+gpus=[0]
 use_landmark_genes=True
 no_feature_source=True
 no_response_source=True
