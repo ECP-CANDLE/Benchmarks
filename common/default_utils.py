@@ -667,8 +667,10 @@ def get_common_parser(parser):
 
 
     # Backend configuration
-    parser.add_argument("--gpus", action="store", nargs='*',
-                        default=[], type=int,
+    parser.add_argument("--gpus", nargs="*",
+                        default=argparse.SUPPRESS,
+                        #default=[0],
+                        type=int,
                         help="set IDs of GPUs to use")
 
     # profiling flags
@@ -679,26 +681,26 @@ def get_common_parser(parser):
     # cyclic learning rate
     parser.add_argument("--clr_flag", 
                         default=argparse.SUPPRESS,
-            #default=None, 
+                        #default=None, 
                         type=str2bool, 
-            help="CLR flag (boolean)")
+                        help="CLR flag (boolean)")
     parser.add_argument("--clr_mode", 
                         default=argparse.SUPPRESS,
-            #default=None, 
+                        #default=None, 
                         type=str, choices=['trng1', 'trng2', 'exp'], 
-            help="CLR mode (default: trng1)")
+                        help="CLR mode (default: trng1)")
     parser.add_argument("--clr_base_lr", type=float, 
                         default=argparse.SUPPRESS,
-            #default=1e-4, 
-            help="Base lr for cycle lr.")
+                        #default=1e-4, 
+                        help="Base lr for cycle lr.")
     parser.add_argument("--clr_max_lr", type=float, 
                         default=argparse.SUPPRESS,
-            #default=1e-3, 
-            help="Max lr for cycle lr.")
+                        #default=1e-3, 
+                        help="Max lr for cycle lr.")
     parser.add_argument("--clr_gamma", type=float, 
                         default=argparse.SUPPRESS,
-            #default=0.999994, 
-            help="Gamma parameter for learning cycle LR.")
+                        #default=0.999994, 
+                        help="Gamma parameter for learning cycle LR.")
 
     return parser
 
@@ -949,7 +951,6 @@ class Benchmark:
             for k,v in config.items(sec):
                 if not k in fileParams:
                     fileParams[k] = eval(v)
-
         fileParams = self.format_benchmark_config_arguments(fileParams)
         #pprint(fileParams)
 
