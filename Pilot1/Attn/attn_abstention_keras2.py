@@ -309,7 +309,7 @@ def run(params):
     xlabel='Epochs'
     ylabel='Abstention Weight mu'
     title='mu Evolution'
-    attnviz.plot_array(abstention_cbk.muvalues, xlabel, ylabel, title, fname)
+    candle.plot_array(abstention_cbk.muvalues, xlabel, ylabel, title, fname)
 
     # Evaluate model
     score = model.evaluate(X_test, Y_test, verbose=0)

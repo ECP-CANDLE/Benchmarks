@@ -7,6 +7,7 @@ from keras.callbacks import Callback
 
 from keras.models import Model
 from keras.layers import Dense
+from keras import layers
 
 from keras.utils import np_utils
 
@@ -224,7 +225,7 @@ class AbstentionAdapt_Callback(Callback):
         #print('epoch: %d, mu: %f' % (epoch, new_mu_val))
 
 
-def modify_labels(numclasses_out, ytrain, ytest, yval):
+def modify_labels(numclasses_out, ytrain, ytest, yval=None):
     """ This function generates a categorical representation with a class added for indicating abstention.
     
     Parameters
@@ -241,15 +242,18 @@ def modify_labels(numclasses_out, ytrain, ytest, yval):
 
     classestrain = np.max(ytrain) + 1
     classestest = np.max(ytest) + 1
-    classesval = np.max(yval) + 1
+    if yval is not None:
+        classesval = np.max(yval) + 1
 
     assert( classestrain == classestest )
-    assert( classesval == classestest )
+    if yval is not None:
+        assert( classesval == classestest )
     assert( (classestrain+1) == numclasses_out ) # In this case only one other slot for abstention is created
 
     labels_train = np_utils.to_categorical( ytrain, numclasses_out )
     labels_test = np_utils.to_categorical( ytest, numclasses_out )
-    labels_val = np_utils.to_categorical( yval, numclasses_out )
+    if yval is not None:
+        labels_val = np_utils.to_categorical( yval, numclasses_out )
 
     # For sanity check
     mask_vec = np.zeros(labels_train.shape)
@@ -267,7 +271,10 @@ def modify_labels(numclasses_out, ytrain, ytest, yval):
             if sanity_check[i,j] == 1:
                 print('Problem at ',i,j)
 
-    return labels_train, labels_test, labels_val
+    if yval is not None:
+        return labels_train, labels_test, labels_val
+        
+    return labels_train, labels_test
 
 ###################################################################
 

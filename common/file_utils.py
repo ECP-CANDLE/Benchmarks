@@ -88,11 +88,13 @@ def get_file(fname, origin, untar=False,
         fnamesplit = fname.split('.tgz')
         untar_fpath = os.path.join(datadir, fnamesplit[0])
         untar = True
+    else:
+        untar_fpath = None
 
     fpath = os.path.join(datadir, fname)
 
     download = False
-    if os.path.exists(fpath) or os.path.exists(untar_fpath):
+    if os.path.exists(fpath) or (untar_fpath is not None and os.path.exists(untar_fpath)):
         # file found; verify integrity if a hash was provided
         if md5_hash is not None:
             if not validate_file(fpath, md5_hash):

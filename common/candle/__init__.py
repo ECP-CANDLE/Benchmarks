@@ -30,6 +30,7 @@ from generic_utils import Progbar
 # import from viz_utils
 from viz_utils import plot_history
 from viz_utils import plot_scatter
+from viz_utils import plot_array
 from viz_utils import plot_density_observed_vs_predicted
 from viz_utils import plot_2d_density_sigma_vs_error
 from viz_utils import plot_histogram_error_per_sigma
