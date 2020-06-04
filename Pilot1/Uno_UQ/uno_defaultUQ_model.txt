@@ -34,6 +34,7 @@ no_feature_source=True
 no_response_source=True
 use_landmark_genes=True
 partition_by='cell'
+gpus=[0]
 
 [Monitor_Params]
 timeout=3600
