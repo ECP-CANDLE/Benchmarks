@@ -6,6 +6,7 @@ dense=[250, 125, 60, 30]
 batch_size=32
 epochs=400
 activation='relu'
+out_activation='relu'
 loss='mean_squared_error'
 optimizer='sgd'
 dropout=0.1
