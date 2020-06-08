@@ -79,6 +79,7 @@ additional_definitions = [
 
 required = [
     "activation",
+    "out_activation",
     "batch_size",
     "dense",
     "dropout",
@@ -117,6 +118,7 @@ def extension_from_parameters(params, framework=""):
         if n:
             ext += ".D{}={}".format(i + 1, n)
     ext += ".A={}".format(params["activation"])
+    ext += ".OA={}".format(params["out_activation"])
     ext += ".B={}".format(params["batch_size"])
     ext += ".E={}".format(params["epochs"])
     ext += ".L={}".format(params["latent_dim"])

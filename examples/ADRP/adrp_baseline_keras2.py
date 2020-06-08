@@ -237,6 +237,7 @@ def run(params):
     initializer_bias = candle.build_initializer("constant", keras_defaults, 0.0)
 
     activation = params["activation"]
+    out_activation = params["out_activation"]
     # TODO: set output_dim
     output_dim = 1
 
@@ -267,14 +268,14 @@ def run(params):
                 x = Dropout(params["dropout"])(x)
         output = Dense(
             output_dim,
-            activation=activation,
+            activation=out_activation,
             kernel_initializer=initializer_weights,
             bias_initializer=initializer_bias,
         )(x)
     else:
         output = Dense(
             output_dim,
-            activation=activation,
+            activation=out_activation,
             kernel_initializer=initializer_weights,
             bias_initializer=initializer_bias,
         )(inputs)
