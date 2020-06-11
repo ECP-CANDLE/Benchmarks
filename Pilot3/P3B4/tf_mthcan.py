@@ -13,7 +13,7 @@ class History(object):
 class hcan(object):
 
     def __init__(self,embedding_matrix,num_classes,max_sents,max_words,
-                 attention_size=512,dropout_rate=0.9,activation=tf.nn.elu,lr=0.0001, 
+                 attention_size=512,dropout_rate=0.9,activation=tf.nn.elu,lr=0.0001,
                  optimizer= 'adam', embed_train = True):
 
         tf.compat.v1.reset_default_graph()
@@ -36,11 +36,11 @@ class hcan(object):
 
         words_per_sent = tf.reduce_sum(tf.sign(self.doc_input),2) # batch X sents
         max_words_ = tf.reduce_max(words_per_sent)
-        sents_per_doc = tf.reduce_sum(tf.sign(words_per_sent),1) # batch 
+        sents_per_doc = tf.reduce_sum(tf.sign(words_per_sent),1) # batch
         max_sents_ = tf.reduce_max(sents_per_doc)
         doc_input_reduced = self.doc_input[:,:max_sents_,:max_words_] #clip
 
-        doc_input_reshape = tf.reshape(doc_input_reduced,(-1,max_words_)) # batch*sents x words 
+        doc_input_reshape = tf.reshape(doc_input_reduced,(-1,max_words_)) # batch*sents x words
 
         #word embeddings
         word_embeds = tf.gather(tf.compat.v1.get_variable('embeddings',initializer=self.embedding_matrix,
@@ -90,7 +90,7 @@ class hcan(object):
         outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
         outputs = tf.matmul(outputs,V) # batch x sents x attention_size
 
-        #sent target attention       
+        #sent target attention
         Q = tf.compat.v1.get_variable('sent_Q',(1,1,self.attention_size),
             tf.float32,tf.orthogonal_initializer())
         Q = tf.tile(Q,[batch_size,1,1])
@@ -120,15 +120,17 @@ class hcan(object):
             self.labels.append(label)
             loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits[i],labels=label))
             self.loss += loss/self.num_tasks
-        # self.optimizer = tf.compat.v1.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
+
         if optimizer == 'adam':
-             self.optimizer = tf.compat.v1.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
+            self.optimizer = tf.compat.v1.train.AdamOptimizer(lr,0.9,0.99)
         elif optimizer == 'sgd':
-             self.optimizer = tf.compat.v1.train.GradientDescentOptimizer( lr ).minimize( self.loss )
+            self.optimizer = tf.compat.v1.train.GradientDescentOptimizer( lr )
         elif optimizer == 'adadelta':
-             self.optimizer = tf.compat.v1.train.AdadeltaOptimizer( learning_rate= lr ).minimize( self.loss )
+            self.optimizer = tf.compat.v1.train.AdadeltaOptimizer( learning_rate= lr )
         else:
-             self.optimizer = tf.compat.v1.train.RMSPropOptimizer( lr ).minimize( self.loss )
+            self.optimizer = tf.compat.v1.train.RMSPropOptimizer( lr )
+        self.optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(self.optimizer, loss_scale='dynamic')
+        self.optimizer = self.optimizer.minimize(self.loss)
 
         #init op
         config = tf.compat.v1.ConfigProto()
