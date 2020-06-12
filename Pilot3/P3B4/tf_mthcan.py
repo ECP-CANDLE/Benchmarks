@@ -129,7 +129,11 @@ class hcan(object):
             self.optimizer = tf.compat.v1.train.AdadeltaOptimizer( learning_rate= lr )
         else:
             self.optimizer = tf.compat.v1.train.RMSPropOptimizer( lr )
-        self.optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(self.optimizer, loss_scale='dynamic')
+
+        tf_version = tf.VERSION
+        tf_version_split = tf_version.split('.')
+        if(int(tf_version_split[0]) == 1 and int(tf_version_split[1]) > 13):
+            self.optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(self.optimizer, loss_scale='dynamic')
         self.optimizer = self.optimizer.minimize(self.loss)
 
         #init op
