@@ -14,12 +14,22 @@ sys.path.append(lib_path2)
 
 import candle
 
-
+additional_definitions=[
+{'name':'attention_size',
+    'action':'store',
+    'type':int},
+{'name':'embed_train',
+    'action':'store',
+    'type':candle.str2bool},
+{'name':'wv_len',
+    'action':'store',
+    'type':int}
+]
 
 required = [
     'learning_rate', 'batch_size', 'epochs', 'dropout', \
     'optimizer', 'wv_len', \
-    'attention_size']
+    'attention_size', 'embed_train']
 
 
 
@@ -34,8 +44,8 @@ class BenchmarkP3B3(candle.Benchmark):
 
         if required is not None:
             self.required = set(required)
-        # if additional_definitions is not None:
-            # self.additional_definitions = additional_definitions
+        if additional_definitions is not None:
+            self.additional_definitions = additional_definitions
 
 
 

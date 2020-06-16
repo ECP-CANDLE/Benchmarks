@@ -1,0 +1,50 @@
+[Global_Params]
+train_sources=['CCLE']
+test_sources=['train']
+cell_types=None
+cell_features=['rnaseq']
+drug_features=['descriptors']
+dense=[1000, 1000, 1000, 1000, 1000]
+dense_feature_layers=[1000, 1000, 1000]
+activation='relu'
+loss='mse'
+optimizer='adamax'
+scaling='std'
+dropout=.1
+epochs=50
+batch_size=32
+val_split=0.2
+cv=1
+max_val_loss=1.0
+learning_rate=0.0001
+base_lr=None
+agg_dose='AUC'
+residual=False
+reduce_lr=False
+warmup_lr=False
+batch_normalization=False
+feature_subsample=0
+rng_seed=2018
+no_gen=False
+verbose=False
+
+
+preprocess_rnaseq='source_scale'
+gpus=[0]
+use_landmark_genes=True
+no_feature_source=True
+no_response_source=True
+cp=True
+save_path='save/uno'
+
+single=True
+
+[Monitor_Params]
+timeout=-1
+
+[CLR_Params]
+clr_flag = True
+clr_mode = 'trng1'
+clr_base_lr = 0.001
+clr_max_lr = 0.01
+clr_gamma = 0.999

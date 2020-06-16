@@ -18,7 +18,10 @@ import pandas as pd
 
 from itertools import cycle, islice
 
-from sklearn.preprocessing import Imputer
+try:
+    from sklearn.impute import SimpleImputer as Imputer
+except ImportError:
+    from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
@@ -104,7 +107,7 @@ required = [
     'batch_normalization',
     'category_cutoffs',
     'cell_features',
-    'drop',
+    'dropout',
     'drug_features',
     'epochs',
     'feature_subsample',
@@ -119,7 +122,7 @@ required = [
     'scaling',
     'subsample',
     'test_cell_split',
-    'validation_split',
+    'val_split',
     'cell_noise_sigma'
     ]
 
@@ -193,7 +196,7 @@ required = [
 #    fileParams['batch_normalization']=eval(config.get(section[0],'batch_normalization'))
 #    fileParams['category_cutoffs']=eval(config.get(section[0],'category_cutoffs'))
 #    fileParams['cell_features']=eval(config.get(section[0],'cell_features'))
-#    fileParams['drop']=eval(config.get(section[0],'drop'))
+#    fileParams['dropout']=eval(config.get(section[0],'dropout'))
 #    fileParams['drug_features']=eval(config.get(section[0],'drug_features'))
 #    fileParams['epochs']=eval(config.get(section[0],'epochs'))
 #    fileParams['feature_subsample']=eval(config.get(section[0],'feature_subsample'))
@@ -208,7 +211,7 @@ required = [
 #    fileParams['scaling']=eval(config.get(section[0],'scaling'))
 #    fileParams['subsample']=eval(config.get(section[0],'subsample'))
 #    fileParams['test_cell_split']=eval(config.get(section[0],'test_cell_split'))
-#    fileParams['validation_split']=eval(config.get(section[0],'validation_split'))
+#    fileParams['val_split']=eval(config.get(section[0],'val_split'))
 #    fileParams['cell_noise_sigma']=eval(config.get(section[0],'cell_noise_sigma'))
 #
 #    # parse the remaining values
@@ -241,7 +244,7 @@ def extension_from_parameters(params, framework):
     ext = framework
     ext += '.A={}'.format(params['activation'])
     ext += '.B={}'.format(params['batch_size'])
-    ext += '.D={}'.format(params['drop'])
+    ext += '.D={}'.format(params['dropout'])
     ext += '.E={}'.format(params['epochs'])
     if params['feature_subsample']:
         ext += '.F={}'.format(params['feature_subsample'])
@@ -318,7 +321,8 @@ def impute_and_scale(df, scaling='std'):
 
     df = df.dropna(axis=1, how='all')
 
-    imputer = Imputer(strategy='mean', axis=0)
+    #imputer = Imputer(strategy='mean', axis=0)
+    imputer = Imputer(strategy='mean')
     mat = imputer.fit_transform(df)
 
     if scaling is None or scaling.lower() == 'none':

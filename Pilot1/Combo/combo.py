@@ -32,6 +32,10 @@ additional_definitions = [
     'type':candle.str2bool,
     'default':True, #action="store_true",
     'help':"use the 978 landmark genes from LINCS (L1000) as expression features"},
+{'name':'use_combo_score',
+    'type':candle.str2bool,
+    'default':False,
+    'help':"use combination score in place of percent growth (stored in 'GROWTH' column)"},
 {'name':'preprocess_rnaseq',
     'default':'none',
     'choices':['source_scale', 'combat', 'none'],
@@ -86,10 +90,10 @@ additional_definitions = [
 ]
 
 
-required = [ 'activation', 'batch_size', 'dense', 'dense_feature_layers', 'drop',
+required = [ 'activation', 'batch_size', 'dense', 'dense_feature_layers', 'dropout',
              'epochs', 'learning_rate', 'loss', 'optimizer', 'residual', 'rng_seed',
-             'save_path', 'scaling', 'feature_subsample', 'validation_split',
-            'solr_root', 'timeout'
+             'save_path', 'scaling', 'feature_subsample', 'val_split',
+             'timeout'
 	    ]
 
 class BenchmarkCombo(candle.Benchmark):

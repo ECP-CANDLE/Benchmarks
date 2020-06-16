@@ -261,7 +261,7 @@ class UnoMTModel(object):
                                 resp_num_layers_per_block=args.resp_num_layers_per_block,
                                 resp_num_blocks=args.resp_num_blocks,
                                 resp_num_layers=args.resp_num_layers,
-                                resp_dropout=args.drop,
+                                resp_dropout=args.dropout,
 
                                 resp_activation=args.resp_activation).to(device)
 
@@ -372,7 +372,7 @@ class UnoMTModel(object):
 
     def update_dropout(self, dropout_rate):
       
-        self.args.drop = dropout_rate
+        self.args.dropout = dropout_rate
   
         # Regressor for drug response
         self.resp_net = RespNet(
@@ -386,7 +386,7 @@ class UnoMTModel(object):
                                 resp_num_layers_per_block=self.args.resp_num_layers_per_block,
                                 resp_num_blocks=self.args.resp_num_blocks,
                                 resp_num_layers=self.args.resp_num_layers,
-                                resp_dropout=self.args.drop,
+                                resp_dropout=self.args.dropout,
 
 
                                 resp_activation=self.args.resp_activation).to(self.device)
@@ -407,7 +407,7 @@ class UnoMTModel(object):
 
 
     def train(self):
-    
+
         args = self.args
         device = self.device
 
@@ -429,7 +429,7 @@ class UnoMTModel(object):
 
             print('=' * 80 + '\nTraining Epoch %3i:' % (epoch + 1))
             epoch_start_time = time.time()
-            
+
             self.resp_lr_decay.step(epoch)
             self.cl_clf_lr_decay.step(epoch)
             self.drug_target_lr_decay.step(epoch)
@@ -469,9 +469,9 @@ class UnoMTModel(object):
 
 
             if epoch >= args.resp_val_start_epoch:
-        
+
                 resp_r2 = self.validation(epoch)
-            
+
                 #print('\nValidation Results:')
 
                 # Record the best R2 score (same data source)
@@ -492,7 +492,7 @@ class UnoMTModel(object):
 
 
     def validation(self, epoch):
-    
+
         args = self.args
         device = self.device
 
@@ -504,7 +504,7 @@ class UnoMTModel(object):
                              site_clf_net=self.site_clf_net,
                              type_clf_net=self.type_clf_net,
                              data_loader=self.cl_clf_val_loader, )
-                             
+
         self.val_cl_clf_acc.append([cl_category_acc, cl_site_acc, cl_type_acc])
 
         # Validating drug target classifier
@@ -519,7 +519,7 @@ class UnoMTModel(object):
             valid_drug_qed(device=device,
                             drug_qed_net=self.drug_qed_net,
                             data_loader=self.drug_qed_val_loader)
-                    
+
         self.val_drug_qed_mse.append(drug_qed_mse)
         self.val_drug_qed_mae.append(drug_qed_mae)
         self.val_drug_qed_r2.append(drug_qed_r2)
@@ -536,10 +536,10 @@ class UnoMTModel(object):
         self.val_resp_r2.append(resp_r2)
 
         return resp_r2
-    
+
 
     def print_final_stats(self):
-    
+
         args = self.args
 
         val_cl_clf_acc = np.array(self.val_cl_clf_acc).reshape(-1, 3)

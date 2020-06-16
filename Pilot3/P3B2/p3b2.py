@@ -35,7 +35,7 @@ additional_definitions = [
 ]
 
 required = ['train_data', 'rnn_size', 'epochs', 'n_layers', \
-        'learning_rate', 'drop', 'recurrent_dropout', \
+        'learning_rate', 'dropout', 'recurrent_dropout', \
         'temperature','primetext', 'length']
 
 class BenchmarkP3B2(candle.Benchmark):

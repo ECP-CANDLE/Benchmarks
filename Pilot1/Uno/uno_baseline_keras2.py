@@ -18,10 +18,6 @@ from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, Learni
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from scipy.stats.stats import pearsonr
 
-# For non-interactive plotting
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-
 import uno as benchmark
 import candle
 
@@ -29,7 +25,6 @@ import uno_data
 from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
 
 
-mpl.use('Agg')
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -81,8 +76,8 @@ def extension_from_parameters(args):
     ext += '.DF={}'.format(''.join([x[0] for x in sorted(args.drug_features)]))
     if args.feature_subsample > 0:
         ext += '.FS={}'.format(args.feature_subsample)
-    if args.drop > 0:
-        ext += '.DR={}'.format(args.drop)
+    if args.dropout > 0:
+        ext += '.DR={}'.format(args.dropout)
     if args.warmup_lr:
         ext += '.wu_lr'
     if args.reduce_lr:
@@ -134,20 +129,6 @@ def log_evaluation(metric_outputs, description='Comparing y_true and y_pred:'):
     for metric, value in metric_outputs.items():
         logger.info('  {}: {:.4f}'.format(metric, value))
 
-
-#def plot_history(out, history, metric='loss', title=None):
-#    title = title or 'model {}'.format(metric)
-#    val_metric = 'val_{}'.format(metric)
-#    plt.figure(figsize=(8, 6))
-#    plt.plot(history.history[metric], marker='o')
-#    plt.plot(history.history[val_metric], marker='d')
-#    plt.title(title)
-#    plt.ylabel(metric)
-#    plt.xlabel('epoch')
-#    plt.legend(['train_{}'.format(metric), 'val_{}'.format(metric)], loc='upper center')
-#    png = '{}.plot.{}.png'.format(out, metric)
-#    plt.savefig(png, bbox_inches='tight')
-#
 
 class LoggingCallback(Callback):
     def __init__(self, print_fcn=print):
@@ -201,7 +182,8 @@ def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
     model = Model(x_input, h, name=name)
     return model
 
-class SimpleWeightSaver(Callback):    
+
+class SimpleWeightSaver(Callback):
 
     def __init__(self, fname):
         self.fname = fname
@@ -214,17 +196,23 @@ class SimpleWeightSaver(Callback):
 
     def on_train_end(self, logs={}):
         self.model.save_weights(self.fname)
-    
 
 
 def build_model(loader, args, permanent_dropout=True, silent=False):
     input_models = {}
-    dropout_rate = args.drop
+    dropout_rate = args.dropout
     for fea_type, shape in loader.feature_shapes.items():
         base_type = fea_type.split('.')[0]
         if base_type in ['cell', 'drug']:
+            if args.dense_cell_feature_layers is not None and base_type == 'cell':
+                dense_feature_layers = args.dense_cell_feature_layers
+            elif args.dense_drug_feature_layers is not None and base_type == 'drug':
+                dense_feature_layers = args.dense_drug_feature_layers
+            else:
+                dense_feature_layers = args.dense_feature_layers
+
             box = build_feature_model(input_shape=shape, name=fea_type,
-                                      dense_layers=args.dense_feature_layers,
+                                      dense_layers=dense_feature_layers,
                                       dropout_rate=dropout_rate, permanent_dropout=permanent_dropout)
             if not silent:
                 logger.debug('Feature encoding submodel for %s:', fea_type)
@@ -265,14 +253,14 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
     return Model(inputs, output)
 
 
-def initialize_parameters():
+def initialize_parameters(default_model='uno_default_model.txt'):
 
     # Build benchmark object
-    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, 'uno_default_model.txt', 'keras',
+    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, default_model, 'keras',
                                     prog='uno_baseline', desc='Build neural network based models to predict tumor response to single and paired drugs.')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(unoBmk)
+    gParameters = candle.finalize_parameters(unoBmk)
     # benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
@@ -289,7 +277,7 @@ def run(params):
     ext = extension_from_parameters(args)
     verify_path(args.save_path)
     prefix = args.save_path + ext
-    logfile = args.logfile if args.logfile else prefix+'.log'
+    logfile = args.logfile if args.logfile else prefix + '.log'
     set_up_logger(logfile, args.verbose)
     logger.info('Params: {}'.format(params))
 
@@ -318,10 +306,11 @@ def run(params):
                 test_sources=args.test_sources,
                 embed_feature_source=not args.no_feature_source,
                 encode_response_source=not args.no_response_source,
+                use_exported_data=args.use_exported_data,
                 )
 
     target = args.agg_dose or 'Growth'
-    val_split = args.validation_split
+    val_split = args.val_split
     train_split = 1 - val_split
 
     if args.export_csv:
@@ -366,13 +355,20 @@ def run(params):
                 store.append('y_{}'.format(partition), y.astype({target: 'float32'}), format='table', data_column=True,
                              min_itemsize=config_min_itemsize)
                 logger.info('Generating {} dataset. {} / {}'.format(partition, i, gen.steps))
+
+        # save input_features and feature_shapes from loader
+        store.put('model', pd.DataFrame())
+        store.get_storer('model').attrs.input_features = loader.input_features
+        store.get_storer('model').attrs.feature_shapes = loader.feature_shapes
+
         store.close()
         logger.info('Completed generating {}'.format(fname))
         return
 
-    loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
-                          cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug,
-                          cell_subset_path=args.cell_subset_path, drug_subset_path=args.drug_subset_path)
+    if args.use_exported_data is None:
+        loader.partition_data(cv_folds=args.cv, train_split=train_split, val_split=val_split,
+                              cell_types=args.cell_types, by_cell=args.by_cell, by_drug=args.by_drug,
+                              cell_subset_path=args.cell_subset_path, drug_subset_path=args.drug_subset_path)
 
     model = build_model(loader, args)
     logger.info('Combined model:')
@@ -403,7 +399,7 @@ def run(params):
 
         template_model = build_model(loader, args, silent=True)
         if args.initial_weights:
-            logger.info("Loading weights from {}".format(args.initial_weights))
+            logger.info("Loading initial weights from {}".format(args.initial_weights))
             template_model.load_weights(args.initial_weights)
 
         if len(args.gpus) > 1:
@@ -419,7 +415,6 @@ def run(params):
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
 
-
         model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
 
         # calculate trainable and non-trainable params
@@ -427,14 +422,17 @@ def run(params):
 
         candle_monitor = candle.CandleRemoteMonitor(params=params)
         timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
+        es_monitor = keras.callbacks.EarlyStopping(patience=10, verbose=1)
 
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
         checkpointer = MultiGPUCheckpoint(prefix + cv_ext + '.model.h5', save_best_only=True)
         tensorboard = TensorBoard(log_dir="tb/{}{}{}".format(args.tb_prefix, ext, cv_ext))
         history_logger = LoggingCallback(logger.debug)
-            
+
         callbacks = [candle_monitor, timeout_monitor, history_logger]
+        if args.es:
+            callbacks.append(es_monitor)
         if args.reduce_lr:
             callbacks.append(reduce_lr)
         if args.warmup_lr:
@@ -444,14 +442,17 @@ def run(params):
         if args.tb:
             callbacks.append(tensorboard)
         if args.save_weights:
-            callbacks.append(SimpleWeightSaver(args.save_path + '/' + args.save_weights))
+            logger.info("Will save weights to: " + args.save_weights)
+            callbacks.append(MultiGPUCheckpoint(args.save_weights))
 
         if args.use_exported_data is not None:
             train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
             val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
+            test_gen = DataFeeder(partition='test', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
         else:
             train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
             val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
+            test_gen = CombinedDataGenerator(loader, partition='test', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
 
         df_val = val_gen.get_response(copy=True)
         y_val = df_val[target].values
@@ -468,20 +469,27 @@ def run(params):
                                 callbacks=callbacks,
                                 validation_data=(x_val_list, y_val))
         else:
-            logger.info('Data points per epoch: train = %d, val = %d', train_gen.size, val_gen.size)
-            logger.info('Steps per epoch: train = %d, val = %d', train_gen.steps, val_gen.steps)
+            logger.info('Data points per epoch: train = %d, val = %d, test = %d', train_gen.size, val_gen.size, test_gen.size)
+            logger.info('Steps per epoch: train = %d, val = %d, test = %d', train_gen.steps, val_gen.steps, test_gen.steps)
             history = model.fit_generator(train_gen, train_gen.steps,
                                           epochs=args.epochs,
                                           callbacks=callbacks,
                                           validation_data=val_gen,
                                           validation_steps=val_gen.steps)
 
-        if args.no_gen:
-            y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
+        # prediction on holdout(test) when exists or use validation set
+        if test_gen.size > 0:
+            df_val = test_gen.get_response(copy=True)
+            y_val = df_val[target].values
+            y_val_pred = model.predict_generator(test_gen, test_gen.steps + 1)
+            y_val_pred = y_val_pred[:test_gen.size]
         else:
-            val_gen.reset()
-            y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
-            y_val_pred = y_val_pred[:val_gen.size]
+            if args.no_gen:
+                y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
+            else:
+                val_gen.reset()
+                y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
+                y_val_pred = y_val_pred[:val_gen.size]
 
         y_val_pred = y_val_pred.flatten()
 
@@ -493,10 +501,7 @@ def run(params):
         df_val[target + 'Error'] = y_val_pred - y_val
         df_pred_list.append(df_val)
 
-        if hasattr(history, 'loss'):
-            plot_history(prefix, history, 'loss')
-        if hasattr(history, 'r2'):
-            plot_history(prefix, history, 'r2')
+        candle.plot_metrics(history, title=None, skip_ep=0, outdir='./save/', add_lr=True)
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)

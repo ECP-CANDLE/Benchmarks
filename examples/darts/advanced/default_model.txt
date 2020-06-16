@@ -1,0 +1,14 @@
+[Global_Params]
+model_name = 'darts_uno'
+data_url = 'ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/' 
+save_path = './results'
+log_interval = 100
+train_data = 'top_21_auc_1fold.uno.h5'
+learning_rate = 0.025
+learning_rate_min = 0.001
+momentum = 0.9
+weight_decay = 3e-4
+grad_clip = 5 
+batch_size = 100
+epochs = 10
+rng_seed = 13

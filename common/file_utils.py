@@ -9,6 +9,7 @@ import hashlib
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import URLError, HTTPError
 
+import requests
 from generic_utils import Progbar
 
 
@@ -39,7 +40,9 @@ else:
 
 
 def get_file(fname, origin, untar=False,
-             md5_hash=None, cache_subdir='common'):
+             #md5_hash=None, datadir='../Data/common'):
+             #md5_hash=None, cache_subdir='common', datadir='../Data/common'):
+             md5_hash=None, cache_subdir='common', datadir=None): # datadir argument was never actually used so changing it to None
     """ Downloads a file from a URL if it not already in the cache.
         Passing the MD5 hash will verify the file after download as well
         as if it is already present in the cache.
@@ -56,15 +59,19 @@ def get_file(fname, origin, untar=False,
             MD5 hash of the file for verification
         cache_subdir : string
             directory being used as the cache
+        datadir : string
+            if set, datadir becomes its setting (which could be e.g. an absolute path) and cache_subdir no longer matters
 
         Returns
         ----------
         Path to the downloaded file
     """
 
-    file_path = os.path.dirname(os.path.realpath(__file__))
-    datadir_base = os.path.expanduser(os.path.join(file_path, '..', 'Data'))
-    datadir = os.path.join(datadir_base, cache_subdir)
+    if datadir is None:
+        file_path = os.path.dirname(os.path.realpath(__file__))
+        datadir_base = os.path.expanduser(os.path.join(file_path, '..', 'Data'))
+        datadir = os.path.join(datadir_base, cache_subdir)
+
     if not os.path.exists(datadir):
         os.makedirs(datadir)
 
@@ -80,11 +87,13 @@ def get_file(fname, origin, untar=False,
         fnamesplit = fname.split('.tgz')
         untar_fpath = os.path.join(datadir, fnamesplit[0])
         untar = True
+    else:
+        untar_fpath = None
 
     fpath = os.path.join(datadir, fname)
 
     download = False
-    if os.path.exists(fpath):
+    if os.path.exists(fpath) or (untar_fpath is not None and os.path.exists(untar_fpath)):
         # file found; verify integrity if a hash was provided
         if md5_hash is not None:
             if not validate_file(fpath, md5_hash):
@@ -93,6 +102,14 @@ def get_file(fname, origin, untar=False,
                 download = True
     else:
         download = True
+
+    # fix ftp protocol if needed
+    '''
+    if origin.startswith('ftp://'):
+        new_url = origin.replace('ftp://','http://')
+        origin = new_url
+    print('Origin = ', origin)
+    '''
 
     if download:
         print('Downloading data from', origin)

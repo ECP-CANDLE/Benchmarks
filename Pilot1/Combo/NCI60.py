@@ -7,7 +7,10 @@ import sys
 import numpy as np
 import pandas as pd
 
-from sklearn.preprocessing import Imputer
+try:
+    from sklearn.impute import SimpleImputer as Imputer
+except ImportError:
+    from sklearn.preprocessing import Imputer
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
@@ -40,7 +43,7 @@ def impute_and_scale(df, scaling='std'):
 
     df = df.dropna(axis=1, how='all')
 
-    imputer = Imputer(strategy='mean', axis=0)
+    imputer = Imputer(strategy='mean')
     mat = imputer.fit_transform(df)
 
     if scaling is None or scaling.lower() == 'none':

@@ -68,29 +68,32 @@ additional_definitions = [
 {'name':'tsne', 
     'type': candle.str2bool,
     'default': False, 
-    'help':'generate tsne plot of the latent representation'}
+    'help':'generate tsne plot of the latent representation'},
+{'name':'alpha_dropout',
+    'type': candle.str2bool,
+    'default': False,
+    'help':'use the AlphaDropout layer from keras instead of regular Dropout'}
 ]
 
 required = [
     'activation',
     'batch_size',
     'dense',
-    'drop',
+    'dropout',
     'epochs',
     'initialization',
     'learning_rate',
     'loss',
-    'noise_factor',
+    #'noise_factor',
     'optimizer',
     'rng_seed',
     'model',
     'scaling',
-    'validation_split',
+    'val_split',
     'latent_dim',
     'feature_subsample',
     'batch_normalization',
     'epsilon_std',
-    'solr_root',
     'timeout'
     ]
 
@@ -125,8 +128,8 @@ def extension_from_parameters(params, framework=''):
         ext += '.EPS={}'.format(params['epsilon_std'])
     if params['feature_subsample'] > 0:
         ext += '.FS={}'.format(params['feature_subsample'])
-    if params['drop']:
-        ext += '.DR={}'.format(params['drop'])
+    if params['dropout']:
+        ext += '.DR={}'.format(params['dropout'])
     if params['alpha_dropout']:
         ext += '.AD'
     if params['batch_normalization']:
@@ -150,15 +153,15 @@ def load_data(params, seed):
 
     if params['use_landmark_genes']:
         lincs_file = 'lincs1000.tsv'
-        lincs_path = candle.fetch_file(params['url_p1b1'] + lincs_file, 'Pilot1')
+        lincs_path = candle.fetch_file(params['data_url'] + lincs_file, 'Pilot1')
         df_l1000 = pd.read_csv(lincs_path, sep='\t')
         x_cols = df_l1000['gdc'].tolist()
         drop_cols = None
     else:
         x_cols = None
 
-    train_path = candle.fetch_file(params['url_p1b1'] + params['file_train'], 'Pilot1')
-    test_path = candle.fetch_file(params['url_p1b1'] + params['file_test'], 'Pilot1')
+    train_path = candle.fetch_file(params['data_url'] + params['train_data'], 'Pilot1')
+    test_path = candle.fetch_file(params['data_url'] + params['test_data'], 'Pilot1')
 
     return candle.load_csv_data(train_path, test_path,
                                    x_cols=x_cols,
@@ -168,8 +171,8 @@ def load_data(params, seed):
                                    n_cols=params['feature_subsample'],
                                    shuffle=params['shuffle'],
                                    scaling=params['scaling'],
-                                   dtype=params['datatype'],
-                                   validation_split=params['validation_split'],
+                                   dtype=params['data_type'],
+                                   validation_split=params['val_split'],
                                    return_dataframe=False,
                                    return_header=True,
                                    seed=seed)
@@ -185,22 +188,22 @@ def load_data_orig(params, seed):
 
     if params['use_landmark_genes']:
         lincs_file = 'lincs1000.tsv'
-        lincs_path = candle.fetch_file(url_p1b1 + lincs_file)
+        lincs_path = candle.fetch_file(params['data_url'] + lincs_file)
         df_l1000 = pd.read_csv(lincs_path, sep='\t')
         usecols = df_l1000['gdc']
         drop_cols = None
     else:
         usecols = None
 
-    return candle.load_X_data(params['url_p1b1'], params['file_train'], params['file_test'],
+    return candle.load_X_data(params['data_url'], params['train_data'], params['test_data'],
                                  drop_cols=drop_cols,
                                  onehot_cols=onehot_cols,
                                  usecols=usecols,
                                  n_cols=params['feature_subsample'],
                                  shuffle=params['shuffle'],
                                  scaling=params['scaling'],
-                                 validation_split=params['validation_split'],
-                                 dtype=params['datatype'],
+                                 validation_split=params['val_split'],
+                                 dtype=params['data_type'],
                                  seed=seed)
 
 

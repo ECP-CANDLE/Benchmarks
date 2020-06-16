@@ -31,10 +31,10 @@ additional_definitions = [
 {'name':'train_bool', 'type':candle.str2bool,'default':True,'help':'Invoke training'},
 {'name':'eval_bool', 'type':candle.str2bool,'default':False,'help':'Use model for inference'},
 {'name':'home_dir','help':'Home Directory','type':str,'default':'.'},
-{'name':'config_file','help':'Config File','type':str,'default':os.path.join(file_path, 'p2b1_default_model.txt')},
+#{'name':'config_file','help':'Config File','type':str,'default':os.path.join(file_path, 'p2b1_default_model.txt')},
 {'name':'weight_path','help':'Trained Model Pickle File','type':str,'default':None},
 {'name':'base_memo','help':'Memo','type':str,'default':None},
-{'name':'seed', 'type':candle.str2bool,'default':False,'help':'Random Seed'},
+#{'name':'seed_bool', 'type':candle.str2bool,'default':False,'help':'Random Seed'},
 {'name':'case','help':'[Full, Center, CenterZ]','type':str,'default':'Full'},
 {'name':'fig_bool', 'type':candle.str2bool,'default':False,'help':'Generate Prediction Figure'},
 {'name':'set_sel','help':'[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]','type':str,'default':'3k_Disordered'},
@@ -42,7 +42,16 @@ additional_definitions = [
 {'name':'full_conv_bool', 'type':candle.str2bool, 'default':False, 'help':'Invoke training using fully convolutional NN for inner AE'},
 {'name':'type_bool', 'type':candle.str2bool, 'default':True, 'help':'Include molecule type information in desining AE'},
 {'name':'nbr_type', 'type':str, 'default':'relative', 'help':'Defines the type of neighborhood data to use. [relative, invariant]'},
-{'name':'backend', 'help':'Keras Backend', 'type':str, 'default':'tensorflow'}
+{'name':'backend', 'help':'Keras Backend', 'type':str, 'default':'tensorflow'},
+{'name':'cool', 'help':'Boolean: cool learning rate', 'type':candle.str2bool, 'default':False},
+{'name':'data_set', 'help':'Data set for training', 'type':str, 'default':None},
+{'name':'l2_reg', 'help':'Regularization parameter', 'type':float, 'default':None},
+{'name':'molecular_nbrs', 'help':'Data dimension for molecular autoencoder', 'type':int, 'default':None},
+{'name':'molecular_nonlinearity', 'help':'Activation for molecular netowrk', 'type':str, 'default':None},
+{'name':'molecular_num_hidden', 'nargs':'+', 'help':'Layer sizes for molecular network', 'type':int, 'default':None},
+{'name':'noise_factor', 'help':'Noise factor', 'type':float, 'default':None},
+{'name':'num_hidden', 'nargs':'+', 'help':'Dense layer specification', 'type':int, 'default':None},
+{'name':'sampling_density', 'help':'Sampling density', 'type':float, 'default':None}
 ]
 
 required = [
@@ -61,7 +70,7 @@ required = [
     'molecular_num_hidden',
     'molecular_nonlinearity',
     'molecular_nbrs',
-    'drop_prob',
+    'dropout',
     'l2_reg',
     'sampling_density',
     'save_path'

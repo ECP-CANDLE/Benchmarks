@@ -13,7 +13,7 @@ def initialize_parameters():
     )
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(mnist_common)
+    gParameters = candle.finalize_parameters(mnist_common)
     csv_logger = CSVLogger('{}/params.log'.format(gParameters))
 
     return gParameters

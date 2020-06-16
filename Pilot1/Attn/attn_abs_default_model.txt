@@ -1,0 +1,27 @@
+[Global_Params]
+data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/'
+train_data='top_21_1fold_001.h5'
+model_name='attn_abs'
+dense=[1000, 1000, 1000, 500, 250, 125, 60, 30, 2]
+batch_size=32
+epochs=2
+activation=['relu', 'relu', 'softmax', 'relu', 'relu', 'relu', 'relu', 'relu', 'softmax']
+loss='categorical_crossentropy'
+optimizer='sgd'
+dropout=0.2
+learning_rate=0.00001
+momentum=0.9
+val_split=0.1
+rng_seed=2017
+use_cp=False
+early_stop=True
+reduce_lr=True
+feature_subsample=0
+output_dir='save_abs/EXP01/'
+experiment_id='01'
+run_id='1'
+save_path='save_abs/EXP01/'
+target_abs_acc=0.85
+
+[Monitor_Params]
+timeout=3600

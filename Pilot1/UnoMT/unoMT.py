@@ -247,7 +247,7 @@ required = [
     'resp_num_layers_per_block',
     'resp_num_blocks',
     'resp_num_layers',
-    'drop',
+    'dropout',
     'resp_activation',
     'cl_clf_layer_dim',
     'cl_clf_num_layers',
@@ -271,7 +271,6 @@ required = [
     'epochs',
     'rng_seed',
     'val_split',
-    'solr_root',
     'timeout',
     ]
 

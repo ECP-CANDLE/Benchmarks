@@ -7,10 +7,10 @@ activation='relu'
 loss='mse'
 optimizer='adam'
 scaling='std'
-drop=0
+dropout=0
 epochs=10
 batch_size=32
-validation_split=0.2
+val_split=0.2
 cv=1
 cv_partition='overlapping'
 max_val_loss=1.0
@@ -28,5 +28,4 @@ use_combo_score=False
 verbose = False
 
 [Monitor_Params]
-solr_root=''
 timeout=3600

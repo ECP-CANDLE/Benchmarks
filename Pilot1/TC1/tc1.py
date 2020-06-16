@@ -18,6 +18,9 @@ additional_definitions = [
        'nargs':'+',
        'type': int,
        'help':'network structure of shared layer'},
+    {'name':'classes',
+        'type':int,
+        'default':36}
 ]
 
 required = [
@@ -28,17 +31,17 @@ required = [
     'conv',
     'dense',
     'activation',
-    'out_act',
+    'out_activation',
     'loss',
     'optimizer',
     'feature_subsample',
     'metrics',
     'epochs',
     'batch_size',
-    'drop',
+    'dropout',
     'classes',
     'pool',
-    'save'
+    'output_dir'
 ]
 
 
@@ -69,4 +72,4 @@ def load_data(params):
 
 
     return candle.load_Xy_data_noheader(train_path, test_path, params['classes'], usecols,
-                                        scaling='maxabs',dtype=params['datatype'])
+                                        scaling='maxabs',dtype=params['data_type'])

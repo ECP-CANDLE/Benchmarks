@@ -14,14 +14,14 @@ from sklearn.metrics import f1_score
 import p3b1 as bmk
 import candle
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p3b1_default_model.txt'):
 
     # Build benchmark object
-    p3b1Bmk = bmk.BenchmarkP3B1(bmk.file_path, 'p3b1_default_model.txt', 'keras',
+    p3b1Bmk = bmk.BenchmarkP3B1(bmk.file_path, default_model, 'keras',
     prog='p3b1_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
-    
+
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p3b1Bmk)
+    gParameters = candle.finalize_parameters(p3b1Bmk)
     #bmk.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
@@ -35,7 +35,7 @@ def fetch_data(gParameters):
 
     path = gParameters['data_url']
     fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', untar=True)
-    
+
     return fpath
 
 
@@ -43,7 +43,7 @@ def build_model(gParameters, kerasDefaults,
                 shared_nnet_spec, individual_nnet_spec,
                 input_dim, Y_train, Y_test,
                 verbose=False):
-    
+
     labels_train = []
     labels_test = []
 
@@ -52,13 +52,13 @@ def build_model(gParameters, kerasDefaults,
     for l in range( len( Y_train ) ):
         truth_train = np.array( Y_train[l], dtype='int32' )
         truth_test = np.array( Y_test[l], dtype='int32' )
-        
+
         mv = int( np.max( truth_train ) )
-        
+
         label_train = np.zeros( ( len( truth_train ), mv + 1 ) )
         for i in range( len( truth_train ) ):
             label_train[ i, truth_train[ i ] ] = 1
-        
+
         label_test = np.zeros( ( len( truth_test ), mv + 1 ) )
         for i in range( len(truth_test) ):
             label_test[ i, truth_test[ i ] ] = 1
@@ -81,8 +81,9 @@ def build_model(gParameters, kerasDefaults,
     for k in range( len( shared_nnet_spec ) ):
         layer = Dense( shared_nnet_spec[ k ], activation=gParameters['activation'],
                        name= 'shared_layer_' + str( k ) )( shared_layers[ -1 ] )
-        if gParameters['drop'] > 0:
-            layer = Dropout( gParameters['drop'] )( shared_layers[ -1 ] )
+        shared_layers.append( layer )
+        if gParameters['dropout'] > 0:
+            layer = Dropout( gParameters['dropout'] )( shared_layers[ -1 ] )
             shared_layers.append( layer )
 
 
@@ -100,8 +101,8 @@ def build_model(gParameters, kerasDefaults,
                 layer = Dense( individual_nnet_spec[l][k], activation=gParameters['activation'],
                                name= 'indiv_layer_' + str( l ) + '_' + str( k ) )( indiv_layers[-1] )
                 indiv_layers.append( layer )
-                if gParameters['drop'] > 0:
-                    layer = Dropout( gParameters['drop'] )( indiv_layers[-1] )
+                if gParameters['dropout'] > 0:
+                    layer = Dropout( gParameters['dropout'] )( indiv_layers[-1] )
                     indiv_layers.append( layer )
             else:
                 layer = Dense( n_out_nodes[l], activation=gParameters['out_activation'],

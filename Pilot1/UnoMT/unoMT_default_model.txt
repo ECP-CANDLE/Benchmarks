@@ -35,7 +35,7 @@ resp_layer_dim=2048
 resp_num_layers_per_block=2
 resp_num_blocks=4
 resp_num_layers=2
-drop=0.1
+dropout=0.1
 resp_activation='none'
 
 # Cell line classification network(s)
@@ -91,6 +91,5 @@ rng_seed=0
 save_path='save/unoMT'
 
 [Monitor_Params]
-solr_root=''
 timeout=3600
 

@@ -1,0 +1,27 @@
+[Global_Params]
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/'
+train_data='adrp-p1.csv'
+model_name='adrp'
+dense=[250, 125, 60, 30]
+batch_size=32
+epochs=400
+activation='relu'
+loss='mean_squared_error'
+optimizer='sgd'
+dropout=0.1
+learning_rate=0.0001
+momentum=0.9
+scaling='minmax'
+epsilon_std=1.0
+rng_seed=2017
+initialization='glorot_uniform'
+latent_dim=2
+batch_normalization=False
+save_path='./001/'
+use_cp=False
+early_stop=True
+reduce_lr=True
+feature_subsample=0
+
+[Monitor_Params]
+timeout=0

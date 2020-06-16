@@ -5,7 +5,6 @@ from datetime import datetime
 
 import numpy as np
 import requests
-from keras import backend as K
 from keras.callbacks import Callback
 
 
@@ -20,10 +19,17 @@ def compute_trainable_params(model):
         ----------
         python dictionary that contains trainable_params, non_trainable_params and total_params
     """
+    if str(type(model)).startswith("<class 'keras."):
+        from keras import backend as K
+    else:
+        import tensorflow.keras.backend as K
+   
     trainable_count = int(
-        np.sum([K.count_params(p) for p in set(model.trainable_weights)]))
+        np.sum([K.count_params(w) for w in model.trainable_weights])
+    )
     non_trainable_count = int(
-        np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
+        np.sum([K.count_params(w) for w in model.non_trainable_weights])
+    )
 
     return {'trainable_params': trainable_count,
             'non_trainable_params': non_trainable_count,
@@ -39,12 +45,6 @@ class CandleRemoteMonitor(Callback):
         super(CandleRemoteMonitor, self).__init__()
 
         self.global_params = params
-        self.has_solr_config = False
-        if 'solr_root' in params and params['solr_root'] != '':
-            self.has_solr_config = True
-            self.root = params['solr_root']
-            self.path = '/run/update?commit=true'
-            self.headers = {'Content-Type': 'application/json'}
 
         # init
         self.experiment_id = None
@@ -71,8 +71,6 @@ class CandleRemoteMonitor(Callback):
                }
         # print("on_train_begin", send)
         self.log_messages.append(send)
-        if self.has_solr_config:
-            self.submit(send)
 
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch_timestamp = datetime.now()
@@ -95,8 +93,6 @@ class CandleRemoteMonitor(Callback):
                }
         # print("on_epoch_end", send)
         self.log_messages.append(send)
-        if self.has_solr_config:
-            self.submit(send)
 
     def on_train_end(self, logs=None):
         logs = logs or {}
@@ -112,25 +108,9 @@ class CandleRemoteMonitor(Callback):
                }
         # print("on_train_end", send)
         self.log_messages.append(send)
-        if self.has_solr_config:
-            self.submit(send)
 
         # save to file when finished
         self.save()
-
-    def submit(self, send):
-        """Send json to solr
-
-        Arguments:
-        send -- json object
-        """
-        try:
-            requests.post(self.root + self.path,
-                          json=[send],
-                          headers=self.headers)
-        except requests.exceptions.RequestException:
-            warnings.warn(
-                'Warning: could not reach RemoteMonitor root server at ' + str(self.root))
 
     def save(self):
         """Save log_messages to file

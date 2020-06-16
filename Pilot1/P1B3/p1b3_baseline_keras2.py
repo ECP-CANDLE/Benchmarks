@@ -28,14 +28,14 @@ import candle
 
 #np.set_printoptions(threshold=np.nan)
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p1b3_default_model.txt'):
 
     # Build benchmark object
-    p1b3Bmk = benchmark.BenchmarkP1B3(benchmark.file_path, 'p1b3_default_model.txt', 'keras',
+    p1b3Bmk = benchmark.BenchmarkP1B3(benchmark.file_path, default_model, 'keras',
     prog='p1b3_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
     
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p1b3Bmk)
+    gParameters = candle.finalize_parameters(p1b3Bmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
@@ -259,8 +259,8 @@ def run(gParameters):
     seed = gParameters['rng_seed']
 
     # Build dataset loader object
-    loader = benchmark.DataLoader(seed=seed, dtype=gParameters['datatype'],
-                             val_split=gParameters['validation_split'],
+    loader = benchmark.DataLoader(seed=seed, dtype=gParameters['data_type'],
+                             val_split=gParameters['val_split'],
                              test_cell_split=gParameters['test_cell_split'],
                              cell_features=gParameters['cell_features'],
                              drug_features=gParameters['drug_features'],
@@ -292,8 +292,8 @@ def run(gParameters):
                 if gParameters['batch_normalization']:
                     model.add(BatchNormalization())
                 model.add(Activation(gParameters['activation']))
-                if gParameters['drop']:
-                    model.add(Dropout(gParameters['drop']))
+                if gParameters['dropout']:
+                    model.add(Dropout(gParameters['dropout']))
     else: # Build convolutional layers
         gen_shape = 'add_1d'
         layer_list = list(range(0, len(gParameters['conv'])))
@@ -359,8 +359,7 @@ def run(gParameters):
                         validation_steps=val_steps,
                         verbose=0,
                         callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
-                        pickle_safe=True,
-                        workers=gParameters['workers'])
+                        )
 
     benchmark.logger.removeHandler(fh)
     benchmark.logger.removeHandler(sh)

@@ -95,8 +95,8 @@ def extension_from_parameters(args):
     ext += '.DF={}'.format(''.join([x[0] for x in sorted(args.drug_features)]))
     if args.feature_subsample > 0:
         ext += '.FS={}'.format(args.feature_subsample)
-    if args.drop > 0:
-        ext += '.DR={}'.format(args.drop)
+    if args.dropout > 0:
+        ext += '.DR={}'.format(args.dropout)
     if args.warmup_lr:
         ext += '.wu_lr'
     if args.reduce_lr:
@@ -609,7 +609,7 @@ def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
 
 def build_model(loader, args, verbose=False):
     input_models = {}
-    dropout_rate = args.drop
+    dropout_rate = args.dropout
     permanent_dropout = True
     for fea_type, shape in loader.feature_shapes.items():
         box = build_feature_model(input_shape=shape, name=fea_type,
@@ -678,7 +678,7 @@ def initialize_parameters():
         desc = 'Build neural network based models to predict tumor response to drug pairs.')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(comboBmk)
+    gParameters = candle.finalize_parameters(comboBmk)
     #combo.logger.info('Params: {}'.format(gParameters))
 
     return gParameters

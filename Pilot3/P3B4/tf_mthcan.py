@@ -13,24 +13,95 @@ class History(object):
 class hcan(object):
 
     def __init__(self,embedding_matrix,num_classes,max_sents,max_words,
-                 attention_size=512,dropout_rate=0.9,activation=tf.nn.elu,lr=0.0001, optimizer= 'adam'):
+                 attention_size=512,dropout_rate=0.9,activation=tf.nn.elu,lr=0.0001, 
+                 optimizer= 'adam', embed_train = True):
 
-        tf.reset_default_graph()
+        tf.compat.v1.reset_default_graph()
 
         dropout_keep = dropout_rate
 
         self.dropout_keep = dropout_keep
-        self.dropout = tf.placeholder(tf.float32)
+        self.dropout = tf.compat.v1.placeholder(tf.float32)
         self.ms = max_sents
         self.mw = max_words
         self.embedding_matrix = embedding_matrix.astype(np.float32)
         self.attention_size = attention_size
         self.activation = activation
         self.num_tasks = len(num_classes)
+        self.embed_train = embed_train
 
         #doc input
-        self.doc_input = tf.placeholder(tf.int32, shape=[None,max_sents,max_words])
-        doc_embeds = tf.map_fn(self._attention_step,self.doc_input,dtype=tf.float32)
+        self.doc_input = tf.compat.v1.placeholder(tf.int32, shape=[None,max_sents,max_words]) # batch x sents x words
+        batch_size = tf.shape(self.doc_input)[0]
+
+        words_per_sent = tf.reduce_sum(tf.sign(self.doc_input),2) # batch X sents
+        max_words_ = tf.reduce_max(words_per_sent)
+        sents_per_doc = tf.reduce_sum(tf.sign(words_per_sent),1) # batch 
+        max_sents_ = tf.reduce_max(sents_per_doc)
+        doc_input_reduced = self.doc_input[:,:max_sents_,:max_words_] #clip
+
+        doc_input_reshape = tf.reshape(doc_input_reduced,(-1,max_words_)) # batch*sents x words 
+
+        #word embeddings
+        word_embeds = tf.gather(tf.compat.v1.get_variable('embeddings',initializer=self.embedding_matrix,
+                      dtype=tf.float32, trainable=self.embed_train),doc_input_reshape)
+        word_embeds = tf.nn.dropout(word_embeds,self.dropout)  # batch*sents x words x attention_size
+
+        #word self attention
+        Q = tf.layers.conv1d(word_embeds,self.attention_size,1,padding='same',
+            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
+        K = tf.layers.conv1d(word_embeds,self.attention_size,1,padding='same',
+            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
+        V = tf.layers.conv1d(word_embeds,self.attention_size,1,padding='same',
+            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
+
+        outputs = tf.matmul(Q,tf.transpose(K,[0, 2, 1]))
+        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
+        outputs = tf.where(tf.equal(outputs,0),tf.ones_like(outputs)*-1000,outputs)
+        outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
+        outputs = tf.matmul(outputs,V) # batch*sents x words x attention_size
+
+        #word target attention
+        Q = tf.compat.v1.get_variable('word_Q',(1,1,self.attention_size),
+            tf.float32,tf.orthogonal_initializer())
+        Q = tf.tile(Q,[batch_size*max_sents_,1,1])
+        V = outputs
+
+        outputs = tf.matmul(Q,tf.transpose(outputs,[0, 2, 1]))
+        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
+        outputs = tf.where(tf.equal(outputs,0),tf.ones_like(outputs)*-1000,outputs)
+        outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
+        outputs = tf.matmul(outputs,V) # batch*sents x 1 x attention_size
+
+        sent_embeds = tf.reshape(outputs,(-1,max_sents_,self.attention_size))
+        sent_embeds = tf.nn.dropout(sent_embeds,self.dropout) # batch x sents x attention_size
+
+        #sent self attention
+        Q = tf.layers.conv1d(sent_embeds,self.attention_size,1,padding='same',
+            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
+        K = tf.layers.conv1d(sent_embeds,self.attention_size,1,padding='same',
+            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
+        V = tf.layers.conv1d(sent_embeds,self.attention_size,1,padding='same',
+            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
+
+        outputs = tf.matmul(Q,tf.transpose(K,[0, 2, 1]))
+        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
+        outputs = tf.where(tf.equal(outputs,0),tf.ones_like(outputs)*-1000,outputs)
+        outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
+        outputs = tf.matmul(outputs,V) # batch x sents x attention_size
+
+        #sent target attention       
+        Q = tf.compat.v1.get_variable('sent_Q',(1,1,self.attention_size),
+            tf.float32,tf.orthogonal_initializer())
+        Q = tf.tile(Q,[batch_size,1,1])
+        V = outputs
+
+        outputs = tf.matmul(Q,tf.transpose(outputs,[0, 2, 1]))
+        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
+        outputs = tf.where(tf.equal(outputs,0),tf.ones_like(outputs)*-1000,outputs)
+        outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
+        outputs = tf.matmul(outputs,V) # batch x 1 x attention_size
+        doc_embeds = tf.nn.dropout(tf.squeeze(outputs,[1]),self.dropout) # batch x attention_size
 
         #classification functions
         logits = []
@@ -45,105 +116,27 @@ class hcan(object):
         self.labels = []
         self.loss = 0
         for i in range(self.num_tasks):
-            label = tf.placeholder(tf.int32,shape=[None])
+            label = tf.compat.v1.placeholder(tf.int32,shape=[None])
             self.labels.append(label)
             loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits[i],labels=label))
             self.loss += loss/self.num_tasks
-        # self.optimizer = tf.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
+        # self.optimizer = tf.compat.v1.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
         if optimizer == 'adam':
-             self.optimizer = tf.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
+             self.optimizer = tf.compat.v1.train.AdamOptimizer(lr,0.9,0.99).minimize(self.loss)
         elif optimizer == 'sgd':
-             self.optimizer = tf.train.GradientDescentOptimizer( lr ).minimize( self.loss )
+             self.optimizer = tf.compat.v1.train.GradientDescentOptimizer( lr ).minimize( self.loss )
         elif optimizer == 'adadelta':
-             self.optimizer = tf.train.AdadeltaOptimizer( learning_rate= lr ).minimize( self.loss )
+             self.optimizer = tf.compat.v1.train.AdadeltaOptimizer( learning_rate= lr ).minimize( self.loss )
         else:
-             self.optimizer = tf.train.RMSPropOptimizer( lr ).minimize( self.loss )        
+             self.optimizer = tf.compat.v1.train.RMSPropOptimizer( lr ).minimize( self.loss )
 
         #init op
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
-        self.saver = tf.train.Saver()
-        self.sess = tf.Session(config=config)
+        self.saver = tf.compat.v1.train.Saver()
+        self.sess = tf.compat.v1.Session(config=config)
         self.sess.run(tf.global_variables_initializer())
 
-    def _attention_step(self,doc):
-
-        words_per_line = tf.reduce_sum(tf.sign(doc),1)
-        num_lines = tf.reduce_sum(tf.sign(words_per_line))
-        max_words_ = tf.reduce_max(words_per_line)
-        doc_input_reduced = doc[:num_lines,:max_words_]
-        num_words = words_per_line[:num_lines]
-
-        #word embeddings
-        word_embeds = tf.gather(tf.get_variable('embeddings',initializer=self.embedding_matrix,
-                      dtype=tf.float32),doc_input_reduced)
-        word_embeds = tf.nn.dropout(word_embeds,self.dropout)
-
-        #masking
-        mask_base = tf.cast(tf.sequence_mask(num_words,max_words_),tf.float32)
-        mask = tf.tile(tf.expand_dims(mask_base,2),[1,1,self.attention_size])
-        mask2 = tf.tile(tf.expand_dims(mask_base,2),[1,1,max_words_])
-
-        #word self attention
-        Q = tf.layers.conv1d(word_embeds,self.attention_size,1,padding='same',
-            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
-        K = tf.layers.conv1d(word_embeds,self.attention_size,1,padding='same',
-            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
-        V = tf.layers.conv1d(word_embeds,self.attention_size,1,padding='same',
-            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
-
-        Q = tf.where(tf.equal(mask,0),tf.zeros_like(Q),Q)
-        K = tf.where(tf.equal(mask,0),tf.zeros_like(K),K)
-        V = tf.where(tf.equal(mask,0),tf.zeros_like(V),V)
-
-        outputs = tf.matmul(Q,tf.transpose(K,[0, 2, 1]))
-        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
-        outputs = tf.where(tf.equal(outputs,0),tf.ones_like(outputs)*-1000,outputs)
-        outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
-        outputs = tf.where(tf.equal(mask2,0),tf.zeros_like(outputs),outputs)
-        outputs = tf.matmul(outputs,V)
-        outputs = tf.where(tf.equal(mask,0),tf.zeros_like(outputs),outputs)
-
-        #word target attention
-        Q = tf.get_variable('word_Q',(1,1,self.attention_size),
-            tf.float32,tf.orthogonal_initializer())
-        Q = tf.tile(Q,[num_lines,1,1])
-        V = outputs
-
-        outputs = tf.matmul(Q,tf.transpose(outputs,[0, 2, 1]))
-        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
-        outputs = tf.where(tf.equal(outputs,0),tf.ones_like(outputs)*-1000,outputs)
-        outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
-        outputs = tf.matmul(outputs,V)
-        sent_embeds = tf.transpose(outputs,[1,0,2])
-        sent_embeds = tf.nn.dropout(sent_embeds,self.dropout)
-
-        #sent self attention
-        Q = tf.layers.conv1d(sent_embeds,self.attention_size,1,padding='same',
-            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
-        K = tf.layers.conv1d(sent_embeds,self.attention_size,1,padding='same',
-            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
-        V = tf.layers.conv1d(sent_embeds,self.attention_size,1,padding='same',
-            activation=self.activation,kernel_initializer=tf.contrib.layers.xavier_initializer())
-
-        outputs = tf.matmul(Q,tf.transpose(K,[0, 2, 1]))
-        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
-        outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
-        outputs = tf.matmul(outputs,V)
-
-        #sent target attention       
-        Q = tf.get_variable('sent_Q',(1,1,self.attention_size),
-            tf.float32,tf.orthogonal_initializer())
-        V = outputs
-
-        outputs = tf.matmul(Q,tf.transpose(outputs,[0, 2, 1]))
-        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
-        outputs = tf.nn.dropout(tf.nn.softmax(outputs),self.dropout)
-        outputs = tf.matmul(outputs,V)
-        doc_embed = tf.nn.dropout(tf.squeeze(outputs,[0]),self.dropout)
-
-        return tf.squeeze(doc_embed,[0])
-    
     def train(self,data,labels,batch_size=100,epochs=50,validation_data=None):
 
         if validation_data:
@@ -196,7 +189,7 @@ class hcan(object):
 
             #checkpoint after every epoch
             print("\ntraining time: %.2f" % (time.time()-start_time))
-            
+
             for i in range(self.num_tasks):
                 micro = f1_score(y_trues[i],y_preds[i],average='micro')
                 macro = f1_score(y_trues[i],y_preds[i],average='macro')
@@ -209,11 +202,11 @@ class hcan(object):
 
             #reset timer
             start_time = time.time()
-            
+
         return history
 
     def predict(self,data,batch_size=100):
-    
+
         y_preds = [[] for i in range(self.num_tasks)]
         for start in range(0,len(data),batch_size):
 
@@ -237,7 +230,7 @@ class hcan(object):
         return y_preds
 
     def score(self,data,labels,batch_size=16):
-        
+
         loss = []
         y_preds = [[] for i in range(self.num_tasks)]
         for start in range(0,len(data),batch_size):
@@ -253,7 +246,7 @@ class hcan(object):
                 feed_dict[self.labels[i]] = labels[i][start:stop]
             retvals = self.sess.run(self.predictions+[self.loss],feed_dict=feed_dict)
             loss.append(retvals[-1])
-            
+
             for i in range(self.num_tasks):
                 y_preds[i].append(np.argmax(retvals[i],1))
 
@@ -298,6 +291,7 @@ if __name__ == "__main__":
 
     #create data
     vocab = np.random.rand(vocab_size,embedding_size)
+    vocab[0,:] = 0
     X = np.random.randint(0,vocab_size,(train_samples+test_samples,max_lines,max_words))
 
     #optional masking
@@ -326,5 +320,6 @@ if __name__ == "__main__":
     history = model.train(X_train,y_trains,batch_size=batch_size,epochs=epochs,
               validation_data=(X_test,y_tests))
     print(history.history)
+
 
 

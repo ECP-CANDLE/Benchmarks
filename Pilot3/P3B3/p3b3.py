@@ -14,7 +14,6 @@ sys.path.append(lib_path2)
 
 import candle
 
-'''
 additional_definitions = [
 {'name':'train_features',
     'action':'store',
@@ -56,9 +55,26 @@ additional_definitions = [
     'type': str},
 {'name':'n_fold',
     'action':'store',
-    'type':int}
+    'type':int},
+{'name':'emb_l2',
+    'action':'store',
+    'type':float},
+{'name':'w_l2',
+    'action':'store',
+    'type':float},
+{'name':'wv_len',
+    'action':'store',
+    'type':int},
+{'name':'filter_sets',
+    'nargs':'+',
+    'type': int},
+{'name':'filter_sizes',
+    'nargs':'+',
+    'type': int},
+{'name':'num_filters',
+    'nargs':'+',
+    'type': int}
 ]
-'''
 
 
 required = [
@@ -79,7 +95,7 @@ class BenchmarkP3B3(candle.Benchmark):
 
         if required is not None:
             self.required = set(required)
-        # if additional_definitions is not None:
-            # self.additional_definitions = additional_definitions
+        if additional_definitions is not None:
+            self.additional_definitions = additional_definitions
 
 

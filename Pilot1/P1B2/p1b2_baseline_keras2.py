@@ -17,14 +17,14 @@ from keras.regularizers import l2
 import p1b2
 import candle
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p1b2_default_model.txt'):
 
     # Build benchmark object
-    p1b2Bmk = p1b2.BenchmarkP1B2(p1b2.file_path, 'p1b2_default_model.txt', 'keras',
+    p1b2Bmk = p1b2.BenchmarkP1B2(p1b2.file_path, default_model, 'keras',
     prog='p1b2_baseline', desc='Train Classifier - Pilot 1 Benchmark 2')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p1b2Bmk)
+    gParameters = candle.finalize_parameters(p1b2Bmk)
     #p1b2.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
@@ -34,7 +34,10 @@ def run(gParameters):
     
     # Construct extension to save model
     ext = p1b2.extension_from_parameters(gParameters, '.keras')
-    logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['save_path']+ext+'.log'
+    candle.verify_path(gParameters['save_path'])
+    prefix = '{}{}'.format(gParameters['save_path'], ext)
+    logfile = gParameters['logfile'] if gParameters['logfile'] else prefix+'.log'
+    candle.set_up_logger(logfile, p1b2.logger, gParameters['verbose'])
     p1b2.logger.info('Params: {}'.format(gParameters))
 
     # Get default parameters for initialization and optimizer functions
@@ -80,16 +83,16 @@ def run(gParameters):
                 x = Dense(l, activation=activation,
                           kernel_initializer=initializer_weights,
                           bias_initializer=initializer_bias,
-                          kernel_regularizer=l2(gParameters['penalty']),
-                          activity_regularizer=l2(gParameters['penalty']))(input_vector)
+                          kernel_regularizer=l2(gParameters['reg_l2']),
+                          activity_regularizer=l2(gParameters['reg_l2']))(input_vector)
             else:
                 x = Dense(l, activation=activation,
                           kernel_initializer=initializer_weights,
                           bias_initializer=initializer_bias,
-                          kernel_regularizer=l2(gParameters['penalty']),
-                          activity_regularizer=l2(gParameters['penalty']))(x)
-            if gParameters['drop']:
-                x = Dropout(gParameters['drop'])(x)
+                          kernel_regularizer=l2(gParameters['reg_l2']),
+                          activity_regularizer=l2(gParameters['reg_l2']))(x)
+            if gParameters['dropout']:
+                x = Dropout(gParameters['dropout'])(x)
         output = Dense(output_dim, activation=activation,
                        kernel_initializer=initializer_weights,
                        bias_initializer=initializer_bias)(x)

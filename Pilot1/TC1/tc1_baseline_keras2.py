@@ -30,14 +30,14 @@ import tc1 as bmk
 import candle
 
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'tc1_default_model.txt'):
 
     # Build benchmark object
-    tc1Bmk = bmk.BenchmarkTC1(file_path, 'tc1_default_model.txt', 'keras',
+    tc1Bmk = bmk.BenchmarkTC1(file_path, default_model, 'keras',
     prog='tc1_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(tc1Bmk)
+    gParameters = candle.finalize_parameters(tc1Bmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
@@ -102,14 +102,14 @@ def run(gParameters):
             else:
                 model.add(Dense(layer))
             model.add(Activation(gParameters['activation']))
-            if gParameters['drop']:
-                    model.add(Dropout(gParameters['drop']))
+            if gParameters['dropout']:
+                    model.add(Dropout(gParameters['dropout']))
 
     if dense_first:
         model.add(Flatten())
 
     model.add(Dense(gParameters['classes']))
-    model.add(Activation(gParameters['out_act']))
+    model.add(Activation(gParameters['out_activation']))
 
     model.summary()
 
@@ -117,7 +117,7 @@ def run(gParameters):
               optimizer=gParameters['optimizer'],
               metrics=[gParameters['metrics']])
 
-    output_dir = gParameters['save']
+    output_dir = gParameters['output_dir']
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     

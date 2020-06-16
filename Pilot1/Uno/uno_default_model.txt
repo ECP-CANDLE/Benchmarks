@@ -10,10 +10,10 @@ activation='relu'
 loss='mse'
 optimizer='adam'
 scaling='std'
-drop=0
+dropout=0
 epochs=10
 batch_size=32
-validation_split=0.2
+val_split=0.2
 cv=1
 max_val_loss=1.0
 learning_rate=None
@@ -27,7 +27,7 @@ rng_seed=2018
 save_path='save/uno'
 no_gen=False
 verbose = False
+gpus = [0]
 
 [Monitor_Params]
-solr_root=''
 timeout=3600

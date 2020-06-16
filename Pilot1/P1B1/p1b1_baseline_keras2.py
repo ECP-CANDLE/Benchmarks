@@ -6,7 +6,7 @@ import keras
 from keras import backend as K
 from keras import optimizers
 from keras.models import Model
-from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda
+from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda, AlphaDropout
 from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from keras.metrics import binary_crossentropy, mean_squared_error
 from scipy.stats.stats import pearsonr
@@ -104,14 +104,14 @@ def build_type_classifier(x_train, y_train, x_test, y_test):
     print(acc)
     return clf
 
-def initialize_parameters():
+def initialize_parameters(default_model = 'p1b1_default_model.txt'):
 
     # Build benchmark object
-    p1b1Bmk = p1b1.BenchmarkP1B1(p1b1.file_path, 'p1b1_default_model.txt', 'keras',
+    p1b1Bmk = p1b1.BenchmarkP1B1(p1b1.file_path, default_model, 'keras',
     prog='p1b1_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
 
     # Initialize parameters
-    gParameters = candle.initialize_parameters(p1b1Bmk)
+    gParameters = candle.finalize_parameters(p1b1Bmk)
     #p1b1.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
@@ -189,9 +189,9 @@ def run(params):
     latent_dim = params['latent_dim']
 
     activation = params['activation']
-    dropout = params['drop']
+    dropout = params['dropout']
     dense_layers = params['dense']
-    dropout_layer = keras.layers.noise.AlphaDropout if params['alpha_dropout'] else Dropout
+    dropout_layer = AlphaDropout if params['alpha_dropout'] else Dropout
 
     # Initialize weights and learning rule
     initializer_weights = candle.build_initializer(params['initialization'], keras_defaults, seed)
