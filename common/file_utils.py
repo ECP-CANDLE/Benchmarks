@@ -9,7 +9,6 @@ import hashlib
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import URLError, HTTPError
 
-import wget
 import requests
 from generic_utils import Progbar
 
@@ -88,11 +87,13 @@ def get_file(fname, origin, untar=False,
         fnamesplit = fname.split('.tgz')
         untar_fpath = os.path.join(datadir, fnamesplit[0])
         untar = True
+    else:
+        untar_fpath = None
 
     fpath = os.path.join(datadir, fname)
 
     download = False
-    if os.path.exists(fpath) or os.path.exists(untar_fpath):
+    if os.path.exists(fpath) or (untar_fpath is not None and os.path.exists(untar_fpath)):
         # file found; verify integrity if a hash was provided
         if md5_hash is not None:
             if not validate_file(fpath, md5_hash):
@@ -126,7 +127,6 @@ def get_file(fname, origin, untar=False,
         try:
             try:
                 urlretrieve(origin, fpath, dl_progress)
-                #fpath = wget.download(origin)
             except URLError as e:
                 raise Exception(error_msg.format(origin, e.errno, e.reason))
             except HTTPError as e:
