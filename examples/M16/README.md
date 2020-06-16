@@ -1,4 +1,6 @@
-# Background
+# Data preprocessing - feature selection examples
+
+## Background
 
 Data preprocessing is an important front-end step in data analysis that prepares data for subsequent analysis. 
 It not only enables the subsequent analysis by processing and transforming data, but also influences the quality of subsequent analysis sometimes significantly. 
@@ -56,13 +58,13 @@ To perform co-expression extrapolation (COXEN) analysis [3] that selects predict
 
 To extend the COXEN approach for selecting genes to predict the response of tumor cells to multiple drugs in precision oncology applications.
 
-# Running the example
+## Running the example
 
 The code demonstrates feature selection methods that CANDLE provides.
 
 It can be run by executing ``` python M16_test.py ```
 
-## Download data
+### Download data
 Code
 ```python
 # download all the data if needed from the repo
@@ -88,7 +90,7 @@ Origin =  http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/Candle_
 Origin =  http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/Candle_Milestone_16_Version_12_15_2019/Data/Data_For_Testing/CCLE_NCI60_Gene_Expression_Full_Data.txt
 ```
 
-## Download gene set
+### Download gene set
 Code
 ```python
 # download all the gene_set files needed
@@ -124,7 +126,7 @@ Origin =  http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/Candle_
 Gene Set data is locally stored at  /Users/hsyoo/projects/CANDLE/Benchmarks/common/../Data/examples/Gene_Sets/MSigDB.v7.0/
 ```
 
-# Select features based on missing values
+### Select features based on missing values
 Code
 ```python
 print('Testing select_features_by_missing_values')
@@ -161,7 +163,7 @@ Select features with missing rates smaller than 0.3
 Feature IDs [0 1 2 3 4 5 6 9]
 ```
 
-# Select features based on variation
+### Select features based on variation
 Code
 ```python
 print('Testing select_features_by_variation')
@@ -182,7 +184,7 @@ Select the top 2 features with the largest standard deviation
 Feature IDs [0 5]
 ```
 
-# Select decorrelated features
+### Select decorrelated features
 Code
 ```python
 print('Testing select_decorrelated_features')
@@ -202,7 +204,7 @@ Select features whose absolute mutual Spearman correlation coefficient is smalle
 Feature IDs [0 2 6 9]
 ```
 
-# Generate cross-validation partitions of data
+### Generate cross-validation partitions of data
 Code
 ```python
 print('Testing generate_cross_validation_partition')
@@ -248,7 +250,7 @@ Fitting L/S model and finding priors
 Finding parametric adjustments
 ```
 
-# Quantile normalization of gene expression data
+### Quantile normalization of gene expression data
 Code
 ```python
 print('Testing quantile_normalization')
@@ -301,7 +303,7 @@ Max difference of median between cell lines is 0.02
 Max difference of first quartile between cell lines is 0.06
 ```
 
-# Generate gene-set-level data
+### Generate gene-set-level data
 ```python
 print('Testing generate_gene_set_data')
 gene_set_data = candle.generate_gene_set_data(np.transpose(norm_data), [i[0] for i in norm_data.index], gene_name_type='entrez',
@@ -348,7 +350,7 @@ CCL_1078                       -10.355489  ...              -26.232325
 [897 rows x 186 columns]
 ```
 
-# Combat batch normalization on gene expression data
+### Combat batch normalization on gene expression data
 Code
 ```python
 print('Testing combat_batch_effect_removal')
@@ -431,7 +433,7 @@ Average median of CCLE cell lines is 2.72
 Average first quartile of CCLE cell lines is 0.13
 ```
 
-# References
+## References
 
 1. Bolstad BM, Irizarry RA, Astrand M, et al. \(2003\) *A comparison of normalization methods for high density oligonucleotide array data based on variance and bias* Bioinformatics. 2003 Jan 22;19\(2\):185-93.  
 
