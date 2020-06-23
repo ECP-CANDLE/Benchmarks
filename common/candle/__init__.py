@@ -96,14 +96,27 @@ if 'keras' in sys.modules:
     from solr_keras import compute_trainable_params
     from solr_keras import TerminateOnTimeOut
 
-    from uq_keras_utils import abstention_variable_initialization
     from uq_keras_utils import abstention_loss
-    from uq_keras_utils import abs_acc
-    from uq_keras_utils import acc_class1
-    from uq_keras_utils import abs_acc_class1
+    from uq_keras_utils import abstention_acc_metric
+    from uq_keras_utils import abstention_metric
+    from uq_keras_utils import acc_class_i_metric
+    from uq_keras_utils import abstention_acc_class_i_metric
+    from uq_keras_utils import AbstentionAdapt_Callback
     from uq_keras_utils import modify_labels
     from uq_keras_utils import add_model_output
-    from uq_keras_utils import AbstentionAdapt_Callback
+    from uq_keras_utils import r2_heteroscedastic_metric
+    from uq_keras_utils import mae_heteroscedastic_metric
+    from uq_keras_utils import mse_heteroscedastic_metric
+    from uq_keras_utils import meanS_heteroscedastic_metric
+    from uq_keras_utils import heteroscedastic_loss
+    from uq_keras_utils import quantile_loss
+    from uq_keras_utils import triple_quantile_loss
+    from uq_keras_utils import quantile_metric
+    from uq_keras_utils import add_index_to_output
+    from uq_keras_utils import contamination_loss
+    from uq_keras_utils import Contamination_Callback
+    from uq_keras_utils import mse_contamination_metric
+    from uq_keras_utils import r2_contamination_metric
 
     from clr_keras_utils import CyclicLR
     from clr_keras_utils import clr_set_args

@@ -241,11 +241,10 @@ def run(params):
     model.summary()
     
     # Configure abstention model
-    mask_ = np.zeros(nb_classes+1)
-    mask_[-1] = 1
+    mask = np.zeros(nb_classes+1)
+    mask[-1] = 1
     mu0 = 0.5 # In the long term this is not as important since mu auto tunes, however it may require a large number of epochs to converge if set far away from target
-
-    candle.abstention_variable_initialization(mu0, mask_, nb_classes)
+    abstention_cbk = candle.AbstentionAdapt_Callback(monitor='val_abs_acc_class1', abs_monitor='val_abstention', mu0=mu0, scale_factor=params['abs_scale_factor'], target_acc=params['target_abs_acc'])
 
     #parallel_model = multi_gpu_model(model, gpus=4)
     #parallel_model.compile(loss='mean_squared_error',
@@ -258,7 +257,8 @@ def run(params):
     optimizer = candle.build_optimizer(params['optimizer'], params['learning_rate'], kerasDefaults)
 
     # compile model with abstention loss
-    model.compile(loss=candle.abstention_loss, optimizer=optimizer, metrics=['acc',tf_auc,candle.abs_acc,candle.acc_class1,candle.abs_acc_class1])
+    model.compile(loss=candle.abstention_loss(abstention_cbk.mu, mask), optimizer=optimizer, metrics=['acc', tf_auc, candle.abstention_acc_metric(nb_classes), candle.acc_class_i_metric(1), candle.abstention_acc_class_i_metric(nb_classes, 1),
+    candle.abstention_metric(nb_classes)])
 
 
     # set up a bunch of callbacks to do work during model training..
@@ -274,7 +274,7 @@ def run(params):
 
     history_logger = candle.LoggingCallback(attn.logger.debug)
     
-    abstention_cbk = candle.AbstentionAdapt_Callback(monitor='val_abs_acc_class1', scale_factor=params['abs_scale_factor'], target_acc=params['target_abs_acc'])
+#    abstention_cbk = candle.AbstentionAdapt_Callback(monitor='val_abs_acc_class1', abs_monitor='val_abstention', scale_factor=params['abs_scale_factor'], target_acc=params['target_abs_acc'])
 
     callbacks = [candle_monitor, timeout_monitor, csv_logger, history_logger, abstention_cbk]
 
@@ -302,8 +302,8 @@ def run(params):
         candle.plot_history(params['save_path'] + root_fname, history, 'loss')
     if 'acc' in history.history.keys():
         candle.plot_history(params['save_path'] + root_fname, history, 'acc')
-    if 'abs_acc' in history.history.keys():
-        candle.plot_history(params['save_path'] + root_fname, history, 'abs_acc')
+    if 'abstention_acc' in history.history.keys():
+        candle.plot_history(params['save_path'] + root_fname, history, 'abstention_acc')
     # Plot mu evolution
     fname = params['save_path'] + root_fname + '.mu.png'
     xlabel='Epochs'
@@ -316,7 +316,7 @@ def run(params):
     Y_predict = model.predict(X_test)
     evaluate_abstention(params, root_fname, nb_classes, Y_test, _Y_test, Y_predict, pos, total, score)
 
-    save_and_test_saved_model(params, model, root_fname, X_train, X_test, Y_test)
+    save_and_test_saved_model(params, model, root_fname, nb_classes, abstention_cbk.mu, mask, X_train, X_test, Y_test)
 
     attn.logger.handlers = []
 
@@ -422,7 +422,7 @@ def evaluate_abstention(params, root_fname, nb_classes, Y_test, _Y_test, Y_predi
     print('Test accuracy (not abstained samples):', score[1])
 
 
-def save_and_test_saved_model(params, model, root_fname, X_train, X_test, Y_test):
+def save_and_test_saved_model(params, model, root_fname, nb_classes, mu, mask, X_train, X_test, Y_test):
 
     # serialize model to JSON
     model_json = model.to_json()
@@ -459,7 +459,7 @@ def save_and_test_saved_model(params, model, root_fname, X_train, X_test, Y_test
     #print("Loaded json model from disk")
     
     # evaluate json loaded model on test data
-    loaded_model_json.compile(loss=candle.abstention_loss, optimizer='SGD', metrics=[candle.abs_acc])
+    loaded_model_json.compile(loss=candle.abstention_loss(mu, mask), optimizer='SGD', metrics=[candle.abstention_acc_metric(nb_classes)])
     score_json = loaded_model_json.evaluate(X_test, Y_test, verbose=0)
     print('json Validation abstention loss:', score_json[0])
     print('json Validation abstention accuracy:', score_json[1])
@@ -469,7 +469,7 @@ def save_and_test_saved_model(params, model, root_fname, X_train, X_test, Y_test
     loaded_model_yaml.load_weights(params['save_path'] + root_fname + '.model.h5')
     print("Loaded yaml model from disk")
     # evaluate yaml loaded model on test data
-    loaded_model_yaml.compile(loss=candle.abstention_loss, optimizer='SGD', metrics=[candle.abs_acc])
+    loaded_model_yaml.compile(loss=candle.abstention_loss(mu, mask), optimizer='SGD', metrics=[candle.abstention_acc_metric(nb_classes)])
     score_yaml = loaded_model_yaml.evaluate(X_test, Y_test, verbose=0)
     print('yaml Validation abstention loss:', score_yaml[0])
     print('yaml Validation abstention accuracy:', score_yaml[1])
