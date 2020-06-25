@@ -73,6 +73,47 @@ def build_masks(args, df):
     return mask['train'], mask['val']
 
 
+def build_masks_w_holdout(args, df):
+    if args.node is None:
+        print('node is None. Generate Random split')
+        mask = get_random_mask(df)
+        return mask, ~mask
+
+    print('from new build_mask: {} {} {}'.format(args.plan, args.node, args.incremental))
+    import plangen
+    plan = read_plan(args.plan, None)
+    ids = {}
+    mask = {}
+    _, _, ids['train'], ids['val'] = plangen.get_subplan_features(plan, args.node, args.incremental)
+
+    # holdout
+    from sklearn.model_selection import ShuffleSplit
+    idx_vec = df.index.to_numpy(copy=True)
+    splitter = ShuffleSplit(n_splits=1, test_size=0.1, random_state=123)
+    tr_vl_id, test_id = next(splitter.split(X=idx_vec))
+    mask['test'] = df.index.isin(test_id)
+
+    # new df
+    df_new = df.iloc[tr_vl_id, :]
+
+    for partition in ['train', 'val']:
+        _mask = df['Sample'] == None
+        for i in range(len(ids[partition]['cell'])):
+            if 'cell' in ids[partition] and 'drug' in ids[partition]:
+                cl_filter = ids[partition]['cell'][i]
+                dr_filter = ids[partition]['drug'][i]
+                __mask = df_new['Sample'].isin(cl_filter) & df_new['Drug1'].isin(dr_filter)
+            elif 'cell' in ids[partition]:
+                cl_filter = ids[partition]['cell'][i]
+                __mask = df_new['Sample'].isin(cl_filter)
+            elif 'drug' in ids[partition]:
+                dr_filter = ids[partition]['drug'][i]
+                __mask = df_new['Drug1'].isin(dr_filter)
+            _mask = _mask | __mask
+        mask[partition] = _mask
+    return mask['train'], mask['val'], mask['test']
+
+
 def get_random_mask(df):
     return np.random.rand(len(df)) < 0.8
 
@@ -137,10 +178,12 @@ def build_dataframe(args):
         x_test_1 = df_dd.iloc[~df_dd.index.isin(tr_vl_idx), :].reset_index(drop=True)
         x_test_1.columns = [''] * len(x_val_1.columns)
     else:
-        train_mask, val_mask = build_masks(args, df_y)
+        # train_mask, val_mask = build_masks(args, df_y)
+        train_mask, val_mask, test_mask = build_masks_w_holdout(args, df_y)
 
         y_train = pd.DataFrame(data=df_y[train_mask].reset_index(drop=True))
         y_val = pd.DataFrame(data=df_y[val_mask].reset_index(drop=True))
+        y_test = pd.DataFrame(data=df_y[test_mask].reset_index(drop=True))
 
         x_train_0 = df_cl[train_mask].reset_index(drop=True)
         x_train_1 = df_dd[train_mask].reset_index(drop=True)
@@ -149,6 +192,10 @@ def build_dataframe(args):
         x_val_0 = df_cl[val_mask].reset_index(drop=True)
         x_val_1 = df_dd[val_mask].reset_index(drop=True)
         x_val_1.columns = [''] * len(x_val_1.columns)
+
+        x_test_0 = df_cl[test_mask].reset_index(drop=True)
+        x_test_1 = df_dd[test_mask].reset_index(drop=True)
+        x_test_1.columns = [''] * len(x_test_1.columns)
 
     # store
     store = pd.HDFStore(args.output, 'w', complevel=9, complib='blosc:snappy')
