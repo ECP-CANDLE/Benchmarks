@@ -39,5 +39,3 @@ uq_exclude_cells_file = 'save_default/infer_cell_ids'
 
 [Monitor_Params]
 timeout=3600
-
-python uno_contamination_keras2.py --learning_rate 1e-6 --agg_dose IC50
