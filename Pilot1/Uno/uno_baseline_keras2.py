@@ -4,7 +4,10 @@ from __future__ import division, print_function
 
 import logging
 import os
+import os.path
+from os import path
 import random
+import time
 
 import numpy as np
 import pandas as pd
@@ -54,8 +57,12 @@ def verify_path(path):
 
 def set_up_logger(logfile, verbose):
     verify_path(logfile)
+    if os.path.exists(logfile):
+        with open(logfile, "a") as fp:
+            fp.write("\n\n")
     fh = logging.FileHandler(logfile)
-    fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+    fh.setFormatter(logging.Formatter("%(asctime)s %(message)s",
+                                      datefmt="%Y-%m-%d %H:%M:%S"))
     fh.setLevel(logging.DEBUG)
 
     sh = logging.StreamHandler()
@@ -214,7 +221,7 @@ class SimpleWeightSaver(Callback):
 
     def on_train_end(self, logs={}):
         self.model.save_weights(self.fname)
-    
+
 
 
 def build_model(loader, args, permanent_dropout=True, silent=False):
@@ -282,6 +289,24 @@ class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
+def get_last_epoch(log):
+    import re
+    last_epoch = -1
+    logger.info("get_last_epoch(): open: " + log)
+    pattern = re.compile(".* \[Epoch: ([0-9].*)\] loss:")
+    with open(log) as fp:
+        for line in fp.readlines():
+            m = re.match(pattern, line)
+            if m != None:
+                logger.info("get_last_epoch(): line: " + line)
+                # print(line)
+                s = m.group(1) # the Epoch integer as a  string
+                e = int(s)     # the Epoch integer as an int
+                if e > last_epoch:
+                    last_epoch = e
+    logger.info("get_last_epoch(): result: %i", last_epoch)
+    return last_epoch
+        
 
 def run(params):
     args = Struct(**params)
@@ -289,10 +314,16 @@ def run(params):
     ext = extension_from_parameters(args)
     verify_path(args.save_path)
     prefix = args.save_path + ext
-    logfile = args.logfile if args.logfile else prefix+'.log'
+    logfile = args.logfile if args.logfile else 'save/python.log'
     set_up_logger(logfile, args.verbose)
+    logger.info('UNO START\n')
     logger.info('Params: {}'.format(params))
 
+    initial_epoch = get_last_epoch(logfile) + 1 # start at next epoch
+    logger.info('initial_epoch: ' + str(initial_epoch))
+    if initial_epoch == 50:
+        logger.warning("EPOCHS COMPLETED IN LOG!")
+            
     if (len(args.gpus) > 0):
         import tensorflow as tf
         config = tf.ConfigProto()
@@ -381,7 +412,7 @@ def run(params):
 
     if args.cp:
         model_json = model.to_json()
-        with open(prefix + '.model.json', 'w') as f:
+        with open('model.json', 'w') as f: # prefix + 
             print(model_json, file=f)
 
     def warmup_scheduler(epoch):
@@ -402,6 +433,16 @@ def run(params):
             cv_ext = '.cv{}'.format(fold + 1)
 
         template_model = build_model(loader, args, silent=True)
+        checkpoint_file = 'save/model-ckpt.h5'
+        logger.info("Checkpoint file: " + checkpoint_file)
+        if path.isfile(checkpoint_file):
+            logger.info("Loading from checkpoint_file ...")
+            start = time.time()
+            template_model.load_weights(checkpoint_file)
+            stop = time.time()
+            duration = stop - start
+            logger.info("Loaded from checkpoint_file: %0.3f seconds." % duration)
+            
         if args.initial_weights:
             logger.info("Loading initial weights from {}".format(args.initial_weights))
             template_model.load_weights(args.initial_weights)
@@ -427,14 +468,15 @@ def run(params):
 
         candle_monitor = candle.CandleRemoteMonitor(params=params)
         timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
-        es_monitor = keras.callbacks.EarlyStopping(patience=10, verbose=1)
+        es_monitor = keras.callbacks.EarlyStopping(patience=10, verbose=1, monitor='loss')
 
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
-        checkpointer = MultiGPUCheckpoint(prefix + cv_ext + '.model.h5', save_best_only=True)
+        checkpointer = MultiGPUCheckpoint(checkpoint_file)
+        # , save_best_only=True) # prefix + cv_ext + '.model.h5'
         tensorboard = TensorBoard(log_dir="tb/{}{}{}".format(args.tb_prefix, ext, cv_ext))
         history_logger = LoggingCallback(logger.debug)
-            
+
         callbacks = [candle_monitor, timeout_monitor, history_logger]
         if args.es:
             callbacks.append(es_monitor)
@@ -443,6 +485,7 @@ def run(params):
         if args.warmup_lr:
             callbacks.append(warmup_lr)
         if args.cp:
+            logger.info("Checkpointing to: " + checkpoint_file) # args.save_weights
             callbacks.append(checkpointer)
         if args.tb:
             callbacks.append(tensorboard)
@@ -476,6 +519,7 @@ def run(params):
             logger.info('Steps per epoch: train = %d, val = %d', train_gen.steps, val_gen.steps)
             history = model.fit_generator(train_gen, train_gen.steps,
                                           epochs=args.epochs,
+                                          initial_epoch=initial_epoch,
                                           callbacks=callbacks,
                                           validation_data=val_gen,
                                           validation_steps=val_gen.steps)
