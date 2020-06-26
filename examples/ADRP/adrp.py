@@ -42,6 +42,24 @@ additional_definitions = [
         "help": "reduce learning rate on plateau",
     },
     {
+        "name": "reduce_patience",
+        "type": int,
+        "default": 20,
+        "help": "number of epochs to wait to reduce learning rate on plateau",
+    },
+    {
+        "name": "reduce_ratio",
+        "type": float,
+        "default": 20,
+        "help": "ration of min learning rate to initial learning rate for reduce on plateau",
+    },
+    {
+        "name": "early_patience",
+        "type": int,
+        "default": 100,
+        "help": "number of epochs to wait for early stopping",
+    },
+    {
         "name": "warmup_lr",
         "type": candle.str2bool,
         "default": False,

@@ -238,6 +238,7 @@ def run(params):
 
     activation = params["activation"]
     out_activation = params["out_activation"]
+
     # TODO: set output_dim
     output_dim = 1
 
@@ -305,16 +306,23 @@ def run(params):
         save_best_only=True,
     )
     csv_logger = CSVLogger(params["save_path"] + "agg_adrp.training.log")
+
+    min_lr = params['learning_rate']*params['reduce_ratio']
     reduce_lr = ReduceLROnPlateau(
         monitor="val_loss",
         factor=0.75,
-        patience=20,
+        patience=params['reduce_patience'],
         mode="auto",
+        verbose=1,
         epsilon=0.0001,
         cooldown=3,
-        min_lr=0.000000001,
+        min_lr=min_lr
     )
-    early_stop = EarlyStopping(monitor="val_loss", patience=100, verbose=1, mode="auto")
+
+    early_stop = EarlyStopping(monitor="val_loss", 
+                               patience=params['early_patience'],
+                               verbose=1, 
+                               mode="auto")
 
     # history = parallel_model.fit(X_train, Y_train,
     epochs = params["epochs"]
@@ -329,6 +337,9 @@ def run(params):
         validation_data=(X_test, Y_test),
         callbacks=[checkpointer, csv_logger, reduce_lr, early_stop],
     )
+
+    print("Reloading saved best model")
+    model.load_weights(params['save_path'] + "agg_adrp.autosave.model.h5")
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
