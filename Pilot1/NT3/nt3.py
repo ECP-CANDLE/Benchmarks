@@ -7,10 +7,10 @@ sys.path.append(lib_path2)
 
 import candle
 
-additional_definitions = [
-{'name':'classes',
-    'type':int,
-    'default':2}
+additional_definitions = [{
+    'name': 'classes',
+    'type': int,
+    'default': 2}
 ]
 
 required = [
@@ -35,6 +35,7 @@ required = [
     'timeout'
 ]
 
+
 class BenchmarkNT3(candle.Benchmark):
 
     def set_locals(self):
@@ -48,4 +49,3 @@ class BenchmarkNT3(candle.Benchmark):
             self.required = set(required)
         if additional_definitions is not None:
             self.additional_definitions = additional_definitions
-
