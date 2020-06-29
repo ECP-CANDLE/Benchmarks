@@ -310,7 +310,7 @@ def run(gParameters):
         "out_layer": "activation_5/Softmax",  # name of the output tensorf in the TF conputational graph
         "output_size": 2,  # number of classes in output (5)
         "precision": "fp32"  # desired precision (fp32, fp16) "test_image_path" : "/home/data/val/roses"
-    }   
+    }
 
     # Now, let's use the Tensorflow backend to get the TF graphdef and frozen graph
     K.set_learning_phase(0)
