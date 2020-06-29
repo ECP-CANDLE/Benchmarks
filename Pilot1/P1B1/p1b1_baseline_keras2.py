@@ -22,10 +22,11 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-import p1b1 
+import p1b1
 import candle
 
 np.set_printoptions(precision=4)
+
 
 def covariance(x, y):
     return K.mean(x * y) - K.mean(x) * K.mean(y)
@@ -70,7 +71,7 @@ class LoggingCallback(Callback):
         self.print_fcn(msg)
 
 
-#def plot_history(out, history, metric='loss', title=None):
+# def plot_history(out, history, metric='loss', title=None):
 #    title = title or 'model {}'.format(metric)
 #    val_metric = 'val_{}'.format(metric)
 #    plt.figure(figsize=(16, 9))
@@ -84,7 +85,7 @@ class LoggingCallback(Callback):
 #    plt.savefig(png, bbox_inches='tight')
 #
 
-#def plot_scatter(data, classes, out):
+# def plot_scatter(data, classes, out):
 #    cmap = plt.cm.get_cmap('gist_rainbow')
 #    plt.figure(figsize=(10, 8))
 #    plt.scatter(data[:, 0], data[:, 1], c=classes, cmap=cmap, lw=0.5, edgecolor='black', alpha=0.7)
@@ -104,22 +105,24 @@ def build_type_classifier(x_train, y_train, x_test, y_test):
     print(acc)
     return clf
 
-def initialize_parameters(default_model = 'p1b1_default_model.txt'):
+
+def initialize_parameters(default_model='p1b1_default_model.txt'):
 
     # Build benchmark object
     p1b1Bmk = p1b1.BenchmarkP1B1(p1b1.file_path, default_model, 'keras',
-    prog='p1b1_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
+                                 prog='p1b1_baseline',
+                                 desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p1b1Bmk)
-    #p1b1.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
 
+
 def save_cache(cache_file, x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels):
     with h5py.File(cache_file, 'w') as hf:
-        hf.create_dataset("x_train",  data=x_train)
-        hf.create_dataset("y_train",  data=y_train)
+        hf.create_dataset("x_train", data=x_train)
+        hf.create_dataset("y_train", data=y_train)
         hf.create_dataset("x_val", data=x_val)
         hf.create_dataset("y_val", data=y_val)
         hf.create_dataset("x_test", data=x_test)
@@ -146,12 +149,12 @@ def run(params):
     args = candle.ArgumentStruct(**params)
     seed = args.rng_seed
     candle.set_seed(seed)
-    
+
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(params, '.keras')
     candle.verify_path(params['save_path'])
     prefix = '{}{}'.format(params['save_path'], ext)
-    logfile = params['logfile'] if params['logfile'] else prefix+'.log'
+    logfile = params['logfile'] if params['logfile'] else prefix + '.log'
     candle.set_up_logger(logfile, p1b1.logger, params['verbose'])
     p1b1.logger.info('Params: {}'.format(params))
 
@@ -239,7 +242,7 @@ def run(params):
         def vae_loss(x, x_decoded_mean):
             xent_loss = binary_crossentropy(x, x_decoded_mean)
             kl_loss = - 0.5 * K.sum(1 + z_log_var - K.square(z_mean) - K.exp(z_log_var), axis=-1)
-            return K.mean(xent_loss + kl_loss/input_dim)
+            return K.mean(xent_loss + kl_loss / input_dim)
 
         def sampling(params):
             z_mean_, z_log_var_ = params
@@ -303,7 +306,7 @@ def run(params):
 
     if params['cp']:
         model_json = model.to_json()
-        with open(prefix+'.model.json', 'w') as f:
+        with open(prefix + '.model.json', 'w') as f:
             print(model_json, file=f)
 
     # Define optimizer
@@ -321,15 +324,15 @@ def run(params):
     params.update(candle.compute_trainable_params(model))
 
     def warmup_scheduler(epoch):
-        lr = params['learning_rate'] or base_lr * params['batch_size']/100
+        lr = params['learning_rate'] or base_lr * params['batch_size'] / 100
         if epoch <= 5:
-            K.set_value(model.optimizer.lr, (base_lr * (5-epoch) + lr * epoch) / 5)
+            K.set_value(model.optimizer.lr, (base_lr * (5 - epoch) + lr * epoch) / 5)
         p1b1.logger.debug('Epoch {}: lr={}'.format(epoch, K.get_value(model.optimizer.lr)))
         return K.get_value(model.optimizer.lr)
 
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
     warmup_lr = LearningRateScheduler(warmup_scheduler)
-    checkpointer = ModelCheckpoint(params['save_path']+ext+'.weights.h5', save_best_only=True, save_weights_only=True)
+    checkpointer = ModelCheckpoint(params['save_path'] + ext + '.weights.h5', save_best_only=True, save_weights_only=True)
     tensorboard = TensorBoard(log_dir="tb/tb{}".format(ext))
     candle_monitor = candle.CandleRemoteMonitor(params=params)
     timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
@@ -371,8 +374,8 @@ def run(params):
                         validation_data=(val_inputs, val_outputs))
 
     if params['cp']:
-        encoder.save(prefix+'.encoder.h5')
-        decoder.save(prefix+'.decoder.h5')
+        encoder.save(prefix + '.encoder.h5')
+        decoder.save(prefix + '.decoder.h5')
 
     candle.plot_history(prefix, history, 'loss')
     candle.plot_history(prefix, history, 'corr', 'streaming pearson correlation')
@@ -384,12 +387,12 @@ def run(params):
 
     x_test_encoded = encoder.predict(test_inputs, batch_size=params['batch_size'])
     y_test_classes = np.argmax(y_test, axis=1)
-    candle.plot_scatter(x_test_encoded, y_test_classes, prefix+'.latent')
+    candle.plot_scatter(x_test_encoded, y_test_classes, prefix + '.latent')
 
     if params['tsne']:
         tsne = TSNE(n_components=2, random_state=seed)
         x_test_encoded_tsne = tsne.fit_transform(x_test_encoded)
-        candle.plot_scatter(x_test_encoded_tsne, y_test_classes, prefix+'.latent.tsne')
+        candle.plot_scatter(x_test_encoded_tsne, y_test_classes, prefix + '.latent.tsne')
 
     # diff = x_pred - x_test
     # plt.hist(diff.ravel(), bins='auto')
