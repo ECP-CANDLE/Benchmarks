@@ -71,29 +71,6 @@ class LoggingCallback(Callback):
         self.print_fcn(msg)
 
 
-# def plot_history(out, history, metric='loss', title=None):
-#    title = title or 'model {}'.format(metric)
-#    val_metric = 'val_{}'.format(metric)
-#    plt.figure(figsize=(16, 9))
-#    plt.plot(history.history[metric])
-#    plt.plot(history.history[val_metric])
-#    plt.title(title)
-#    plt.ylabel(metric)
-#    plt.xlabel('epoch')
-#    plt.legend(['train', 'test'], loc='upper left')
-#    png = '{}.plot.{}.png'.format(out, metric)
-#    plt.savefig(png, bbox_inches='tight')
-#
-
-# def plot_scatter(data, classes, out):
-#    cmap = plt.cm.get_cmap('gist_rainbow')
-#    plt.figure(figsize=(10, 8))
-#    plt.scatter(data[:, 0], data[:, 1], c=classes, cmap=cmap, lw=0.5, edgecolor='black', alpha=0.7)
-#    plt.colorbar()
-#    png = '{}.png'.format(out)
-#    plt.savefig(png, bbox_inches='tight')
-#
-
 def build_type_classifier(x_train, y_train, x_test, y_test):
     y_train = np.argmax(y_train, axis=1)
     y_test = np.argmax(y_test, axis=1)
