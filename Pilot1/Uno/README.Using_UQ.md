@@ -1,10 +1,10 @@
-## Uno_UQ: Predicting Tumor Dose Response across Multiple Data Sources with added UQ functionality.
+## *UQ*: Predicting Tumor Dose Response across Multiple Data Sources with added UQ functionality.
 
 
 
 ## Functionality
 
-Uno_UQ adds uncertainty quantification (UQ) functionality to the Uno model. For information about the underlaying model, please refer to the Uno benchmark.
+*UQ* adds uncertainty quantification (UQ) functionality to the Uno model. For information about the underlaying model, please refer to the Uno benchmark documentation.
 
 
 
@@ -132,7 +132,7 @@ The train script trains the model, as in the underlying Uno benchmark, but exclu
 
 
 
-An additional --loss heteroscedastic option is available. This will learn the input-dependent noise level as well as the main regression variable specified (i.e. growth or AUC).
+Additional --loss 'het' and --loss 'qtl' options are available. This will learn the input-dependent noise level as well as the main regression variable specified (i.e. growth or AUC).
 
 
 
@@ -339,17 +339,17 @@ Likewise, in the case that a pre-generated file is provided, the features includ
 
 
 
-Note also that the --loss heteroscedastic option should be specified if the model was trained to predict the heterogeneous noise as well.
+Note also that the --loss 'het' or --loss 'qtl' option should be specified if the model was trained to predict as well the heterogeneous noise, or the quantile distributions.
 
 
 
 #### Example output
 
-This assumes that a trained model (files default.model.json and default.weights.h5) is available at save_default folder. A sample json file compatible with the default model used in the training demo script is provided. After running the training script a default.weights.h5 file should be generated. Both, in combination, can be used for testing the inference demo script and would produce a similar output to the one shown next.
+This assumes that a trained model (files saved.model.h5 and saved.weights.h5) is available at save_default folder. These files are usually generated when running the training and using the --cp True option. Both, in combination, can be used for testing the inference demo script and would produce a similar output to the one shown next.
 
 ```
 
-python uno_inferUQ_keras2.py  --uq_infer_file save_default/infer_cell_ids --uq_infer_given_cells True --model_file save_default/uno.A\=relu.B\=32.E\=10.O\=sgd.LS\=mse.LR\=0.01.CF\=r.DF\=df.DR\=0.1.L1000.D1\=1000.D2\=1000.D3\=1000.model.h5 --weights_file save_default/saved.weights.h5 --n_pred 10
+python uno_inferUQ_keras2.py  --uq_infer_file save_default/infer_cell_ids --uq_infer_given_cells True --model_file save_default/saved.model.h5 --weights_file save_default/saved.weights.h5 --n_pred 10
 Using TensorFlow backend.
 Importing candle utils for keras
 Params:
@@ -391,7 +391,7 @@ Params:
  'logfile': None,
  'loss': 'mse',
  'max_val_loss': 1.0,
- 'model_file': 'save_default/default.model.json',
+ 'model_file': 'save_default/saved.model.h5',
  'n_pred': 10,
  'no_feature_source': True,
  'no_gen': False,

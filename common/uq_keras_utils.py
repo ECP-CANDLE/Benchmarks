@@ -22,12 +22,12 @@ piSQ = np.pi**2
 
 # For Abstention Model
 
-def abstention_loss(mu, mask):
+def abstention_loss(alpha, mask):
     """ Function to compute abstention loss. It is composed by two terms: (i) original loss of the multiclass classification problem, (ii) cost associated to the abstaining samples.
     
     Parameters
     ----------
-    mu : Keras variable
+    alpha : Keras variable
         Weight of abstention term in cost function
     mask : ndarray
         Numpy array to use as mask for abstention: it is 1 on the output associated to the abstention class and 0 otherwise
@@ -46,7 +46,7 @@ def abstention_loss(mu, mask):
         base_cost = K.categorical_crossentropy(base_true, base_pred)
         abs_pred = K.mean(mask * y_pred, axis=-1)
         
-        return ((1. - abs_pred) * base_cost - mu * K.log(1. - abs_pred))
+        return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
         
     return loss
 
@@ -223,35 +223,41 @@ class AbstentionAdapt_Callback(Callback):
         If the current monitored accuracy is greater than the target set, mu decreases to promote more predictions (less abstention).
     """
 
-    def __init__(self, monitor, abs_monitor, mu0, init_abs_epoch=4, scale_factor=0.95, target_acc=0.95, max_abs=0.5):
+    def __init__(self, acc_monitor, abs_monitor, alpha0, init_abs_epoch=4, alpha_scale_factor=0.8, min_abs_acc=0.9, max_abs_frac=0.4, acc_gain=5.0, abs_gain=1.0):
         """ Initializer of the AbstentionAdapt_Callback.
         Parameters
         ----------
-        monitor : keras metric
-            Metric to monitor during the run and use as base to adapt the weight of the abstention term (i.e. mu) in the asbstention cost function
+        acc_monitor : keras metric
+            Accuracy metric to monitor during the run and use as base to adapt the weight of the abstention term (i.e. alpha) in the abstention cost function. (Must be an accuracy metric that takes abstention into account)
         abs_monitor : keras metric
-            Abstention metric monitored during the run and used as the other factor to adapt the weight of the abstention term (i.e. mu) in the asbstention loss function
-        mu0 : float
+            Abstention metric monitored during the run and used as the other factor to adapt the weight of the abstention term (i.e. alpha) in the asbstention loss function
+        alpha0 : float
             Initial weight of abstention term in cost function
         init_abs_epoch : integer
-            Value of the epochs to start adjusting the weight of the abstention term (i.e. mu). Default: 4.
-        scale_factor: float
-            Factor to scale (increase by dividing or decrease by multiplying) the weight of the abstention term (i.e. mu). Default: 0.95.
-        target_acc: float
-            Target accuracy to achieve in the current training. Default: 0.95.
-        max_abs: float
-            Maximum abstention to tolerate in the current training. Default: 0.5.
+            Value of the epochs to start adjusting the weight of the abstention term (i.e. alpha). Default: 4.
+        alpha_scale_factor: float
+            Factor to scale (increase by dividing or decrease by multiplying) the weight of the abstention term (i.e. alpha). Default: 0.8.
+        min_abs_acc: float
+            Minimum accuracy to target in the current training. Default: 0.9.
+        max_abs_frac: float
+            Maximum abstention fraction to tolerate in the current training. Default: 0.4.
+        acc_gain: float
+            Factor to adjust alpha scale. Default: 5.0.
+        abs_gain: float
+            Factor to adjust alpha scale. Default: 1.0.
         """
         super(AbstentionAdapt_Callback, self).__init__()
 
-        self.monitor = monitor
-        self.abs_monitor = abs_monitor
-        self.mu = K.variable(value=mu0)     # Weight of abstention term
+        self.acc_monitor = acc_monitor  # Keras metric to monitor (must be an accuracy with abstention)
+        self.abs_monitor = abs_monitor # Keras metric momitoring abstention fraction
+        self.alpha = K.variable(value=alpha0)     # Weight of abstention term
         self.init_abs_epoch = init_abs_epoch # epoch to init abstention
-        self.scale_factor = scale_factor # factor to scale mu (weight for abstention term in cost function)
-        self.target_acc = target_acc # target accuracy (value specified as parameter of the run)
-        self.max_abs = max_abs # target abstention (value specified as parameter of the run)
-        self.muvalues = [] # array to store mu evolution
+        self.alpha_scale_factor = alpha_scale_factor # factor to scale alpha (weight for abstention term in cost function)
+        self.min_abs_acc = min_abs_acc # minimum target accuracy (value specified as parameter of the run)
+        self.max_abs_frac = max_abs_frac # maximum abstention fraction (value specified as parameter of the run)
+        self.acc_gain = acc_gain # factor for adjusting alpha scale
+        self.abs_gain = abs_gain # factor for adjusting alpha scale
+        self.alphavalues = [] # array to store alpha evolution
 
         
     def on_epoch_end(self, epoch, logs=None):
@@ -264,28 +270,32 @@ class AbstentionAdapt_Callback(Callback):
             Metrics stored during current keras training.
         """
 
-        new_mu_val = K.get_value(self.mu)
+        new_alpha_val = K.get_value(self.alpha)
         if epoch > self.init_abs_epoch:
         
-            current = logs.get(self.monitor)
-            abs = logs.get(self.abs_monitor)
+            abs_acc = logs.get(self.acc_monitor)    # Current accuracy (with abstention)
+            abs_frac = logs.get(self.abs_monitor)   # Current abstention fraction
             
             if current is None:
                 warnings.warn( 'Abstention Adapt conditioned on metric `%s` ' 'which is not available. Available metrics are: %s' % (self.monitor, ','.join(list(logs.keys()))), RuntimeWarning)
             else:
-                # modify mu as needed
-                #if current > self.target_acc: #increase abstention penalty --> DO NOTHING
-                    #new_mu_val /= self.scale_factor
-                if current < self.target_acc: #decrease abstention penalty
-                    new_mu_val *= self.scale_factor
-
-                if abs > self.max_abs: #increase abstention penalty
-                    new_mu_val /= self.scale_factor
-                #if abs < self.max_abs: #DO NOTHING
-                    #new_mu_val *= self.scale_factor
-
-                K.set_value(self.mu, new_mu_val)
-        self.muvalues.append(new_mu_val)
+                # modify alpha as needed
+                acc_error = abs_acc - self.min_abs_acc
+                acc_error = min(acc_error, 0.0)
+                abs_error = abs_frac - self.max_abs_frac
+                abs_error = max(abs_error, 0.0)
+                new_scale = 1.0 + self.acc_gain * acc_error + self.abs_gain * abs_error
+                # threshold to avoid huge swings
+                min_scale = self.alpha_scale_factor
+                max_scale = 1. / self.alpha_scale_factor
+                new_scale = min(new_scale, max_scale)
+                new_scale = max(new_scale, min_scale)
+                
+                print('Scaling factor: ', new_scale)
+                new_alpha_val *= new_scale
+                K.set_value(self.alpha, new_alpha_val)
+                
+        self.alphavalues.append(new_alpha_val)
 
 
 
