@@ -1,10 +1,10 @@
-""" 
+"""
     File Name:          UnoPytorch/drug_qed_dataset.py
     Author:             Xiaotian Duan (xduan7)
     Email:              xduan7@uchicago.edu
     Date:               9/4/18
     Python Version:     3.6.6
-    File Description:   
+    File Description:
 
 """
 import logging
@@ -113,7 +113,7 @@ class DrugQEDDataset(data.Dataset):
         drug_feature = np.asarray(drug_qed_data[1], dtype=self.__output_dtype)
         qed = np.array([drug_qed_data[0]], dtype=self.__output_dtype)
 
-        return  drug_feature, qed
+        return drug_feature, qed
 
     def __split_drug_resp(self):
 
