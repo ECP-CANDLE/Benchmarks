@@ -30,31 +30,31 @@ logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 additional_definitions = [
-{'name':'uq_exclude_drugs_file',
-    'default':argparse.SUPPRESS,
-    'action':'store',
-    'help':'File with drug ids to exclude from training'},
-{'name':'uq_exclude_cells_file',
-    'default':argparse.SUPPRESS,
-    'action':'store',
-    'help':'File with cell ids to exclude from training'},
-{'name':'uq_exclude_indices_file',
-    'default':argparse.SUPPRESS,
-    'action':'store',
-    'help':'File with indices to exclude from training'},
-{'name':'exclude_drugs', 'nargs':'+',
-    'default': [],
-    'help':'drug ids to exclude'},
-{'name':'exclude_cells', 'nargs':'+',
-    'default': [],
-    'help':'cell ids to exclude'},
-{'name':'exclude_indices', 'nargs':'+',
-    'default': [],
-    'help':'indices to exclude'},
-{'name':'reg_l2',
-    'type': float,
-    'default': 0.,
-    'help':'weight of regularization for l2 norm of nn weights'}
+    {'name': 'uq_exclude_drugs_file',
+     'default': argparse.SUPPRESS,
+     'action': 'store',
+     'help': 'File with drug ids to exclude from training'},
+    {'name': 'uq_exclude_cells_file',
+     'default': argparse.SUPPRESS,
+     'action': 'store',
+     'help': 'File with cell ids to exclude from training'},
+    {'name': 'uq_exclude_indices_file',
+     'default': argparse.SUPPRESS,
+     'action': 'store',
+     'help': 'File with indices to exclude from training'},
+    {'name': 'exclude_drugs', 'nargs': '+',
+     'default': [],
+     'help':'drug ids to exclude'},
+    {'name': 'exclude_cells', 'nargs': '+',
+     'default': [],
+     'help':'cell ids to exclude'},
+    {'name': 'exclude_indices', 'nargs': '+',
+     'default': [],
+     'help':'indices to exclude'},
+    {'name': 'reg_l2',
+     'type': float,
+     'default': 0.,
+     'help': 'weight of regularization for l2 norm of nn weights'}
 ]
 
 required = ['exclude_drugs', 'exclude_cells', 'exclude_indices']
@@ -96,7 +96,6 @@ def extension_from_parameters(args):
     return ext
 
 
-
 def log_evaluation(metric_outputs, logger, description='Comparing y_true and y_pred:'):
     logger.info(description)
     for metric, value in metric_outputs.items():
@@ -119,7 +118,6 @@ def initialize_parameters(default_model='uno_defaultUQ_model.txt'):
     return gParameters
 
 
-
 def run(params):
     args = candle.ArgumentStruct(**params)
     candle.set_seed(args.rng_seed)
@@ -129,7 +127,7 @@ def run(params):
     logfile = args.logfile if args.logfile else prefix + '.log'
     candle.set_up_logger(logfile, logger, args.verbose)
     logger.info('Params: {}'.format(params))
-    
+
     # Exclude drugs / cells for UQ
     if 'uq_exclude_drugs_file' in params.keys():
         args.exclude_drugs = read_IDs_file(args.uq_exclude_drugs_file)
@@ -185,16 +183,16 @@ def run(params):
     if args.export_csv:
         fname = args.export_csv
         loader.partition_data(cv_folds=args.cv,
-            train_split=train_split,
-            val_split=val_split,
-            cell_types=args.cell_types,
-            by_cell=args.by_cell,
-            by_drug=args.by_drug,
-            cell_subset_path=args.cell_subset_path,
-            drug_subset_path=args.drug_subset_path,
-            exclude_cells=args.exclude_cells,
-            exclude_drugs=args.exclude_drugs,
-            exclude_indices=args.exclude_indices)
+                              train_split=train_split,
+                              val_split=val_split,
+                              cell_types=args.cell_types,
+                              by_cell=args.by_cell,
+                              by_drug=args.by_drug,
+                              cell_subset_path=args.cell_subset_path,
+                              drug_subset_path=args.drug_subset_path,
+                              exclude_cells=args.exclude_cells,
+                              exclude_drugs=args.exclude_drugs,
+                              exclude_indices=args.exclude_indices)
         train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
 
@@ -211,16 +209,16 @@ def run(params):
     if args.export_data:
         fname = args.export_data
         loader.partition_data(cv_folds=args.cv,
-            train_split=train_split,
-            val_split=val_split,
-            cell_types=args.cell_types,
-            by_cell=args.by_cell,
-            by_drug=args.by_drug,
-            cell_subset_path=args.cell_subset_path,
-            drug_subset_path=args.drug_subset_path,
-            exclude_cells=args.exclude_cells,
-            exclude_drugs=args.exclude_drugs,
-            exclude_indices=args.exclude_indices)
+                              train_split=train_split,
+                              val_split=val_split,
+                              cell_types=args.cell_types,
+                              by_cell=args.by_cell,
+                              by_drug=args.by_drug,
+                              cell_subset_path=args.cell_subset_path,
+                              drug_subset_path=args.drug_subset_path,
+                              exclude_cells=args.exclude_cells,
+                              exclude_drugs=args.exclude_drugs,
+                              exclude_indices=args.exclude_indices)
         train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
         store = pd.HDFStore(fname, complevel=9, complib='blosc:snappy')
@@ -252,17 +250,16 @@ def run(params):
 
     if args.use_exported_data is None:
         loader.partition_data(cv_folds=args.cv,
-            train_split=train_split,
-            val_split=val_split,
-            cell_types=args.cell_types,
-            by_cell=args.by_cell,
-            by_drug=args.by_drug,
-            cell_subset_path=args.cell_subset_path,
-            drug_subset_path=args.drug_subset_path,
-            exclude_cells=args.exclude_cells,
-            exclude_drugs=args.exclude_drugs,
-            exclude_indices=args.exclude_indices)
-
+                              train_split=train_split,
+                              val_split=val_split,
+                              cell_types=args.cell_types,
+                              by_cell=args.by_cell,
+                              by_drug=args.by_drug,
+                              cell_subset_path=args.cell_subset_path,
+                              drug_subset_path=args.drug_subset_path,
+                              exclude_cells=args.exclude_cells,
+                              exclude_drugs=args.exclude_drugs,
+                              exclude_indices=args.exclude_indices)
 
     model = build_model(loader, args)
     logger.info('Combined model:')
@@ -349,25 +346,24 @@ def run(params):
         log_evaluation(evaluate_prediction(y_val, y_shuf), logger,
                        description='Between random pairs in y_val:')
 
-        
         x_train_list, y_train = train_gen.get_slice(size=train_gen.size, single=args.single)
         x_val_list, y_val = val_gen.get_slice(size=val_gen.size, single=args.single)
-            
+
         if y_train.ndim > 1:
             nout = y_train.shape[1]
         else:
             nout = 1
-            
+
         logger.info('Training contamination model:')
         contamination_cbk = candle.Contamination_Callback(x_train_list, y_train)
         model.compile(loss=candle.contamination_loss(nout, contamination_cbk.T_k, contamination_cbk.a, contamination_cbk.sigmaSQ, contamination_cbk.gammaSQ), optimizer=optimizer, metrics=[candle.mse_contamination_metric(nout),
-            candle.r2_contamination_metric(nout)])
+                                                                                                                                                                                            candle.r2_contamination_metric(nout)])
 
         # calculate trainable and non-trainable params
         params.update(candle.compute_trainable_params(model))
-            
+
         callbacks.append(contamination_cbk)
-            
+
         y_train_augmented = candle.add_index_to_output(y_train)
         y_val_aug_dum = candle.add_index_to_output(y_val)
         history = model.fit(x_train_list, y_train_augmented,
@@ -392,32 +388,32 @@ def run(params):
 
         scores = evaluate_prediction(y_val, y_val_pred)
         log_evaluation(scores, logger)
-        
+
         df_pred_list.append(df_val)
-        
+
         if 'loss' in history.history.keys():
             # Do not plot val loss since it is meaningless
             candle.plot_history(prefix, history, metric='loss', val=False)
         if 'r2_contamination' in history.history.keys():
             candle.plot_history(prefix, history, metric='r2_contamination')
-        
+
         # Plot a evolution
         fname = prefix + '.evol.a.png'
-        xlabel='Epochs'
-        ylabel='Contamination a'
-        title='a Evolution'
+        xlabel = 'Epochs'
+        ylabel = 'Contamination a'
+        title = 'a Evolution'
         candle.plot_array(contamination_cbk.avalues, xlabel, ylabel, title, fname)
         # Plot sigmaSQ evolution
         fname = prefix + '.evol.sigmasq.png'
-        xlabel='Epochs'
-        ylabel='Contamination SigmaSQ'
-        title='SigmaSQ Evolution'
+        xlabel = 'Epochs'
+        ylabel = 'Contamination SigmaSQ'
+        title = 'SigmaSQ Evolution'
         candle.plot_array(contamination_cbk.sigmaSQvalues, xlabel, ylabel, title, fname)
         # Plot gammaSQ evolution
         fname = prefix + '.evol.gammasq.png'
-        xlabel='Epochs'
-        ylabel='Contamination GammaSQ'
-        title='GammaSQ Evolution'
+        xlabel = 'Epochs'
+        ylabel = 'Contamination GammaSQ'
+        title = 'GammaSQ Evolution'
         candle.plot_array(contamination_cbk.gammaSQvalues, xlabel, ylabel, title, fname)
 
     pred_fname = prefix + '.predicted.tsv'
@@ -433,11 +429,11 @@ def run(params):
         else:
             df_pred.sort_values(['Sample', 'Drug1', 'Drug2', 'Dose1', 'Dose2', 'Growth'], inplace=True)
     df_pred.to_csv(pred_fname, sep='\t', index=False, float_format='%.4g')
-    
+
     sigma = np.sqrt(K.get_value(contamination_cbk.sigmaSQ))
     gamma = np.sqrt(K.get_value(contamination_cbk.gammaSQ))
     T = K.get_value(contamination_cbk.T_k)
-    dictCont = {'sigma' : sigma, 'gamma' : gamma, 'T' : T}
+    dictCont = {'sigma': sigma, 'gamma': gamma, 'T': T}
     cpar_fname = prefix + '.contPar.joblib'
     dump(dictCont, cpar_fname)
 
@@ -452,7 +448,7 @@ def run(params):
         n_test = len(y_test)
         if n_test == 0:
             continue
-        
+
         x_test_list, y_test = test_gen.get_slice(size=test_gen.size, single=args.single)
         y_test_pred = model.predict(x_test_list, batch_size=args.batch_size)
         y_test_pred = y_test_pred.flatten()

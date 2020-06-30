@@ -22,11 +22,10 @@ def initialize_parameters(default_model='uno_defaultUQ_model.txt'):
 
     # Build benchmark object
     unoBmk = benchmark.BenchmarkUno(benchmark.file_path, default_model, 'keras',
-    prog='uno_holdoutUQ_data', desc='Build data split for UQ analysis in the problem of prediction of tumor response to single or drug pairs.')
+                                    prog='uno_holdoutUQ_data', desc='Build data split for UQ analysis in the problem of prediction of tumor response to single or drug pairs.')
 
     # Finalize parameters
     gParameters = candle.finalize_parameters(unoBmk)
-    #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
 
@@ -37,8 +36,7 @@ def run(params):
     ext = extension_from_parameters(args)
     candle.verify_path(args.save_path)
     prefix = args.save_path + ext
-    logfile = args.logfile if args.logfile else prefix+'.log'
-    #uno.set_up_logger(logfile, logger, uno.loggerUno, args.verbose)
+    logfile = args.logfile if args.logfile else prefix + '.log'
     candle.set_up_logger(logfile, logger, args.verbose)
     logger.info('Params: {}'.format(params))
 
@@ -68,12 +66,12 @@ def run(params):
     train_split = 1 - val_split
 
     loader.partition_data(partition_by=args.partition_by,
-                            cv_folds=args.cv, train_split=train_split,
-                            val_split=val_split, cell_types=args.cell_types,
-                            by_cell=args.by_cell, by_drug=args.by_drug,
-                            cell_subset_path=args.cell_subset_path,
-                            drug_subset_path=args.drug_subset_path
-                        )
+                          cv_folds=args.cv, train_split=train_split,
+                          val_split=val_split, cell_types=args.cell_types,
+                          by_cell=args.by_cell, by_drug=args.by_drug,
+                          cell_subset_path=args.cell_subset_path,
+                          drug_subset_path=args.drug_subset_path
+                          )
 
     print('partition_by: ', args.partition_by)
     if args.partition_by == 'drug_pair':
@@ -90,7 +88,7 @@ def run(params):
             for item in pcs:
                 f.write('%s\n' % item)
         logger.info('Cell IDs in holdout set written in file: {}'.format(fname_cells))
-    else : #
+    else:
         fname_index = args.save_path + 'infer_index_ids'
         pins = loader.get_index_in_val()
         with open(fname_index, 'w') as f:

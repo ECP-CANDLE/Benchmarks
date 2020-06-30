@@ -56,7 +56,7 @@ def build_masks(args, df):
     _, _, ids['train'], ids['val'] = plangen.get_subplan_features(plan, args.node, args.incremental)
 
     for partition in ['train', 'val']:
-        _mask = df['Sample'] == None
+        _mask = df['Sample'] == None  # noqa Should keep == operator here. This is a pandas operation.
         for i in range(len(ids[partition]['cell'])):
             if 'cell' in ids[partition] and 'drug' in ids[partition]:
                 cl_filter = ids[partition]['cell'][i]
@@ -97,7 +97,7 @@ def build_masks_w_holdout(args, df):
     df_new = df.iloc[tr_vl_id, :]
 
     for partition in ['train', 'val']:
-        _mask = df['Sample'] == None
+        _mask = df['Sample'] == None  # noqa Should keep == operator here. This is a pandas operation.
         for i in range(len(ids[partition]['cell'])):
             if 'cell' in ids[partition] and 'drug' in ids[partition]:
                 cl_filter = ids[partition]['cell'][i]

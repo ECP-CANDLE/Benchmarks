@@ -31,31 +31,31 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
 additional_definitions = [
-{'name':'uq_exclude_drugs_file',
-    'default':argparse.SUPPRESS,
-    'action':'store',
-    'help':'File with drug ids to exclude from training'},
-{'name':'uq_exclude_cells_file',
-    'default':argparse.SUPPRESS,
-    'action':'store',
-    'help':'File with cell ids to exclude from training'},
-{'name':'uq_exclude_indices_file',
-    'default':argparse.SUPPRESS,
-    'action':'store',
-    'help':'File with indices to exclude from training'},
-{'name':'exclude_drugs', 'nargs':'+',
-    'default': [],
-    'help':'drug ids to exclude'},
-{'name':'exclude_cells', 'nargs':'+',
-    'default': [],
-    'help':'cell ids to exclude'},
-{'name':'exclude_indices', 'nargs':'+',
-    'default': [],
-    'help':'indices to exclude'},
-{'name':'reg_l2',
-    'type': float,
-    'default': 0.,
-    'help':'weight of regularization for l2 norm of nn weights'}
+    {'name': 'uq_exclude_drugs_file',
+     'default': argparse.SUPPRESS,
+     'action': 'store',
+     'help': 'File with drug ids to exclude from training'},
+    {'name': 'uq_exclude_cells_file',
+     'default': argparse.SUPPRESS,
+     'action': 'store',
+     'help': 'File with cell ids to exclude from training'},
+    {'name': 'uq_exclude_indices_file',
+     'default': argparse.SUPPRESS,
+     'action': 'store',
+     'help': 'File with indices to exclude from training'},
+    {'name': 'exclude_drugs', 'nargs': '+',
+     'default': [],
+     'help':'drug ids to exclude'},
+    {'name': 'exclude_cells', 'nargs': '+',
+     'default': [],
+     'help':'cell ids to exclude'},
+    {'name': 'exclude_indices', 'nargs': '+',
+     'default': [],
+     'help':'indices to exclude'},
+    {'name': 'reg_l2',
+     'type': float,
+     'default': 0.,
+     'help': 'weight of regularization for l2 norm of nn weights'}
 ]
 
 required = ['exclude_drugs', 'exclude_cells', 'exclude_indices']
@@ -119,7 +119,6 @@ def initialize_parameters(default_model='uno_defaultUQ_model.txt'):
     return gParameters
 
 
-
 def run(params):
     args = candle.ArgumentStruct(**params)
     candle.set_seed(args.rng_seed)
@@ -129,7 +128,7 @@ def run(params):
     logfile = args.logfile if args.logfile else prefix + '.log'
     candle.set_up_logger(logfile, logger, args.verbose)
     logger.info('Params: {}'.format(params))
-    
+
     # Exclude drugs / cells for UQ
     if 'uq_exclude_drugs_file' in params.keys():
         args.exclude_drugs = read_IDs_file(args.uq_exclude_drugs_file)
@@ -148,7 +147,6 @@ def run(params):
         logger.info('Indices to exclude: {}'.format(args.exclude_indices))
     else:
         args.exclude_indices = []
-
 
     if (len(args.gpus) > 0):
         import tensorflow as tf
@@ -186,16 +184,16 @@ def run(params):
     if args.export_csv:
         fname = args.export_csv
         loader.partition_data(cv_folds=args.cv,
-            train_split=train_split,
-            val_split=val_split,
-            cell_types=args.cell_types,
-            by_cell=args.by_cell,
-            by_drug=args.by_drug,
-            cell_subset_path=args.cell_subset_path,
-            drug_subset_path=args.drug_subset_path,
-            exclude_cells=args.exclude_cells,
-            exclude_drugs=args.exclude_drugs,
-            exclude_indices=args.exclude_indices)
+                              train_split=train_split,
+                              val_split=val_split,
+                              cell_types=args.cell_types,
+                              by_cell=args.by_cell,
+                              by_drug=args.by_drug,
+                              cell_subset_path=args.cell_subset_path,
+                              drug_subset_path=args.drug_subset_path,
+                              exclude_cells=args.exclude_cells,
+                              exclude_drugs=args.exclude_drugs,
+                              exclude_indices=args.exclude_indices)
         train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
 
@@ -212,16 +210,16 @@ def run(params):
     if args.export_data:
         fname = args.export_data
         loader.partition_data(cv_folds=args.cv,
-            train_split=train_split,
-            val_split=val_split,
-            cell_types=args.cell_types,
-            by_cell=args.by_cell,
-            by_drug=args.by_drug,
-            cell_subset_path=args.cell_subset_path,
-            drug_subset_path=args.drug_subset_path,
-            exclude_cells=args.exclude_cells,
-            exclude_drugs=args.exclude_drugs,
-            exclude_indices=args.exclude_indices)
+                              train_split=train_split,
+                              val_split=val_split,
+                              cell_types=args.cell_types,
+                              by_cell=args.by_cell,
+                              by_drug=args.by_drug,
+                              cell_subset_path=args.cell_subset_path,
+                              drug_subset_path=args.drug_subset_path,
+                              exclude_cells=args.exclude_cells,
+                              exclude_drugs=args.exclude_drugs,
+                              exclude_indices=args.exclude_indices)
         train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
         store = pd.HDFStore(fname, complevel=9, complib='blosc:snappy')
@@ -253,16 +251,16 @@ def run(params):
 
     if args.use_exported_data is None:
         loader.partition_data(partition_by=args.partition_by, cv_folds=args.cv,
-            train_split=train_split,
-            val_split=val_split,
-            cell_types=args.cell_types,
-            by_cell=args.by_cell,
-            by_drug=args.by_drug,
-            cell_subset_path=args.cell_subset_path,
-            drug_subset_path=args.drug_subset_path,
-            exclude_cells=args.exclude_cells,
-            exclude_drugs=args.exclude_drugs,
-            exclude_indices=args.exclude_indices)
+                              train_split=train_split,
+                              val_split=val_split,
+                              cell_types=args.cell_types,
+                              by_cell=args.by_cell,
+                              by_drug=args.by_drug,
+                              cell_subset_path=args.cell_subset_path,
+                              drug_subset_path=args.drug_subset_path,
+                              exclude_cells=args.exclude_cells,
+                              exclude_drugs=args.exclude_drugs,
+                              exclude_indices=args.exclude_indices)
 
     model = build_model(loader, args)
     logger.info('Combined model:')
@@ -398,10 +396,10 @@ def run(params):
             y_val_pred = model.predict_generator(test_gen, test_gen.steps + 1)
             y_val_pred = y_val_pred[:test_gen.size]
             if args.loss == 'het':
-                y_val_pred_ = y_val_pred[:,0]
+                y_val_pred_ = y_val_pred[:, 0]
                 y_val_pred = y_val_pred_.flatten()
             elif args.loss == 'qtl':
-                y_val_pred_50q = y_val_pred[:,0]
+                y_val_pred_50q = y_val_pred[:, 0]
                 y_val_pred = y_val_pred_50q.flatten()   # 50th quantile prediction
         else:
             if args.no_gen:
@@ -410,40 +408,40 @@ def run(params):
                 val_gen.reset()
                 y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
                 y_val_pred = y_val_pred[:val_gen.size]
-                
+
             if args.loss == 'het':
-                y_val_pred_ = y_val_pred[:,0]
-                s_val_pred = y_val_pred[:,1]
+                y_val_pred_ = y_val_pred[:, 0]
+                s_val_pred = y_val_pred[:, 1]
 
                 y_val_pred = y_val_pred_.flatten()
 
-                df_val['Predicted_'+target] = y_val_pred
-                df_val[target+'_Error'] = y_val_pred-y_val
-                df_val['Pred_S_'+target] = s_val_pred
+                df_val['Predicted_' + target] = y_val_pred
+                df_val[target + '_Error'] = y_val_pred - y_val
+                df_val['Pred_S_' + target] = s_val_pred
 
             elif args.loss == 'qtl':
-                y_val_pred_50q = y_val_pred[:,0]
-                y_val_pred_10q = y_val_pred[:,1]
-                y_val_pred_90q = y_val_pred[:,2]
+                y_val_pred_50q = y_val_pred[:, 0]
+                y_val_pred_10q = y_val_pred[:, 1]
+                y_val_pred_90q = y_val_pred[:, 2]
 
                 y_val_pred = y_val_pred_50q.flatten()   # 50th quantile prediction
 
-                df_val['Predicted_50q_'+target] = y_val_pred
-                df_val[target+'_Error_50q'] = y_val_pred-y_val
-                df_val['Predicted_10q_'+target] = y_val_pred_10q.flatten()
-                df_val['Predicted_90q_'+target] = y_val_pred_90q.flatten()
+                df_val['Predicted_50q_' + target] = y_val_pred
+                df_val[target + '_Error_50q'] = y_val_pred - y_val
+                df_val['Predicted_10q_' + target] = y_val_pred_10q.flatten()
+                df_val['Predicted_90q_' + target] = y_val_pred_90q.flatten()
 
             else:
                 y_val_pred = y_val_pred.flatten()
                 # df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred - y_val)
-                df_val['Predicted'+target] = y_val_pred
-                df_val[target+'Error'] = y_val_pred-y_val
+                df_val['Predicted' + target] = y_val_pred
+                df_val[target + 'Error'] = y_val_pred - y_val
 
         scores = evaluate_prediction(y_val, y_val_pred)
         log_evaluation(scores, logger)
-        
+
         df_pred_list.append(df_val)
-        
+
         if 'loss' in history.history.keys():
             candle.plot_history(prefix, history, 'loss')
         if args.loss == 'het':
@@ -464,7 +462,6 @@ def run(params):
             if 'r2' in history.history.keys():
                 candle.plot_history(prefix, history, 'r2')
 
-
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
     if args.agg_dose:
@@ -481,8 +478,8 @@ def run(params):
     logger.info('Testing predictions stored in file: {}'.format(pred_fname))
 
     if args.cp:
-        logger.info('Model stored in file: {}'.format(prefix+'.model.h5'))
-#        logger.info('Model weights stored in file: {}'.format(prefix+cv_ext+'.weights.h5'))
+        logger.info('Model stored in file: {}'.format(prefix + '.model.h5'))
+        # logger.info('Model weights stored in file: {}'.format(prefix+cv_ext+'.weights.h5'))
         logger.info('Model weights stored in file: {}'.format(args.save_path + '/' + args.save_weights))
 
     if args.cv > 1:
@@ -500,15 +497,15 @@ def run(params):
             x_test_list, y_test = test_gen.get_slice(size=test_gen.size, single=args.single)
             y_test_pred = model.predict(x_test_list, batch_size=args.batch_size)
             if args.loss == 'het':
-                y_test_pred = y_test_pred[:,0] # mean
+                y_test_pred = y_test_pred[:, 0]  # mean
             elif args.loss == 'qtl':
-                y_test_pred = y_test_pred[:,0] # 50th quantile prediction
+                y_test_pred = y_test_pred[:, 0]  # 50th quantile prediction
         else:
             y_test_pred = model.predict_generator(test_gen.flow(single=args.single), test_gen.steps)
             if args.loss == 'het':
-                y_test_pred = y_test_pred[:test_gen.size,0] # mean
+                y_test_pred = y_test_pred[:test_gen.size, 0]  # mean
             elif args.loss == 'qtl':
-                y_test_pred = y_test_pred[:test_gen.size,0] # 50th quantile prediction
+                y_test_pred = y_test_pred[:test_gen.size, 0]  # 50th quantile prediction
             else:
                 y_test_pred = y_test_pred[:test_gen.size]
         y_test_pred = y_test_pred.flatten()
