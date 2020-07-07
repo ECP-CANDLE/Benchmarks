@@ -278,7 +278,7 @@ class AbstentionAdapt_Callback(Callback):
                 abs_acc = logs.get(self.acc_monitor)
                 # Current abstention fraction
                 abs_frac = logs.get(self.abs_monitor)
-                if abs_acc is None or type(abs_frac) is None:
+                if abs_acc is None or abs_frac is None:
                     raise Exception('ERROR! Abstention Adapt conditioned on metrics ' + str(self.acc_monitor) + ' and ' + str(self.abs_monitor) + ' which are not available. Available metrics are: ' + ','.join(list(logs.keys())) + '... Exiting')
                 
                 # modify alpha as needed
