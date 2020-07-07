@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 
-
 from keras import backend as K
 
 from keras.callbacks import Callback
@@ -216,11 +215,11 @@ def abstention_acc_class_i_metric(nb_classes, class_i):
 
 
 class AbstentionAdapt_Callback(Callback):
-    """ This callback is used to adapt the parameter mu in the abstention loss.
-        Factor mu (weight of the abstention term in the abstention loss) is increased or decreased to try to match the accuracy set as target.
-        The accuracy to use must be specified as the 'monitor' argument in the initialization of the callback. It could be: the accuracy without abstention samples (abs_acc), the accuracy over class 1 without abstention samples (abs_acc_class1), etc.
-        If the current monitored accuracy is smaller than the target set, mu increases to promote more abstention.
-        If the current monitored accuracy is greater than the target set, mu decreases to promote more predictions (less abstention).
+    """ This callback is used to adapt the parameter alpha in the abstention loss.
+        The parameter alpha (weight of the abstention term in the abstention loss) is increased or decreased adaptively during the training run. It is decreased if the current abstention accuracy is less than the minimum accuracy set or increased if the current abstention fraction is greater than the maximum fraction set.
+        The abstention accuracy metric to use must be specified as the 'acc_monitor' argument in the initialization of the callback. It could be: the global abstention accuracy (abstention_acc), the abstention accuracy over the ith class (acc_class_i), etc.
+        The abstention metric to use must be specified as the 'abs_monitor' argument in the initialization of the callback. It should be the metric that computes the fraction of samples for which the model is abstaining (abstention).
+        The factor alpha is modified if the current abstention accuracy is less than the minimum accuracy set or if the current abstention fraction is greater than the maximum fraction set. Thresholds for minimum and maximum correction factors are computed and the correction over alpha is not allowed to be less or greater than them, respectively, to avoid huge swings in the abstention loss evolution.
     """
 
     def __init__(self, acc_monitor, abs_monitor, alpha0, init_abs_epoch=4, alpha_scale_factor=0.8, min_abs_acc=0.9, max_abs_frac=0.4, acc_gain=5.0, abs_gain=1.0):
@@ -228,7 +227,7 @@ class AbstentionAdapt_Callback(Callback):
         Parameters
         ----------
         acc_monitor : keras metric
-            Accuracy metric to monitor during the run and use as base to adapt the weight of the abstention term (i.e. alpha) in the abstention cost function. (Must be an accuracy metric that takes abstention into account)
+            Accuracy metric to monitor during the run and use as base to adapt the weight of the abstention term (i.e. alpha) in the abstention cost function. (Must be an accuracy metric that takes abstention into account).
         abs_monitor : keras metric
             Abstention metric monitored during the run and used as the other factor to adapt the weight of the abstention term (i.e. alpha) in the asbstention loss function
         alpha0 : float
@@ -272,13 +271,16 @@ class AbstentionAdapt_Callback(Callback):
 
         new_alpha_val = K.get_value(self.alpha)
         if epoch > self.init_abs_epoch:
-        
-            abs_acc = logs.get(self.acc_monitor)    # Current accuracy (with abstention)
-            abs_frac = logs.get(self.abs_monitor)   # Current abstention fraction
-            
-            if current is None:
-                warnings.warn( 'Abstention Adapt conditioned on metric `%s` ' 'which is not available. Available metrics are: %s' % (self.monitor, ','.join(list(logs.keys()))), RuntimeWarning)
+            if self.acc_monitor is None or self.abs_monitor is None:
+                raise Exception('ERROR! Abstention Adapt conditioned on metrics ' + str(self.acc_monitor) + ' and ' + str(self.abs_monitor) + ' which are not available. Available metrics are: ' + ','.join(list(logs.keys())) + '... Exiting')
             else:
+                # Current accuracy (with abstention)
+                abs_acc = logs.get(self.acc_monitor)
+                # Current abstention fraction
+                abs_frac = logs.get(self.abs_monitor)
+                if abs_acc is None or type(abs_frac) is None:
+                    raise Exception('ERROR! Abstention Adapt conditioned on metrics ' + str(self.acc_monitor) + ' and ' + str(self.abs_monitor) + ' which are not available. Available metrics are: ' + ','.join(list(logs.keys())) + '... Exiting')
+                
                 # modify alpha as needed
                 acc_error = abs_acc - self.min_abs_acc
                 acc_error = min(acc_error, 0.0)
@@ -437,6 +439,15 @@ def r2_heteroscedastic_metric(nout):
         Number of outputs without uq augmentation
     """
     def metric(y_true, y_pred):
+        """
+        Parameters
+        ----------
+        y_true : Keras tensor
+            Keras tensor including the ground truth
+        y_pred : Keras tensor
+            Keras tensor including the predictions of a heteroscedastic model. The predictions follow the order: (mean_0,S_0,mean_1,S_1,...) with S_i the log of the variance for the ith output.
+        """
+
         if nout > 1:
             y_out = K.reshape(y_pred[:,0::nout], K.shape(y_true))
         else:
@@ -667,7 +678,7 @@ def quantile_metric(nout, index, quantile):
 # For the Contamination Model
 
 def add_index_to_output(y_train):
-    """ This function adds a column to the training ouput to store the indices of the corresponding samples in the training set.
+    """ This function adds a column to the training output to store the indices of the corresponding samples in the training set.
     
     Parameters
     ----------

@@ -257,7 +257,7 @@ def run(params):
     mask = np.zeros(nb_classes + 1)
     mask[-1] = 1
     alpha0 = 0.5  # In the long term this is not as important since alpha auto tunes, however it may require a large number of epochs to converge if set far away from target
-    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abs_acc_class1', abs_monitor='val_abstention', alpha0=alpha0, alpha_scale_factor=params['alpha_scale_factor'], min_abs_acc=params['min_abs_acc'],
+    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abstention_acc_class_1', abs_monitor='val_abstention', alpha0=alpha0, alpha_scale_factor=params['alpha_scale_factor'], min_abs_acc=params['min_abs_acc'],
         max_abs_frac=params['max_abs_frac'],
         acc_gain=params['acc_gain'],
         abs_gain=params['abs_gain'],
