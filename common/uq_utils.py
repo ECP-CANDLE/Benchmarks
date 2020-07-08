@@ -338,12 +338,12 @@ def fill_array(blocklist, maxsize, numdata, numblocks, blocksize):
 
 ###### UTILS for COMPUTATION OF EMPIRICAL CALIBRATION
 
-def compute_statistics_homoscedastic(df_data,
-                                     col_true=0,
-                                     col_pred=6,
-                                     col_std_pred=7,
-                                     ):
-    """ Extracts ground truth, mean predition, error and
+def compute_statistics_homoscedastic_summary(df_data,
+                                            col_true=0,
+                                            col_pred=6,
+                                            col_std_pred=7,
+                                            ):
+    """ Extracts ground truth, mean prediction, error and
         standard deviation of prediction from inference
         data frame. The latter includes the statistics
         over all the inference realizations.
@@ -408,11 +408,11 @@ def compute_statistics_homoscedastic(df_data,
     return Ytrue, Ypred, yerror, sigma, Ypred_std, pred_name
 
 
-def compute_statistics_homoscedastic_all(df_data,
+def compute_statistics_homoscedastic(df_data,
                                      col_true=4,
                                      col_pred_start=6
                                      ):
-    """ Extracts ground truth, mean predition, error and
+    """ Extracts ground truth, mean prediction, error and
         standard deviation of prediction from inference
         data frame. The latter includes all the individual
         inference realizations.
@@ -481,7 +481,7 @@ def compute_statistics_heteroscedastic(df_data,
                                      col_pred_start=6,
                                      col_std_pred_start=7,
                                      ):
-    """ Extracts ground truth, mean predition, error, standard
+    """ Extracts ground truth, mean prediction, error, standard
         deviation of prediction and predicted (learned) standard
         deviation from inference data frame. The latter includes
         all the individual inference realizations.
@@ -560,7 +560,7 @@ def compute_statistics_quantile(df_data,
                                      col_true=4,
                                      col_pred_start=6
                                      ):
-    """ Extracts ground truth, 50th percentile mean predition,
+    """ Extracts ground truth, 50th percentile mean prediction,
         low percentile and high percentile mean prediction
         (usually 10th percentile and 90th percentile respectively),
         error (using 50th percentile), standard deviation of
@@ -803,7 +803,7 @@ def compute_empirical_calibration(pSigma_cal, pPred_cal, true_cal, bins, coverag
 
 
 
-def bining_for_calibration(pSigma_cal_ordered_, minL_sigma,
+def binning_for_calibration(pSigma_cal_ordered_, minL_sigma,
                             maxL_sigma, Er_vect_cal_orderedSigma_,
                             bins, coverage_percentile):
     """ Bin the values of the standard deviations observed during
@@ -897,7 +897,7 @@ def bining_for_calibration(pSigma_cal_ordered_, minL_sigma,
     return mean_sigma, min_sigma, max_sigma, error_thresholds, err_err
 
 
-def computation_of_valid_calibration_interval(error_thresholds, error_thresholds_smooth, err_err):
+def compute_valid_calibration_interval(error_thresholds, error_thresholds_smooth, err_err):
     """ Function that estimates the empirical range in which a 
         monotonic relation is observed between standard deviation 
         and coverage of absolute value of error. Since the 
@@ -907,11 +907,11 @@ def computation_of_valid_calibration_interval(error_thresholds, error_thresholds
         good results. Therefore, a softer version is constructed
         based on the satisfaction of certain criteria depending
         on: the values of the error coverage computed per bin,
-        a smoothed version of them and the assocatiate error
+        a smoothed version of them and the associated error
         estimated (based on one standard deviation for a binomial
         distribution estimated by bin vs. the other bins).
-        A minimal validation requiring the end idex to be
-        largest than the starting index is performed before
+        A minimal validation requiring the end index to be
+        greater than the starting index is performed before
         the function return.
         
         Current criteria:
@@ -997,7 +997,7 @@ def computation_of_valid_calibration_interval(error_thresholds, error_thresholds
     return sigma_start_index, sigma_end_index
 
 
-def applying_calibration(pSigma_test, pPred_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto):
+def apply_calibration(pSigma_test, pPred_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto):
     """ Use the empirical mapping between standard deviation and
         absolute value of error estimated during calibration (i.e.
         apply the univariate spline computed) to estimate the error
@@ -1061,7 +1061,7 @@ def applying_calibration(pSigma_test, pPred_test, true_test, s_interpolate, minL
 
 
 def overprediction_check(yp_test, eabs_red):
-    """ Compute the percentage of overestimated absoulte error
+    """ Compute the percentage of overestimated absolute error
         predictions for the arrays reserved for calibration testing
         and whose corresponding standard deviations are included
         in the valid calibration interval.

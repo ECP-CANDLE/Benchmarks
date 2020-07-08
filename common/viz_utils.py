@@ -225,7 +225,8 @@ def plot_calibration_and_errors(mean_sigma, sigma_start_index, sigma_end_index,
                                 steps=False):
     """Functionality to plot empirical calibration curves
        estimated by binning the statistics of computed
-       standard deviations and errors.
+       standard deviations and errors. The plot generated
+       is stored in a png file.
 
     Parameters
     ----------

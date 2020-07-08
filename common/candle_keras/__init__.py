@@ -36,15 +36,15 @@ from viz_utils import plot_calibration_and_errors
 from viz_utils import plot_percentile_predictions
 
 # import from uq_utils
+from uq_utils import compute_statistics_homoscedastic_summary
 from uq_utils import compute_statistics_homoscedastic
-from uq_utils import compute_statistics_homoscedastic_all
 from uq_utils import compute_statistics_heteroscedastic
 from uq_utils import compute_statistics_quantile
 from uq_utils import split_data_for_empirical_calibration
 from uq_utils import compute_empirical_calibration
-from uq_utils import bining_for_calibration
-from uq_utils import computation_of_valid_calibration_interval
-from uq_utils import applying_calibration
+from uq_utils import binning_for_calibration
+from uq_utils import compute_valid_calibration_interval
+from uq_utils import apply_calibration
 from uq_utils import overprediction_check
 
 
