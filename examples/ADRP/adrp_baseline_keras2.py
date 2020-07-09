@@ -212,6 +212,7 @@ def run(params):
 
     # Construct extension to save model
     ext = adrp.extension_from_parameters(params, ".keras")
+    params['save_path'] = './'+params['base_name']+'/'
     candle.verify_path(params["save_path"])
     prefix = "{}{}".format(params["save_path"], ext)
     logfile = params["logfile"] if params["logfile"] else prefix + ".log"

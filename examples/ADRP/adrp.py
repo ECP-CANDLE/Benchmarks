@@ -6,6 +6,7 @@ import logging
 
 import pandas as pd
 import numpy as np
+import csv
 
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
@@ -158,7 +159,60 @@ def extension_from_parameters(params, framework=""):
 
     return ext
 
+def load_headers(desc_headers, train_headers):
+    with open(desc_headers) as f:
+        reader = csv.reader(f, delimiter=",")
+        dh_row = next(reader)
+        dh_row = [x.strip() for x in dh_row]
 
+    dh_dict = {}
+    for i in range(len(dh_row)):
+        dh_dict[dh_row[i]] = i
+
+    with open(train_headers) as f:
+        reader = csv.reader(f, delimiter=",")
+        th_list = next(reader)
+        th_list = [x.strip() for x in th_list]
+
+    return dh_dict, th_list
+
+def load_data(params, seed):
+
+    #data_path = args['in']
+    dh_dict, th_list = load_headers('descriptor_headers.csv', 'training_headers.csv')
+    offset = 6  # descriptor starts at index 6
+    desc_col_idx = [dh_dict[key] + offset for key in th_list]
+
+    url = params["data_url"]
+    file_train = 'ml.'+params['base_name']+'.Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet'
+    #file_train = params["train_data"]
+    train_file = candle.get_file(
+        file_train, url + file_train, cache_subdir="Pilot1"
+    )
+    # df = (pd.read_csv(data_path,skiprows=1).values).astype('float32')
+    print('Loading data...')
+    df = pd.read_parquet(train_file)
+    print('done')
+
+    # df_y = df[:,0].astype('float32')
+    df_y = df['reg'].astype('float32')
+    # df_x = df[:, 1:PL].astype(np.float32)
+    df_x = df.iloc[:, desc_col_idx].astype(np.float32)
+
+#    scaler = MaxAbsScaler()
+
+    scaler = StandardScaler()
+    df_x = scaler.fit_transform(df_x)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(df_x, df_y, test_size= 0.20, random_state=42)
+
+    print('x_train shape:', X_train.shape)
+    print('x_test shape:', X_test.shape)
+
+
+    return X_train, Y_train, X_test, Y_test, X_train.shape[1]
+
+'''
 def load_data(params, seed):
 
     # start change #
@@ -193,3 +247,4 @@ def load_data(params, seed):
         sys.exit()
 
     return X_train, Y_train, X_test, Y_test, PS
+'''
