@@ -394,6 +394,8 @@ def run(params):
         if 'loss' in history.history.keys():
             # Do not plot val loss since it is meaningless
             candle.plot_history(prefix, history, metric='loss', val=False)
+        if 'mse_contamination' in history.history.keys():
+            candle.plot_history(prefix, history, metric='mse_contamination')
         if 'r2_contamination' in history.history.keys():
             candle.plot_history(prefix, history, metric='r2_contamination')
 
