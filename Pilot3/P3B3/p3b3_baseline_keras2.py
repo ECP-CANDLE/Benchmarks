@@ -77,11 +77,19 @@ def run_cnn( GP, train_x, train_y, test_x, test_y,
 
     wv_mat = np.random.randn( max_vocab + 1, wv_len ).astype( 'float32' ) * 0.1
 
+    task_list = GP['task_list']
+    task_names = GP['task_names']
     num_classes = []
+    for i in range(train_y.shape[1]):
+        if i in task_list:
+            num_classes.append( np.max( train_y[ :, i ] ) + 1 )
+
+    '''
     num_classes.append( np.max( train_y[ :, 0 ] ) + 1 )
     num_classes.append( np.max( train_y[ :, 1 ] ) + 1 )
     num_classes.append( np.max( train_y[ :, 2 ] ) + 1 )
     num_classes.append( np.max( train_y[ :, 3 ] ) + 1 )
+    '''
 
 
     kerasDefaults = candle.keras_default_config()
@@ -102,11 +110,23 @@ def run_cnn( GP, train_x, train_y, test_x, test_y,
 
     print( cnn.summary() )
 
-    validation_data = ( { 'Input': test_x },
+    val_labels = {}
+    train_labels = []
+    i_label=0
+    for i in range(train_y.shape[1]):
+        if i in task_list:
+            task_string = 'Dense'+str(i_label)
+            val_labels[task_string] = test_y[:,i]
+            train_labels.append(np.array(train_y[:,i]))
+            i_label+=1
+
+    validation_data = ( { 'Input': test_x },val_labels)
+    '''
         { 'Dense0': test_y[ :, 0 ],
           'Dense1': test_y[ :, 1 ],
           'Dense2': test_y[ :, 2 ],
           'Dense3': test_y[ :, 3 ] } )
+    '''
 
     # candleRemoteMonitor = CandleRemoteMonitor(params= GP)
     # timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
@@ -116,10 +136,11 @@ def run_cnn( GP, train_x, train_y, test_x, test_y,
 
     history = cnn.fit(
         x= np.array( train_x ),
-        y= [ np.array( train_y[ :, 0 ] ),
-             np.array( train_y[ :, 1 ] ),
-             np.array( train_y[ :, 2 ] ),
-             np.array( train_y[ :, 3 ] ) ],
+        y = train_labels,
+        #y= [ np.array( train_y[ :, 0 ] ),
+             #np.array( train_y[ :, 1 ] ),
+             #np.array( train_y[ :, 2 ] ),
+             #np.array( train_y[ :, 3 ] ) ],
         batch_size= batch_size,
         epochs= epochs,
         verbose= 2,
