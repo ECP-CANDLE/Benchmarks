@@ -409,6 +409,9 @@ def add_model_output(modelIn, mode=None, num_add=None, activation=None):
     # Update activation function if requested
     if activation is not None:
         config['activation'] = activation
+    # Bias initialization seems to help het and qtl
+    if mode == 'het' or mode == 'qtl':
+        config['bias_initializer'] = 'ones'
     # Create new Dense layer
     reconstructed_layer = Dense.from_config(config)
     # Connect new Dense last layer to previous one-before-last layer
