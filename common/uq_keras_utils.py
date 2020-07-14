@@ -742,7 +742,7 @@ def contamination_loss(nout, T_k, a, sigmaSQ, gammaSQ):
 class Contamination_Callback(Callback):
     """ This callback is used to update the parameters of the contamination model. This functionality follows the EM algorithm: in the E-step latent variables are updated and in the M-step global variables are updated. The global variables correspond to 'a' (probability of membership to normal class), 'sigmaSQ' (variance of normal class) and 'gammaSQ' (scale of Cauchy class, modeling outliers). The latent variables correspond to 'T_k' (the first column corresponds to the probability of membership to the normal distribution, while the second column corresponds to the probability of membership to the Cauchy distribution i.e. outlier).
     """
-    def __init__(self, x, y):
+    def __init__(self, x, y, a_max=0.99):
         """ Initializer of the Contamination_Callback.
         Parameters
         ----------
@@ -750,13 +750,16 @@ class Contamination_Callback(Callback):
             Array of samples (= input features) in training set.
         y : ndarray
             Array of sample outputs in training set.
+        a_max : float
+            Maximum value of a variable to allow
         """
         super(Contamination_Callback, self).__init__()
         
         self.x = x                              # Features of training set
         self.y = y                              # Output of training set
-        self.sigmaSQ = K.variable(value=0.1)    # Standard devation of normal distribution for error
-        self.gammaSQ = K.variable(value=0.1)    # Scale of Cauchy distribution for error
+        self.a_max = a_max                      # Set maximum a value to allow
+        self.sigmaSQ = K.variable(value=0.01)   # Standard devation of normal distribution for error
+        self.gammaSQ = K.variable(value=0.01)   # Scale of Cauchy distribution for error
         # Parameter Initialization - Conditional distribution of the latent variables
         if isinstance(x, list):
             self.T = np.zeros((x[0].shape[0], 2))
@@ -788,8 +791,8 @@ class Contamination_Callback(Callback):
         # Update parameters (M-Step)
         errorSQ = error**2
         aux = np.mean(self.T[:, 0])
-        #if aux > aux_max:
-        #    aux = aux_max
+        if aux > self.a_max:
+            aux = self.a_max
         K.set_value(self.a, aux)
         K.set_value(self.sigmaSQ, np.sum(self.T[:,0] * errorSQ) / np.sum(self.T[:,0]))
         # Gradient descent
@@ -798,7 +801,7 @@ class Contamination_Callback(Callback):
         # Guarantee positivity in update
         eta = K.get_value(self.model.optimizer.lr)
         new_gmSQ = gmSQ_eval - eta * grad_gmSQ
-        while new_gmSQ < 0:# or (new_gmSQ/gmSQ_eval) > 1000:
+        while new_gmSQ < 0 or (new_gmSQ/gmSQ_eval) > 1000:
             eta /= 2
             new_gmSQ = gmSQ_eval - eta * grad_gmSQ
         K.set_value(self.gammaSQ, new_gmSQ)
@@ -865,8 +868,13 @@ def r2_contamination_metric(nout):
         y_pred : Keras tensor
             Keras tensor with the predictions of the contamination model (no data index).
         """
-        SS_res =  K.sum(K.square(y_true[:,:nout] - y_pred[:,:nout]))
-        SS_tot = K.sum(K.square(y_true[:,:nout] - K.mean(y_true[:,:nout])))
+        if nout > 1:
+            y_out = K.reshape(y_true[:,:-1], K.shape(y_pred))
+        else:
+            y_out = K.reshape(y_true[:,0], K.shape(y_pred))
+
+        SS_res =  K.sum(K.square(y_true_ - y_pred))
+        SS_tot = K.sum(K.square(y_true_ - K.mean(y_true_)))
         return (1. - SS_res/(SS_tot + K.epsilon()))
                         
     metric.__name__ = 'r2_contamination'
