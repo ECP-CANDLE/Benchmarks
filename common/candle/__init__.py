@@ -116,6 +116,7 @@ if 'keras' in sys.modules:
     from uq_keras_utils import contamination_loss
     from uq_keras_utils import Contamination_Callback
     from uq_keras_utils import mse_contamination_metric
+    from uq_keras_utils import mae_contamination_metric
     from uq_keras_utils import r2_contamination_metric
 
     from clr_keras_utils import CyclicLR

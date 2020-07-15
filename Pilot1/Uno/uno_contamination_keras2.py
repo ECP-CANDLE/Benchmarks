@@ -54,7 +54,11 @@ additional_definitions = [
     {'name': 'reg_l2',
      'type': float,
      'default': 0.,
-     'help': 'weight of regularization for l2 norm of nn weights'}
+     'help': 'weight of regularization for l2 norm of nn weights'},
+    {'name': 'a_max',
+     'type': float,
+     'default': 0.99,
+     'help': 'maximum value admisible for a (global normal probability)'}
 ]
 
 required = ['exclude_drugs', 'exclude_cells', 'exclude_indices']
@@ -182,7 +186,8 @@ def run(params):
 
     if args.export_csv:
         fname = args.export_csv
-        loader.partition_data(cv_folds=args.cv,
+        loader.partition_data(partition_by=args.partition_by,
+                              cv_folds=args.cv,
                               train_split=train_split,
                               val_split=val_split,
                               cell_types=args.cell_types,
@@ -208,7 +213,8 @@ def run(params):
 
     if args.export_data:
         fname = args.export_data
-        loader.partition_data(cv_folds=args.cv,
+        loader.partition_data(partition_by=args.partition_by,
+                              cv_folds=args.cv,
                               train_split=train_split,
                               val_split=val_split,
                               cell_types=args.cell_types,
@@ -249,7 +255,8 @@ def run(params):
         return
 
     if args.use_exported_data is None:
-        loader.partition_data(cv_folds=args.cv,
+        loader.partition_data(partition_by=args.partition_by,
+                              cv_folds=args.cv,
                               train_split=train_split,
                               val_split=val_split,
                               cell_types=args.cell_types,
@@ -308,9 +315,9 @@ def run(params):
 
         candle_monitor = candle.CandleRemoteMonitor(params=params)
         timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
-        es_monitor = keras.callbacks.EarlyStopping(patience=10, verbose=1)
+        es_monitor = keras.callbacks.EarlyStopping(monitor='val_mae_contamination', patience=10, verbose=1)
 
-        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
+        reduce_lr = ReduceLROnPlateau(monitor='val_mae_contamination', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
         checkpointer = candle.MultiGPUCheckpoint(prefix + cv_ext + '.model.h5', save_best_only=True)
         tensorboard = TensorBoard(log_dir="tb/{}{}{}".format(args.tb_prefix, ext, cv_ext))
@@ -355,9 +362,9 @@ def run(params):
             nout = 1
 
         logger.info('Training contamination model:')
-        contamination_cbk = candle.Contamination_Callback(x_train_list, y_train)
-        model.compile(loss=candle.contamination_loss(nout, contamination_cbk.T_k, contamination_cbk.a, contamination_cbk.sigmaSQ, contamination_cbk.gammaSQ), optimizer=optimizer, metrics=[candle.mse_contamination_metric(nout),
-                                                                                                                                                                                            candle.r2_contamination_metric(nout)])
+        contamination_cbk = candle.Contamination_Callback(x_train_list, y_train, args.a_max)
+        model.compile(loss=candle.contamination_loss(nout, contamination_cbk.T_k, contamination_cbk.a, contamination_cbk.sigmaSQ, contamination_cbk.gammaSQ), optimizer=optimizer, metrics=[candle.mae_contamination_metric(nout),
+            candle.r2_contamination_metric(nout)])
 
         # calculate trainable and non-trainable params
         params.update(candle.compute_trainable_params(model))
@@ -394,8 +401,8 @@ def run(params):
         if 'loss' in history.history.keys():
             # Do not plot val loss since it is meaningless
             candle.plot_history(prefix, history, metric='loss', val=False)
-        if 'mse_contamination' in history.history.keys():
-            candle.plot_history(prefix, history, metric='mse_contamination')
+        if 'mae_contamination' in history.history.keys():
+            candle.plot_history(prefix, history, metric='mae_contamination')
         if 'r2_contamination' in history.history.keys():
             candle.plot_history(prefix, history, metric='r2_contamination')
 

@@ -723,7 +723,10 @@ def contamination_loss(nout, T_k, a, sigmaSQ, gammaSQ):
         """
         y_shape = K.shape(y_pred)
         y_true_ = K.reshape(y_true[:,:-1], y_shape)
-        diff_sq = K.sum(K.square(y_true_ - y_pred), axis=-1)
+        if nout > 1:
+            diff_sq = K.sum(K.square(y_true_ - y_pred), axis=-1)
+        else:
+            diff_sq = K.square(y_true_ - y_pred)
 
         term_normal = diff_sq / (2. * sigmaSQ) + 0.5 * K.log(sigmaSQ) + 0.5 * K.log(2. * np.pi) - K.log(a)
         term_cauchy = K.log(1. + diff_sq / gammaSQ) + 0.5 * K.log(piSQ * gammaSQ) - K.log(1. - a)
@@ -786,7 +789,7 @@ class Contamination_Callback(Callback):
             Metrics stored during current keras training.
         """
         y_pred = self.model.predict(self.x)
-        error = self.y - y_pred.squeeze()
+        error = self.y.squeeze() - y_pred.squeeze()
                 
         # Update parameters (M-Step)
         errorSQ = error**2
@@ -851,6 +854,31 @@ def mse_contamination_metric(nout):
 
 
 
+def mae_contamination_metric(nout):
+    """This function computes the mean absolute error (mae) for the contamination model. The mae is computed over the prediction. Therefore, the augmentation for the index variable is ignored.
+        
+    Parameters
+    ----------
+    nout : int
+        Number of outputs without uq augmentation (in the contamination model the augmentation corresponds to the data index in training).
+    """
+    def metric(y_true, y_pred):
+        """
+        Parameters
+        ----------
+        y_true : Keras tensor
+            Keras tensor including the ground truth. Since the keras tensor includes an extra column to store the index of the data sample in the training set this column is ignored.
+        y_pred : Keras tensor
+            Keras tensor with the predictions of the contamination model (no data index).
+        """
+        
+        return mean_absolute_error(y_true[:,:nout], y_pred[:,:nout])
+                        
+    metric.__name__ = 'mae_contamination'
+    return metric
+    
+    
+    
 def r2_contamination_metric(nout):
     """This function computes the r2 for the contamination model. The r2 is computed over the prediction. Therefore, the augmentation for the index variable is ignored.
         
@@ -868,10 +896,11 @@ def r2_contamination_metric(nout):
         y_pred : Keras tensor
             Keras tensor with the predictions of the contamination model (no data index).
         """
-        if nout > 1:
-            y_out = K.reshape(y_true[:,:-1], K.shape(y_pred))
-        else:
-            y_out = K.reshape(y_true[:,0], K.shape(y_pred))
+        #if nout > 1:
+        #    y_true_ = K.reshape(y_true[:,:-1], K.shape(y_pred))
+        #else:
+        #    y_true_ = K.reshape(y_true[:,0], K.shape(y_pred))
+        y_true_ = K.reshape(y_true[:,:-1], K.shape(y_pred))
 
         SS_res =  K.sum(K.square(y_true_ - y_pred))
         SS_tot = K.sum(K.square(y_true_ - K.mean(y_true_)))
