@@ -128,6 +128,7 @@ def abstention_acc_metric(nb_classes):
         return abs_acc
 
     metric.__name__ = 'abstention_acc'
+    return metric
 
 def sparse_abstention_acc_metric(nb_classes):
     """ Abstained accuracy:
