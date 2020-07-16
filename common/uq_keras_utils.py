@@ -22,7 +22,47 @@ piSQ = np.pi**2
 # For Abstention Model
 
 def abstention_loss(alpha, mask):
-    """ Function to compute abstention loss. It is composed by two terms: (i) original loss of the multiclass classification problem, (ii) cost associated to the abstaining samples.
+    """ Function to compute abstention loss. 
+        It is composed by two terms: 
+        (i) original loss of the multiclass classification problem, 
+        (ii) cost associated to the abstaining samples.
+    
+    Parameters
+    ----------
+    alpha : Keras variable
+        Weight of abstention term in cost function
+    mask : ndarray
+        Numpy array to use as mask for abstention: 
+        it is 1 on the output associated to the abstention class and 0 otherwise
+    """
+    def loss(y_true, y_pred):
+        """
+        Parameters
+        ----------
+        y_true : keras tensor
+            True values to predict
+        y_pred : keras tensor
+            Prediction made by the model. 
+            It is assumed that this keras tensor includes extra columns to store the abstaining classes.
+        """
+        base_pred = (1 - mask) * y_pred + K.epsilon()
+        base_true = y_true
+        base_cost = K.categorical_crossentropy(base_true, base_pred)
+        abs_pred = K.mean(mask * y_pred, axis=-1)
+        # add some small value to prevent NaN when prediction is abstained
+        abs_pred = K.clip(abs_pred, K.epsilon(), 1.-K.epsilon())
+        
+        return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        
+    loss.__name__='abs_crossentropy'
+    return loss
+
+def sparse_abstention_loss(alpha, mask):
+    """ Function to compute abstention loss. 
+        It is composed by two terms: 
+        (i) original loss of the multiclass classification problem, 
+        (ii) cost associated to the abstaining samples.
+        Assumes y_true is not one-hot encoded.
     
     Parameters
     ----------
@@ -40,19 +80,23 @@ def abstention_loss(alpha, mask):
         y_pred : keras tensor
             Prediction made by the model. It is assumed that this keras tensor includes extra columns to store the abstaining classes.
         """
-        base_pred = (1 - mask) * y_pred
+        base_pred = (1 - mask) * y_pred + K.epsilon()
         base_true = y_true
-        base_cost = K.categorical_crossentropy(base_true, base_pred)
+        base_cost = K.sparse_categorical_crossentropy(base_true, base_pred)
         abs_pred = K.mean(mask * y_pred, axis=-1)
+        # add some small value to prevent NaN when prediction is abstained
+        abs_pred = K.clip(abs_pred, K.epsilon(), 1.-K.epsilon())
         
         return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
         
+    loss.__name__='sparse_abs_crossentropy'
     return loss
 
 
-
 def abstention_acc_metric(nb_classes):
-    """ Function to estimate accuracy over the predicted samples after removing the samples where the model is abstaining.
+    """ Abstained accuracy:
+        Function to estimate accuracy over the predicted samples 
+        after removing the samples where the model is abstaining.
     
     Parameters
     ----------
@@ -66,7 +110,8 @@ def abstention_acc_metric(nb_classes):
         y_true : keras tensor
             True values to predict
         y_pred : keras tensor
-            Prediction made by the model. It is assumed that this keras tensor includes extra columns to store the abstaining classes.
+            Prediction made by the model. 
+            It is assumed that this keras tensor includes extra columns to store the abstaining classes.
         """
         # matching in original classes
         true_pred = K.sum(K.cast(K.equal(K.argmax(y_true, axis=-1), K.argmax(y_pred, axis=-1)), 'int64'))
@@ -77,9 +122,51 @@ def abstention_acc_metric(nb_classes):
         # total predicted in original classes
         total_pred = K.sum(K.cast(K.equal(K.argmax(y_pred, axis=-1), K.argmax(y_pred, axis=-1)), 'int64'))
 
-        return true_pred/(total_pred - total_abs)
+        # guard against divide by zero
+        condition = K.greater(total_pred, total_abs)
+        abs_acc = K.switch(condition, true_pred/(total_pred - total_abs), total_pred/total_pred)
+        return abs_acc
 
     metric.__name__ = 'abstention_acc'
+
+def sparse_abstention_acc_metric(nb_classes):
+    """ Abstained accuracy:
+        Function to estimate accuracy over the predicted samples 
+        after removing the samples where the model is abstaining.
+        Assumes y_true is not one-hot encoded.
+    
+    Parameters
+    ----------
+    nb_classes : int or ndarray
+        Integer or numpy array defining indices of the abstention class
+    """
+    def metric(y_true, y_pred):
+        """
+        Parameters
+        ----------
+        y_true : keras tensor
+            True values to predict
+        y_pred : keras tensor
+            Prediction made by the model. 
+            It is assumed that this keras tensor includes extra columns to store the abstaining classes.
+        """
+        # matching in original classes
+        y_pred_index = K.argmax(y_pred, axis=-1)
+        y_true_index = K.cast(K.max(y_true, axis=-1),'int64')
+        true_pred = K.sum(K.cast(K.equal(y_true_index, y_pred_index), 'int64'))
+
+        # total abstention
+        total_abs = K.sum(K.cast(K.equal(K.argmax(y_pred, axis=-1), nb_classes), 'int64'))
+
+        # total predicted in original classes
+        total_pred = K.sum(K.cast(K.equal(K.argmax(y_pred, axis=-1), K.argmax(y_pred, axis=-1)), 'int64'))
+
+        # guard against divide by zero
+        condition = K.greater(total_pred, total_abs)
+        abs_acc = K.switch(condition, true_pred/(total_pred - total_abs), total_pred/total_pred)
+        return abs_acc
+
+    metric.__name__ = 'sparse_abstention_acc'
     return metric
 
 
@@ -99,7 +186,8 @@ def abstention_metric(nb_classes):
         y_true : keras tensor
             True values to predict
         y_pred : keras tensor
-            Prediction made by the model. It is assumed that this keras tensor includes extra columns to store the abstaining classes.
+            Prediction made by the model. 
+            It is assumed that this keras tensor includes extra columns to store the abstaining classes.
         """
         # total abstention
         total_abs = K.sum(K.cast(K.equal(K.argmax(y_pred, axis=-1), nb_classes), 'int64'))
@@ -115,7 +203,8 @@ def abstention_metric(nb_classes):
     
 
 def acc_class_i_metric(class_i):
-    """ Function to estimate accuracy over the ith class prediction. This estimation is global (i.e. abstaining samples are not removed)
+    """ Function to estimate accuracy over the ith class prediction. 
+        This estimation is global (i.e. abstaining samples are not removed)
     
     Parameters
     ----------
@@ -129,7 +218,8 @@ def acc_class_i_metric(class_i):
         y_true : keras tensor
             True values to predict
         y_pred : keras tensor
-            Prediction made by the model. It is assumed that this keras tensor includes extra columns to store the abstaining classes.
+            Prediction made by the model. 
+            It is assumed that this keras tensor includes extra columns to store the abstaining classes.
         """
         # Find locations in ground truth belonging to class i
         ytrueint = K.cast(K.equal(K.argmax(y_true, axis=-1), class_i), 'int64')
@@ -180,7 +270,8 @@ def abstention_acc_class_i_metric(nb_classes, class_i):
         y_true : keras tensor
             True values to predict
         y_pred : keras tensor
-            Prediction made by the model. It is assumed that this keras tensor includes extra columns to store the abstaining classes.
+            Prediction made by the model. 
+            It is assumed that this keras tensor includes extra columns to store the abstaining classes.
         """
         # Find locations in ground truth belonging to class i
         ytrueint = K.cast(K.equal(K.argmax(y_true, axis=-1), class_i), 'int64')
