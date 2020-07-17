@@ -306,6 +306,46 @@ def abstention_acc_class_i_metric(nb_classes, class_i):
 
 
 
+def abstention_class_i_metric(nb_classes, class_i):
+    """ Function to estimate fraction of the samples where the model is abstaining in class i.
+
+    Parameters
+    ----------
+    nb_classes : int or ndarray
+        Integer or numpy array defining indices of the abstention class
+    class_i : int
+        Index of the class to estimate accuracy
+    """
+    def metric(y_true, y_pred):
+        """
+        Parameters
+        ----------
+        y_true : keras tensor
+            True values to predict
+        y_pred : keras tensor
+            Prediction made by the model. It is assumed that this keras tensor includes extra columns to store the abstaining classes.
+        """
+        # Find locations in ground truth belonging to class i
+        ytrue_i_int = K.cast(K.equal(K.argmax(y_true, axis=-1), class_i), 'int64')
+        # total in class i
+        total_class_i = K.sum(ytrue_i_int)
+        
+        # Abstention samples
+        y_abs = K.cast(K.equal(K.argmax(y_pred, axis=-1), nb_classes), 'int64')
+        # Abstention in class_i
+        total_abs_i = K.sum(ytrue_i_int * y_abs)
+        
+        abs_i = total_abs_i / total_class_i
+        
+        condition = K.greater(total_class_i, 0)
+
+        return K.switch(condition, abs_i, K.zeros_like(abs_i, dtype=abs_i.dtype))
+
+    metric.__name__ = 'abstention_class_{}'.format(class_i)
+    return metric
+
+
+
 class AbstentionAdapt_Callback(Callback):
     """ This callback is used to adapt the parameter alpha in the abstention loss.
         The parameter alpha (weight of the abstention term in the abstention loss) is increased or decreased adaptively during the training run. It is decreased if the current abstention accuracy is less than the minimum accuracy set or increased if the current abstention fraction is greater than the maximum fraction set.
@@ -501,6 +541,9 @@ def add_model_output(modelIn, mode=None, num_add=None, activation=None):
     # Update activation function if requested
     if activation is not None:
         config['activation'] = activation
+    # Bias initialization seems to help het and qtl
+    if mode == 'het' or mode == 'qtl':
+        config['bias_initializer'] = 'ones'
     # Create new Dense layer
     reconstructed_layer = Dense.from_config(config)
     # Connect new Dense last layer to previous one-before-last layer
@@ -812,7 +855,10 @@ def contamination_loss(nout, T_k, a, sigmaSQ, gammaSQ):
         """
         y_shape = K.shape(y_pred)
         y_true_ = K.reshape(y_true[:,:-1], y_shape)
-        diff_sq = K.sum(K.square(y_true_ - y_pred), axis=-1)
+        if nout > 1:
+            diff_sq = K.sum(K.square(y_true_ - y_pred), axis=-1)
+        else:
+            diff_sq = K.square(y_true_ - y_pred)
 
         term_normal = diff_sq / (2. * sigmaSQ) + 0.5 * K.log(sigmaSQ) + 0.5 * K.log(2. * np.pi) - K.log(a)
         term_cauchy = K.log(1. + diff_sq / gammaSQ) + 0.5 * K.log(piSQ * gammaSQ) - K.log(1. - a)
@@ -831,7 +877,7 @@ def contamination_loss(nout, T_k, a, sigmaSQ, gammaSQ):
 class Contamination_Callback(Callback):
     """ This callback is used to update the parameters of the contamination model. This functionality follows the EM algorithm: in the E-step latent variables are updated and in the M-step global variables are updated. The global variables correspond to 'a' (probability of membership to normal class), 'sigmaSQ' (variance of normal class) and 'gammaSQ' (scale of Cauchy class, modeling outliers). The latent variables correspond to 'T_k' (the first column corresponds to the probability of membership to the normal distribution, while the second column corresponds to the probability of membership to the Cauchy distribution i.e. outlier).
     """
-    def __init__(self, x, y):
+    def __init__(self, x, y, a_max=0.99):
         """ Initializer of the Contamination_Callback.
         Parameters
         ----------
@@ -839,13 +885,16 @@ class Contamination_Callback(Callback):
             Array of samples (= input features) in training set.
         y : ndarray
             Array of sample outputs in training set.
+        a_max : float
+            Maximum value of a variable to allow
         """
         super(Contamination_Callback, self).__init__()
         
         self.x = x                              # Features of training set
         self.y = y                              # Output of training set
-        self.sigmaSQ = K.variable(value=0.1)    # Standard devation of normal distribution for error
-        self.gammaSQ = K.variable(value=0.1)    # Scale of Cauchy distribution for error
+        self.a_max = a_max                      # Set maximum a value to allow
+        self.sigmaSQ = K.variable(value=0.01)   # Standard devation of normal distribution for error
+        self.gammaSQ = K.variable(value=0.01)   # Scale of Cauchy distribution for error
         # Parameter Initialization - Conditional distribution of the latent variables
         if isinstance(x, list):
             self.T = np.zeros((x[0].shape[0], 2))
@@ -872,13 +921,13 @@ class Contamination_Callback(Callback):
             Metrics stored during current keras training.
         """
         y_pred = self.model.predict(self.x)
-        error = self.y - y_pred.squeeze()
+        error = self.y.squeeze() - y_pred.squeeze()
                 
         # Update parameters (M-Step)
         errorSQ = error**2
         aux = np.mean(self.T[:, 0])
-        #if aux > aux_max:
-        #    aux = aux_max
+        if aux > self.a_max:
+            aux = self.a_max
         K.set_value(self.a, aux)
         K.set_value(self.sigmaSQ, np.sum(self.T[:,0] * errorSQ) / np.sum(self.T[:,0]))
         # Gradient descent
@@ -887,7 +936,7 @@ class Contamination_Callback(Callback):
         # Guarantee positivity in update
         eta = K.get_value(self.model.optimizer.lr)
         new_gmSQ = gmSQ_eval - eta * grad_gmSQ
-        while new_gmSQ < 0:# or (new_gmSQ/gmSQ_eval) > 1000:
+        while new_gmSQ < 0 or (new_gmSQ/gmSQ_eval) > 1000:
             eta /= 2
             new_gmSQ = gmSQ_eval - eta * grad_gmSQ
         K.set_value(self.gammaSQ, new_gmSQ)
@@ -937,6 +986,31 @@ def mse_contamination_metric(nout):
 
 
 
+def mae_contamination_metric(nout):
+    """This function computes the mean absolute error (mae) for the contamination model. The mae is computed over the prediction. Therefore, the augmentation for the index variable is ignored.
+        
+    Parameters
+    ----------
+    nout : int
+        Number of outputs without uq augmentation (in the contamination model the augmentation corresponds to the data index in training).
+    """
+    def metric(y_true, y_pred):
+        """
+        Parameters
+        ----------
+        y_true : Keras tensor
+            Keras tensor including the ground truth. Since the keras tensor includes an extra column to store the index of the data sample in the training set this column is ignored.
+        y_pred : Keras tensor
+            Keras tensor with the predictions of the contamination model (no data index).
+        """
+        
+        return mean_absolute_error(y_true[:,:nout], y_pred[:,:nout])
+                        
+    metric.__name__ = 'mae_contamination'
+    return metric
+    
+    
+    
 def r2_contamination_metric(nout):
     """This function computes the r2 for the contamination model. The r2 is computed over the prediction. Therefore, the augmentation for the index variable is ignored.
         
@@ -954,8 +1028,14 @@ def r2_contamination_metric(nout):
         y_pred : Keras tensor
             Keras tensor with the predictions of the contamination model (no data index).
         """
-        SS_res =  K.sum(K.square(y_true[:,:nout] - y_pred[:,:nout]))
-        SS_tot = K.sum(K.square(y_true[:,:nout] - K.mean(y_true[:,:nout])))
+        #if nout > 1:
+        #    y_true_ = K.reshape(y_true[:,:-1], K.shape(y_pred))
+        #else:
+        #    y_true_ = K.reshape(y_true[:,0], K.shape(y_pred))
+        y_true_ = K.reshape(y_true[:,:-1], K.shape(y_pred))
+
+        SS_res =  K.sum(K.square(y_true_ - y_pred))
+        SS_tot = K.sum(K.square(y_true_ - K.mean(y_true_)))
         return (1. - SS_res/(SS_tot + K.epsilon()))
                         
     metric.__name__ = 'r2_contamination'

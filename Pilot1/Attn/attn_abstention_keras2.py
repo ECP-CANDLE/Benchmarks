@@ -130,7 +130,7 @@ def build_type_classifier(x_train, y_train, x_test, y_test):
     return clf
 
 
-def initialize_parameters(default_model='attn_abs_default_model.txt'):
+def initialize_parameters(default_model='attn_abs_default_model_v2.txt'):
 
     # Build benchmark object
     attnAbsBmk = BenchmarkAttnAbs(
@@ -257,7 +257,7 @@ def run(params):
     mask = np.zeros(nb_classes + 1)
     mask[-1] = 1
     alpha0 = 0.5  # In the long term this is not as important since alpha auto tunes, however it may require a large number of epochs to converge if set far away from target
-    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abstention_acc_class_1', abs_monitor='val_abstention', alpha0=alpha0, alpha_scale_factor=params['alpha_scale_factor'], min_abs_acc=params['min_abs_acc'],
+    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abstention_acc', abs_monitor='val_abstention', alpha0=alpha0, alpha_scale_factor=params['alpha_scale_factor'], min_abs_acc=params['min_abs_acc'],
         max_abs_frac=params['max_abs_frac'],
         acc_gain=params['acc_gain'],
         abs_gain=params['abs_gain'],
@@ -338,6 +338,21 @@ def run(params):
     save_and_test_saved_model(params, model, root_fname, nb_classes, abstention_cbk.alpha, mask, X_train, X_test, Y_test)
 
     attn.logger.handlers = []
+    df_testX = pd.DataFrame(X_test)
+    #print('df_testX.shape: ', df_testX.shape)
+    cols = ['Y_test' + str(i) for i in range(Y_test.shape[1])]
+    df_testY = pd.DataFrame(Y_test, columns=cols)
+    #print('df_testY.shape: ', df_testY.shape)
+    df_test = pd.concat([df_testY, df_testX], axis=1)
+    #print('df_test.shape: ', df_test.shape)
+    cols = ['Y_pred' + str(i) for i in range(Y_predict.shape[1])]
+    df_pred = pd.DataFrame(Y_predict, columns=cols)
+    #print('df_pred.shape: ', df_pred.shape)
+    df_test = pd.concat([df_pred, df_test], axis=1).reset_index(drop=True)
+    #print('df_test.shape: ', df_test.shape)
+    fname = params['save_path'] + root_fname + '.dftest.tsv'
+    df_test.to_csv(fname, sep='\t', index=False, float_format="%.3g")
+
 
     return history
 
