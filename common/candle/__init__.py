@@ -97,7 +97,9 @@ if 'keras' in sys.modules:
     from solr_keras import TerminateOnTimeOut
 
     from uq_keras_utils import abstention_loss
+    from uq_keras_utils import sparse_abstention_loss
     from uq_keras_utils import abstention_acc_metric
+    from uq_keras_utils import sparse_abstention_acc_metric
     from uq_keras_utils import abstention_metric
     from uq_keras_utils import acc_class_i_metric
     from uq_keras_utils import abstention_acc_class_i_metric
