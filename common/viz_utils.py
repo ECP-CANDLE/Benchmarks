@@ -147,21 +147,21 @@ def plot_2d_density_sigma_vs_error(sigma, yerror, method=None, figprefix=None):
     xbins = 51
     ybins = 31
 
-    fig = plt.figure(figsize=(24,12)) # (30,16)
+    fig = plt.figure(figsize=(24,18)) # (30,16)
     ax = plt.gca()
     plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
     plt.hist2d(sigma, yerror, bins=[xbins,ybins], norm=LogNorm())
     cb = plt.colorbar()
-    ax.set_xlabel('Sigma (' + method + ')', fontsize=38, labelpad=15.)
-    ax.set_ylabel('Observed - Mean Predicted', fontsize=38, labelpad=15.)
+    ax.set_xlabel('Standard Deviation (' + method + ')', fontsize=38, labelpad=15.)
+    ax.set_ylabel('Error: Observed - Mean Predicted', fontsize=38, labelpad=15.)
     ax.axis([sigma.min()*0.98, sigma.max()*1.02, -yerror.max(), yerror.max()])
-    plt.setp(ax.get_xticklabels(), fontsize=28)
-    plt.setp(ax.get_yticklabels(), fontsize=28)
-    cb.ax.set_yticklabels(cb.ax.get_yticklabels(), fontsize=22)
+    plt.setp(ax.get_xticklabels(), fontsize=32)
+    plt.setp(ax.get_yticklabels(), fontsize=32)
+    cb.ax.set_yticklabels(cb.ax.get_yticklabels(), fontsize=28)
     plt.grid(True)
-    plt.savefig(figprefix + '_density_sigma_error.png')
+    plt.savefig(figprefix + '_density_std_error.png')
     plt.close()
-    print('Generated plot: ', figprefix + '_density_sigma_error.png')
+    print('Generated plot: ', figprefix + '_density_std_error.png')
 
 
 def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
@@ -194,24 +194,24 @@ def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     H, xedges, yedges, img = plt.hist2d(sigma, yerror,# normed=True,
                                         bins=[xbins,ybins])
 
-    fig = plt.figure(figsize=(14,16))
+    fig = plt.figure(figsize=(18,24))
     legend = []
-    for ii in range(6):#(H.shape[0]):
+    for ii in range(4):#(H.shape[0]):
         if ii is not 1:
             plt.plot(yedges[0:H.shape[1]], H[ii,:]/np.sum(H[ii,:]), marker='o',
                  markersize=12, lw=6.)
         legend.append(str((xedges[ii] + xedges[ii+1])/2))
-    plt.legend(legend, fontsize=16)
+    plt.legend(legend, fontsize=28)
     ax = plt.gca()
-    plt.title('Error Dist. per Sigma for ' + method, fontsize=40)
-    ax.set_xlabel('Observed - Mean Predicted', fontsize=38, labelpad=15.)
+    plt.title('Error Dist. per Standard Deviation for ' + method, fontsize=40)
+    ax.set_xlabel('Error: Observed - Mean Predicted', fontsize=38, labelpad=15.)
     ax.set_ylabel('Density', fontsize=38, labelpad=15.)
-    plt.setp(ax.get_xticklabels(), fontsize=28)
-    plt.setp(ax.get_yticklabels(), fontsize=28)
+    plt.setp(ax.get_xticklabels(), fontsize=32)
+    plt.setp(ax.get_yticklabels(), fontsize=32)
     plt.grid(True)
-    plt.savefig(figprefix + '_histogram_error_per_sigma.png')
+    plt.savefig(figprefix + '_histogram_error_per_std.png')
     plt.close()
-    print('Generated plot: ', figprefix + '_histogram_error_per_sigma.png')
+    print('Generated plot: ', figprefix + '_histogram_error_per_std.png')
 
 
 def plot_calibration_and_errors_binning(mean_sigma, sigma_start_index, sigma_end_index,
@@ -284,43 +284,43 @@ def plot_calibration_and_errors_binning(mean_sigma, sigma_start_index, sigma_end
     p_cov = coverage_percentile
     if steps:
         # Plot raw bin statistics
-        fig = plt.figure(figsize=(18,12))
+        fig = plt.figure(figsize=(24,18))
         ax = plt.gca()
         ax.errorbar(mean_sigma, error_thresholds,
             yerr=err_err,
             xerr=[mean_sigma-min_sigma, max_sigma-mean_sigma],
             fmt='o', ecolor='k', capthick=2, ms=8)
-        plt.xlabel('Sigma Predicted (' + method + ')', fontsize=24.)
-        plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=24.)
-        plt.title('Calibration', fontsize=28)
+        plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
+        plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=38.)
+        plt.title('Calibration', fontsize=40)
         ax.axis([0, np.max(max_sigma)*1.1, np.min(error_thresholds)*0.9, np.max(yp23)*1.2])
         plt.grid()
-        plt.setp(ax.get_xticklabels(), fontsize=22)
-        plt.setp(ax.get_yticklabels(), fontsize=22)
+        plt.setp(ax.get_xticklabels(), fontsize=32)
+        plt.setp(ax.get_yticklabels(), fontsize=32)
         plt.savefig(figprefix + '_empirical_calibration_step1.png')
         plt.close()
         print('Generated plot: ', figprefix + '_empirical_calibration_step1.png')
         # Plot raw bin statistics and smoothing
-        fig = plt.figure(figsize=(18,12))
+        fig = plt.figure(figsize=(24,18))
         ax = plt.gca()
         ax.plot(mean_sigma, error_thresholds_smooth, 'g^', ms=12)
         ax.errorbar(mean_sigma, error_thresholds,
             yerr=err_err,
             xerr=[mean_sigma-min_sigma, max_sigma-mean_sigma],
             fmt='o', ecolor='k', capthick=2, ms=8)
-        plt.xlabel('Sigma Predicted (' + method + ')', fontsize=24.)
-        plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=24.)
-        plt.title('Calibration', fontsize=28)
+        plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
+        plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=38.)
+        plt.title('Calibration', fontsize=40)
         ax.axis([0, np.max(max_sigma)*1.1, np.min(error_thresholds)*0.9, np.max(yp23)*1.2])
         plt.grid()
-        plt.setp(ax.get_xticklabels(), fontsize=22)
-        plt.setp(ax.get_yticklabels(), fontsize=22)
+        plt.setp(ax.get_xticklabels(), fontsize=32)
+        plt.setp(ax.get_yticklabels(), fontsize=32)
         plt.savefig(figprefix + '_empirical_calibration_step2.png')
         plt.close()
         print('Generated plot: ', figprefix + '_empirical_calibration_step2.png')
 
     # Plot raw bin statistics, smoothing and empirical calibration
-    fig = plt.figure(figsize=(18,12))
+    fig = plt.figure(figsize=(24,18))
     ax = plt.gca()
     ax.plot(xp23, yp23, 'rx', ms=20)
     ax.plot(mean_sigma, error_thresholds_smooth, 'g^', ms=12)
@@ -328,37 +328,37 @@ def plot_calibration_and_errors_binning(mean_sigma, sigma_start_index, sigma_end
         yerr=err_err,
         xerr=[mean_sigma-min_sigma, max_sigma-mean_sigma],
         fmt='o', ecolor='k', capthick=2, ms=8)
-    plt.xlabel('Sigma Predicted (' + method + ')', fontsize=24.)
-    plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=24.)
-    plt.title('Calibration', fontsize=28)
+    plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
+    plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=38.)
+    plt.title('Calibration', fontsize=40)
     ax.axis([0, np.max(max_sigma)*1.1, np.min(error_thresholds)*0.9, np.max(yp23)*1.2])
     plt.grid()
-    plt.setp(ax.get_xticklabels(), fontsize=22)
-    plt.setp(ax.get_yticklabels(), fontsize=22)
+    plt.setp(ax.get_xticklabels(), fontsize=32)
+    plt.setp(ax.get_yticklabels(), fontsize=32)
     plt.savefig(figprefix + '_empirical_calibration.png')
     plt.close()
     print('Generated plot: ', figprefix + '_empirical_calibration.png')
 
 
-def plot_percentile_predictions(Ypred, Ypred_Lp, Ypred_Hp, percentile_list, pred_name=None, figprefix=None):
-    """Functionality to plot the mean of the percentiles predicted.
+def plot_decile_predictions(Ypred, Ypred_Lp, Ypred_Hp, decile_list, pred_name=None, figprefix=None):
+    """Functionality to plot the mean of the deciles predicted.
        The plot generated is stored in a png file.
 
     Parameters
     ----------
     Ypred : numpy array
-      Array with mid percentile predicted values.
+      Array with median predicted values.
     Ypred_Lp : numpy array
-      Array with low percentile predicted values.
+      Array with low decile predicted values.
     Ypred_Hp : numpy array
-      Array with high percentile predicted values.
-    percentile_list : string list
-      List of percentiles predicted (e.g. '10p', '90p', etc.)
+      Array with high decile predicted values.
+    decile_list : string list
+      List of deciles predicted (e.g. '1st', '9th', etc.)
     pred_name : string
       Name of data colum or quantity predicted (e.g. growth, AUC, etc.)
     figprefix : string
       String to prefix the filename to store the figure generated.
-      A '_density_predictions.png' string will be appended to the
+      A '_decile_predictions.png' string will be appended to the
       figprefix given.
     """
 
@@ -367,17 +367,17 @@ def plot_percentile_predictions(Ypred, Ypred_Lp, Ypred_Hp, percentile_list, pred
     plt.scatter(range(index_.shape[0]), Ypred[index_])
     plt.scatter(range(index_.shape[0]), Ypred_Lp[index_])
     plt.scatter(range(index_.shape[0]), Ypred_Hp[index_])
-    plt.legend(percentile_list, fontsize=20)
-    plt.xlabel('Index', fontsize=18.)
-    plt.ylabel(pred_name, fontsize=18.)
-    plt.title('Predicted ' + pred_name + ' Percentiles', fontsize=28)
+    plt.legend(decile_list, fontsize=28)
+    plt.xlabel('Index', fontsize=38.)
+    plt.ylabel(pred_name, fontsize=38.)
+    plt.title('Predicted ' + pred_name + ' Deciles', fontsize=40)
     plt.grid()
     ax = plt.gca()
-    plt.setp(ax.get_xticklabels(), fontsize=16)
-    plt.setp(ax.get_yticklabels(), fontsize=16)
-    plt.savefig(figprefix + '_percentile_predictions.png')
+    plt.setp(ax.get_xticklabels(), fontsize=32)
+    plt.setp(ax.get_yticklabels(), fontsize=32)
+    plt.savefig(figprefix + '_decile_predictions.png')
     plt.close()
-    print('Generated plot: ', figprefix + '_percentile_predictions.png')
+    print('Generated plot: ', figprefix + '_decile_predictions.png')
 
 
 # plot training and validation metrics together and generate one chart per metrics

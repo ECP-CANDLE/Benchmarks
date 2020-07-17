@@ -710,99 +710,6 @@ def split_data_for_empirical_calibration(Ytrue, Ypred, sigma, cal_split=0.8):
     return index_perm_total, pSigma_cal, pSigma_test, pPred_cal, pPred_test, true_cal, true_test
 
 
-def compute_empirical_calibration_binning(pSigma_cal, pPred_cal, true_cal, bins, coverage_percentile):
-    """ Use the arrays provided to estimate an empirical mapping
-        between standard deviation and absolute value of error,
-        both of which have been observed during inference. Uses
-        statistics collected by binning the data. Since
-        most of the times the raw statistics per bin are very noisy,
-        a smoothing step (based on scipy's savgol filter) is performed.
-        
-        Parameters
-        ----------
-        pSigma_cal : numpy array
-            Part of the standard deviations array to use for calibration.
-        pPred_cal : numpy array
-            Part of the predictions array to use for calibration.
-        true_cal : numpy array
-            Part of the true (observed) values array to use for calibration.
-        bins : int
-            Number of bins to split the range of standard deviations
-            included in pSigma_cal array.
-        coverage_percentile : float
-            Value to use for estimating coverage when evaluating the percentiles 
-            of the observed absolute value of errors.
-            
-        Return
-        ----------
-        mean_sigma : numpy array
-            Array with the mean standard deviations computed per bin.
-        min_sigma : numpy array
-            Array with the minimum standard deviations computed per bin.
-        max_sigma : numpy array
-            Array with the maximum standard deviations computed per bin.
-        error_thresholds : numpy array
-            Thresholds of the errors computed to attain a certain
-            error coverage per bin.
-        err_err : numpy array
-            Error bars in errors (one standard deviation for a binomial
-            distribution estimated by bin vs. the other bins) for the 
-            calibration error.
-        error_thresholds_smooth : numpy array
-            Thresholds of the errors computed to attain a certain
-            error coverage per bin after a smoothed operation is applied
-            to the frequently noisy bin-based estimations.
-        sigma_start_index : non-negative integer
-            Index in the mean_sigma array that defines the start of
-            the valid empirical calibration interval (i.e. index to
-            the smallest std for which a meaningful error mapping
-            is obtained).
-        sigma_end_index : non-negative integer
-            Index in the mean_sigma array that defines the end of
-            the valid empirical calibration interval (i.e. index to
-            the largest std for which a meaningful error mappping 
-            is obtained).
-        s_interpolate : scipy.interpolate python object
-            A python object from scipy.interpolate that computes a
-            univariate spline (InterpolatedUnivariateSpline) constructed
-            to express the mapping from standard deviation to error. This
-            spline is generated during the computational empirical
-            calibration procedure.
-    """
-
-    index_sigma_cal = np.argsort(pSigma_cal)
-    pSigma_cal_ordered_ = pSigma_cal[index_sigma_cal]
-    Er_vect_cal_ = np.abs(true_cal - pPred_cal)
-    Er_vect_cal_orderedSigma_ = Er_vect_cal_[index_sigma_cal]
-
-    minL_sigma = np.min(pSigma_cal_ordered_)
-    maxL_sigma = np.max(pSigma_cal_ordered_)
-    print('Complete Sigma range --> Min: %f, Max: %f' % (minL_sigma, maxL_sigma))
-
-    # Bin statistics for error and sigma
-    mean_sigma, min_sigma, max_sigma, error_thresholds, err_err = bining_for_calibration(pSigma_cal_ordered_,
-                                minL_sigma,
-                                maxL_sigma,
-                                Er_vect_cal_orderedSigma_,
-                                bins,
-                                coverage_percentile)
-
-    # smooth error function
-    #scipy.signal.savgol_filter(x, window_length, polyorder,
-    #deriv=0, delta=1.0, axis=-1, mode='interp', cval=0.0)
-    #error_thresholds_smooth = signal.savgol_filter(error_thresholds, 5, 1)
-    error_thresholds_smooth = signal.savgol_filter(error_thresholds, 5, 1, mode='nearest')
-
-    # Build Interpolant over smooth plot (this will become the calibration function)
-    s_interpolate = InterpolatedUnivariateSpline(mean_sigma, error_thresholds_smooth)
-    # Determine limits of calibration (i.e. monotonicity range)
-    sigma_start_index, sigma_end_index = computation_of_valid_calibration_interval_binning(error_thresholds, error_thresholds_smooth, err_err)
-    
-    print('Range of valid sigma: %.6f --> %.6f' % (mean_sigma[sigma_start_index], mean_sigma[sigma_end_index]))
-
-    return mean_sigma, min_sigma, max_sigma, error_thresholds, err_err, error_thresholds_smooth, sigma_start_index, sigma_end_index, s_interpolate
-
-
 
 def binning_for_calibration(pSigma_cal_ordered_, minL_sigma,
                             maxL_sigma, Er_vect_cal_orderedSigma_,
@@ -896,6 +803,7 @@ def binning_for_calibration(pSigma_cal_ordered_, minL_sigma,
         err_err[i] = np.sqrt(new_nbins[i] * (Ncal - new_nbins[i])) / Ncal * error_thresholds[i]
 
     return mean_sigma, min_sigma, max_sigma, error_thresholds, err_err
+
 
 
 def compute_valid_calibration_interval_binning(error_thresholds, error_thresholds_smooth, err_err):
@@ -997,6 +905,100 @@ def compute_valid_calibration_interval_binning(error_thresholds, error_threshold
     assert (sigma_end_index > sigma_start_index)
 
     return sigma_start_index, sigma_end_index
+
+
+
+def compute_empirical_calibration_binning(pSigma_cal, pPred_cal, true_cal, bins, coverage_percentile):
+    """ Use the arrays provided to estimate an empirical mapping
+        between standard deviation and absolute value of error,
+        both of which have been observed during inference. Uses
+        statistics collected by binning the data. Since
+        most of the times the raw statistics per bin are very noisy,
+        a smoothing step (based on scipy's savgol filter) is performed.
+        
+        Parameters
+        ----------
+        pSigma_cal : numpy array
+            Part of the standard deviations array to use for calibration.
+        pPred_cal : numpy array
+            Part of the predictions array to use for calibration.
+        true_cal : numpy array
+            Part of the true (observed) values array to use for calibration.
+        bins : int
+            Number of bins to split the range of standard deviations
+            included in pSigma_cal array.
+        coverage_percentile : float
+            Value to use for estimating coverage when evaluating the percentiles
+            of the observed absolute value of errors.
+            
+        Return
+        ----------
+        mean_sigma : numpy array
+            Array with the mean standard deviations computed per bin.
+        min_sigma : numpy array
+            Array with the minimum standard deviations computed per bin.
+        max_sigma : numpy array
+            Array with the maximum standard deviations computed per bin.
+        error_thresholds : numpy array
+            Thresholds of the errors computed to attain a certain
+            error coverage per bin.
+        err_err : numpy array
+            Error bars in errors (one standard deviation for a binomial
+            distribution estimated by bin vs. the other bins) for the
+            calibration error.
+        error_thresholds_smooth : numpy array
+            Thresholds of the errors computed to attain a certain
+            error coverage per bin after a smoothed operation is applied
+            to the frequently noisy bin-based estimations.
+        sigma_start_index : non-negative integer
+            Index in the mean_sigma array that defines the start of
+            the valid empirical calibration interval (i.e. index to
+            the smallest std for which a meaningful error mapping
+            is obtained).
+        sigma_end_index : non-negative integer
+            Index in the mean_sigma array that defines the end of
+            the valid empirical calibration interval (i.e. index to
+            the largest std for which a meaningful error mappping
+            is obtained).
+        s_interpolate : scipy.interpolate python object
+            A python object from scipy.interpolate that computes a
+            univariate spline (InterpolatedUnivariateSpline) constructed
+            to express the mapping from standard deviation to error. This
+            spline is generated during the computational empirical
+            calibration procedure.
+    """
+
+    index_sigma_cal = np.argsort(pSigma_cal)
+    pSigma_cal_ordered_ = pSigma_cal[index_sigma_cal]
+    Er_vect_cal_ = np.abs(true_cal - pPred_cal)
+    Er_vect_cal_orderedSigma_ = Er_vect_cal_[index_sigma_cal]
+
+    minL_sigma = np.min(pSigma_cal_ordered_)
+    maxL_sigma = np.max(pSigma_cal_ordered_)
+    print('Complete Sigma range --> Min: %f, Max: %f' % (minL_sigma, maxL_sigma))
+
+    # Bin statistics for error and sigma
+    mean_sigma, min_sigma, max_sigma, error_thresholds, err_err = binning_for_calibration(pSigma_cal_ordered_,
+                                minL_sigma,
+                                maxL_sigma,
+                                Er_vect_cal_orderedSigma_,
+                                bins,
+                                coverage_percentile)
+
+    # smooth error function
+    #scipy.signal.savgol_filter(x, window_length, polyorder,
+    #deriv=0, delta=1.0, axis=-1, mode='interp', cval=0.0)
+    #error_thresholds_smooth = signal.savgol_filter(error_thresholds, 5, 1)
+    error_thresholds_smooth = signal.savgol_filter(error_thresholds, 5, 1, mode='nearest')
+
+    # Build Interpolant over smooth plot (this will become the calibration function)
+    s_interpolate = InterpolatedUnivariateSpline(mean_sigma, error_thresholds_smooth)
+    # Determine limits of calibration (i.e. monotonicity range)
+    sigma_start_index, sigma_end_index = compute_valid_calibration_interval_binning(error_thresholds, error_thresholds_smooth, err_err)
+    
+    print('Range of valid sigma: %.6f --> %.6f' % (mean_sigma[sigma_start_index], mean_sigma[sigma_end_index]))
+
+    return mean_sigma, min_sigma, max_sigma, error_thresholds, err_err, error_thresholds_smooth, sigma_start_index, sigma_end_index, s_interpolate
 
 
 def apply_calibration_binning(pSigma_test, pPred_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto):

@@ -1,0 +1,5 @@
+[Global_Params]
+uqmode = 'qtl' 
+calibration_mode = 'bin' 
+results_filename = '../Pilot1/Uno/uno.predicted_INFER_QTL.tsv'
+coverage_percentile = 0.95

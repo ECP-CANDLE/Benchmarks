@@ -5,8 +5,10 @@ from __future__ import division, print_function
 import pandas as pd
 import sys
 import os
-import pickle
 import dill
+
+from keras import backend as K
+
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, './'))
@@ -29,6 +31,10 @@ additional_definitions = [
     'type': candle.str2bool,
     'default': False,
     'help': 'do not plot all the steps in computed in empirical calibrarion'},
+{'name': 'coverage_percentile',
+    'type': float,
+    'default': 0.95,
+    'help': 'coverage seek in ABS error per bin'},
 {'name': 'results_filename',
     'type': str,
     'default': None,
@@ -38,6 +44,7 @@ additional_definitions = [
 required = [
     'uqmode',
     'calibration_mode',
+    'coverage_percentile',
     'results_filename'
 ]
 
@@ -58,7 +65,7 @@ class CalibrationApp(candle.Benchmark):
 
 
 
-def initialize_parameters(default_model='calibration.txt'):
+def initialize_parameters(default_model='calibration_default.txt'):
 
     # Build benchmark object
     calBmk = CalibrationApp(file_path, default_model, 'python',
@@ -72,24 +79,15 @@ def initialize_parameters(default_model='calibration.txt'):
 
 
 
-def read_file(filename):
-
-    df_data = pd.read_csv(filename, sep='\t')
-    print('data read shape: ', df_data.shape)
-
-    return df_data
-
-
-
 def run(params):
-    set_seed(params['rng_seed'])
+    candle.set_seed(params['rng_seed'])
     uqmode = params['uqmode'] # hom, het, qtl
     calibration_mode = params['calibration_mode'] # binning, interpolation
     filename = params['results_filename']
 
-    folder_out = './outUQ/'
-    if folder_out and not os.path.exists(folder_out):
-        os.makedirs(folder_out)
+    #folder_out = './outUQ/'
+    #if folder_out and not os.path.exists(folder_out):
+    #    os.makedirs(folder_out)
 
     index_dp = filename.find('DR=')
     if index_dp == -1: # DR is not in filename
@@ -105,9 +103,10 @@ def run(params):
         print('Droput rate: ', dp)
         dp_perc = dp * 100.
     method = 'Dropout ' + str(dp_perc) + '%'
-    prefix = folder_out + uqmode + '_DR=' + str(dp_perc)
+    prefix = params['output_dir'] + '/' + uqmode + '_DR=' + str(dp_perc)
 
-    df_data = read_file(path, filename)
+    df_data = pd.read_csv(filename, sep='\t')
+    print('data read shape: ', df_data.shape)
     # compute statistics according to uqmode
     if uqmode == 'hom':
         Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_homoscedastic(df_data)
@@ -118,16 +117,16 @@ def run(params):
     elif uqmode == 'qtl': # for quantile UQ
         Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name, Ypred_10p_mean, Ypred_90p_mean = candle.compute_statistics_quantile(df_data)
         bins = 31
-        percentile_list = ['50p', '10p', '90p']
-        candle.plot_percentile_predictions(Ypred_mean, Ypred_10p_mean, Ypred_90p_mean, percentile_list, pred_name, prefix)
+        decile_list = ['5th', '1st', '9th']
+        candle.plot_decile_predictions(Ypred_mean, Ypred_10p_mean, Ypred_90p_mean, decile_list, pred_name, prefix)
     else:
         raise Exception('ERROR ! UQ mode specified ' \
             + 'for calibration: ' + uqmode + ' not implemented... Exiting')
 
     # storing sigma --> needed?
-    #fname = prefix + '_sigma.pkl'
+    #fname = prefix + '_sigma.dkl'
     #with open(fname, 'wb') as f:
-    #    pickle.dump(sigma, f, protocol=4)
+    #    dill.dump(sigma, f)
     #    print('Sigma stored in file: ', fname)
 
     #plots
@@ -140,7 +139,7 @@ def run(params):
 
     # Compute empirical calibration
     if calibration_mode == 'bin': # calibration by binning
-        coverage_percentile = 95
+        coverage_percentile = params['coverage_percentile']
         mean_sigma, min_sigma, max_sigma, error_thresholds, err_err, error_thresholds_smooth, sigma_start_index, sigma_end_index, s_interpolate = candle.compute_empirical_calibration_binning(pSigma_cal, pMean_cal, true_cal, bins, coverage_percentile)
 
         candle.plot_calibration_and_errors_binning(mean_sigma, sigma_start_index,
@@ -163,17 +162,17 @@ def run(params):
         pYstd_perm_all = Ypred_std[index_perm_total]
         pYstd_test = pYstd_perm_all[num_cal:]
         pYstd_red = pYstd_test[index_sigma_range_test]
+        print('Coverage specified (percentile): ', coverage_percentile)
         candle.overprediction_binning_check(yp_test, eabs_red)
 
         # store calibration
         fname = prefix + '_calibration_binning_spline.dkl'
         with open(fname, 'wb') as f:
-#        pickle.dump(s_interpolate, f, protocol=pickle.HIGHEST_PROTOCOL)
             dill.dump(s_interpolate, f)
             print('Calibration spline (binning) stored in file: ', fname)
-        fname = prefix + '_calibration_binning_limits.pkl'
+        fname = prefix + '_calibration_binning_limits.dkl'
         with open(fname, 'wb') as f:
-            pickle.dump([minL_sigma_auto, maxL_sigma_auto], f, protocol=4)
+            dill.dump([minL_sigma_auto, maxL_sigma_auto], f)
             print('Calibration limits (binning) stored in file: ', fname)
     else: # Calibration by smooth interpolation
         print('Calibration by smooth interpolation in progress')

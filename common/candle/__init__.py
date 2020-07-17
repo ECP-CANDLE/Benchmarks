@@ -35,10 +35,11 @@ from viz_utils import plot_density_observed_vs_predicted
 from viz_utils import plot_2d_density_sigma_vs_error
 from viz_utils import plot_histogram_error_per_sigma
 from viz_utils import plot_calibration_and_errors_binning
-from viz_utils import plot_percentile_predictions
+from viz_utils import plot_decile_predictions
 
 
 # import from uq_utils
+from uq_utils import generate_index_distribution
 from uq_utils import compute_statistics_homoscedastic_summary
 from uq_utils import compute_statistics_homoscedastic
 from uq_utils import compute_statistics_heteroscedastic
@@ -47,7 +48,6 @@ from uq_utils import split_data_for_empirical_calibration
 from uq_utils import compute_empirical_calibration_binning
 from uq_utils import apply_calibration_binning
 from uq_utils import overprediction_binning_check
-from uq_utils import generate_index_distribution
 
 # import from profiling_utils
 from profiling_utils import start_profiling
