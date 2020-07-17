@@ -214,7 +214,7 @@ def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     print('Generated plot: ', figprefix + '_histogram_error_per_sigma.png')
 
 
-def plot_calibration_and_errors(mean_sigma, sigma_start_index, sigma_end_index,
+def plot_calibration_and_errors_binning(mean_sigma, sigma_start_index, sigma_end_index,
                                 min_sigma, max_sigma,
                                 error_thresholds,
                                 error_thresholds_smooth,

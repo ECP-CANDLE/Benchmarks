@@ -710,10 +710,11 @@ def split_data_for_empirical_calibration(Ytrue, Ypred, sigma, cal_split=0.8):
     return index_perm_total, pSigma_cal, pSigma_test, pPred_cal, pPred_test, true_cal, true_test
 
 
-def compute_empirical_calibration(pSigma_cal, pPred_cal, true_cal, bins, coverage_percentile):
+def compute_empirical_calibration_binning(pSigma_cal, pPred_cal, true_cal, bins, coverage_percentile):
     """ Use the arrays provided to estimate an empirical mapping
         between standard deviation and absolute value of error,
-        both of which have been observed during inference. Since
+        both of which have been observed during inference. Uses
+        statistics collected by binning the data. Since
         most of the times the raw statistics per bin are very noisy,
         a smoothing step (based on scipy's savgol filter) is performed.
         
@@ -795,7 +796,7 @@ def compute_empirical_calibration(pSigma_cal, pPred_cal, true_cal, bins, coverag
     # Build Interpolant over smooth plot (this will become the calibration function)
     s_interpolate = InterpolatedUnivariateSpline(mean_sigma, error_thresholds_smooth)
     # Determine limits of calibration (i.e. monotonicity range)
-    sigma_start_index, sigma_end_index = computation_of_valid_calibration_interval(error_thresholds, error_thresholds_smooth, err_err)
+    sigma_start_index, sigma_end_index = computation_of_valid_calibration_interval_binning(error_thresholds, error_thresholds_smooth, err_err)
     
     print('Range of valid sigma: %.6f --> %.6f' % (mean_sigma[sigma_start_index], mean_sigma[sigma_end_index]))
 
@@ -897,10 +898,11 @@ def binning_for_calibration(pSigma_cal_ordered_, minL_sigma,
     return mean_sigma, min_sigma, max_sigma, error_thresholds, err_err
 
 
-def compute_valid_calibration_interval(error_thresholds, error_thresholds_smooth, err_err):
+def compute_valid_calibration_interval_binning(error_thresholds, error_thresholds_smooth, err_err):
     """ Function that estimates the empirical range in which a 
         monotonic relation is observed between standard deviation 
-        and coverage of absolute value of error. Since the 
+        and coverage of absolute value of error. Uses
+        statistics collected by binning the data. Since the
         statistics computed per bin are relatively noisy, the 
         application of a greedy criterion (e.g. guarantee a
         monotonically increasing relationship) does not yield 
@@ -997,10 +999,10 @@ def compute_valid_calibration_interval(error_thresholds, error_thresholds_smooth
     return sigma_start_index, sigma_end_index
 
 
-def apply_calibration(pSigma_test, pPred_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto):
+def apply_calibration_binning(pSigma_test, pPred_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto):
     """ Use the empirical mapping between standard deviation and
-        absolute value of error estimated during calibration (i.e.
-        apply the univariate spline computed) to estimate the error
+        absolute value of error estimated during calibration by binning
+        (i.e. apply the univariate spline computed) to estimate the error
         for the part of the standard deviation array that was reserved
         for testing the empirical calibration. The resulting error array
         (yp_test) should overestimate the true observed error (eabs_red).
@@ -1060,11 +1062,12 @@ def apply_calibration(pSigma_test, pPred_test, true_test, s_interpolate, minL_si
     return index_sigma_range_test, xp_test, yp_test, eabs_red
 
 
-def overprediction_check(yp_test, eabs_red):
+def overprediction_binning_check(yp_test, eabs_red):
     """ Compute the percentage of overestimated absolute error
         predictions for the arrays reserved for calibration testing
         and whose corresponding standard deviations are included
-        in the valid calibration interval.
+        in the valid calibration interval determined for the
+        method of calibration by binning.
         
         Parameters
         ----------
