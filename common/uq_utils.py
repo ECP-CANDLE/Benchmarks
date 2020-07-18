@@ -393,14 +393,10 @@ def compute_statistics_homoscedastic_summary(df_data,
     """
 
     Ytrue = df_data.iloc[:,col_true].values
-    print('Ytrue shape: ', Ytrue.shape)
     pred_name = df_data.columns[col_true]
     Ypred = df_data.iloc[:,col_pred].values
-    print('Ypred shape: ', Ypred.shape)
     Ypred_std = df_data.iloc[:,col_std_pred].values
-    print('Ypred_std shape: ', Ypred_std.shape)
     yerror = Ytrue - Ypred
-    print('yerror shape: ', yerror.shape)
     sigma = Ypred_std # std
     MSE = np.mean((Ytrue - Ypred)**2)
     print('MSE: ', MSE)
@@ -459,16 +455,12 @@ def compute_statistics_homoscedastic(df_data,
     """
 
     Ytrue = df_data.iloc[:,col_true].values
-    print('Ytrue shape: ', Ytrue.shape)
     pred_name = df_data.columns[col_true]
     Ypred_mean_ = np.mean(df_data.iloc[:,col_pred_start:], axis=1)
     Ypred_mean = Ypred_mean_.values
-    print('Ypred_mean shape: ', Ypred_mean.shape)
     Ypred_std_ = np.std(df_data.iloc[:,col_pred_start:], axis=1)
     Ypred_std = Ypred_std_.values
-    print('Ypred_std shape: ', Ypred_std.shape)
     yerror = Ytrue - Ypred_mean
-    print('yerror shape: ', yerror.shape)
     sigma = Ypred_std # std
     MSE = np.mean((Ytrue - Ypred_mean)**2)
     print('MSE: ', MSE)
@@ -533,21 +525,16 @@ def compute_statistics_heteroscedastic(df_data,
     """
 
     Ytrue = df_data.iloc[:,col_true].values
-    print('Ytrue shape: ', Ytrue.shape)
     pred_name = df_data.columns[col_true]
     Ypred_mean_ = np.mean(df_data.iloc[:,col_pred_start::2], axis=1)
     Ypred_mean = Ypred_mean_.values
-    print('Ypred shape: ', Ypred_mean.shape)
     Ypred_std_ = np.std(df_data.iloc[:,col_pred_start::2], axis=1)
     Ypred_std = Ypred_std_.values
-    print('Ypred_std shape: ', Ypred_std.shape)
     yerror = Ytrue - Ypred_mean
-    print('yerror shape: ', yerror.shape)
     s_ = df_data.iloc[:,col_std_pred_start::2]
     s_mean = np.mean(s_, axis=1)
     var = np.exp(s_mean.values) # variance
     sigma = np.sqrt(var) # std
-    print('sigma shape: ', sigma.shape)
     MSE = np.mean((Ytrue - Ypred_mean)**2)
     print('MSE: ', MSE)
     MSE_STD = np.std((Ytrue - Ypred_mean)**2)
@@ -620,23 +607,18 @@ def compute_statistics_quantile(df_data,
     """
 
     Ytrue = df_data.iloc[:,col_true].values
-    print('Ytrue shape: ', Ytrue.shape)
     pred_name = df_data.columns[col_true]
     Ypred_5d_mean = np.mean(df_data.iloc[:,col_pred_start::3], axis=1)
     Ypred_mean = Ypred_5d_mean.values
-    print('Ypred shape: ', Ypred_mean.shape)
     Ypred_Lp_mean_ = np.mean(df_data.iloc[:,col_pred_start+1::3], axis=1)
     Ypred_Hp_mean_ = np.mean(df_data.iloc[:,col_pred_start+2::3], axis=1)
     Ypred_Lp_mean = Ypred_Lp_mean_.values
     Ypred_Hp_mean = Ypred_Hp_mean_.values
     interdecile_range = Ypred_Hp_mean - Ypred_Lp_mean
     sigma = interdecile_range / sigma_divisor
-    print('sigma shape: ', sigma.shape)
     yerror = Ytrue - Ypred_mean
-    print('yerror shape: ', yerror.shape)
     Ypred_std_ = np.std(df_data.iloc[:,col_pred_start::3], axis=1)
     Ypred_std = Ypred_std_.values
-    print('Ypred_std shape: ', Ypred_std.shape)
     MSE = np.mean((Ytrue - Ypred_mean)**2)
     print('MSE: ', MSE)
     MSE_STD = np.std((Ytrue - Ypred_mean)**2)
@@ -765,6 +747,12 @@ def compute_empirical_calibration_interpolation(pSigma_cal, pPred_cal, true_cal,
     test_split = 1.0 / cv
     xmin = np.min(pSigma_cal)
     xmax = np.max(pSigma_cal)
+    
+    warnings.filterwarnings("ignore")
+    
+    print('--------------------------------------------')
+    print('Using CV for selecting calibration smoothing')
+    print('--------------------------------------------')
 
     min_error = np.inf
     for cv_ in range(cv):
@@ -774,7 +762,8 @@ def compute_empirical_calibration_interpolation(pSigma_cal, pPred_cal, true_cal,
         # Order x to apply smoothing and interpolation
         xindsort = np.argsort(X_train)
         # Smooth abs error
-        z3smooth = signal.savgol_filter(y_train[xindsort], 31, 1, mode='nearest')
+        #z3smooth = signal.savgol_filter(y_train[xindsort], 31, 1, mode='nearest')
+        z3smooth = signal.savgol_filter(y_train[xindsort], 21, 1, mode='nearest')
         # Compute Piecewise Cubic Hermite Interpolating Polynomial
         splineobj = interpolate.PchipInterpolator(X_train[xindsort], z3smooth, extrapolate=True)
         # Compute prediction from interpolator

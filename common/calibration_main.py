@@ -67,16 +67,16 @@ def coverage_80p(y_test, y_pred, std_pred, y_pred_1d=None, y_pred_9d=None):
     """
 
     if std_pred is None: # for qtl
-        topLim = y_pred_90p
-        botLim = y_pred_10p
+        topLim = y_pred_9d
+        botLim = y_pred_1d
     else: # for hom and het
         topLim = y_pred + 1.28 * std_pred
         botLim = y_pred - 1.28 * std_pred
     
     # greater than top
-    count_gr = np.count_nonzero(np.clip(y_test - topLim, 0.))
+    count_gr = np.count_nonzero(np.clip(y_test - topLim, 0., None))
     # less than bottom
-    count_ls = np.count_nonzero(np.clip(botLim - y_test, 0.))
+    count_ls = np.count_nonzero(np.clip(botLim - y_test, 0., None))
     
     count_out = count_gr + count_ls
     N_test = y_test.shape[0]
@@ -182,10 +182,10 @@ def run(params):
     print('Coverage (80%) after calibration: ', cov80p)
     eabs_true = np.abs(true_test - pMean_test)
     mse = np.mean((eabs_true - eabs_pred)**2)
-    mae = np.abs(eabs_true - eabs_pred)
+    mae = np.mean(np.abs(eabs_true - eabs_pred))
     print('Prediction error in testing calibration')
     print('MSE: ', mse)
-    print('MAE: ', mse)
+    print('MAE: ', mae)
     
     # Use MAE as threshold of accuracy
     # Mark samples with predicted std > mae
