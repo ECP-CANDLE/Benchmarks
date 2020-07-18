@@ -37,6 +37,7 @@ from viz_utils import plot_histogram_error_per_sigma
 from viz_utils import plot_decile_predictions
 from viz_utils import plot_calibration_interpolation
 from viz_utils import plot_calibrated_std
+from viz_utils import plot_contamination_training
 
 
 # import from uq_utils
