@@ -188,8 +188,8 @@ def run(params):
     print('MAE: ', mse)
     
     # Use MAE as threshold of accuracy
-    # compute accuracy of confidence interval (CI)
     # Mark samples with predicted std > mae
+    candle.plot_calibrated_std(true_test, pMean_test, eabs_pred, mae, pred_name, prefix)
     
     # store calibration
     fname = prefix + '_calibration_interpolation_spline.dkl'

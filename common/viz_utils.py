@@ -340,6 +340,53 @@ def plot_calibration_interpolation(mean_sigma, error, splineobj1, splineobj2, me
     print('Generated plot: ', figprefix + '_empirical_calibration_interpolation.png')
 
 
+def plot_calibrated_std(y_test, y_pred, std_calibrated, thresC, pred_name=None, figprefix=None):
+    """Functionality to plot values in testing set after calibration. An estimation of the less confidence samples is made. The plot generated is stored in a png file.
+
+    Parameters
+    ----------
+    y_test : numpy array
+      Array with (true) observed values.
+    y_pred : numpy array
+      Array with predicted values.
+    std_calibrated : numpy array
+      Array with standar deviation values after calibration.
+    thresC : float
+      Threshold to label low confidence predictions (low
+      confidence predictions are the ones with std > thresC).
+    pred_name : string
+      Name of data colum or quantity predicted (e.g. growth, AUC, etc.).
+    figprefix : string
+      String to prefix the filename to store the figure generated.
+      A '_calibrated.png' string will be appended to the
+      figprefix given.
+    """
+
+    N = y_test.shape[0]
+    index = np.argsort(y_pred)
+    
+    indexC = std_calibrated > thresC
+    
+    fig = plt.figure(figsize=(24,18))
+    ax = plt.gca()
+    ax.scatter(range(N), y_test, color='red', lw=2.)
+    plt.fill_between(index, y_pred[index] - 1.28 * std_calibrated[index],
+                       y_pred[index] + 1.28 * std_calibrated[index], color='gray', alpha=0.5)
+    plt.scatter(indexC, y_test[indexC], color='green')#, alpha=0.8)
+    plt.scatter(index, y_pred[index], color='orange')
+    plt.legend(['True', 'Low conf', 'Pred'], fontsize=28)
+    plt.xlabel('Index', fontsize=38.)
+    plt.ylabel(pred_name + ' Predicted', fontsize=38.)
+    plt.title('Calibrated Standard Deviation', fontsize=40)
+    plt.setp(ax.get_xticklabels(), fontsize=32)
+    plt.setp(ax.get_yticklabels(), fontsize=32)
+    plt.grid()
+    fig.tight_layout()
+    plt.savefig(figprefix + '_calibrated.png', bbox_inches='tight')
+    plt.close()
+    print('Generated plot: ', figprefix + '_calibrated.png')
+
+
 
 # plot training and validation metrics together and generate one chart per metrics
 def plot_metrics(history, title=None, skip_ep=0, outdir='.', add_lr=False):
