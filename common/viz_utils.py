@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 
 import numpy as np
 
+from scipy import interpolate
+
 def plot_history(out, history, metric='loss', val=True, title=None, width=8, height=6):
     title = title or 'model {}'.format(metric)
     val_metric = 'val_{}'.format(metric)
@@ -118,7 +120,7 @@ def plot_density_observed_vs_predicted(Ytest, Ypred, pred_name=None, figprefix=N
     plt.setp(ax.get_yticklabels(), fontsize=32)
     cb.ax.set_yticklabels(cb.ax.get_yticklabels(), fontsize=28)
     plt.grid(True)
-    plt.savefig(figprefix + '_density_predictions.png')
+    plt.savefig(figprefix + '_density_predictions.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + '_density_predictions.png')
 
@@ -159,7 +161,7 @@ def plot_2d_density_sigma_vs_error(sigma, yerror, method=None, figprefix=None):
     plt.setp(ax.get_yticklabels(), fontsize=32)
     cb.ax.set_yticklabels(cb.ax.get_yticklabels(), fontsize=28)
     plt.grid(True)
-    plt.savefig(figprefix + '_density_std_error.png')
+    plt.savefig(figprefix + '_density_std_error.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + '_density_std_error.png')
 
@@ -209,7 +211,7 @@ def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     plt.setp(ax.get_xticklabels(), fontsize=32)
     plt.setp(ax.get_yticklabels(), fontsize=32)
     plt.grid(True)
-    plt.savefig(figprefix + '_histogram_error_per_std.png')
+    plt.savefig(figprefix + '_histogram_error_per_std.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + '_histogram_error_per_std.png')
 
@@ -292,14 +294,14 @@ def plot_calibration_and_errors_binning(mean_sigma, sigma_start_index, sigma_end
             fmt='o', ecolor='k', capthick=2, ms=8)
         plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
         plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=38.)
-        plt.title('Calibration', fontsize=40)
+        plt.title('Calibration (by Binning)', fontsize=40)
         ax.axis([0, np.max(max_sigma)*1.1, np.min(error_thresholds)*0.9, np.max(yp23)*1.2])
         plt.grid()
         plt.setp(ax.get_xticklabels(), fontsize=32)
         plt.setp(ax.get_yticklabels(), fontsize=32)
-        plt.savefig(figprefix + '_empirical_calibration_step1.png')
+        plt.savefig(figprefix + '_empirical_calibration_bin_step1.png')
         plt.close()
-        print('Generated plot: ', figprefix + '_empirical_calibration_step1.png')
+        print('Generated plot: ', figprefix + '_empirical_calibration_bin_step1.png', bbox_inches='tight')
         # Plot raw bin statistics and smoothing
         fig = plt.figure(figsize=(24,18))
         ax = plt.gca()
@@ -310,14 +312,14 @@ def plot_calibration_and_errors_binning(mean_sigma, sigma_start_index, sigma_end
             fmt='o', ecolor='k', capthick=2, ms=8)
         plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
         plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=38.)
-        plt.title('Calibration', fontsize=40)
+        plt.title('Calibration (by Binning)', fontsize=40)
         ax.axis([0, np.max(max_sigma)*1.1, np.min(error_thresholds)*0.9, np.max(yp23)*1.2])
         plt.grid()
         plt.setp(ax.get_xticklabels(), fontsize=32)
         plt.setp(ax.get_yticklabels(), fontsize=32)
-        plt.savefig(figprefix + '_empirical_calibration_step2.png')
+        plt.savefig(figprefix + '_empirical_calibration_bin_step2.png', bbox_inches='tight')
         plt.close()
-        print('Generated plot: ', figprefix + '_empirical_calibration_step2.png')
+        print('Generated plot: ', figprefix + '_empirical_calibration_bin_step2.png')
 
     # Plot raw bin statistics, smoothing and empirical calibration
     fig = plt.figure(figsize=(24,18))
@@ -330,14 +332,14 @@ def plot_calibration_and_errors_binning(mean_sigma, sigma_start_index, sigma_end
         fmt='o', ecolor='k', capthick=2, ms=8)
     plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
     plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=38.)
-    plt.title('Calibration', fontsize=40)
+    plt.title('Calibration (by Binning)', fontsize=40)
     ax.axis([0, np.max(max_sigma)*1.1, np.min(error_thresholds)*0.9, np.max(yp23)*1.2])
     plt.grid()
     plt.setp(ax.get_xticklabels(), fontsize=32)
     plt.setp(ax.get_yticklabels(), fontsize=32)
-    plt.savefig(figprefix + '_empirical_calibration.png')
+    plt.savefig(figprefix + '_empirical_calibration_binning.png', bbox_inches='tight')
     plt.close()
-    print('Generated plot: ', figprefix + '_empirical_calibration.png')
+    print('Generated plot: ', figprefix + '_empirical_calibration_binning.png')
 
 
 def plot_decile_predictions(Ypred, Ypred_Lp, Ypred_Hp, decile_list, pred_name=None, figprefix=None):
@@ -375,9 +377,53 @@ def plot_decile_predictions(Ypred, Ypred_Lp, Ypred_Hp, decile_list, pred_name=No
     ax = plt.gca()
     plt.setp(ax.get_xticklabels(), fontsize=32)
     plt.setp(ax.get_yticklabels(), fontsize=32)
-    plt.savefig(figprefix + '_decile_predictions.png')
+    plt.savefig(figprefix + '_decile_predictions.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + '_decile_predictions.png')
+
+
+
+def plot_calibration_interpolation(mean_sigma, error, splineobj, figprefix=None):
+
+    xmax = np.max(mean_sigma)
+    xmin = np.min(mean_sigma)
+    xp23 = np.arange(xmin, xmax, 0.5)
+    yp23 = interpolate.splev(xp23, splineobj, der=0)
+
+    fig = plt.figure(figsize=(24,18))
+    ax = plt.gca()
+    ax.plot(mean_sigma, error, 'kx')
+    ax.plot(xp23, yp23, 'rx', ms=20)
+    plt.legend(['True', 'Cubic Spline'], fontsize=28)
+    plt.xlabel('Standard Deviation Predicted', fontsize=38.)
+    plt.ylabel('ABS Error Estimated', fontsize=38.)
+    plt.title('Calibration (by Interpolation)', fontsize=40)
+    plt.setp(ax.get_xticklabels(), fontsize=32)
+    plt.setp(ax.get_yticklabels(), fontsize=32)
+    plt.grid()
+    fig.tight_layout()
+    plt.savefig(figprefix + '_empirical_calibration_interpolation.png', bbox_inches='tight')
+    plt.close()
+    print('Generated plot: ', figprefix + '_empirical_calibration_interpolation.png')
+
+
+def plot_cverror_calibration_interpolation(reg, cverror, figprefix=None):
+
+    fig = plt.figure(figsize=(24,18))
+    ax = plt.gca()
+    ax.plot(reg, cverror, 'kx')
+    plt.ylim((0, np.mean(cverror) + 3 * np.std(cverror)))
+    plt.xlabel('Regularization Parameter', fontsize=38.)
+    plt.ylabel('CV Error', fontsize=38.)
+    plt.title('CV Error vs Regularization', fontsize=40)
+    plt.setp(ax.get_xticklabels(), fontsize=32)
+    plt.setp(ax.get_yticklabels(), fontsize=32)
+    plt.grid()
+    fig.tight_layout()
+    plt.savefig(figprefix + '_cverror_calibration_interpolation.png', bbox_inches='tight')
+    plt.close()
+    print('Generated plot: ', figprefix + '_cverror_calibration_interpolation.png')
+
 
 
 # plot training and validation metrics together and generate one chart per metrics

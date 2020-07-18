@@ -1,9 +1,15 @@
 from __future__ import absolute_import
 
 import numpy as np
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr, spearman, rankdata
 from scipy import signal
 from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy import interpolate
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import warnings
+
+
 
 def generate_index_distribution(numTrain, numTest, numValidation, params):
     """ Generates a vector of indices to partition the data for training.
@@ -1089,7 +1095,81 @@ def overprediction_binning_check(yp_test, eabs_red):
 
 
 
+def spline_fit_calibration_interpolation(Xtrain, ytrain, Xtest, xmin, xmax, s):
+    tck = interpolate.splrep(Xtrain, ytrain, s=s) # s=0: no smoothing
+    ytest = interpolate.splev(Xtest, tck, der=0)
+    
+    xnew = np.arange(xmin, xmax, 0.5)
+    ynew = interpolate.splev(xnew, tck, der=0)
+
+    return ytest, xnew, ynew
 
 
 
+def compute_empirical_calibration_interpolation(pSigma_cal, pPred_cal, true_cal, cv=10, patience=75, Rmax=500, pflag=False):
+
+    xs3 = pSigma_cal
+    z3 = pPred_cal
+    #scipy.stats.rankdata(a, method='ordinal')
+    
+    print('Compute calibration for CV = {} patience = {}, Rmax = {}'.format(cv, patience, Rmax))
+    
+    #r_min, R, cv_error = compute_spline_patience(xs3, z3, cv, patience, Rmax)
+    
+    cv_error = []
+
+    test_split = 1.0 / cv
+    xmin = np.min(pSigma_cal)
+    xmax = np.max(pSigma_cal)
+
+    min_error = 10**6
+    pat = 0
+    
+    R = np.arange(100, Rmax)
+    r_vals = []
+    for r in R:
+        cv_e = []
+        for cv_ in range(cv):
+            X_train, X_test, y_train, y_test = train_test_split(xs3, z3, test_size=test_split, shuffle=True)
+            
+            xindsort = np.argsort(X_train)
+
+            with warnings.catch_warnings():
+                warnings.filterwarnings('error')
+                try:
+                    ytest, xnew, ynew = spline_fit_calibration_interpolation(X_train[xindsort], y_train[xindsort], X_test, xmin, xmax, r)
+                    cv_e.append(mean_squared_error(y_test, ytest))
+                except Warning as e:
+                    print('\n\t\t r={} cv = {}: Warning! '.format(r,cv))
+                    pass
+
+        m_error = np.mean(cv_e)
+        cv_error.append(m_error)
+        r_vals.append(r)
+        if pflag:
+            print('{} {}'.format(r, m_error))
+
+        if m_error < min_error:
+            min_error = m_error
+            r_min = r
+            pat = 0  # new minimum: reinitialize patience trace
+            print('\t r_min = {} min_error = {}'.format(r_min,min_error))
+        else:
+            pat += 1 # unchanged minimum: update patience trace
+        
+        #print('r = {} error = {:.2e} pat = {}'.format(r,m_error,pat))
+        if pat == patience:
+            print('\n\t break: r_min = {} min_error = {}'.format(r_min,min_error))
+            break
+    
+    reg = np.asarray(r_vals)
+    cv_error = np.asarray(cv_error)
+
+    if pflag:
+        for (a,b) in enumerate(cv_error):
+            print('{} {}'.format(a,b))
+
+    splineobj = interpolate.splrep(X, y, s=r_min)
+
+    return reg, cv_error, splineobj
 

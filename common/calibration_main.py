@@ -30,21 +30,32 @@ additional_definitions = [
 {'name': 'plot_steps',
     'type': candle.str2bool,
     'default': False,
-    'help': 'do not plot all the steps in computed in empirical calibrarion'},
+    'help': 'plot the empirical calibration computed step-by-step'},
 {'name': 'coverage_percentile',
     'type': float,
     'default': 0.95,
-    'help': 'coverage seek in ABS error per bin'},
+    'help': 'coverage seek in ABS error per bin for calibration by binning'},
 {'name': 'results_filename',
     'type': str,
     'default': None,
     'help': 'file with uq inference results'},
+{'name': 'cv',
+    'type': int,
+    'default': 10,
+    'help': 'number of cross validations for calibration by interpolation'},
+{'name': 'patience',
+    'type': int,
+    'default': 75,
+    'help': 'iterations to wait for changes in the calibration by interpolation procedure when sweeping over the regularization parameter'},
+{'name': 'rmax',
+    'type': int,
+    'default': 500,
+    'help': 'maximum regularization parameter to try in calibration by interpolation'},
 ]
 
 required = [
     'uqmode',
     'calibration_mode',
-    'coverage_percentile',
     'results_filename'
 ]
 
@@ -109,7 +120,13 @@ def run(params):
     print('data read shape: ', df_data.shape)
     # compute statistics according to uqmode
     if uqmode == 'hom':
-        Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_homoscedastic(df_data)
+        if df.data.shape[1] < 9:
+            print('Too few columns... Asumming that a summary ' \
+              + '(and not individual realizations) has been ' \
+              + 'given as input')
+            Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_homoscedastic_summary(df_data)
+        else: # all individual realizations
+            Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_homoscedastic(df_data)
         bins = 60
     elif uqmode == 'het': # for heteroscedastic UQ
         Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_heteroscedastic(df_data)
@@ -123,11 +140,6 @@ def run(params):
         raise Exception('ERROR ! UQ mode specified ' \
             + 'for calibration: ' + uqmode + ' not implemented... Exiting')
 
-    # storing sigma --> needed?
-    #fname = prefix + '_sigma.dkl'
-    #with open(fname, 'wb') as f:
-    #    dill.dump(sigma, f)
-    #    print('Sigma stored in file: ', fname)
 
     #plots
     candle.plot_density_observed_vs_predicted(Ytest, Ypred_mean, pred_name, prefix)
@@ -175,9 +187,23 @@ def run(params):
             dill.dump([minL_sigma_auto, maxL_sigma_auto], f)
             print('Calibration limits (binning) stored in file: ', fname)
     else: # Calibration by smooth interpolation
-        print('Calibration by smooth interpolation in progress')
+        #print('Calibration by smooth interpolation in progress')
+        cv = params['cv']
+        patience = params['patience']
+        Rmax = params['rmax']
+        print('Compute calibration for CV = {} patience = {}, Rmax = {}'.format(cv, patience, Rmax))
+        
+        reg, cv_error, splineobj = candle.compute_empirical_calibration_interpolation(pSigma_cal, pMean_cal, true_cal, cv, patience, Rmax)
+        candle.plot_cverror_calibration_interpolation(reg, cverror, prefix)
+        candle.plot_calibration_interpolation(pSigma_cal, pMean_cal, splineobj, prefix)
+        
+        # store calibration
+        fname = prefix + '_calibration_interpolation_spline.dkl'
+        with open(fname, 'wb') as f:
+            dill.dump(splineobj, f)
+            print('Calibration spline (interpolation) stored in file: ', fname)
 
-
+#index_perm_total, pSigma_cal, pSigma_test, pMean_cal, pMean_test, true_cal, true_test
 
 def main():
     params = initialize_parameters()
