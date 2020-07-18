@@ -166,6 +166,7 @@ def plot_2d_density_sigma_vs_error(sigma, yerror, method=None, figprefix=None):
     print('Generated plot: ', figprefix + '_density_std_error.png')
 
 
+
 def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     """Functionality to plot a 1D histogram of the distribution of
        computed errors (i.e. values of observed - predicted) observed 
@@ -216,131 +217,6 @@ def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     print('Generated plot: ', figprefix + '_histogram_error_per_std.png')
 
 
-def plot_calibration_and_errors_binning(mean_sigma, sigma_start_index, sigma_end_index,
-                                min_sigma, max_sigma,
-                                error_thresholds,
-                                error_thresholds_smooth,
-                                err_err,
-                                s_interpolate,
-                                coverage_percentile,
-                                method=None, figprefix=None,
-                                steps=False):
-    """Functionality to plot empirical calibration curves
-       estimated by binning the statistics of computed
-       standard deviations and errors. The plot generated
-       is stored in a png file.
-
-    Parameters
-    ----------
-    mean_sigma : numpy array
-      Array with the mean standard deviations computed per bin.
-    sigma_start_index : non-negative integer
-      Index of the mean_sigma array that defines the start of
-      the valid empirical calibration interval (i.e. index to
-      the smallest std for which a meaningful error is obtained).
-    sigma_end_index : non-negative integer
-      Index of the mean_sigma array that defines the end of
-      the valid empirical calibration interval (i.e. index to
-      the largest std for which a meaningful error is obtained).
-    min_sigma : numpy array
-      Array with the minimum standard deviations computed per bin.
-    max_sigma : numpy array
-      Array with the maximum standard deviations computed per bin.
-    error_thresholds : numpy array
-      Thresholds of the errors computed to attain a certain
-      error coverage per bin.
-    error_thresholds_smooth : numpy array
-      Thresholds of the errors computed to attain a certain
-      error coverage per bin after a smoothed operation is applied
-      to the frequently noisy bin-based estimations.
-    err_err : numpy array
-      Vertical error bars (usually one standard deviation for a binomial
-      distribution estimated by bin) for the error calibration
-      computed empirically.
-    s_interpolate : scipy.interpolate python object
-      A python object from scipy.interpolate that computes a
-      univariate spline (InterpolatedUnivariateSpline) constructed
-      to express the mapping from standard deviation to error. This 
-      spline is generated during the computational empirical 
-      calibration procedure.
-    coverage_percentile : float
-      Value used for the coverage in the percentile estimation
-      of the observed error.
-    method : string
-      Method used to comput the standard deviations (i.e. dropout, 
-      heteroscedastic, etc.).
-    figprefix : string
-      String to prefix the filename to store the figure generated.
-      A '_empirical_calibration.png' string will be appended to
-      the figprefix given.
-    steps : boolean
-      Besides the complete empirical calibration (including raw 
-      statistics, error bars and smoothing), also generates partial 
-      plots with only the raw bin statistics (step1) and with only
-      the raw bin statistics and the smoothing interpolation (step2).
-    """
-    
-    xp23 = np.linspace(mean_sigma[sigma_start_index], mean_sigma[sigma_end_index], 200)
-    yp23 = s_interpolate(xp23)
-        
-    p_cov = coverage_percentile
-    if steps:
-        # Plot raw bin statistics
-        fig = plt.figure(figsize=(24,18))
-        ax = plt.gca()
-        ax.errorbar(mean_sigma, error_thresholds,
-            yerr=err_err,
-            xerr=[mean_sigma-min_sigma, max_sigma-mean_sigma],
-            fmt='o', ecolor='k', capthick=2, ms=8)
-        plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
-        plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=38.)
-        plt.title('Calibration (by Binning)', fontsize=40)
-        ax.axis([0, np.max(max_sigma)*1.1, np.min(error_thresholds)*0.9, np.max(yp23)*1.2])
-        plt.grid()
-        plt.setp(ax.get_xticklabels(), fontsize=32)
-        plt.setp(ax.get_yticklabels(), fontsize=32)
-        plt.savefig(figprefix + '_empirical_calibration_bin_step1.png', bbox_inches='tight')
-        plt.close()
-        print('Generated plot: ', figprefix + '_empirical_calibration_bin_step1.png')
-        # Plot raw bin statistics and smoothing
-        fig = plt.figure(figsize=(24,18))
-        ax = plt.gca()
-        ax.plot(mean_sigma, error_thresholds_smooth, 'g^', ms=12)
-        ax.errorbar(mean_sigma, error_thresholds,
-            yerr=err_err,
-            xerr=[mean_sigma-min_sigma, max_sigma-mean_sigma],
-            fmt='o', ecolor='k', capthick=2, ms=8)
-        plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
-        plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=38.)
-        plt.title('Calibration (by Binning)', fontsize=40)
-        ax.axis([0, np.max(max_sigma)*1.1, np.min(error_thresholds)*0.9, np.max(yp23)*1.2])
-        plt.grid()
-        plt.setp(ax.get_xticklabels(), fontsize=32)
-        plt.setp(ax.get_yticklabels(), fontsize=32)
-        plt.savefig(figprefix + '_empirical_calibration_bin_step2.png', bbox_inches='tight')
-        plt.close()
-        print('Generated plot: ', figprefix + '_empirical_calibration_bin_step2.png')
-
-    # Plot raw bin statistics, smoothing and empirical calibration
-    fig = plt.figure(figsize=(24,18))
-    ax = plt.gca()
-    ax.plot(xp23, yp23, 'rx', ms=20)
-    ax.plot(mean_sigma, error_thresholds_smooth, 'g^', ms=12)
-    ax.errorbar(mean_sigma, error_thresholds,
-        yerr=err_err,
-        xerr=[mean_sigma-min_sigma, max_sigma-mean_sigma],
-        fmt='o', ecolor='k', capthick=2, ms=8)
-    plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
-    plt.ylabel(str(p_cov) + '% Coverage for ABS Observed - Mean Predicted', fontsize=38.)
-    plt.title('Calibration (by Binning)', fontsize=40)
-    ax.axis([0, np.max(max_sigma)*1.1, np.min(error_thresholds)*0.9, np.max(yp23)*1.2])
-    plt.grid()
-    plt.setp(ax.get_xticklabels(), fontsize=32)
-    plt.setp(ax.get_yticklabels(), fontsize=32)
-    plt.savefig(figprefix + '_empirical_calibration_binning.png', bbox_inches='tight')
-    plt.close()
-    print('Generated plot: ', figprefix + '_empirical_calibration_binning.png')
-
 
 def plot_decile_predictions(Ypred, Ypred_Lp, Ypred_Hp, decile_list, pred_name=None, figprefix=None):
     """Functionality to plot the mean of the deciles predicted.
@@ -383,20 +259,77 @@ def plot_decile_predictions(Ypred, Ypred_Lp, Ypred_Hp, decile_list, pred_name=No
 
 
 
-def plot_calibration_interpolation(mean_sigma, error, splineobj, figprefix=None):
+def plot_calibration_interpolation(mean_sigma, error, splineobj1, splineobj2, method='', figprefix=None, steps=False):
+    """Functionality to plot empirical calibration curves
+       estimated by interpolation of the computed
+       standard deviations and errors. Since the estimations
+       are very noisy, two levels of smoothing are used. Both
+       can be plotted independently, if requested.
+       The plot(s) generated is(are) stored in png file(s).
+
+    Parameters
+    ----------
+    mean_sigma : numpy array
+      Array with the mean standard deviations computed in inference.
+    error : numpy array
+      Array with the errors computed from the means predicted in inference.
+    splineobj1 : scipy.interpolate python object
+      A python object from scipy.interpolate that computes a
+      cubic Hermite spline (PchipInterpolator) to express
+      the interpolation after the first smoothing. This
+      spline is a partial result generated during the empirical
+      calibration procedure.
+    splineobj2 : scipy.interpolate python object
+      A python object from scipy.interpolate that computes a
+      cubic Hermite spline (PchipInterpolator) to express
+      the mapping from standard deviation to error. This
+      spline is generated for interpolating the predictions
+      after a process of smoothing-interpolation-smoothing
+      computed during the empirical calibration procedure.
+    method : string
+      Method used to comput the standard deviations (i.e. dropout,
+      heteroscedastic, etc.).
+    figprefix : string
+      String to prefix the filename to store the figure generated.
+      A '_empirical_calibration_interpolation.png' string will be appended to
+      the figprefix given.
+    steps : boolean
+      Besides the complete empirical calibration (including the interpolating
+      spline), also generates partial plots with only the spline of
+      the interpolating spline after the first smoothing level (smooth1).
+    """
 
     xmax = np.max(mean_sigma)
     xmin = np.min(mean_sigma)
     xp23 = np.linspace(xmin, xmax, 200)
-    yp23 = interpolate.splev(xp23, splineobj, der=0)
+    yp23 = splineobj2(xp23)
+
+    if steps:
+        # Plot first smoothing
+        yp23_1 = splineobj1(xp23)
+        fig = plt.figure(figsize=(24,18))
+        ax = plt.gca()
+        ax.plot(mean_sigma, error, 'kx')
+        ax.plot(xp23, yp23_1, 'gx', ms=20)
+        plt.legend(['True', 'Cubic Spline'], fontsize=28)
+        plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
+        plt.ylabel('Error: ABS Observed - Mean Predicted', fontsize=38.)
+        plt.title('Calibration (by Interpolation)', fontsize=40)
+        plt.setp(ax.get_xticklabels(), fontsize=32)
+        plt.setp(ax.get_yticklabels(), fontsize=32)
+        plt.grid()
+        fig.tight_layout()
+        plt.savefig(figprefix + '_empirical_calibration_interp_smooth1.png', bbox_inches='tight')
+        plt.close()
+        print('Generated plot: ', figprefix + '_empirical_calibration_interp_smooth1.png')
 
     fig = plt.figure(figsize=(24,18))
     ax = plt.gca()
     ax.plot(mean_sigma, error, 'kx')
     ax.plot(xp23, yp23, 'rx', ms=20)
     plt.legend(['True', 'Cubic Spline'], fontsize=28)
-    plt.xlabel('Standard Deviation Predicted', fontsize=38.)
-    plt.ylabel('ABS Error Estimated', fontsize=38.)
+    plt.xlabel('Standard Deviation Predicted (' + method + ')', fontsize=38.)
+    plt.ylabel('Error: ABS Observed - Mean Predicted', fontsize=38.)
     plt.title('Calibration (by Interpolation)', fontsize=40)
     plt.setp(ax.get_xticklabels(), fontsize=32)
     plt.setp(ax.get_yticklabels(), fontsize=32)
@@ -405,24 +338,6 @@ def plot_calibration_interpolation(mean_sigma, error, splineobj, figprefix=None)
     plt.savefig(figprefix + '_empirical_calibration_interpolation.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + '_empirical_calibration_interpolation.png')
-
-
-def plot_cverror_calibration_interpolation(reg, cverror, figprefix=None):
-
-    fig = plt.figure(figsize=(24,18))
-    ax = plt.gca()
-    ax.plot(reg, cverror, 'kx')
-    plt.ylim((0, np.mean(cverror) + 3 * np.std(cverror)))
-    plt.xlabel('Regularization Parameter', fontsize=38.)
-    plt.ylabel('CV Error', fontsize=38.)
-    plt.title('CV Error vs Regularization', fontsize=40)
-    plt.setp(ax.get_xticklabels(), fontsize=32)
-    plt.setp(ax.get_yticklabels(), fontsize=32)
-    plt.grid()
-    fig.tight_layout()
-    plt.savefig(figprefix + '_cverror_calibration_interpolation.png', bbox_inches='tight')
-    plt.close()
-    print('Generated plot: ', figprefix + '_cverror_calibration_interpolation.png')
 
 
 

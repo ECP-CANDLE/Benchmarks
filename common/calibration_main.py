@@ -7,6 +7,8 @@ import sys
 import os
 import dill
 
+import numpy as np
+
 from keras import backend as K
 
 
@@ -22,19 +24,10 @@ additional_definitions = [
     'default': None,
     'choices': ['hom', 'het', 'qtl'],
     'help': 'mode of UQ regression used: homoscedastic (hom), heteroscedastic (het) or quantile (qtl)'},
-{'name': 'calibration_mode',
-    'type': str,
-    'default': 'bin',
-    'choices': ['bin', 'inter'],
-    'help': 'mode of empirical calibration to compute: by binning (bin), or by smooth interpolation (inter)'},
 {'name': 'plot_steps',
     'type': candle.str2bool,
     'default': False,
     'help': 'plot step-by-step the computation of the empirical calibration by binning'},
-{'name': 'coverage_percentile',
-    'type': float,
-    'default': 0.95,
-    'help': 'coverage seek in ABS error per bin for calibration by binning'},
 {'name': 'results_filename',
     'type': str,
     'default': None,
@@ -43,27 +36,54 @@ additional_definitions = [
     'type': int,
     'default': 10,
     'help': 'number of cross validations for calibration by interpolation'},
-{'name': 'patience',
-    'type': int,
-    'default': 75,
-    'help': 'iterations to wait for changes in the calibration by interpolation procedure when sweeping over the regularization parameter'},
-{'name': 'rmax',
-    'type': int,
-    'default': 500,
-    'help': 'maximum regularization parameter to try in calibration by interpolation'},
-{'name': 'pflag',
-    'type': candle.str2bool,
-    'default': False,
-    'help': 'flag to print intermediate results when computing empirical calibration by interpolation'},
-
 ]
 
 required = [
     'uqmode',
-    'calibration_mode',
     'results_filename'
 ]
 
+def coverage_80p(y_test, y_pred, std_pred, y_pred_1d=None, y_pred_9d=None):
+    """ Determine the fraction of the true data that falls
+        into the 80p coverage of the model.
+        For homoscedastic and heteroscedastic models the
+        standard deviation prediction is used.
+        For quantile model, if first and nineth deciles
+        are available, these are used instead of computing
+        a standard deviation based on Gaussian assumptions.
+        
+        Parameters
+        ----------
+        y_test : numpy array
+            True (observed) values array.
+        y_pred : numpy array
+            Mean predictions made by the model.
+        std_pred : numpy array
+            Standard deviation predictions made by the model.
+        y_pred_1d : numpy array
+            First decile predictions made by qtl model.
+        y_pred_9d : numpy array
+            Nineth decile predictions made by qtl model.
+    """
+
+    if std_pred is None: # for qtl
+        topLim = y_pred_90p
+        botLim = y_pred_10p
+    else: # for hom and het
+        topLim = y_pred + 1.28 * std_pred
+        botLim = y_pred - 1.28 * std_pred
+    
+    # greater than top
+    count_gr = np.count_nonzero(np.clip(y_test - topLim, 0.))
+    # less than bottom
+    count_ls = np.count_nonzero(np.clip(botLim - y_test, 0.))
+    
+    count_out = count_gr + count_ls
+    N_test = y_test.shape[0]
+    frac_out = (float(count_out)/float(N_test))
+    
+    return (1. - frac_out)
+    
 
 class CalibrationApp(candle.Benchmark):
 
@@ -98,12 +118,8 @@ def initialize_parameters(default_model='calibration_default.txt'):
 def run(params):
     candle.set_seed(params['rng_seed'])
     uqmode = params['uqmode'] # hom, het, qtl
-    calibration_mode = params['calibration_mode'] # binning, interpolation
     filename = params['results_filename']
-
-    #folder_out = './outUQ/'
-    #if folder_out and not os.path.exists(folder_out):
-    #    os.makedirs(folder_out)
+    cv = params['cv']
 
     index_dp = filename.find('DR=')
     if index_dp == -1: # DR is not in filename
@@ -118,35 +134,36 @@ def run(params):
 
         print('Droput rate: ', dp)
         dp_perc = dp * 100.
-    method = 'Dropout ' + str(dp_perc) + '%'
+    method = uqmode + ' - dropout ' + str(dp_perc) + '%'
     prefix = params['output_dir'] + '/' + uqmode + '_DR=' + str(dp_perc)
 
     df_data = pd.read_csv(filename, sep='\t')
     print('data read shape: ', df_data.shape)
     # compute statistics according to uqmode
     if uqmode == 'hom':
-        if df.data.shape[1] < 9:
+        if df_data.shape[1] < 9:
             print('Too few columns... Asumming that a summary ' \
               + '(and not individual realizations) has been ' \
               + 'given as input')
             Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_homoscedastic_summary(df_data)
         else: # all individual realizations
             Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_homoscedastic(df_data)
-        bins = 60
+        cov80p = coverage_80p(Ytest, Ypred_mean, sigma)
     elif uqmode == 'het': # for heteroscedastic UQ
         Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_heteroscedastic(df_data)
-        bins = 31
+        cov80p = coverage_80p(Ytest, Ypred_mean, sigma)
     elif uqmode == 'qtl': # for quantile UQ
-        Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name, Ypred_10p_mean, Ypred_90p_mean = candle.compute_statistics_quantile(df_data)
-        bins = 31
+        Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name, Ypred_1d_mean, Ypred_9d_mean = candle.compute_statistics_quantile(df_data)
+        cov80p = coverage_80p(Ytest, Ypred_mean, None, Ypred_1d_mean, Ypred_9d_mean)
         decile_list = ['5th', '1st', '9th']
-        candle.plot_decile_predictions(Ypred_mean, Ypred_10p_mean, Ypred_90p_mean, decile_list, pred_name, prefix)
+        candle.plot_decile_predictions(Ypred_mean, Ypred_1d_mean, Ypred_9d_mean, decile_list, pred_name, prefix)
     else:
         raise Exception('ERROR ! UQ mode specified ' \
             + 'for calibration: ' + uqmode + ' not implemented... Exiting')
 
+    print('Coverage (80%) before calibration: ', cov80p)
 
-    #plots
+    # Density / Histogram plots
     candle.plot_density_observed_vs_predicted(Ytest, Ypred_mean, pred_name, prefix)
     candle.plot_2d_density_sigma_vs_error(sigma, yerror, method, prefix)
     candle.plot_histogram_error_per_sigma(sigma, yerror, method, prefix)
@@ -154,63 +171,33 @@ def run(params):
     # shuffle data for calibration
     index_perm_total, pSigma_cal, pSigma_test, pMean_cal, pMean_test, true_cal, true_test = candle.split_data_for_empirical_calibration(Ytest, Ypred_mean, sigma)
 
-    # Compute empirical calibration
-    if calibration_mode == 'bin': # calibration by binning
-        coverage_percentile = params['coverage_percentile']
-        mean_sigma, min_sigma, max_sigma, error_thresholds, err_err, error_thresholds_smooth, sigma_start_index, sigma_end_index, s_interpolate = candle.compute_empirical_calibration_binning(pSigma_cal, pMean_cal, true_cal, bins, coverage_percentile)
-
-        candle.plot_calibration_and_errors_binning(mean_sigma, sigma_start_index,
-            sigma_end_index,
-            min_sigma, max_sigma,
-            error_thresholds,
-            error_thresholds_smooth,
-            err_err,
-            s_interpolate,
-            coverage_percentile, method, prefix, params['plot_steps'])
-
-
-        # Use empirical calibration and automatic determined monotonic interval
-        minL_sigma_auto = mean_sigma[sigma_start_index]
-        maxL_sigma_auto = mean_sigma[sigma_end_index]
-        index_sigma_range_test, xp_test, yp_test, eabs_red = candle.apply_calibration_binning(pSigma_test, pMean_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto, 5)
-        # Check sigma overprediction
-        p_cov = coverage_percentile
-        num_cal = pSigma_cal.shape[0]
-        pYstd_perm_all = Ypred_std[index_perm_total]
-        pYstd_test = pYstd_perm_all[num_cal:]
-        pYstd_red = pYstd_test[index_sigma_range_test]
-        print('Coverage specified (percentile): ', coverage_percentile)
-        candle.overprediction_binning_check(yp_test, eabs_red)
-
-        # store calibration
-        fname = prefix + '_calibration_binning_spline.dkl'
-        with open(fname, 'wb') as f:
-            dill.dump(s_interpolate, f)
-            print('Calibration spline (binning) stored in file: ', fname)
-        fname = prefix + '_calibration_binning_limits.dkl'
-        with open(fname, 'wb') as f:
-            dill.dump([minL_sigma_auto, maxL_sigma_auto], f)
-            print('Calibration limits (binning) stored in file: ', fname)
-    else: # Calibration by smooth interpolation
-        #print('Calibration by smooth interpolation in progress')
-        cv = params['cv']
-        patience = params['patience']
-        Rmax = params['rmax']
-        pflag = params['pflag']
-        
-        print('Compute calibration for CV = {} patience = {}, Rmax = {}'.format(cv, patience, Rmax))
-        
-        reg, cv_error, splineobj = candle.compute_empirical_calibration_interpolation(pSigma_cal, pMean_cal, true_cal, cv, patience, Rmax, pflag)
-        candle.plot_cverror_calibration_interpolation(reg, cv_error, prefix)
-        candle.plot_calibration_interpolation(pSigma_cal, pMean_cal, splineobj, prefix)
-        
-        # store calibration
-        fname = prefix + '_calibration_interpolation_spline.dkl'
-        with open(fname, 'wb') as f:
-            dill.dump(splineobj, f)
-            print('Calibration spline (interpolation) stored in file: ', fname)
-
-#index_perm_total, pSigma_cal, pSigma_test, pMean_cal, pMean_test, true_cal, true_test
+    # Compute empirical calibration by smooth interpolation
+    splineobj1, splineobj2 = candle.compute_empirical_calibration_interpolation(pSigma_cal, pMean_cal, true_cal, cv)
+    error = np.abs(true_cal - pMean_cal)
+    candle.plot_calibration_interpolation(pSigma_cal, error, splineobj1, splineobj2, method, prefix, params['plot_steps'])
+    
+    # Check prediction error
+    eabs_pred = splineobj2(pSigma_test)
+    cov80p = coverage_80p(true_test, pMean_test, eabs_pred)
+    print('Coverage (80%) after calibration: ', cov80p)
+    eabs_true = np.abs(true_test - pMean_test)
+    mse = np.mean((eabs_true - eabs_pred)**2)
+    mae = np.abs(eabs_true - eabs_pred)
+    print('Prediction error in testing calibration')
+    print('MSE: ', mse)
+    print('MAE: ', mse)
+    
+    # Use MAE as threshold of accuracy
+    # compute accuracy of confidence interval (CI)
+    # Mark samples with predicted std > mae
+    
+    # store calibration
+    fname = prefix + '_calibration_interpolation_spline.dkl'
+    with open(fname, 'wb') as f:
+        dill.dump(splineobj2, f)
+        print('Calibration spline (interpolation) stored in file: ', fname)
+    
+    
 
 def main():
     params = initialize_parameters()
