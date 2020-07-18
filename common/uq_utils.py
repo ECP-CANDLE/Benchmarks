@@ -905,6 +905,9 @@ def compute_valid_calibration_interval_binning(error_thresholds, error_threshold
             else: # Reset indices
                 sigma_start_index = i + 1
                 sigma_end_index = i
+    if sigma_end_index == err_err.shape[0]-2: # check last
+        if error_thresholds_smooth[sigma_end_index+1] > error_thresholds_smooth[sigma_end_index]:
+            sigma_end_index += 1
 
     print('Range of valid sigma indices (inclusive): %d --> %d' % (sigma_start_index, sigma_end_index))
 
@@ -914,7 +917,7 @@ def compute_valid_calibration_interval_binning(error_thresholds, error_threshold
 
 
 
-def compute_empirical_calibration_binning(pSigma_cal, pPred_cal, true_cal, bins, coverage_percentile):
+def compute_empirical_calibration_binning1(pSigma_cal, pPred_cal, true_cal, bins, coverage_percentile):
     """ Use the arrays provided to estimate an empirical mapping
         between standard deviation and absolute value of error,
         both of which have been observed during inference. Uses
@@ -1005,6 +1008,65 @@ def compute_empirical_calibration_binning(pSigma_cal, pPred_cal, true_cal, bins,
     print('Range of valid sigma: %.6f --> %.6f' % (mean_sigma[sigma_start_index], mean_sigma[sigma_end_index]))
 
     return mean_sigma, min_sigma, max_sigma, error_thresholds, err_err, error_thresholds_smooth, sigma_start_index, sigma_end_index, s_interpolate
+
+
+def compute_empirical_calibration_binning(pSigma_cal, pPred_cal, true_cal, bins, coverage_percentile, cv):
+
+    min_mse = np.inf
+    test_split = 1.0 / cv
+    
+    for cv_ in range(cv):
+        y_augmented = np.vstack([pPred_cal, true_cal]).T
+        pSigma_cal_train, pSigma_cal_test, y_train, y_test = train_test_split(pSigma_cal, y_augmented, test_size=test_split, shuffle=True)
+        pPred_cal_train = y_train[:,0]
+        true_cal_train = y_train[:,1]
+        pPred_cal_test = y_test[:,0]
+        true_cal_test = y_test[:,1]
+
+        index_sigma_cal = np.argsort(pSigma_cal_train)
+        pSigma_cal_ordered_ = pSigma_cal_train[index_sigma_cal]
+        Er_vect_cal_ = np.abs(true_cal_train - pPred_cal_train)
+        Er_vect_cal_orderedSigma_ = Er_vect_cal_[index_sigma_cal]
+
+        minL_sigma = np.min(pSigma_cal_ordered_)
+        maxL_sigma = np.max(pSigma_cal_ordered_)
+        print('Complete Sigma range --> Min: %f, Max: %f' % (minL_sigma, maxL_sigma))
+
+        # Bin statistics for error and sigma
+        mean_sigma, min_sigma, max_sigma, error_thresholds, err_err = binning_for_calibration(pSigma_cal_ordered_,
+                                minL_sigma,
+                                maxL_sigma,
+                                Er_vect_cal_orderedSigma_,
+                                bins,
+                                coverage_percentile)
+
+        # smooth error function
+        #scipy.signal.savgol_filter(x, window_length, polyorder,
+        #deriv=0, delta=1.0, axis=-1, mode='interp', cval=0.0)
+        #error_thresholds_smooth = signal.savgol_filter(error_thresholds, 5, 1)
+        error_thresholds_smooth = signal.savgol_filter(error_thresholds, 5, 1, mode='nearest')
+
+        # Build Interpolant over smooth plot (this will become the calibration function)
+        s_interpolate = InterpolatedUnivariateSpline(mean_sigma, error_thresholds_smooth)
+        # Determine limits of calibration (i.e. monotonicity range)
+        sigma_start_index, sigma_end_index = compute_valid_calibration_interval_binning(error_thresholds, error_thresholds_smooth, err_err)
+        # Test accuracy of calibration
+        yp_test_map = s_interpolate(pSigma_cal_test)
+        mse = mean_squared_error(true_cal_test, yp_test_map)
+        if mse < min_mse:
+            mean_sigma_best = mean_sigma
+            min_sigma_best = min_sigma
+            max_sigma_best = max_sigma
+            error_thresholds_best = error_thresholds
+            err_err_best = err_err
+            error_thresholds_smooth_best = error_thresholds_smooth
+            s_interpolate_best = s_interpolate
+            sigma_start_index_best = sigma_start_index
+            sigma_end_index_best = sigma_end_index
+            
+        print('Range of valid sigma: %.6f --> %.6f' % (mean_sigma_best[sigma_start_index_best], mean_sigma_best[sigma_end_index_best]))
+
+    return mean_sigma_best, min_sigma_best, max_sigma_best, error_thresholds_best, err_err_best, error_thresholds_smooth_best, sigma_start_index_best, sigma_end_index_best, s_interpolate_best
 
 
 def apply_calibration_binning(pSigma_test, pPred_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto):

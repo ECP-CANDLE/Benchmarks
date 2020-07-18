@@ -172,7 +172,7 @@ def run(params):
         # Use empirical calibration and automatic determined monotonic interval
         minL_sigma_auto = mean_sigma[sigma_start_index]
         maxL_sigma_auto = mean_sigma[sigma_end_index]
-        index_sigma_range_test, xp_test, yp_test, eabs_red = candle.apply_calibration_binning(pSigma_test, pMean_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto)
+        index_sigma_range_test, xp_test, yp_test, eabs_red = candle.apply_calibration_binning(pSigma_test, pMean_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto, 5)
         # Check sigma overprediction
         p_cov = coverage_percentile
         num_cal = pSigma_cal.shape[0]

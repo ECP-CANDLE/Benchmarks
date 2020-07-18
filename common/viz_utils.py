@@ -387,7 +387,7 @@ def plot_calibration_interpolation(mean_sigma, error, splineobj, figprefix=None)
 
     xmax = np.max(mean_sigma)
     xmin = np.min(mean_sigma)
-    xp23 = np.arange(xmin, xmax, 0.5)
+    xp23 = np.linspace(xmin, xmax, 200)
     yp23 = interpolate.splev(xp23, splineobj, der=0)
 
     fig = plt.figure(figsize=(24,18))
