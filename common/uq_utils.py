@@ -1169,7 +1169,8 @@ def compute_empirical_calibration_interpolation(pSigma_cal, pPred_cal, true_cal,
         for (a,b) in enumerate(cv_error):
             print('{} {}'.format(a,b))
 
-    splineobj = interpolate.splrep(X, y, s=r_min)
+    xindsort = np.argsort(xs3)
+    splineobj = interpolate.splrep(xs3[xindsort], z3[xindsort], s=r_min)
 
     return reg, cv_error, splineobj
 

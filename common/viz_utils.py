@@ -299,9 +299,9 @@ def plot_calibration_and_errors_binning(mean_sigma, sigma_start_index, sigma_end
         plt.grid()
         plt.setp(ax.get_xticklabels(), fontsize=32)
         plt.setp(ax.get_yticklabels(), fontsize=32)
-        plt.savefig(figprefix + '_empirical_calibration_bin_step1.png')
+        plt.savefig(figprefix + '_empirical_calibration_bin_step1.png', bbox_inches='tight')
         plt.close()
-        print('Generated plot: ', figprefix + '_empirical_calibration_bin_step1.png', bbox_inches='tight')
+        print('Generated plot: ', figprefix + '_empirical_calibration_bin_step1.png')
         # Plot raw bin statistics and smoothing
         fig = plt.figure(figsize=(24,18))
         ax = plt.gca()

@@ -201,7 +201,7 @@ def run(params):
         print('Compute calibration for CV = {} patience = {}, Rmax = {}'.format(cv, patience, Rmax))
         
         reg, cv_error, splineobj = candle.compute_empirical_calibration_interpolation(pSigma_cal, pMean_cal, true_cal, cv, patience, Rmax, pflag)
-        candle.plot_cverror_calibration_interpolation(reg, cverror, prefix)
+        candle.plot_cverror_calibration_interpolation(reg, cv_error, prefix)
         candle.plot_calibration_interpolation(pSigma_cal, pMean_cal, splineobj, prefix)
         
         # store calibration
