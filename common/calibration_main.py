@@ -30,7 +30,7 @@ additional_definitions = [
 {'name': 'plot_steps',
     'type': candle.str2bool,
     'default': False,
-    'help': 'plot the empirical calibration computed step-by-step'},
+    'help': 'plot step-by-step the computation of the empirical calibration by binning'},
 {'name': 'coverage_percentile',
     'type': float,
     'default': 0.95,
@@ -51,6 +51,11 @@ additional_definitions = [
     'type': int,
     'default': 500,
     'help': 'maximum regularization parameter to try in calibration by interpolation'},
+{'name': 'pflag',
+    'type': candle.str2bool,
+    'default': False,
+    'help': 'flag to print intermediate results when computing empirical calibration by interpolation'},
+
 ]
 
 required = [
@@ -191,9 +196,11 @@ def run(params):
         cv = params['cv']
         patience = params['patience']
         Rmax = params['rmax']
+        pflag = params['pflag']
+        
         print('Compute calibration for CV = {} patience = {}, Rmax = {}'.format(cv, patience, Rmax))
         
-        reg, cv_error, splineobj = candle.compute_empirical_calibration_interpolation(pSigma_cal, pMean_cal, true_cal, cv, patience, Rmax)
+        reg, cv_error, splineobj = candle.compute_empirical_calibration_interpolation(pSigma_cal, pMean_cal, true_cal, cv, patience, Rmax, pflag)
         candle.plot_cverror_calibration_interpolation(reg, cverror, prefix)
         candle.plot_calibration_interpolation(pSigma_cal, pMean_cal, splineobj, prefix)
         
