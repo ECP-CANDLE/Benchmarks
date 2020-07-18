@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import numpy as np
-from scipy.stats import pearsonr, spearman, rankdata
+from scipy.stats import pearsonr, spearmanr
 from scipy import signal
 from scipy.interpolate import InterpolatedUnivariateSpline
 from scipy import interpolate
