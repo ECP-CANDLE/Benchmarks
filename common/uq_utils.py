@@ -706,7 +706,7 @@ def compute_empirical_calibration_interpolation(pSigma_cal, pPred_cal, true_cal,
         Cubic Hermite splines (PchipInterpolator) are constructed for
         interpolation. This type of splines preserve the monotonicity
         in the interpolation data and does not overshoot if the data is
-        not smooth. The overal process of constructing a spline
+        not smooth. The overall process of constructing a spline
         to express the mapping from standard deviation to error is
         composed of smoothing-interpolation-smoothing-interpolation.
         

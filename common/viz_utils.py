@@ -342,7 +342,7 @@ def plot_calibration_interpolation(mean_sigma, error, splineobj1, splineobj2, me
 
 
 def plot_calibrated_std(y_test, y_pred, std_calibrated, thresC, pred_name=None, figprefix=None):
-    """Functionality to plot values in testing set after calibration. An estimation of the less confidence samples is made. The plot generated is stored in a png file.
+    """Functionality to plot values in testing set after calibration. An estimation of the lower-confidence samples is made. The plot generated is stored in a png file.
 
     Parameters
     ----------
@@ -394,14 +394,14 @@ def plot_calibrated_std(y_test, y_pred, std_calibrated, thresC, pred_name=None, 
 def plot_contamination(y_true, y_pred, sigma, T=None, thresC=0.1, pred_name=None, figprefix=None):
     """Functionality to plot results for the contamination model.
        This includes the latent variables T if they are given (i.e.
-       if the results provided correspond to training results. Global
-       parameters for the normal distribution are used for shading the
+       if the results provided correspond to training results). Global
+       parameters for the normal distribution are used for shading 80%
        confidence interval.
        If results for training (i.e. T available), samples determined to
        be outliers (i.e. samples whose probability of membership to the
        heavy tailed distribution (Cauchy) is greater than the threshold
        given) are highlighted.
-       The plots generated is stored in a png file.
+       The plot(s) generated is(are) stored in a png file.
 
     Parameters
     ----------
