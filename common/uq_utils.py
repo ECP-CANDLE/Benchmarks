@@ -704,7 +704,7 @@ def compute_empirical_calibration_interpolation(pSigma_cal, pPred_cal, true_cal,
         most of the times the prediction statistics are very noisy,
         two smoothing steps (based on scipy's savgol filter) are performed.
         Cubic Hermite splines (PchipInterpolator) are constructed for
-        interpolation. This type of splines preserve the monotonicity
+        interpolation. This type of splines preserves the monotonicity
         in the interpolation data and does not overshoot if the data is
         not smooth. The overall process of constructing a spline
         to express the mapping from standard deviation to error is
