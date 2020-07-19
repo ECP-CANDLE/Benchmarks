@@ -391,27 +391,29 @@ def plot_calibrated_std(y_test, y_pred, std_calibrated, thresC, pred_name=None, 
 
 
 
-def plot_contamination_training(y_train, y_pred, T, sigma, gamma, thresC=0.2, pred_name=None, figprefix=None):
-    """Functionality to plot results of training the contamination model.
-       This includes the latent variables T, and the estimation of the global
-       parameters for the normal distribution. Points labeled as outliers (i.e.
-       whose probability of membership to the heavy tailed distribution (Cauchy)
-       is greater than the threshold given) are highlighted. The plots generated
-       is stored in a png file.
+def plot_contamination(y_true, y_pred, sigma, T=None, thresC=0.1, pred_name=None, figprefix=None):
+    """Functionality to plot results for the contamination model.
+       This includes the latent variables T if they are given (i.e.
+       if the results provided correspond to training results. Global
+       parameters for the normal distribution are used for shading the
+       confidence interval.
+       If results for training (i.e. T available), samples determined to
+       be outliers (i.e. samples whose probability of membership to the
+       heavy tailed distribution (Cauchy) is greater than the threshold
+       given) are highlighted.
+       The plots generated is stored in a png file.
 
     Parameters
     ----------
-    y_train : numpy array
-      Array with (true) observed values.
+    y_true : numpy array
+      Array with observed values.
     y_pred : numpy array
-      Array with predicted values (in training).
-    T : numpy array
-      Array with latent variables (i.e. membership to normal and heavy-tailed
-      distributions).
+      Array with predicted values.
     sigma : float
       Standard deviation of the normal distribution.
-    gamma : float
-      Scale parameter of the heavy-tailed (Cauchy) distribution.
+    T : numpy array
+      Array with latent variables (i.e. membership to normal and heavy-tailed
+      distributions). If in testing T is not available (i.e. None)
     thresC : float
       Threshold to label outliers (outliers are the ones
       with probability of membership to heavy-tailed distribution,
@@ -424,58 +426,63 @@ def plot_contamination_training(y_train, y_pred, T, sigma, gamma, thresC=0.2, pr
       figprefix given.
     """
     
-    N = y_train.shape[0]
+    N = y_true.shape[0]
     index = np.argsort(y_pred)
     x = np.array(range(N))
     
-    indexG = T[:,0] > (1. - thresC)
-    indexC = T[:,1] > thresC
-    ss = sigma * indexG
-    auxGh = y_pred + 2*ss
-    auxGl = y_pred - 2*ss
-    sc = sigma * indexC
-    auxCh = y_pred + 2*sc
-    auxCl = y_pred - 2*sc
+    if T is not None:
+        indexG = T[:,0] > (1. - thresC)
+        indexC = T[:,1] > thresC
+        ss = sigma * indexG
+        prefig = '_outTrain'
+    else:
+        ss = sigma
+        prefig = '_outTest'
+    auxGh = y_pred + 1.28 * ss
+    auxGl = y_pred - 1.28 * ss
 
     # Plotting Outliers
     scale = 120
     fig = plt.figure(figsize=(24,18))
     ax = plt.gca()
-    ax.scatter(x, y_train[index], color='red', s=scale)
-    plt.scatter(x[indexC], y_train[indexC], color='green', s=scale)#, alpha=0.8)
+    ax.scatter(x, y_true[index], color='red', s=scale)
+    if T is not None:
+        plt.scatter(x[indexC], y_true[indexC], color='green', s=scale)#, alpha=0.8)
     plt.scatter(x, y_pred[index], color='orange', s=scale)
     plt.fill_between(x, auxGl[index], auxGh[index], color='gray', alpha=0.5)
-    plt.legend(['True', 'Outlier', 'Pred', '2 Std'], fontsize=28)
+    if T is not None:
+        plt.legend(['True', 'Outlier', 'Pred', '1.28 Std'], fontsize=28)
+    else:
+        plt.legend(['True', 'Pred', '1.28 Std'], fontsize=28)
     plt.xlabel('Index', fontsize=38.)
     plt.ylabel(pred_name + ' Predicted', fontsize=38.)
-    plt.title('Contamination: Outlier Detection', fontsize=40)
+    plt.title('Contamination Results', fontsize=40)
     plt.setp(ax.get_xticklabels(), fontsize=32)
     plt.setp(ax.get_yticklabels(), fontsize=32)
     plt.grid()
     fig.tight_layout()
-    plt.savefig(figprefix + '_out_contamination.png', bbox_inches='tight')
+    plt.savefig(figprefix + prefig + '_contamination.png', bbox_inches='tight')
     plt.close()
-    print('Generated plot: ', figprefix + '_out_contamination.png')
+    print('Generated plot: ', figprefix + prefig + '_contamination.png')
     
-    # Plotting Latent Variables
-    indexT = np.argsort(T[:,0])
-    error = np.abs(y_train - y_pred)
-    
-    fig = plt.figure(figsize=(24,18))
-    ax = plt.gca()
-    ax.scatter(error[indexT], T[indexT, 0], color='blue', s=scale)
-    ax.scatter(error[indexT], T[indexT, 1], color='orange', s=scale)
-    plt.legend(['Normal', 'Heavy-Tailed'], fontsize=28)
-    plt.xlabel('Index', fontsize=38.)
-    plt.ylabel('Membership Probability', fontsize=38.)
-    plt.title('Contamination: Latent Variables', fontsize=40)
-    plt.setp(ax.get_xticklabels(), fontsize=32)
-    plt.setp(ax.get_yticklabels(), fontsize=32)
-    plt.grid()
-    fig.tight_layout()
-    plt.savefig(figprefix + '_T_contamination.png', bbox_inches='tight')
-    plt.close()
-    print('Generated plot: ', figprefix + '_T_contamination.png')
+    if T is not None:
+        # Plotting Latent Variables vs error
+        error = np.abs(y_true - y_pred)
+        fig = plt.figure(figsize=(24,18))
+        ax = plt.gca()
+        ax.scatter(error, T[:, 0], color='blue', s=scale)
+        ax.scatter(error, T[:, 1], color='orange', s=scale)
+        plt.legend(['Normal', 'Heavy-Tailed'], fontsize=28)
+        plt.xlabel('ABS Error', fontsize=38.)
+        plt.ylabel('Membership Probability', fontsize=38.)
+        plt.title('Contamination: Latent Variables', fontsize=40)
+        plt.setp(ax.get_xticklabels(), fontsize=32)
+        plt.setp(ax.get_yticklabels(), fontsize=32)
+        plt.grid()
+        fig.tight_layout()
+        plt.savefig(figprefix + '_T_contamination.png', bbox_inches='tight')
+        plt.close()
+        print('Generated plot: ', figprefix + '_T_contamination.png')
 
     
     

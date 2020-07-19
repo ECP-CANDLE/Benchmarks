@@ -22,7 +22,7 @@ additional_definitions = [
 {'name': 'uqmode',
     'type': str,
     'default': None,
-    'choices': ['hom', 'het', 'qtl'],
+    'choices': ['hom', 'het', 'qtl', 'contam'],
     'help': 'mode of UQ regression used: homoscedastic (hom), heteroscedastic (het) or quantile (qtl)'},
 {'name': 'plot_steps',
     'type': candle.str2bool,
@@ -36,6 +36,10 @@ additional_definitions = [
     'type': int,
     'default': 10,
     'help': 'number of cross validations for calibration by interpolation'},
+{'name': 'sigma',
+    'type': float,
+    'default': None,
+    'help': 'Standard deviation of normal distribution in contamination model'},
 ]
 
 required = [
@@ -157,9 +161,31 @@ def run(params):
         cov80p = coverage_80p(Ytest, Ypred_mean, None, Ypred_1d_mean, Ypred_9d_mean)
         decile_list = ['5th', '1st', '9th']
         candle.plot_decile_predictions(Ypred_mean, Ypred_1d_mean, Ypred_9d_mean, decile_list, pred_name, prefix)
+    elif uqmode == 'contam':
+        Ytest, Ypred_mean, yerror, sigma_, Ypred_std, pred_name = candle.compute_statistics_homoscedastic(df_data)
+        sigma_scalar = params['sigma']
+        if sigma_scalar is None:
+            raise Exception('ERROR ! No sigma ' \
+            + 'specified for contamination model... Exiting')
+        sigma = sigma_scalar * np.ones(Ytest.shape[0])
+        cov80p = coverage_80p(Ytest, Ypred_mean, sigma)
+        print('Coverage (80%): ', cov80p)
+        candle.plot_density_observed_vs_predicted(Ytest, Ypred_mean, pred_name, prefix)
+        candle.plot_2d_density_sigma_vs_error(sigma, yerror, method, prefix)
+        candle.plot_contamination(Ytest, Ypred_mean, sigma, pred_name=pred_name, figprefix=prefix)
+        mse = np.mean((Ytest - Ypred_mean)**2)
+        mae = np.mean(np.abs(Ytest - Ypred_mean))
+        print('Prediction error in testing')
+        print('MSE: ', mse)
+        print('MAE: ', mae)
+        print('Since in contamination model std prediction is ' \
+            + 'uniform for all samples, no point in ' \
+            + 'calibrating... Finishing')
+        return
     else:
         raise Exception('ERROR ! UQ mode specified ' \
-            + 'for calibration: ' + uqmode + ' not implemented... Exiting')
+            + 'for calibration: ' + uqmode + ' not ' \
+            + 'implemented... Exiting')
 
     print('Coverage (80%) before calibration: ', cov80p)
 

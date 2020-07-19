@@ -426,17 +426,15 @@ def run(params):
         title = 'GammaSQ Evolution'
         candle.plot_array(contamination_cbk.gammaSQvalues, xlabel, ylabel, title, fname)
         # Plot latent variables and outliers
-        sigma_all = np.sqrt(K.get_value(contamination_cbk.sigmaSQ))
-        gamma_all = np.sqrt(K.get_value(contamination_cbk.gammaSQ))
+        sigma = np.sqrt(K.get_value(contamination_cbk.sigmaSQ))
+        gamma = np.sqrt(K.get_value(contamination_cbk.gammaSQ))
         T = K.get_value(contamination_cbk.T_k)
-        dictCont = {'sigma': sigma_all, 'gamma': gamma_all, 'T': T}
+        dictCont = {'sigma': sigma, 'gamma': gamma, 'T': T}
         cpar_fname = prefix + '.contPar.joblib'
         dump(dictCont, cpar_fname)
         
-        sigma = sigma_all[-1]
-        gamma = gamma_all[-1]
         y_tr_pred = model.predict(x_train_list, batch_size=args.batch_size)
-        candle.plot_contamination_training(y_train, y_tr_pred, T, sigma, gamma, pred_name=target, figprefix=prefix)
+        candle.plot_contamination(y_train, y_tr_pred.squeeze(), sigma, T, pred_name=target, figprefix=prefix)
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
