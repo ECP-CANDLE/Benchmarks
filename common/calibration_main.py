@@ -178,10 +178,7 @@ def run(params):
         print('Prediction error in testing')
         print('MSE: ', mse)
         print('MAE: ', mae)
-        # Use MAE as threshold of accuracy
-        # Mark samples with predicted std > mae
-        candle.plot_calibrated_std(Ytest, Ypred_mean, sigma, mae, pred_name, prefix)
-        #candle.plot_contamination(Ytest, Ypred_mean, sigma, pred_name=pred_name, figprefix=prefix)
+        candle.plot_contamination(Ytest, Ypred_mean, sigma, pred_name=pred_name, figprefix=prefix)
         print('Since in contamination model std prediction is ' \
             + 'uniform for all samples, no point in ' \
             + 'calibrating... Finishing')
