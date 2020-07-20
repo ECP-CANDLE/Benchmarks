@@ -172,12 +172,16 @@ def run(params):
         print('Coverage (80%): ', cov80p)
         candle.plot_density_observed_vs_predicted(Ytest, Ypred_mean, pred_name, prefix)
         candle.plot_2d_density_sigma_vs_error(sigma, yerror, method, prefix)
-        candle.plot_contamination(Ytest, Ypred_mean, sigma, pred_name=pred_name, figprefix=prefix)
+        
         mse = np.mean((Ytest - Ypred_mean)**2)
         mae = np.mean(np.abs(Ytest - Ypred_mean))
         print('Prediction error in testing')
         print('MSE: ', mse)
         print('MAE: ', mae)
+        # Use MAE as threshold of accuracy
+        # Mark samples with predicted std > mae
+        candle.plot_calibrated_std(Ytest, Ypred_mean, sigma, mae, pred_name, prefix)
+        #candle.plot_contamination(Ytest, Ypred_mean, sigma, pred_name=pred_name, figprefix=prefix)
         print('Since in contamination model std prediction is ' \
             + 'uniform for all samples, no point in ' \
             + 'calibrating... Finishing')
