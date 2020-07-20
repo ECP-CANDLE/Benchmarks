@@ -213,10 +213,10 @@ def run(params):
     print('Prediction error in testing calibration')
     print('MSE: ', mse)
     print('MAE: ', mae)
-    
+
     # Use MAE as threshold of accuracy
     # Mark samples with predicted std > mae
-    candle.plot_calibrated_std(true_test, pMean_test, eabs_pred, mae, pred_name, prefix)
+    candle.plot_calibrated_std(true_test, pMean_test, eabs_pred, 2.*mae, pred_name, prefix)
     
     # store calibration
     fname = prefix + '_calibration_interpolation_spline.dkl'

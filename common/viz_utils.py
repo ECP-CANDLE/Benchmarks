@@ -368,16 +368,19 @@ def plot_calibrated_std(y_test, y_pred, std_calibrated, thresC, pred_name=None, 
     x = np.array(range(N))
     
     indexC = std_calibrated > thresC
+    alphafill = 0.5
+    if N > 2000:
+        alphafill = 0.7
     
     scale = 120
     fig = plt.figure(figsize=(24,18))
     ax = plt.gca()
-    ax.scatter(x, y_test[index], color='red', s=scale)
-    plt.scatter(x[indexC], y_test[indexC], color='green', s=scale)#, alpha=0.8)
-    plt.scatter(x, y_pred[index], color='orange', s=scale)
+    ax.scatter(x, y_test[index], color='red', s=scale, alpha=0.5)
     plt.fill_between(x, y_pred[index] - 1.28 * std_calibrated[index],
-                       y_pred[index] + 1.28 * std_calibrated[index], color='gray', alpha=0.5)
-    plt.legend(['True', 'Low conf', 'Pred', '1.28 Std'], fontsize=28)
+                       y_pred[index] + 1.28 * std_calibrated[index], color='gray', alpha=alphafill)
+    plt.scatter(x, y_pred[index], color='orange', s=scale)
+    plt.scatter(x[indexC], y_test[indexC], color='green', s=scale, alpha=0.5)
+    plt.legend(['True', '1.28 Std', 'Pred', 'Low conf'], fontsize=28)
     plt.xlabel('Index', fontsize=38.)
     plt.ylabel(pred_name + ' Predicted', fontsize=38.)
     plt.title('Calibrated Standard Deviation', fontsize=40)

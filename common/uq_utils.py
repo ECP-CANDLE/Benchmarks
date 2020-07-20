@@ -1,13 +1,12 @@
 from __future__ import absolute_import
 
 import numpy as np
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr
 from scipy import signal
 from scipy import interpolate
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import warnings
-
 
 
 def generate_index_distribution(numTrain, numTest, numValidation, params):
@@ -398,14 +397,18 @@ def compute_statistics_homoscedastic_summary(df_data,
     Ypred_std = df_data.iloc[:,col_std_pred].values
     yerror = Ytrue - Ypred
     sigma = Ypred_std # std
-    MSE = np.mean((Ytrue - Ypred)**2)
+    MSE = mean_squared_error(Ytrue, Ypred_mean)
     print('MSE: ', MSE)
-    MSE_STD = np.std((Ytrue - Ypred)**2)
+    MSE_STD = np.std((Ytrue - Ypred_mean)**2)
     print('MSE_STD: ', MSE_STD)
+    MAE = mean_absolute_error(Ytrue, Ypred_mean)
+    print('MAE: ', MAE)
+    r2 = r2_score(Ytrue, Ypred_mean)
+    print('R2: ', r2)
     # p-value 'not entirely reliable, reasonable for datasets > 500'
-    spearman_cc, pval = spearmanr(Ytrue, Ypred)
-    print('Spearman CC: %f, p-value: %e' % (spearman_cc, pval))
-
+    pearson_cc, pval = pearsonr(Ytrue, Ypred_mean)
+    print('Pearson CC: %f, p-value: %e' % (pearson_cc, pval))
+    
     return Ytrue, Ypred, yerror, sigma, Ypred_std, pred_name
 
 
@@ -462,14 +465,18 @@ def compute_statistics_homoscedastic(df_data,
     Ypred_std = Ypred_std_.values
     yerror = Ytrue - Ypred_mean
     sigma = Ypred_std # std
-    MSE = np.mean((Ytrue - Ypred_mean)**2)
+    MSE = mean_squared_error(Ytrue, Ypred_mean)
     print('MSE: ', MSE)
     MSE_STD = np.std((Ytrue - Ypred_mean)**2)
     print('MSE_STD: ', MSE_STD)
+    MAE = mean_absolute_error(Ytrue, Ypred_mean)
+    print('MAE: ', MAE)
+    r2 = r2_score(Ytrue, Ypred_mean)
+    print('R2: ', r2)
     # p-value 'not entirely reliable, reasonable for datasets > 500'
-    spearman_cc, pval = spearmanr(Ytrue, Ypred_mean)
-    print('Spearman CC: %f, p-value: %e' % (spearman_cc, pval))
-
+    pearson_cc, pval = pearsonr(Ytrue, Ypred_mean)
+    print('Pearson CC: %f, p-value: %e' % (pearson_cc, pval))
+        
     return Ytrue, Ypred_mean, yerror, sigma, Ypred_std, pred_name
 
 
@@ -535,13 +542,17 @@ def compute_statistics_heteroscedastic(df_data,
     s_mean = np.mean(s_, axis=1)
     var = np.exp(s_mean.values) # variance
     sigma = np.sqrt(var) # std
-    MSE = np.mean((Ytrue - Ypred_mean)**2)
+    MSE = mean_squared_error(Ytrue, Ypred_mean)
     print('MSE: ', MSE)
     MSE_STD = np.std((Ytrue - Ypred_mean)**2)
     print('MSE_STD: ', MSE_STD)
+    MAE = mean_absolute_error(Ytrue, Ypred_mean)
+    print('MAE: ', MAE)
+    r2 = r2_score(Ytrue, Ypred_mean)
+    print('R2: ', r2)
     # p-value 'not entirely reliable, reasonable for datasets > 500'
-    spearman_cc, pval = spearmanr(Ytrue, Ypred_mean)
-    print('Spearman CC: %f, p-value: %e' % (spearman_cc, pval))
+    pearson_cc, pval = pearsonr(Ytrue, Ypred_mean)
+    print('Pearson CC: %f, p-value: %e' % (pearson_cc, pval))
 
     return Ytrue, Ypred_mean, yerror, sigma, Ypred_std, pred_name
 
@@ -619,13 +630,17 @@ def compute_statistics_quantile(df_data,
     yerror = Ytrue - Ypred_mean
     Ypred_std_ = np.std(df_data.iloc[:,col_pred_start::3], axis=1)
     Ypred_std = Ypred_std_.values
-    MSE = np.mean((Ytrue - Ypred_mean)**2)
+    MSE = mean_squared_error(Ytrue, Ypred_mean)
     print('MSE: ', MSE)
     MSE_STD = np.std((Ytrue - Ypred_mean)**2)
     print('MSE_STD: ', MSE_STD)
+    MAE = mean_absolute_error(Ytrue, Ypred_mean)
+    print('MAE: ', MAE)
+    r2 = r2_score(Ytrue, Ypred_mean)
+    print('R2: ', r2)
     # p-value 'not entirely reliable, reasonable for datasets > 500'
-    spearman_cc, pval = spearmanr(Ytrue, Ypred_mean)
-    print('Spearman CC: %f, p-value: %e' % (spearman_cc, pval))
+    pearson_cc, pval = pearsonr(Ytrue, Ypred_mean)
+    print('Pearson CC: %f, p-value: %e' % (pearson_cc, pval))
 
     return Ytrue, Ypred_mean, yerror, sigma, Ypred_std, pred_name, Ypred_Lp_mean, Ypred_Hp_mean
 
