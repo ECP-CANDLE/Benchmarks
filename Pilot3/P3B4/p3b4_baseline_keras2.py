@@ -53,17 +53,14 @@ def run(gParameters):
     embed_train = gParameters['embed_train']
 
     optimizer = gParameters['optimizer']
-    if optimizer == 0:
-        optimizer = 'adam'
-    elif optimizer == 1:
-        optimizer = 'adadelta'
-    elif optimizer == 2:
-        optimizer = 'sgd'
-    elif optimizer == 3:
-        optimizer = 'rmsprop'
 
     wv_len = gParameters['wv_len']
     attention_size = gParameters['attention_size']
+
+    max_words = gParameters['max_words']
+    max_lines = gParameters['max_lines']
+    min_words = gParameters['min_words']
+    min_lines = gParameters['min_lines']
 
     train_x = np.load(fpath + '/train_X.npy')
     train_y = np.load(fpath + '/train_Y.npy')
@@ -90,15 +87,10 @@ def run(gParameters):
     train_samples = train_x.shape[0]
     test_samples = test_x.shape[0]
 
-    max_lines = 50
-    max_words = 30
-
     train_x = train_x.reshape((train_x.shape[0], max_lines, max_words))
     test_x = test_x.reshape((test_x.shape[0], max_lines, max_words))
 
     #optional masking
-    min_lines = 30
-    min_words = 5
     mask = []
     for i in range(train_samples+test_samples):
         doc_mask = np.ones((1, max_lines, max_words))
