@@ -7,6 +7,7 @@ import numpy as np
 
 from scipy import interpolate
 
+
 def plot_history(out, history, metric='loss', val=True, title=None, width=8, height=6):
     title = title or 'model {}'.format(metric)
     val_metric = 'val_{}'.format(metric)
@@ -25,6 +26,7 @@ def plot_history(out, history, metric='loss', val=True, title=None, width=8, hei
     plt.savefig(png, bbox_inches='tight')
     plt.close()
 
+
 def plot_scatter(data, classes, out, width=10, height=8):
     cmap = plt.cm.get_cmap('gist_rainbow')
     plt.figure(figsize=(width, height))
@@ -33,6 +35,7 @@ def plot_scatter(data, classes, out, width=10, height=8):
     png = '{}.png'.format(out)
     plt.savefig(png, bbox_inches='tight')
     plt.close()
+
 
 def plot_error(y_true, y_pred, batch, file_ext, file_pre='output_dir', subsample=1000):
     if batch % 10:
@@ -85,6 +88,7 @@ def plot_array(nparray, xlabel, ylabel, title, fname):
 
 ###### UTILS for UQ / CALIBRATION VISUALIZATION
 
+
 from matplotlib.colors import LogNorm
 
 def plot_density_observed_vs_predicted(Ytest, Ypred, pred_name=None, figprefix=None):
@@ -107,7 +111,7 @@ def plot_density_observed_vs_predicted(Ytest, Ypred, pred_name=None, figprefix=N
 
     xbins = 51
 
-    fig = plt.figure(figsize=(24,18)) # (30,16)
+    fig = plt.figure(figsize=(24, 18)) # (30, 16)
     ax = plt.gca()
     plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
     ax.plot([Ytest.min(), Ytest.max()], [Ytest.min(), Ytest.max()], 'r--', lw=4.)
@@ -126,7 +130,7 @@ def plot_density_observed_vs_predicted(Ytest, Ypred, pred_name=None, figprefix=N
 
 
 def plot_2d_density_sigma_vs_error(sigma, yerror, method=None, figprefix=None):
-    """Functionality to plot a 2D histogram of the distribution of 
+    """Functionality to plot a 2D histogram of the distribution of
        the standard deviations computed for the predictions vs. the
        computed errors (i.e. values of observed - predicted).
        The plot generated is stored in a png file.
@@ -138,21 +142,21 @@ def plot_2d_density_sigma_vs_error(sigma, yerror, method=None, figprefix=None):
     yerror : numpy array
       Array with errors computed (observed - predicted).
     method : string
-      Method used to comput the standard deviations (i.e. dropout, 
+      Method used to comput the standard deviations (i.e. dropout,
       heteroscedastic, etc.).
     figprefix : string
       String to prefix the filename to store the figure generated.
-      A '_density_sigma_error.png' string will be appended to the 
+      A '_density_sigma_error.png' string will be appended to the
       figprefix given.
     """
-    
+
     xbins = 51
     ybins = 31
 
-    fig = plt.figure(figsize=(24,18)) # (30,16)
+    fig = plt.figure(figsize=(24, 18)) # (30, 16)
     ax = plt.gca()
     plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
-    plt.hist2d(sigma, yerror, bins=[xbins,ybins], norm=LogNorm())
+    plt.hist2d(sigma, yerror, bins=[xbins, ybins], norm=LogNorm())
     cb = plt.colorbar()
     ax.set_xlabel('Standard Deviation (' + method + ')', fontsize=38, labelpad=15.)
     ax.set_ylabel('Error: Observed - Mean Predicted', fontsize=38, labelpad=15.)
@@ -166,12 +170,11 @@ def plot_2d_density_sigma_vs_error(sigma, yerror, method=None, figprefix=None):
     print('Generated plot: ', figprefix + '_density_std_error.png')
 
 
-
 def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     """Functionality to plot a 1D histogram of the distribution of
-       computed errors (i.e. values of observed - predicted) observed 
+       computed errors (i.e. values of observed - predicted) observed
        for specific values of standard deviations computed. The range of
-       standard deviations computed is split in xbins values and the 
+       standard deviations computed is split in xbins values and the
        1D histograms of error distributions for the smallest six
        standard deviations are plotted.
        The plot generated is stored in a png file.
@@ -183,26 +186,26 @@ def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     yerror : numpy array
       Array with errors computed (observed - predicted).
     method : string
-      Method used to comput the standard deviations (i.e. dropout, 
+      Method used to comput the standard deviations (i.e. dropout,
       heteroscedastic, etc.).
     figprefix : string
       String to prefix the filename to store the figure generated.
-      A '_histogram_error_per_sigma.png' string will be appended to 
+      A '_histogram_error_per_sigma.png' string will be appended to
       the figprefix given.
     """
-    
+
     xbins = 21
     ybins = 31
 
     H, xedges, yedges, img = plt.hist2d(sigma, yerror,# normed=True,
-                                        bins=[xbins,ybins])
+                                        bins=[xbins, ybins])
 
-    fig = plt.figure(figsize=(18,24))
+    fig = plt.figure(figsize=(18, 24))
     legend = []
     for ii in range(4):#(H.shape[0]):
-        if ii is not 1:
-            plt.plot(yedges[0:H.shape[1]], H[ii,:]/np.sum(H[ii,:]), marker='o',
-                 markersize=12, lw=6.)
+        if ii != 1:
+            plt.plot(yedges[0:H.shape[1]], H[ii, :]/np.sum(H[ii, :]),
+                     marker='o', markersize=12, lw=6.)
         legend.append(str((xedges[ii] + xedges[ii+1])/2))
     plt.legend(legend, fontsize=28)
     ax = plt.gca()
@@ -215,7 +218,6 @@ def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     plt.savefig(figprefix + '_histogram_error_per_std.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + '_histogram_error_per_std.png')
-
 
 
 def plot_decile_predictions(Ypred, Ypred_Lp, Ypred_Hp, decile_list, pred_name=None, figprefix=None):
@@ -241,7 +243,7 @@ def plot_decile_predictions(Ypred, Ypred_Lp, Ypred_Hp, decile_list, pred_name=No
     """
 
     index_ = np.argsort(Ypred)
-    fig = plt.figure(figsize=(24,18))
+    fig = plt.figure(figsize=(24, 18))
     plt.scatter(range(index_.shape[0]), Ypred[index_])
     plt.scatter(range(index_.shape[0]), Ypred_Lp[index_])
     plt.scatter(range(index_.shape[0]), Ypred_Hp[index_])
@@ -256,7 +258,6 @@ def plot_decile_predictions(Ypred, Ypred_Lp, Ypred_Hp, decile_list, pred_name=No
     plt.savefig(figprefix + '_decile_predictions.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + '_decile_predictions.png')
-
 
 
 def plot_calibration_interpolation(mean_sigma, error, splineobj1, splineobj2, method='', figprefix=None, steps=False):
@@ -307,7 +308,7 @@ def plot_calibration_interpolation(mean_sigma, error, splineobj1, splineobj2, me
     if steps:
         # Plot first smoothing
         yp23_1 = splineobj1(xp23)
-        fig = plt.figure(figsize=(24,18))
+        fig = plt.figure(figsize=(24, 18))
         ax = plt.gca()
         ax.plot(mean_sigma, error, 'kx')
         ax.plot(xp23, yp23_1, 'gx', ms=20)
@@ -323,7 +324,7 @@ def plot_calibration_interpolation(mean_sigma, error, splineobj1, splineobj2, me
         plt.close()
         print('Generated plot: ', figprefix + '_empirical_calibration_interp_smooth1.png')
 
-    fig = plt.figure(figsize=(24,18))
+    fig = plt.figure(figsize=(24, 18))
     ax = plt.gca()
     ax.plot(mean_sigma, error, 'kx')
     ax.plot(xp23, yp23, 'rx', ms=20)
@@ -338,7 +339,6 @@ def plot_calibration_interpolation(mean_sigma, error, splineobj1, splineobj2, me
     plt.savefig(figprefix + '_empirical_calibration_interpolation.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + '_empirical_calibration_interpolation.png')
-
 
 
 def plot_calibrated_std(y_test, y_pred, std_calibrated, thresC, pred_name=None, figprefix=None):
@@ -366,18 +366,19 @@ def plot_calibrated_std(y_test, y_pred, std_calibrated, thresC, pred_name=None, 
     N = y_test.shape[0]
     index = np.argsort(y_pred)
     x = np.array(range(N))
-    
+
     indexC = std_calibrated > thresC
     alphafill = 0.5
     if N > 2000:
         alphafill = 0.7
-    
+
     scale = 120
-    fig = plt.figure(figsize=(24,18))
+    fig = plt.figure(figsize=(24, 18))
     ax = plt.gca()
     ax.scatter(x, y_test[index], color='red', s=scale, alpha=0.5)
     plt.fill_between(x, y_pred[index] - 1.28 * std_calibrated[index],
-                       y_pred[index] + 1.28 * std_calibrated[index], color='gray', alpha=alphafill)
+                     y_pred[index] + 1.28 * std_calibrated[index],
+                     color='gray', alpha=alphafill)
     plt.scatter(x, y_pred[index], color='orange', s=scale)
     plt.scatter(x[indexC], y_test[indexC], color='green', s=scale, alpha=0.5)
     plt.legend(['True', '1.28 Std', 'Pred', 'Low conf'], fontsize=28)
@@ -391,7 +392,6 @@ def plot_calibrated_std(y_test, y_pred, std_calibrated, thresC, pred_name=None, 
     plt.savefig(figprefix + '_calibrated.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + '_calibrated.png')
-
 
 
 def plot_contamination(y_true, y_pred, sigma, T=None, thresC=0.1, pred_name=None, figprefix=None):
@@ -428,14 +428,14 @@ def plot_contamination(y_true, y_pred, sigma, T=None, thresC=0.1, pred_name=None
       A '_contamination.png' string will be appended to the
       figprefix given.
     """
-    
+
     N = y_true.shape[0]
     index = np.argsort(y_pred)
     x = np.array(range(N))
-    
+
     if T is not None:
-        indexG = T[:,0] > (1. - thresC)
-        indexC = T[:,1] > thresC
+        indexG = T[:, 0] > (1. - thresC)
+        indexC = T[:, 1] > thresC
         ss = sigma * indexG
         prefig = '_outTrain'
     else:
@@ -446,11 +446,11 @@ def plot_contamination(y_true, y_pred, sigma, T=None, thresC=0.1, pred_name=None
 
     # Plotting Outliers
     scale = 120
-    fig = plt.figure(figsize=(24,18))
+    fig = plt.figure(figsize=(24, 18))
     ax = plt.gca()
     ax.scatter(x, y_true[index], color='red', s=scale)
     if T is not None:
-        plt.scatter(x[indexC], y_true[indexC], color='green', s=scale)#, alpha=0.8)
+        plt.scatter(x[indexC], y_true[indexC], color='green', s=scale)  #, alpha=0.8)
     plt.scatter(x, y_pred[index], color='orange', s=scale)
     plt.fill_between(x, auxGl[index], auxGh[index], color='gray', alpha=0.5)
     if T is not None:
@@ -467,11 +467,11 @@ def plot_contamination(y_true, y_pred, sigma, T=None, thresC=0.1, pred_name=None
     plt.savefig(figprefix + prefig + '_contamination.png', bbox_inches='tight')
     plt.close()
     print('Generated plot: ', figprefix + prefig + '_contamination.png')
-    
+
     if T is not None:
         # Plotting Latent Variables vs error
         error = np.abs(y_true - y_pred)
-        fig = plt.figure(figsize=(24,18))
+        fig = plt.figure(figsize=(24, 18))
         ax = plt.gca()
         ax.scatter(error, T[:, 0], color='blue', s=scale)
         ax.scatter(error, T[:, 1], color='orange', s=scale)
@@ -487,8 +487,7 @@ def plot_contamination(y_true, y_pred, sigma, T=None, thresC=0.1, pred_name=None
         plt.close()
         print('Generated plot: ', figprefix + '_T_contamination.png')
 
-    
-    
+
 # plot training and validation metrics together and generate one chart per metrics
 def plot_metrics(history, title=None, skip_ep=0, outdir='.', add_lr=False):
     """ Plots keras training curves history.
