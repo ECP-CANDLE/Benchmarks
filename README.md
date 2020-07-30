@@ -21,4 +21,4 @@ Implementations that use alternative tensor frameworks, such as mxnet or neon, w
         p1b3_mxnet.py
         p1b3_neon.py
 
-Documentation: https://ecp-candle.github.io/Candle/
+Documentation: https://ecp-candle.github.io/Candle/html/readme.html
