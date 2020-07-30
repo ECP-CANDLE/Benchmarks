@@ -309,7 +309,7 @@ def run(params):
 
     epochs = params['epochs']
     batch_size = params['batch_size']
-    history = model.fit(X_train, Y_train,  # class_weight=d_class_weights,
+    history = model.fit(X_train, Y_train,  class_weight=d_class_weights,
                         batch_size=batch_size,
                         epochs=epochs,
                         verbose=1,
@@ -323,7 +323,7 @@ def run(params):
         candle.plot_history(params['save_path'] + root_fname, history, 'acc')
     if 'abstention_acc' in history.history.keys():
         candle.plot_history(params['save_path'] + root_fname, history, 'abstention_acc')
-    # Plot mu evolution
+    # Plot alpha evolution
     fname = params['save_path'] + root_fname + '.alpha.png'
     xlabel = 'Epochs'
     ylabel = 'Abstention Weight alpha'
