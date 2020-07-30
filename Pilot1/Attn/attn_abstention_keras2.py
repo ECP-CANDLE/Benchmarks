@@ -130,7 +130,7 @@ def build_type_classifier(x_train, y_train, x_test, y_test):
     return clf
 
 
-def initialize_parameters(default_model='attn_abs_default_model_v2.txt'):
+def initialize_parameters(default_model='attn_abs_default_model.txt'):
 
     # Build benchmark object
     attnAbsBmk = BenchmarkAttnAbs(
@@ -236,10 +236,10 @@ def run(params):
     # Convert classes to categorical with an extra slot for the abstaining class
     Y_train, Y_test, Y_val = candle.modify_labels(nb_classes + 1, Y_train, Y_test, Y_val)
 
-    # Disable class weight (for initial testing of the abstention classifier)
-    # y_integers = np.argmax(Y_train, axis=1)
-    # class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
-    # d_class_weights = dict(enumerate(class_weights))
+    # Try class weight and abstention classifier
+    y_integers = np.argmax(Y_train, axis=1)
+    class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
+    d_class_weights = dict(enumerate(class_weights))
 
     print('X_train shape:', X_train.shape)
     print('X_test shape:', X_test.shape)
