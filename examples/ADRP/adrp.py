@@ -100,6 +100,13 @@ additional_definitions = [
         "default": "https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/",
         "help": "url to get training and description header files",
     },
+    {
+        "name": "base_name",
+        "type": str,
+        "default": "ADRP_6W02_A_1_H",
+        "help": "base name of pocket",
+    },
+
 ]
 
 required = [
