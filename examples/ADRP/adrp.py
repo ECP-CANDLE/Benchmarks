@@ -94,6 +94,19 @@ additional_definitions = [
         "default": False,
         "help": "generate tsne plot of the latent representation",
     },
+    {
+        "name": "header_url",
+        "type": str,
+        "default": "https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/",
+        "help": "url to get training and description header files",
+    },
+    {
+        "name": "base_name",
+        "type": str,
+        "default": "ADRP_6W02_A_1_H",
+        "help": "base name of pocket",
+    },
+
 ]
 
 required = [
@@ -159,7 +172,16 @@ def extension_from_parameters(params, framework=""):
 
     return ext
 
-def load_headers(desc_headers, train_headers):
+def load_headers(desc_headers, train_headers, header_url):
+
+    desc_headers = candle.get_file(
+        desc_headers, header_url + desc_headers, cache_subdir="Pilot1"
+    )
+
+    train_headers = candle.get_file(
+        train_headers, header_url + train_headers, cache_subdir="Pilot1"
+    )
+
     with open(desc_headers) as f:
         reader = csv.reader(f, delimiter=",")
         dh_row = next(reader)
@@ -177,9 +199,8 @@ def load_headers(desc_headers, train_headers):
     return dh_dict, th_list
 
 def load_data(params, seed):
-
-    #data_path = args['in']
-    dh_dict, th_list = load_headers('descriptor_headers.csv', 'training_headers.csv')
+    header_url = params["header_url"]
+    dh_dict, th_list = load_headers('descriptor_headers.csv', 'training_headers.csv', header_url)
     offset = 6  # descriptor starts at index 6
     desc_col_idx = [dh_dict[key] + offset for key in th_list]
 
