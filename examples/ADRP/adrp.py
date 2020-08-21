@@ -94,6 +94,12 @@ additional_definitions = [
         "default": False,
         "help": "generate tsne plot of the latent representation",
     },
+    {
+        "name": "header_url",
+        "type": str,
+        "default": "https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/",
+        "help": "url to get training and description header files",
+    },
 ]
 
 required = [
@@ -186,12 +192,7 @@ def load_headers(desc_headers, train_headers, header_url):
     return dh_dict, th_list
 
 def load_data(params, seed):
-    try:
-        # use this user specified header_url
-        header_url = params["header_url"]
-    except:
-        header_url = 'https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/'
-
+    header_url = params["header_url"]
     dh_dict, th_list = load_headers('descriptor_headers.csv', 'training_headers.csv', header_url)
     offset = 6  # descriptor starts at index 6
     desc_col_idx = [dh_dict[key] + offset for key in th_list]
