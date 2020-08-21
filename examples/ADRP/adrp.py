@@ -160,6 +160,15 @@ def extension_from_parameters(params, framework=""):
     return ext
 
 def load_headers(desc_headers, train_headers):
+    header_url = 'https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/'
+    desc_headers = candle.get_file(
+        desc_headers, header_url + desc_headers, cache_subdir="Pilot1"
+    )
+
+    train_headers = candle.get_file(
+        train_headers, header_url + train_headers, cache_subdir="Pilot1"
+    )
+
     with open(desc_headers) as f:
         reader = csv.reader(f, delimiter=",")
         dh_row = next(reader)
