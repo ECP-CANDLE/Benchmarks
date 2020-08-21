@@ -159,8 +159,8 @@ def extension_from_parameters(params, framework=""):
 
     return ext
 
-def load_headers(desc_headers, train_headers):
-    header_url = 'https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/'
+def load_headers(desc_headers, train_headers, header_url):
+
     desc_headers = candle.get_file(
         desc_headers, header_url + desc_headers, cache_subdir="Pilot1"
     )
@@ -186,9 +186,13 @@ def load_headers(desc_headers, train_headers):
     return dh_dict, th_list
 
 def load_data(params, seed):
+    try:
+        # use this user specified header_url
+        header_url = params["header_url"]
+    except:
+        header_url = 'https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/'
 
-    #data_path = args['in']
-    dh_dict, th_list = load_headers('descriptor_headers.csv', 'training_headers.csv')
+    dh_dict, th_list = load_headers('descriptor_headers.csv', 'training_headers.csv', header_url)
     offset = 6  # descriptor starts at index 6
     desc_col_idx = [dh_dict[key] + offset for key in th_list]
 
