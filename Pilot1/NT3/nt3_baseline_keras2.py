@@ -54,9 +54,51 @@ def load_data(train_path, test_path, gParameters):
 
     Y_train = np_utils.to_categorical(df_y_train, gParameters['classes'])
     Y_test = np_utils.to_categorical(df_y_test, gParameters['classes'])
+    df_comp_train = df_train[0:,1:]
+    df_comp_test = df_test[0:,1:]
 
-    df_x_train = df_train[:, 1:seqlen].astype(np.float32)
-    df_x_test = df_test[:, 1:seqlen].astype(np.float32)
+    x_noise_level = float(gParameters['x_noise_level']) / 100.0
+    y_noise_level = float(gParameters['y_noise_level']) / 100.0
+
+    # x_noise_level = 0.5
+    print("x or flipping start, noise level = ", x_noise_level)
+
+
+    flips = 0
+    import random
+    #introduce x noise
+    for i in range(0,df_y_train.shape[0]):
+        if random.random() < x_noise_level:
+            print("x flipping ", i)
+            flips += 1
+            df_y_train[i] = int(not df_y_train[i])
+
+    print("flips: %i / %i" % (flips, df_y_train.shape[0]))
+    print("x flipping done")
+
+    # introduce y noise
+    print("y noise introduction starts, noise level = ", y_noise_level)
+
+    for i in range(0,df_y_train.shape[0]):
+        if random.random() < y_noise_level:
+            print("y noise for ", i)
+            for j in range(0, df_comp_train.shape[1] ):
+                tmp1 = df_comp_train[i][j]
+                tmp2 = (df_comp_train.shape[1])*(random.random())
+                tmp2 = int(tmp2)
+                df_comp_train[i][j] = df_comp_train[i][tmp2]
+                df_comp_train[i][tmp2] = tmp1
+    print("y noise: %i / %i" % (flips, df_y_train.shape[0]));
+    print(" y noise stop")
+
+    Y_train = np_utils.to_categorical(df_y_train,gParameters['classes'])
+    Y_test = np_utils.to_categorical(df_y_test,gParameters['classes'])
+
+    # df_x_train = df_train[:, 1:seqlen].astype(np.float32)
+    df_x_train = df_comp_train
+    df_x_test = df_comp_test
+  #  df_x_train = df_train[:, 1:seqlen].astype(np.float32)
+  #  df_x_test = df_test[:, 1:seqlen].astype(np.float32)
 
     X_train = df_x_train
     X_test = df_x_test

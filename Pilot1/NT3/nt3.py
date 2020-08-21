@@ -7,10 +7,22 @@ sys.path.append(lib_path2)
 
 import candle
 
-additional_definitions = [{
-    'name': 'classes',
-    'type': int,
-    'default': 2}
+additional_definitions = [
+    {
+        'name': 'classes',
+        'type': int,
+        'default': 2
+    },
+    {
+        'name': 'x_noise_level',
+        'type': int,
+        'default': 0
+    },
+    {
+        'name': 'y_noise_level',
+        'type': int,
+        'default': 0
+    }
 ]
 
 required = [
