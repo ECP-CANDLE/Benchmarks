@@ -34,22 +34,20 @@ from viz_utils import plot_array
 from viz_utils import plot_density_observed_vs_predicted
 from viz_utils import plot_2d_density_sigma_vs_error
 from viz_utils import plot_histogram_error_per_sigma
-from viz_utils import plot_calibration_and_errors
-from viz_utils import plot_percentile_predictions
+from viz_utils import plot_decile_predictions
+from viz_utils import plot_calibration_interpolation
+from viz_utils import plot_calibrated_std
+from viz_utils import plot_contamination
 
 
 # import from uq_utils
+from uq_utils import generate_index_distribution
 from uq_utils import compute_statistics_homoscedastic_summary
 from uq_utils import compute_statistics_homoscedastic
 from uq_utils import compute_statistics_heteroscedastic
 from uq_utils import compute_statistics_quantile
 from uq_utils import split_data_for_empirical_calibration
-from uq_utils import compute_empirical_calibration
-from uq_utils import binning_for_calibration
-from uq_utils import compute_valid_calibration_interval
-from uq_utils import apply_calibration
-from uq_utils import overprediction_check
-from uq_utils import generate_index_distribution
+from uq_utils import compute_empirical_calibration_interpolation
 
 # import from profiling_utils
 from profiling_utils import start_profiling
@@ -97,10 +95,13 @@ if 'keras' in sys.modules:
     from solr_keras import TerminateOnTimeOut
 
     from uq_keras_utils import abstention_loss
+    from uq_keras_utils import sparse_abstention_loss
     from uq_keras_utils import abstention_acc_metric
+    from uq_keras_utils import sparse_abstention_acc_metric
     from uq_keras_utils import abstention_metric
     from uq_keras_utils import acc_class_i_metric
     from uq_keras_utils import abstention_acc_class_i_metric
+    from uq_keras_utils import abstention_class_i_metric
     from uq_keras_utils import AbstentionAdapt_Callback
     from uq_keras_utils import modify_labels
     from uq_keras_utils import add_model_output
@@ -116,6 +117,7 @@ if 'keras' in sys.modules:
     from uq_keras_utils import contamination_loss
     from uq_keras_utils import Contamination_Callback
     from uq_keras_utils import mse_contamination_metric
+    from uq_keras_utils import mae_contamination_metric
     from uq_keras_utils import r2_contamination_metric
 
     from clr_keras_utils import CyclicLR

@@ -236,10 +236,10 @@ def run(params):
     # Convert classes to categorical with an extra slot for the abstaining class
     Y_train, Y_test, Y_val = candle.modify_labels(nb_classes + 1, Y_train, Y_test, Y_val)
 
-    # Disable class weight (for initial testing of the abstention classifier)
-    # y_integers = np.argmax(Y_train, axis=1)
-    # class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
-    # d_class_weights = dict(enumerate(class_weights))
+    # Try class weight and abstention classifier
+    y_integers = np.argmax(Y_train, axis=1)
+    class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
+    d_class_weights = dict(enumerate(class_weights))
 
     print('X_train shape:', X_train.shape)
     print('X_test shape:', X_test.shape)
@@ -257,7 +257,7 @@ def run(params):
     mask = np.zeros(nb_classes + 1)
     mask[-1] = 1
     alpha0 = 0.5  # In the long term this is not as important since alpha auto tunes, however it may require a large number of epochs to converge if set far away from target
-    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abstention_acc_class_1', abs_monitor='val_abstention', alpha0=alpha0, alpha_scale_factor=params['alpha_scale_factor'], min_abs_acc=params['min_abs_acc'],
+    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abstention_acc', abs_monitor='val_abstention', alpha0=alpha0, alpha_scale_factor=params['alpha_scale_factor'], min_abs_acc=params['min_abs_acc'],
         max_abs_frac=params['max_abs_frac'],
         acc_gain=params['acc_gain'],
         abs_gain=params['abs_gain'],
@@ -309,7 +309,7 @@ def run(params):
 
     epochs = params['epochs']
     batch_size = params['batch_size']
-    history = model.fit(X_train, Y_train,  # class_weight=d_class_weights,
+    history = model.fit(X_train, Y_train,  class_weight=d_class_weights,
                         batch_size=batch_size,
                         epochs=epochs,
                         verbose=1,
@@ -323,7 +323,7 @@ def run(params):
         candle.plot_history(params['save_path'] + root_fname, history, 'acc')
     if 'abstention_acc' in history.history.keys():
         candle.plot_history(params['save_path'] + root_fname, history, 'abstention_acc')
-    # Plot mu evolution
+    # Plot alpha evolution
     fname = params['save_path'] + root_fname + '.alpha.png'
     xlabel = 'Epochs'
     ylabel = 'Abstention Weight alpha'
@@ -338,6 +338,21 @@ def run(params):
     save_and_test_saved_model(params, model, root_fname, nb_classes, abstention_cbk.alpha, mask, X_train, X_test, Y_test)
 
     attn.logger.handlers = []
+    df_testX = pd.DataFrame(X_test)
+    #print('df_testX.shape: ', df_testX.shape)
+    cols = ['Y_test' + str(i) for i in range(Y_test.shape[1])]
+    df_testY = pd.DataFrame(Y_test, columns=cols)
+    #print('df_testY.shape: ', df_testY.shape)
+    df_test = pd.concat([df_testY, df_testX], axis=1)
+    #print('df_test.shape: ', df_test.shape)
+    cols = ['Y_pred' + str(i) for i in range(Y_predict.shape[1])]
+    df_pred = pd.DataFrame(Y_predict, columns=cols)
+    #print('df_pred.shape: ', df_pred.shape)
+    df_test = pd.concat([df_pred, df_test], axis=1).reset_index(drop=True)
+    #print('df_test.shape: ', df_test.shape)
+    fname = params['save_path'] + root_fname + '.dftest.tsv'
+    df_test.to_csv(fname, sep='\t', index=False, float_format="%.3g")
+
 
     return history
 
