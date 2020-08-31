@@ -16,12 +16,16 @@ from keras import backend as K
 import keras
 from keras.utils import get_custom_objects
 
-import data_utils_.uno as uno
+import uno as benchmark
 import candle
 
-import data_utils_.uno_combined_data_loader as uno_combined_data_loader
-import data_utils_.uno_combined_data_generator as uno_combined_data_generator
-import model_utils_.uno_model_utils as uno_model_utils
+from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder, read_IDs_file
+
+from unoUQ_data import FromFileDataGenerator, find_columns_with_str
+
+from uno_baseline_keras2 import build_feature_model, build_model, evaluate_prediction
+
+from uno_trainUQ_keras2 import extension_from_parameters, log_evaluation
 
 logger = logging.getLogger(__name__)
 
@@ -63,20 +67,21 @@ required_local = ( 'model_file', 'weights_file', 'uq_infer_file',
              'agg_dose', 'batch_size')
 
 
-def initialize_parameters(default_model='uno_defaultUQ_model.txt'):
+def initialize_parameters(default_model='uno_default_inferUQ_model.txt'):
 
     # Build benchmark object
-    unoBmk = uno.BenchmarkUno(uno.file_path, default_model, 'keras',
+    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, default_model, 'keras',
     prog='uno_inferUQ', desc='Read models to predict tumor response to single and paired drugs.')
 
     unoBmk.additional_definitions += additional_definitions_local
     unoBmk.required = unoBmk.required.union(required_local)
 
-    # Initialize parameters
+    # Finalize parameters
     gParameters = candle.finalize_parameters(unoBmk)
     #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
+
 
 
 def from_file(args, model):
@@ -101,19 +106,20 @@ def from_file(args, model):
 
     feature_names_list.append('dragon7')
         
-    test_gen = uno_combined_data_generator.FromFileDataGenerator(df_data, test_indices,
+    test_gen = FromFileDataGenerator(df_data, test_indices,
                 target_str, feature_names_list, num_features_list,
                 batch_size=args.batch_size, shuffle=False)
 
     return test_gen
 
 
+
 def given_drugs(args, loader):
 
-    test_gen = uno_combined_data_generator.CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size)
+    test_gen = CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size)
     
     # Include specified drugs
-    include_drugs = uno.read_IDs_file(args.uq_infer_file)
+    include_drugs = read_IDs_file(args.uq_infer_file)
     df_response = test_gen.data.df_response
     if np.isin('Drug', df_response.columns.values):
         df = df_response[['Drug']]
@@ -132,12 +138,13 @@ def given_drugs(args, loader):
     return test_gen
 
 
+
 def given_cells(args, loader):
 
-    test_gen = uno_combined_data_generator.CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size)
+    test_gen = CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size)
     
     # Include specified cells
-    include_cells = uno.read_IDs_file(args.uq_infer_file)
+    include_cells = read_IDs_file(args.uq_infer_file)
     df = test_gen.data.df_response[['Sample']]
     index = df.index[df['Sample'].isin(include_cells)]
     
@@ -150,12 +157,13 @@ def given_cells(args, loader):
     return test_gen
 
 
+
 def given_indices(args, loader):
 
-    test_gen = uno_combined_data_generator.CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size)
+    test_gen = CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size)
     
     # Include specified indices
-    index = uno.read_IDs_file(args.uq_infer_file)
+    index = read_IDs_file(args.uq_infer_file)
     
     # Update object
     test_gen.index = index
@@ -166,15 +174,16 @@ def given_indices(args, loader):
     return test_gen
 
 
+
 def run(params):
     args = candle.ArgumentStruct(**params)
     candle.set_seed(args.rng_seed)
     logfile_def = 'uno_infer_from_' + args.uq_infer_file + '.log'
     logfile = args.logfile if args.logfile else logfile_def
-    uno.set_up_logger(logfile, logger, uno.loggerUno, args.verbose)
+    candle.set_up_logger(logfile, logger, args.verbose)
     logger.info('Params: {}'.format(params))
     
-    ext = uno.extension_from_parameters(args)
+    ext = extension_from_parameters(args)
     candle.verify_path(args.save_path)
     prefix = args.save_path + 'uno' + ext
 
@@ -189,7 +198,7 @@ def run(params):
     target = args.agg_dose or 'Growth'
     
     if (args.uq_infer_given_drugs or args.uq_infer_given_cells or args.uq_infer_given_indices):
-        loader = uno_combined_data_loader.CombinedDataLoader(args.rng_seed)
+        loader = CombinedDataLoader(args.rng_seed)
         loader.load(cache=args.cache,
                 ncols=args.feature_subsample,
                 agg_dose=args.agg_dose,
@@ -233,7 +242,7 @@ def run(params):
             y_test_pred = model.predict_generator(test_gen.flow(single=args.single), test_gen.steps)
             y_test_pred = y_test_pred[:test_gen.size]
 
-        if args.loss == 'heteroscedastic':
+        if args.loss == 'het':
             y_test_pred_ = y_test_pred[:,0]
             s_test_pred = y_test_pred[:,1]
 
@@ -244,7 +253,7 @@ def run(params):
 
             pred_fname = prefix + '.predicted_INFER_HET.tsv'
 
-        elif args.loss == 'quantile':
+        elif args.loss == 'qtl':
         
             y_test_pred_50q = y_test_pred[:,0]
             y_test_pred_10q = y_test_pred[:,1]
@@ -264,8 +273,8 @@ def run(params):
             pred_fname = prefix + '.predicted_INFER.tsv'
 
         if args.n_pred < 21:
-            scores = uno.evaluate_prediction(y_test, y_test_pred)
-            uno.log_evaluation(scores, logger)
+            scores = evaluate_prediction(y_test, y_test_pred)
+            log_evaluation(scores, logger)
 
     df_pred = df_test
     if args.agg_dose:

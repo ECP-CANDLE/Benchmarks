@@ -60,6 +60,18 @@ def get_file(url):
     return file_utils.get_file(fname, origin=url, cache_subdir='Pilot1')
 
 
+
+def read_IDs_file(fname):
+
+    with open(fname, 'r') as f:
+        read_ids = f.read().splitlines()
+
+    logger.info('Read file: {}'.format(fname))
+    logger.info('Number of elements read: {}'.format(len(read_ids)))
+
+    return read_ids
+
+
 def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):
     """Impute missing values with mean and scale data included in pandas dataframe.
 
@@ -706,7 +718,8 @@ class CombinedDataLoader(object):
 
     def partition_data(self, partition_by=None, cv_folds=1, train_split=0.7, val_split=0.2,
                        cell_types=None, by_cell=None, by_drug=None,
-                       cell_subset_path=None, drug_subset_path=None):
+                       cell_subset_path=None, drug_subset_path=None,
+                       exclude_cells=[], exclude_drugs=[], exclude_indices=[]):
 
         seed = self.seed
         train_sep_sources = self.train_sep_sources
@@ -720,6 +733,18 @@ class CombinedDataLoader(object):
                 partition_by = 'cell'
             else:
                 partition_by = 'drug_pair'
+                
+        # Exclude specified cells / drugs / indices
+        if exclude_cells != []:
+            df_response = df_response[~df_response['Sample'].isin(exclude_cells)]
+        if exclude_drugs != []:
+            if np.isin('Drug', df_response.columns.values):
+                df_response = df_response[~df_response['Drug1'].isin(exclude_drugs)]
+            else:
+                df_response = df_response[~df_response['Drug1'].isin(exclude_drugs) & ~df_response['Drug2'].isin(exclude_drugs)]
+        if exclude_indices != []:
+            df_response = df_response.drop(exclude_indices, axis=0)
+            logger.info('Excluding indices specified')
 
         if partition_by != self.partition_by:
             df_response = df_response.assign(Group=assign_partition_groups(df_response, partition_by))
@@ -997,6 +1022,31 @@ class CombinedDataLoader(object):
 
         if cache:
             self.save_to_cache(cache, params)
+
+
+    def get_cells_in_val(self):
+    
+        val_cell_ids = list(set(self.df_response.loc[self.val_indexes[0]]['Sample'].values))
+    
+        return val_cell_ids
+
+
+    def get_drugs_in_val(self):
+    
+        if np.isin('Drug', self.df_response.columns.values):
+            val_drug_ids = list(set(self.df_response.loc[self.val_indexes[0]]['Drug'].values))
+        else:
+            val_drug_ids = list(set(self.df_response.loc[self.val_indexes[0]]['Drug1'].values))
+    
+        return val_drug_ids
+
+
+    def get_index_in_val(self):
+    
+        val_indices = list(set(self.val_indexes[0]))
+    
+        return val_indices
+
 
 
 class DataFeeder(keras.utils.Sequence):

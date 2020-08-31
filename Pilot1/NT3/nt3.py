@@ -8,9 +8,19 @@ sys.path.append(lib_path2)
 import candle
 
 additional_definitions = [
-{'name':'classes',
-    'type':int,
-    'default':2}
+{'name': 'classes',
+    'type': int,
+    'default': 2},
+{'name': 'label_noise',
+    'type': float},
+{'name': 'feature_col',
+    'type': int},
+{'name': 'feature_threshold',
+    'type': float},
+{'name': 'add_noise',
+    'type': candle.str2bool},
+{'name': 'noise_correlated',
+    'type': candle.str2bool}
 ]
 
 required = [
@@ -35,6 +45,7 @@ required = [
     'timeout'
 ]
 
+
 class BenchmarkNT3(candle.Benchmark):
 
     def set_locals(self):
@@ -48,4 +59,3 @@ class BenchmarkNT3(candle.Benchmark):
             self.required = set(required)
         if additional_definitions is not None:
             self.additional_definitions = additional_definitions
-

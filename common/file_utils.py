@@ -9,7 +9,6 @@ import hashlib
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import URLError, HTTPError
 
-import wget
 import requests
 from generic_utils import Progbar
 

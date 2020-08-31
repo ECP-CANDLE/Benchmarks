@@ -7,7 +7,7 @@ drug_features=['descriptors', 'fingerprints']
 dense=[1000, 1000, 1000]
 dense_feature_layers=[1000, 1000, 1000]
 activation='relu'
-loss='mse'
+loss='qtl'
 optimizer='sgd'
 scaling='std'
 dropout=0.1
@@ -24,8 +24,7 @@ warmup_lr=False
 batch_normalization=False
 feature_subsample=0
 rng_seed=2018
-save_path='save_default/'
-save_weights='saved.weights.h5'
+save_path='save_default_infer/'
 no_gen=False
 verbose = False
 single=True
@@ -34,7 +33,13 @@ no_feature_source=True
 no_response_source=True
 use_landmark_genes=True
 partition_by='cell'
-gpus=[0]
+gpus = [0]
+uq_infer_file = 'save_default/infer_cell_ids'
+uq_infer_given_cells = True
+weights_file = 'save_default/saved.weights.h5'
+model_file = 'save_default/saved.model.h5'
+n_pred = 10
+
 
 [Monitor_Params]
 timeout=3600

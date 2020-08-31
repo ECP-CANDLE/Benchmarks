@@ -9,7 +9,7 @@ The model also acts as a quality control check for synthetically generated gene 
 ## Profile runs
 We have run the same configuration across multiple machines and compared the resource utilization. 
 ```
-python uno_baseline_keras2.py --conf nt3_perf_benchmark.txt
+python nt3_baseline_keras2.py --conf nt3_perf_bench_model.txt
 ```
 
 | Machine | Time to complete (HH:mm:ss) | Time per epoch (s) | Perf factor <sup>*</sup> | CPU % | Mem % | Mem GB | GPU % | GPU Mem % | Note |

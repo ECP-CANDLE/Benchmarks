@@ -23,7 +23,7 @@ latent_dim=2
 feature_subsample=0
 batch_normalization=False
 alpha_dropout=False
-save='save'
+save_path='save/'
 use_landmark_genes=True
 
 [Monitor_Params]
