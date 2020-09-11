@@ -36,6 +36,7 @@ def label_flip_correlated(y_data_categorical, y_noise_level, x_data, feature_col
 
 # Add simple Gaussian noise to RNA seq values, assume normalized x data
 def add_gaussian_noise(x_data, loc=0., scale=0.5):
+    print("added gaussian noise")
     train_noise = np.random.normal(loc, scale, size=x_data.shape)
     x_data = x_data + train_noise 
     return x_data

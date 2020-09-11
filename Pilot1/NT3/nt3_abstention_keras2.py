@@ -99,6 +99,10 @@ def load_data(train_path, test_path, gParameters):
         # else add uncorrelated noise
         else:
             Y_train, y_train_noise_gen = candle.label_flip(Y_train, gParameters['label_noise'])
+    # check if noise is on for RNA-seq data
+    elif gParameters['noise_gaussian']:
+        print("adding gnoise", gParameters['std_dev'])
+        X_train = candle.add_gaussian_noise(X_train, 0, gParameters['std_dev'])
 
     return X_train, Y_train, X_test, Y_test
 
