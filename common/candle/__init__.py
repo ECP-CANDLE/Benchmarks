@@ -65,7 +65,7 @@ from feature_selection_utils import select_decorrelated_features
 # noise injection 
 from noise_utils import label_flip
 from noise_utils import label_flip_correlated
-
+from noise_utils import add_gaussian_noise
 # P1-specific
 from P1_utils import coxen_single_drug_gene_selection
 from P1_utils import coxen_multi_drug_gene_selection

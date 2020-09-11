@@ -13,6 +13,8 @@ additional_definitions = [
     'default': 2},
 {'name': 'label_noise',
     'type': float},
+{'name': 'std_dev',
+    'type': float},
 {'name': 'feature_col',
     'type': int},
 {'name': 'feature_threshold',
@@ -20,6 +22,8 @@ additional_definitions = [
 {'name': 'add_noise',
     'type': candle.str2bool},
 {'name': 'noise_correlated',
+    'type': candle.str2bool},
+{'name': 'noise_gaussian',
     'type': candle.str2bool}
 ]
 
