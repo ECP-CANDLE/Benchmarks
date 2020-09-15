@@ -1,18 +1,18 @@
-[Global_Params]
+[Global Params]
 header_url = 'https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/'
 data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/V5.1-1M-flatten/'
 train_data = ''
-base_name = 'ADRP_6W02_A_1_H'
+base_name = 'RDRP_7BV2_A_1_F'
 model_name = 'adrp'
-dense = [250, 125, 60, 30]
+dense = [500, 250, 125, 60, 30]
 batch_size = 32
 epochs = 400
 activation = 'elu'
 out_activation = 'relu'
 loss = 'mean_squared_error'
-optimizer = 'sgd'
-dropout = 0.1
-learning_rate = 0.001
+optimizer = 'adam'
+dropout = 0.1163
+learning_rate = 0.0001
 momentum = 0.9
 scaling = 'minmax'
 epsilon_std = 1.0
@@ -26,8 +26,19 @@ early_stop = True
 early_patience = 20
 reduce_lr = True
 reduce_patience = 10
-reduce_ratio = 1e-5
+reduce_ratio = 1e-05
 feature_subsample = 0
-
-[Monitor_Params]
-timeout = 0
+verbose = None
+logfile = None
+train_bool = True
+shuffle = False
+profiling = False
+residual = False
+warmup_lr = False
+use_tb = False
+tsne = False
+use_sample_weight = False
+sample_weight_type = 'linear'
+framework = 'keras'
+[Monitor Params]
+timeout = 36000

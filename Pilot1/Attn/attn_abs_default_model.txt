@@ -4,7 +4,7 @@ train_data='top_21_1fold_001.h5'
 model_name='attn_abs'
 dense=[1000, 1000, 1000, 500, 250, 125, 60, 30, 2]
 batch_size=32
-epochs=2
+epochs=50
 activation=['relu', 'relu', 'softmax', 'relu', 'relu', 'relu', 'relu', 'relu', 'softmax']
 loss='categorical_crossentropy'
 optimizer='sgd'
@@ -22,7 +22,7 @@ experiment_id='01'
 run_id='1'
 save_path='save_abs/EXP01/'
 min_abs_acc=0.85
-max_abs_frac=0.6
+max_abs_frac=0.3
 
 [Monitor_Params]
 timeout=3600

@@ -431,6 +431,7 @@ class AbstentionAdapt_Callback(Callback):
                 new_alpha_val *= new_scale
                 K.set_value(self.alpha, new_alpha_val)
                 print('Scaling factor: ', new_scale, ' new alpha, ', new_alpha_val)
+
         self.alphavalues.append(new_alpha_val)
 
 

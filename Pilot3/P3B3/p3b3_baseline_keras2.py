@@ -12,7 +12,7 @@ from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 from sklearn.metrics import f1_score
 '''
 
-import keras
+#import keras
 
 import p3b3 as bmk
 import keras_mt_shared_cnn
@@ -88,7 +88,8 @@ def run_cnn(GP, train_x, train_y, test_x, test_y,
         concat_dropout_prob=dropout,
         emb_l2=emb_l2,
         w_l2=w_l2,
-        optimizer=optimizer_run)
+        optimizer=optimizer_run
+        )
 
     print(cnn.summary())
 
@@ -101,9 +102,6 @@ def run_cnn(GP, train_x, train_y, test_x, test_y,
             train_labels.append(np.array(train_y[:, i]))
 
     validation_data = ({'Input': test_x}, val_labels)
-
-    # candleRemoteMonitor = CandleRemoteMonitor(params= GP)
-    # timeoutMonitor = TerminateOnTimeOut(TIMEOUT)
 
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=GP)
     timeoutMonitor = candle.TerminateOnTimeOut(GP['timeout'])
