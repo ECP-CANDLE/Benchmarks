@@ -223,13 +223,16 @@ def run(params):
     keras_defaults = candle.keras_default_config()
 
     ##
-    X_train, Y_train, X_test, Y_test, PS = adrp.load_data(params, seed)
+    X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_data(params, seed)
 
     print("X_train shape:", X_train.shape)
     print("X_test shape:", X_test.shape)
 
     print("Y_train shape:", Y_train.shape)
     print("Y_test shape:", Y_test.shape)
+
+    print("Y_test:")
+    print(Y_test)
 
     # Initialize weights and learning rule
     initializer_weights = candle.build_initializer(
@@ -325,18 +328,52 @@ def run(params):
                                verbose=1, 
                                mode="auto")
 
+    #count_array = np.random.random_integers(0, 10000, 20)
+    #print(count_array)
+
     # history = parallel_model.fit(X_train, Y_train,
     epochs = params["epochs"]
     batch_size = params["batch_size"]
     timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
-    
+    if (params['use_sample_weight']):
+        if (params['sample_weight_type'] == 'linear'):
+            train_weight = np.array(Y_train.values.tolist())
+            test_weight = np.array(Y_test.values.tolist())
+            print("Linear score weighting")
+        elif (params['sample_weight_type'] == 'quadratic'):
+            train_weight = np.square(np.array(Y_train.values.tolist()))
+            test_weight = np.square(np.array(Y_test.values.tolist()))
+            print("Quadratic score weighting")
+        elif (params['sample_weight_type'] == 'inverse_samples'):
+            train_score = np.array(Y_train.values.tolist())
+            test_score = np.array(Y_test.values.tolist())
+            train_bin = train_score.astype(int)
+            test_bin = test_score.astype(int)
+            train_count = count_array[train_bin].astype(float)
+            test_count = count_array[test_bin].astype(float)
+            train_weight = 1./(train_count+1.0)
+            test_weight = 1./(test_count+1.0)
+            print("Inverse sample weighting")
+            print("Test score, bin, count, weight:")
+            print(test_score[:10, ])
+            print(test_bin[:10, ])
+            print(test_count[:10, ])
+
+    else:
+        train_weight = np.ones(shape = (len(Y_train),))
+        test_weight = np.ones(shape = (len(Y_test),))
+
+    print("Test weight:")
+    print(test_weight[:10, ])
+
     history = model.fit(
         X_train,
         Y_train,
         batch_size=batch_size,
         epochs=epochs,
         verbose=1,
-        validation_data=(X_test, Y_test),
+        sample_weight=train_weight,
+        validation_data=(X_test, Y_test, test_weight),
         callbacks=[checkpointer, timeout_monitor, csv_logger, reduce_lr, early_stop],
     )
 

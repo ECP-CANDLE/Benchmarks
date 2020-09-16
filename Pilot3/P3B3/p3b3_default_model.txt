@@ -13,5 +13,5 @@ filter_sets = 3
 num_filters = 100
 emb_l2 = 0.001
 w_l2 = 0.01
-task_list = [0,1,2,3]
-task_names = ['site','laterality','histology','grade']
+task_list = [0, 2, 3]
+task_names = ['site', 'laterality', 'histology', 'grade']

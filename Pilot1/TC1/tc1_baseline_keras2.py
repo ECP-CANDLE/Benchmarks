@@ -6,21 +6,13 @@ import os
 import sys
 import gzip
 import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 from keras import backend as K
 
 from keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
-from keras.optimizers import SGD, Adam, RMSprop
+from keras.layers import LocallyConnected1D
 from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.utils import np_utils
 from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
-
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
@@ -33,9 +25,9 @@ import candle
 def initialize_parameters(default_model='tc1_default_model.txt'):
 
     # Build benchmark object
-    tc1Bmk = bmk.BenchmarkTC1(file_path, default_model, 'keras',
-                              prog='tc1_baseline',
-                              desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
+    tc1Bmk = bmk.BenchmarkTC1(
+            file_path, default_model, 'keras', prog='tc1_baseline',
+            desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(tc1Bmk)
@@ -81,13 +73,16 @@ def run(gParameters):
             break
         dense_first = False
         if 'locally_connected' in gParameters:
-            model.add(LocallyConnected1D(filters, filter_len, strides=stride, padding='valid', input_shape=(x_train_len, 1)))
+            model.add(LocallyConnected1D(filters, filter_len, strides=stride,
+                                         padding='valid', input_shape=(x_train_len, 1)))
         else:
             # input layer
             if i == 0:
-                model.add(Conv1D(filters=filters, kernel_size=filter_len, strides=stride, padding='valid', input_shape=(x_train_len, 1)))
+                model.add(Conv1D(filters=filters, kernel_size=filter_len,
+                                 strides=stride, padding='valid', input_shape=(x_train_len, 1)))
             else:
-                model.add(Conv1D(filters=filters, kernel_size=filter_len, strides=stride, padding='valid'))
+                model.add(Conv1D(filters=filters, kernel_size=filter_len,
+                                 strides=stride, padding='valid'))
         model.add(Activation(gParameters['activation']))
         if gParameters['pool']:
             model.add(MaxPooling1D(pool_size=pool_list[i // 3]))
@@ -124,9 +119,11 @@ def run(gParameters):
     # set up callbacks to do work during model training..
     model_name = gParameters['model_name']
     path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
-    checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
+    checkpointer = ModelCheckpoint(filepath=path, verbose=1,
+                                   save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10,
+                                  verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
 
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],

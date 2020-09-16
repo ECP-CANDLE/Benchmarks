@@ -1,6 +1,5 @@
 import os
 import sys
-import argparse
 import candle
 import p3b5 as bmk
 
@@ -21,7 +20,8 @@ sys.path.append(lib_path2)
 import darts
 
 
-def train(trainloader, validloader, model, architecture, criterion, optimizer, lr, args, tasks, device, meter):
+def train(trainloader, validloader, model, architecture, 
+          criterion, optimizer, lr, args, tasks, device, meter):
 
     valid_iter = iter(trainloader)
 

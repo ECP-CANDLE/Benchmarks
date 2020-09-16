@@ -257,11 +257,15 @@ def run(params):
     mask = np.zeros(nb_classes + 1)
     mask[-1] = 1
     alpha0 = 0.5  # In the long term this is not as important since alpha auto tunes, however it may require a large number of epochs to converge if set far away from target
-    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abstention_acc', abs_monitor='val_abstention', alpha0=alpha0, alpha_scale_factor=params['alpha_scale_factor'], min_abs_acc=params['min_abs_acc'],
-        max_abs_frac=params['max_abs_frac'],
-        acc_gain=params['acc_gain'],
-        abs_gain=params['abs_gain'],
-    )
+    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abstention_acc', 
+                                                     abs_monitor='val_abstention', 
+                                                     alpha0=alpha0, 
+                                                     alpha_scale_factor=params['alpha_scale_factor'], 
+                                                     min_abs_acc=params['min_abs_acc'],
+                                                     max_abs_frac=params['max_abs_frac'],
+                                                     acc_gain=params['acc_gain'],
+                                                     abs_gain=params['abs_gain'],
+                                                     )
 
     # parallel_model = multi_gpu_model(model, gpus=4)
     # parallel_model.compile(loss='mean_squared_error',
@@ -277,7 +281,10 @@ def run(params):
     model.compile(
         loss=candle.abstention_loss(abstention_cbk.alpha, mask),
         optimizer=optimizer,
-        metrics=['acc', tf_auc, candle.abstention_acc_metric(nb_classes), candle.acc_class_i_metric(1), candle.abstention_acc_class_i_metric(nb_classes, 1),
+        metrics=['acc', tf_auc, 
+                 candle.abstention_acc_metric(nb_classes), 
+                 candle.acc_class_i_metric(1), 
+                 candle.abstention_acc_class_i_metric(nb_classes, 1),
                  candle.abstention_metric(nb_classes)])
 
     # set up a bunch of callbacks to do work during model training..
@@ -299,7 +306,6 @@ def run(params):
 
     if params['reduce_lr']:
         callbacks.append(reduce_lr)
-
     if params['use_cp']:
         callbacks.append(checkpointer)
     if params['use_tb']:

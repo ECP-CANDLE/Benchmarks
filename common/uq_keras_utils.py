@@ -50,11 +50,13 @@ def abstention_loss(alpha, mask):
         base_pred = (1 - mask) * y_pred + K.epsilon()
         base_true = y_true
         base_cost = K.categorical_crossentropy(base_true, base_pred)
-        abs_pred = K.mean(mask * y_pred, axis=-1)
+        #abs_pred = K.mean(mask * y_pred, axis=-1)
+        abs_pred = K.sum(mask * y_pred, axis=-1)
         # add some small value to prevent NaN when prediction is abstained
         abs_pred = K.clip(abs_pred, K.epsilon(), 1.-K.epsilon())
 
-        return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        #return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        return K.mean((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
 
     loss.__name__ = 'abs_crossentropy'
     return loss
@@ -86,11 +88,13 @@ def sparse_abstention_loss(alpha, mask):
         base_pred = (1 - mask) * y_pred + K.epsilon()
         base_true = y_true
         base_cost = K.sparse_categorical_crossentropy(base_true, base_pred)
-        abs_pred = K.mean(mask * y_pred, axis=-1)
+        #abs_pred = K.mean(mask * y_pred, axis=-1)
+        abs_pred = K.sum(mask * y_pred, axis=-1)
         # add some small value to prevent NaN when prediction is abstained
         abs_pred = K.clip(abs_pred, K.epsilon(), 1.-K.epsilon())
 
-        return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        #return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        return K.mean((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
 
     loss.__name__ = 'sparse_abs_crossentropy'
     return loss
@@ -423,9 +427,10 @@ class AbstentionAdapt_Callback(Callback):
                 new_scale = min(new_scale, max_scale)
                 new_scale = max(new_scale, min_scale)
 
-                print('Scaling factor: ', new_scale)
+                #print('Scaling factor: ', new_scale)
                 new_alpha_val *= new_scale
                 K.set_value(self.alpha, new_alpha_val)
+                print('Scaling factor: ', new_scale, ' new alpha, ', new_alpha_val)
 
         self.alphavalues.append(new_alpha_val)
 

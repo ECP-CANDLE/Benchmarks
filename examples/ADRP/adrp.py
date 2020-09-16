@@ -78,6 +78,18 @@ additional_definitions = [
         "default": False,
         "help": "checkpoint models with best val_loss",
     },
+    {
+        "name": "use_sample_weight",
+        "type": candle.str2bool,
+        "default": False,
+        "help": "Use sample weights based on docking score"
+    },
+    {
+        "name": "sample_weight_type",
+        "type": str,
+        "default": 'linear',
+        "help": "type of sample weighting: choices ['linear', 'quadratic', 'inverse_samples']",
+    },
     # {'name':'shuffle',
     #'type': candle.str2bool,
     #'default': False,
@@ -220,6 +232,11 @@ def load_data(params, seed):
     # df_x = df[:, 1:PL].astype(np.float32)
     df_x = df.iloc[:, desc_col_idx].astype(np.float32)
 
+    bins = np.arange(0, 20)
+    histogram, bin_edges = np.histogram(df_y, bins=bins, density=False)
+    print("Histogram of samples")
+    print(histogram)
+
 #    scaler = MaxAbsScaler()
 
     scaler = StandardScaler()
@@ -230,8 +247,7 @@ def load_data(params, seed):
     print('x_train shape:', X_train.shape)
     print('x_test shape:', X_test.shape)
 
-
-    return X_train, Y_train, X_test, Y_test, X_train.shape[1]
+    return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
 
 '''
 def load_data(params, seed):
