@@ -10,9 +10,9 @@ epochs = 400
 activation = 'elu'
 out_activation = 'relu'
 loss = 'mean_squared_error'
-optimizer = 'sgd'
-dropout = 0.1
-learning_rate = 0.001
+optimizer = 'adam'
+dropout = 0.1163
+learning_rate = 0.0001
 momentum = 0.9
 scaling = 'minmax'
 epsilon_std = 1.0
@@ -30,4 +30,4 @@ reduce_ratio = 1e-5
 feature_subsample = 0
 
 [Monitor_Params]
-timeout = 0
+timeout = 360000
