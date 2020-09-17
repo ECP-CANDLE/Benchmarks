@@ -211,11 +211,13 @@ def run(params):
     candle.set_seed(seed)
 
     # Construct extension to save model
-    ext = adrp.extension_from_parameters(params, ".keras")
-    params['save_path'] = './'+params['base_name']+'/'
-    candle.verify_path(params["save_path"])
-    prefix = "{}{}".format(params["save_path"], ext)
-    logfile = params["logfile"] if params["logfile"] else prefix + ".log"
+    # ext = adrp.extension_from_parameters(params, ".keras")
+    # params['save_path'] = './'+params['base_name']+'/'
+    # candle.verify_path(params["save_path"])
+
+    # prefix = "{}{}".format(params["save_path"], ext)
+    prefix = "{}".format(params["save_path"])
+    logfile = params["logfile"] if params["logfile"] else prefix + "TEST.log"
     candle.set_up_logger(logfile, adrp.logger, params["verbose"])
     adrp.logger.info("Params: {}".format(params))
 
@@ -307,11 +309,12 @@ def run(params):
         filepath=params["save_path"] + "agg_adrp.autosave.model.h5",
         verbose=1,
         save_weights_only=False,
-        save_best_only=True,
+        save_best_only=True
     )
     csv_logger = CSVLogger(params["save_path"] + "agg_adrp.training.log")
 
-    min_lr = params['learning_rate']*params['reduce_ratio']
+    #min_lr = params['learning_rate']*params['reduce_ratio']
+    min_lr=0.000000001
     reduce_lr = ReduceLROnPlateau(
         monitor="val_loss",
         factor=0.75,
@@ -366,6 +369,7 @@ def run(params):
     print("Test weight:")
     print(test_weight[:10, ])
 
+    print("calling model.fit with epochs={}".format(epochs))    
     history = model.fit(
         X_train,
         Y_train,
@@ -388,7 +392,7 @@ def run(params):
 
     # see big fuction below, creates plots etc.
     # TODO: Break post_process into multiple functions
-    post_process(params, X_train, X_test, Y_test, score, history, model)
+    # post_process(params, X_train, X_test, Y_test, score, history, model)
 
     adrp.logger.handlers = []
 
