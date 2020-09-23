@@ -1050,13 +1050,14 @@ class CombinedDataLoader(object):
 class DataFeeder(keras.utils.Sequence):
     """Read from pre-joined dataset (HDF5 format) and feed data to the model.
     """
-    def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False, single=False, agg_dose=None):
+    def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False, single=False, agg_dose=None, on_memory=False):
         self.partition = partition
         self.filename = filename
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.single = single
         self.agg_dose = agg_dose
+        self.on_memory = on_memory
         self.target = agg_dose if agg_dose is not None else 'Growth'
 
         self.store = pd.HDFStore(filename, mode='r')
@@ -1064,6 +1065,7 @@ class DataFeeder(keras.utils.Sequence):
         try:
             y = self.store.select('y_{}'.format(self.partition))
             self.index = y.index
+            self.target_loc = y.columns.get_loc(self.target)
         except KeyError:
             self.index = []
 
@@ -1076,6 +1078,13 @@ class DataFeeder(keras.utils.Sequence):
         self.index_map = np.arange(self.steps)
         if self.shuffle:
             np.random.shuffle(self.index_map)
+        if self.on_memory:
+            print(f'on_memory_loader activated')
+            self.dataframe = {}
+            current_partition_keys = list(map(lambda x: x[1:], filter(lambda x: self.partition in x, self.store.keys())))
+            for key in current_partition_keys:
+                self.dataframe[key] = self.store.get(key)
+            self.store.close()
 
     def __len__(self):
         return self.steps
@@ -1083,8 +1092,12 @@ class DataFeeder(keras.utils.Sequence):
     def __getitem__(self, idx):
         start = self.index_map[idx] * self.batch_size
         stop = (self.index_map[idx] + 1) * self.batch_size
-        x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
-        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop)[self.target]
+        if self.on_memory:
+            x = [self.dataframe['x_{0}_{1}'.format(self.partition, i)].iloc[start:stop, :] for i in range(self.input_size)]
+            y = self.dataframe['y_{}'.format(self.partition)].iloc[start:stop, self.target_loc]
+        else:
+            x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
+            y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop)[self.target]
         return x, y
 
     def reset(self):
@@ -1093,6 +1106,25 @@ class DataFeeder(keras.utils.Sequence):
         pass
 
     def get_response(self, copy=False):
+        if self.on_memory:
+            return self._get_response_on_memory(copy=copy)
+        else:
+            return self._get_response_on_disk(copy=copy)
+
+    def _get_response_on_memory(self, copy=False):
+        if self.shuffle:
+            self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
+            df = self.dataframe['y_{}'.format(self.partition)].iloc[self.index, :]
+        else:
+            df = self.dataframe['y_{}'.format(self.partition)]
+
+        if self.agg_dose is None:
+            df['Dose1'] = self.dataframe['x_{}_0'.format(self.partition)].iloc[self.index, :]
+            if not self.single:
+                df['Dose2'] = self.dataframe['x_{}_1'.format(self.partition)].iloc[self.index, :]
+        return df.copy() if copy else df
+
+    def _get_response_on_disk(self, copy=False):
         if self.shuffle:
             self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
             df = self.store.get('y_{}'.format(self.partition)).iloc[self.index, :]
@@ -1106,7 +1138,10 @@ class DataFeeder(keras.utils.Sequence):
         return df.copy() if copy else df
 
     def close(self):
-        self.store.close()
+        if self.on_memory:
+            pass
+        else:
+            self.store.close()
 
 
 class CombinedDataGenerator(keras.utils.Sequence):
