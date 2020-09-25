@@ -27,14 +27,10 @@ additional_definitions = [
 
 required = [
     'learning_rate',
-    'learning_rate_min',
-    'momentum',
     'weight_decay',
-    'grad_clip',
     'rng_seed',
-    'unrolled',
     'batch_size',
-    'epochs',
+    'num_epochs',
 ]
 
 
