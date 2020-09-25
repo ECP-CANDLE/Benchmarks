@@ -1,15 +1,11 @@
 [Global_Params]
-model_name = 'p3b5'
-unrolled = True
-data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/'
-save_path = '.'
-log_interval = 10
-train_data = 'P3B3_data.tar.gz'
-learning_rate = 0.01
-learning_rate_min = 0.001
+model_name = 'p3b6'
+pretrained_weights_path = '/gpfs/alpine/proj-shared/med107/g8o/bert_mimic_summit/savedmodels/ncbi_bert_base_pubmed_mimic_uncased/'
+learning_rate = 2e-5 
+eps = 1e-8
 momentum = 0.9
-weight_decay = 3e-4
+weight_decay = 0.0
 grad_clip = 5 
 batch_size = 100
-epochs = 10
+num_epochs = 10
 rng_seed = 13

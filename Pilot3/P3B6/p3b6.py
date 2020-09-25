@@ -53,3 +53,4 @@ class BenchmarkP3B6(candle.Benchmark):
             self.required = set(required)
         if additional_definitions is not None:
                     self.additional_definitions = additional_definitions
+

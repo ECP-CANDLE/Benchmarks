@@ -1,10 +1,18 @@
+import torch
 import candle
 import p3b6 as bmk
 
+import numpy as np
 import horovod.torch as hvd
 
+import torch.nn as nn
+from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
+
+from sklearn.metrics import f1_score
 from mimic_synthetic_data import MimicDatasetSynthetic
+
+from bert import HiBERT
 
 
 hvd.init()
@@ -23,7 +31,6 @@ def initialize_parameters():
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b5_bench)
-    # bmk.logger.info('Params: {}'.format(gParameters))
     return gParameters
 
 
@@ -69,9 +76,10 @@ def create_data_loaders(gParameters):
         test, num_replicas=hvd.size(), rank=hvd.rank(), shuffle=False
     )
 
-    train_loader = DataLoader(train, batch_size=1, sampler=train_sampler)
-    valid_loader = DataLoader(valid, batch_size=1, sampler=val_sampler)
-    test_loader = DataLoader(test, batch_size=1, sampler=test_sampler)
+    batch_size = gParameters["batch_size"]
+    train_loader = DataLoader(train, batch_size=batch_size, sampler=train_sampler)
+    valid_loader = DataLoader(valid, batch_size=batch_size, sampler=val_sampler)
+    test_loader = DataLoader(test, batch_size=batch_size, sampler=test_sampler)
 
     return train_loader, valid_loader, test_loader
 
@@ -92,9 +100,11 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
         logits = model(input_ids, input_mask, segment_ids, n_segs)
 
         label_ids = batch["label"].to(device)
+
         loss = criterion(
             logits.view(-1, num_classes), label_ids.view(-1, args.num_classes)
         )
+
         loss.backward()
         optimizer.step()
 
@@ -156,9 +166,14 @@ def run(params):
     model = model = HiBERT(args.pretrained_weights_path, args.num_classes)
     model.to(device)
 
-    params = [{"params": [p for n, p in model.named_parameters()], "weight_decay": 0.0}]
+    params = [
+        {
+            "params": [p for n, p in model.named_parameters()],
+            "weight_decay": args.weight_decay,
+        }
+    ]
 
-    optimizer = torch.optim.Adam(params, lr=2e-5, eps=1e-8)
+    optimizer = torch.optim.Adam(params, lr=args.learning_rate, eps=args.eps)
     optimizer = hvd.DistributedOptimizer(
         optimizer, named_parameters=model.named_parameters()
     )
@@ -166,7 +181,7 @@ def run(params):
     hvd.broadcast_parameters(model.state_dict(), root_rank=0)
     hvd.broadcast_optimizer_state(optimizer, root_rank=0)
 
-    criterion = torch.nn.BCEWithLogitsLoss()
+    criterion = nn.BCEWithLogitsLoss()
 
     for epoch in range(args.num_epochs):
         train(train_loader, model, optimizer, criterion, args, epoch)
