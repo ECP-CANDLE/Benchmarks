@@ -92,14 +92,14 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
         train_loss = 0.0
         optimizer.zero_grad()
 
-        input_ids = batch["tokens"].to(device)
-        segment_ids = batch["seg_ids"].to(device)
-        input_mask = batch["masks"].to(device)
-        n_segs = batch["n_segs"].to(device)
+        input_ids = batch["tokens"].to(args.device)
+        segment_ids = batch["seg_ids"].to(args.device)
+        input_mask = batch["masks"].to(args.device)
+        n_segs = batch["n_segs"].to(args.device)
 
         logits = model(input_ids, input_mask, segment_ids, n_segs)
 
-        label_ids = batch["label"].to(device)
+        label_ids = batch["label"].to(args.device)
 
         loss = criterion(
             logits.view(-1, num_classes), label_ids.view(-1, args.num_classes)
@@ -128,10 +128,10 @@ def validate(dataloader, model, args, epoch):
     with torch.no_grad():
         for idx, batch in enumerate(dataloader):
 
-            input_ids = batch["tokens"].to(device)
-            segment_ids = batch["seg_ids"].to(device)
-            input_mask = batch["masks"].to(device)
-            n_segs = batch["n_segs"].to(device)
+            input_ids = batch["tokens"].to(args.device)
+            segment_ids = batch["seg_ids"].to(args.device)
+            input_mask = batch["masks"].to(args.device)
+            n_segs = batch["n_segs"].to(args.device)
 
             logits = model(input_ids, input_mask, segment_ids, n_segs)
             logits = torch.nn.Sigmoid()(logits)
@@ -158,12 +158,12 @@ def validate(dataloader, model, args, epoch):
 def run(params):
     args = candle.ArgumentStruct(**params)
     args.cuda = torch.cuda.is_available()
-    device = torch.device(f"cuda" if args.cuda else "cpu")
+    args.device = torch.device(f"cuda" if args.cuda else "cpu")
 
     train_loader, valid_loader, test_loader = create_data_loaders(params)
 
     model = model = HiBERT(args.pretrained_weights_path, args.num_classes)
-    model.to(device)
+    model.to(args.device)
 
     params = [
         {
