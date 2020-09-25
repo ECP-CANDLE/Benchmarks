@@ -1,9 +1,13 @@
-from mimic_synthetic_data import MimicDatasetSynthetic
-
-from torch.utils.data.distributed import DistributedSampler
-
 import candle
 import p3b6 as bmk
+
+import horovod.torch as hvd
+
+from torch.utils.data.distributed import DistributedSampler
+from mimic_synthetic_data import MimicDatasetSynthetic
+
+
+hvd.init()
 
 
 def initialize_parameters():
