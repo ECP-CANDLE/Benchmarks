@@ -1,50 +1,29 @@
-import p3b6 as bmk
-import candle
-import darts
+import torch.nn as nn
+
+from pytorch_pretrained_bert import (
+    BertForSequenceClassification
+)
 
 
-def initialize_parameters():
-    """ Initialize the parameters for the P3B5 benchmark """
+class HiBERT(nn.Module):
 
-    p3b5_bench = bmk.BenchmarkP3B5(
-        bmk.file_path,
-        'default_model.txt',
-        'pytorch',
-        prog='p3b5_baseline',
-        desc='Differentiable Architecture Search - Pilot 3 Benchmark 5',
-    )
+    def __init__(self, bert_load_path, num_classes):
 
-    # Initialize parameters
-    gParameters = candle.finalize_parameters(p3b5_bench)
-    #bmk.logger.info('Params: {}'.format(gParameters))
-    return gParameters
+        super(HiBERT, self).__init__()
 
+        self.bert = BertForSequenceClassification.from_pretrained(
+            bert_load_path, num_labels=num_classes
+        )
 
-def fetch_data(gParameters):
-    """ Download and untar data
+    def forward(self, input_ids, input_mask, segment_ids, n_segs):
 
-    Args:
-        gParameters: parameters from candle
+        n_segs = n_segs.view(-1)
+        input_ids_ = input_ids.view(-1, 512)[:n_segs]
+        input_mask_ = input_mask.view(-1, 512)[:n_segs]
+        segment_ids_ = segment_ids.view(-1, 512)[:n_segs]
 
-    Returns:
-        path to where the data is located
-    """
-    path = gParameters['data_url']
-    fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', untar=True)
-    return fpath
+        logits = self.bert(input_ids_, input_mask_, segment_ids_, labels=None)
+        logits = torch.max(logits, 0)[0]
 
+        return logits
 
-def run(params):
-    args = candle.ArgumentStruct(**params)
-    args.cuda = torch.cuda.is_available()
-
-    device = torch.device(f'cuda' if args.cuda else "cpu")
-
-
-def main():
-    params = initialize_parameters()
-    run(params)
-
-
-if __name__=='__main__':
-    main()
