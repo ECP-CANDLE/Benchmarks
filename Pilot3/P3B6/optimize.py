@@ -10,9 +10,9 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
 from sklearn.metrics import f1_score
-from mimic_synthetic_data import MimicDatasetSynthetic
 
 from bert import HiBERT
+from mimic_synthetic_data import MimicDatasetSynthetic
 
 
 hvd.init()
