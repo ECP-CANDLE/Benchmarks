@@ -158,7 +158,6 @@ def validate(dataloader, model, args, epoch):
 def run(params):
     args = candle.ArgumentStruct(**params)
     args.cuda = torch.cuda.is_available()
-
     device = torch.device(f"cuda" if args.cuda else "cpu")
 
     train_loader, valid_loader, test_loader = create_data_loaders(params)
