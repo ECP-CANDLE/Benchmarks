@@ -76,6 +76,75 @@ def create_data_loaders(gParameters):
     return train_loader, valid_loader, test_loader
 
 
+def train(dataloader, model, optimizer, criterion, args, epoch):
+    model.train()
+    train_sampler.set_epoch(epoch)
+
+    for idx, batch in enumerate(dataloader):
+        train_loss = 0.0
+        optimizer.zero_grad()
+
+        input_ids = batch["tokens"].to(device)
+        segment_ids = batch["seg_ids"].to(device)
+        input_mask = batch["masks"].to(device)
+        n_segs = batch["n_segs"].to(device)
+
+        logits = model(input_ids, input_mask, segment_ids, n_segs)
+
+        label_ids = batch["label"].to(device)
+        loss = criterion(
+            logits.view(-1, num_classes), label_ids.view(-1, args.num_classes)
+        )
+        loss.backward()
+        optimizer.step()
+
+        train_loss += loss.mean()
+
+        # track training loss
+        if (idx + 1) % 100 == 0:
+            train_loss = torch.tensor(train_loss)
+            avg_loss = hvd.allreduce(train_loss, name="avg_loss").item()
+
+            if hvd.rank() == 0:
+                print(f"epoch: {epoch}, batch: {idx}, loss: {train_loss}")
+
+
+def validate(dataloader, model, args, epoch):
+    model.eval()
+
+    val_preds = []
+    val_labels = []
+
+    with torch.no_grad():
+        for idx, batch in enumerate(dataloader):
+
+            input_ids = batch["tokens"].to(device)
+            segment_ids = batch["seg_ids"].to(device)
+            input_mask = batch["masks"].to(device)
+            n_segs = batch["n_segs"].to(device)
+
+            logits = model(input_ids, input_mask, segment_ids, n_segs)
+            logits = torch.nn.Sigmoid()(logits)
+
+            logits = logits.view(-1, args.num_classes).cpu().data.numpy()
+            preds.append(np.rint(logits))
+            labels.append(batch["label"].data.numpy())
+
+    preds = np.concatenate(preds, 0)
+    labels = np.concatenate(labels, 0)
+
+    preds = torch.tensor(preds)
+    preds_all = hvd.allgather(preds, name="val_preds_all").cpu().data.numpy()
+
+    labels = torch.tensor(labels)
+    labels_all = hvd.allgather(labels, name="val_labels_all").cpu().data.numpy()
+
+    valid_f1 = f1_score(val_labels_all.flatten(), val_preds_all.flatten())
+
+    if hvd.rank() == 0:
+        print(f"epoch: {epoch}, validation F1: {valid_f1}")
+
+
 def run(params):
     args = candle.ArgumentStruct(**params)
     args.cuda = torch.cuda.is_available()
@@ -83,6 +152,25 @@ def run(params):
     device = torch.device(f"cuda" if args.cuda else "cpu")
 
     train_loader, valid_loader, test_loader = create_data_loaders(params)
+
+    model = model = HiBERT(args.pretrained_weights_path, args.num_classes)
+    model.to(device)
+
+    params = [{"params": [p for n, p in model.named_parameters()], "weight_decay": 0.0}]
+
+    optimizer = torch.optim.Adam(params, lr=2e-5, eps=1e-8)
+    optimizer = hvd.DistributedOptimizer(
+        optimizer, named_parameters=model.named_parameters()
+    )
+
+    hvd.broadcast_parameters(model.state_dict(), root_rank=0)
+    hvd.broadcast_optimizer_state(optimizer, root_rank=0)
+
+    criterion = torch.nn.BCEWithLogitsLoss()
+
+    for epoch in range(args.num_epochs):
+        train(train_loader, model, optimizer, criterion, args, epoch)
+        validate(valid_loader, model, args, epoch)
 
 
 def main():
