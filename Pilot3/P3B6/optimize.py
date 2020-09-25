@@ -29,7 +29,6 @@ def initialize_parameters():
         desc="Differentiable Architecture Search - Pilot 3 Benchmark 5",
     )
 
-    # Initialize parameters
     gParameters = candle.finalize_parameters(p3b5_bench)
     return gParameters
 
