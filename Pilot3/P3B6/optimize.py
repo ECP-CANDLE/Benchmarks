@@ -1,6 +1,7 @@
 import torch
-import candle
-import p3b6 as bmk
+import argparse
+#import candle
+#import p3b6 as bmk
 
 import numpy as np
 import horovod.torch as hvd
@@ -18,6 +19,34 @@ from mimic_synthetic_data import MimicDatasetSynthetic
 hvd.init()
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description='Bert Mimic Synth')
+    parser.add_argument('--batch_size', type=int, default=128,
+                        help='batch size')
+    parser.add_argument('--num_epochs', type=int, default=10,
+                        help='Adam learning rate')
+    parser.add_argument('--learning_rate', type=float, default=1e-3,
+                        help='Adam learning rate')
+    parser.add_argument('--eps', type=float, default=1e-7,
+                        help='Adam epsilon')
+    parser.add_argument('--num_train_samples', type=int, default=10000,
+                        help='Number of training samples')
+    parser.add_argument('--num_valid_samples', type=int, default=10000,
+                        help='Number of valid samples')
+    parser.add_argument('--num_test_samples', type=int, default=10000,
+                        help='Number of test samples')
+    parser.add_argument('--num_classes', type=int, default=10,
+                        help='Number of clases')
+    parser.add_argument('--weight_decay', type=float, default=0.0,
+                        help='weight decay')
+    parser.add_argument('--device', type=str, default='cuda',
+                        help='path to the model weights')
+    parser.add_argument('--pretrained_weights_path', type=str, 
+                        help='path to the model weights')
+
+    return parser.parse_args()
+
+
 def initialize_parameters():
     """ Initialize the parameters for the P3B5 benchmark """
 
@@ -33,7 +62,7 @@ def initialize_parameters():
     return gParameters
 
 
-def load_data(gParameters):
+def load_data(args):
     """ Initialize random data
 
     Args:
@@ -42,19 +71,19 @@ def load_data(gParameters):
     Returns:
         train, valid, test sets
     """
-    num_classes = gParameters["num_classes"]
-    num_train_samples = gParameters["num_train_samples"]
-    num_valid_samples = gParameters["num_valid_samples"]
-    num_test_samples = gParameters["num_test_samples"]
+    num_classes = args.num_classes
+    num_train_samples = args.num_train_samples
+    num_valid_samples = args.num_valid_samples
+    num_test_samples = args.num_test_samples
 
-    train = MimicDatasetSynthetic(num_train_samples, num_classes)
-    valid = MimicDatasetSynthetic(num_valid_samples, num_classes)
-    test = MimicDatasetSynthetic(num_test_samples, num_classes)
+    train = MimicDatasetSynthetic(size=num_train_samples, n_classes=num_classes)
+    valid = MimicDatasetSynthetic(size=num_valid_samples, n_classes=num_classes)
+    test = MimicDatasetSynthetic(size=num_test_samples, n_classes=num_classes)
 
     return train, valid, test
 
 
-def create_data_loaders(gParameters):
+def create_data_loaders(args):
     """ Initialize data loaders
 
     Args:
@@ -63,7 +92,7 @@ def create_data_loaders(gParameters):
     Returns:
         train, valid, test data loaders
     """
-    train, valid, test = load_data(gParameters)
+    train, valid, test = load_data(args)
 
     train_sampler = DistributedSampler(
         train, num_replicas=hvd.size(), rank=hvd.rank(), shuffle=True
@@ -75,17 +104,16 @@ def create_data_loaders(gParameters):
         test, num_replicas=hvd.size(), rank=hvd.rank(), shuffle=False
     )
 
-    batch_size = gParameters["batch_size"]
-    train_loader = DataLoader(train, batch_size=batch_size, sampler=train_sampler)
-    valid_loader = DataLoader(valid, batch_size=batch_size, sampler=val_sampler)
-    test_loader = DataLoader(test, batch_size=batch_size, sampler=test_sampler)
+    train_loader = DataLoader(train, batch_size=args.batch_size, sampler=train_sampler)
+    valid_loader = DataLoader(valid, batch_size=args.batch_size, sampler=valid_sampler)
+    test_loader = DataLoader(test, batch_size=args.batch_size, sampler=test_sampler)
 
-    return train_loader, valid_loader, test_loader
+    return train_loader, train_sampler, valid_loader, test_loader
 
 
-def train(dataloader, model, optimizer, criterion, args, epoch):
+def train(dataloader, sampler, model, optimizer, criterion, args, epoch):
     model.train()
-    train_sampler.set_epoch(epoch)
+    sampler.set_epoch(epoch)
 
     for idx, batch in enumerate(dataloader):
         train_loss = 0.0
@@ -154,12 +182,12 @@ def validate(dataloader, model, args, epoch):
         print(f"epoch: {epoch}, validation F1: {valid_f1}")
 
 
-def run(params):
-    args = candle.ArgumentStruct(**params)
-    args.cuda = torch.cuda.is_available()
-    args.device = torch.device(f"cuda" if args.cuda else "cpu")
+def run(args):
+    #args = candle.ArgumentStruct(**params)
+    #args.cuda = torch.cuda.is_available()
+    #args.device = torch.device(f"cuda" if args.cuda else "cpu")
 
-    train_loader, valid_loader, test_loader = create_data_loaders(params)
+    train_loader, train_sampler, valid_loader, test_loader = create_data_loaders(args)
 
     model = model = HiBERT(args.pretrained_weights_path, args.num_classes)
     model.to(args.device)
@@ -182,13 +210,16 @@ def run(params):
     criterion = nn.BCEWithLogitsLoss()
 
     for epoch in range(args.num_epochs):
-        train(train_loader, model, optimizer, criterion, args, epoch)
+        train(train_loader, train_sampler, model, optimizer, criterion, args, epoch)
         validate(valid_loader, model, args, epoch)
 
 
 def main():
-    params = initialize_parameters()
+    #params = initialize_parameters()
+    # Temporarily use argparse
+    params = parse_args()
     run(params)
+   
 
 
 if __name__ == "__main__":
