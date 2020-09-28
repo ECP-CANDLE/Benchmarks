@@ -1,13 +1,13 @@
 from __future__ import print_function
 
-import itertools
-import pandas as pd
+#import itertools
+#import pandas as pd
 import numpy as np
-import os
-import sys
-import gzip
-import argparse
-import sklearn
+#import os
+#import sys
+#import gzip
+#import argparse
+#import sklearn
 
 import matplotlib
 
@@ -17,13 +17,13 @@ import matplotlib.pyplot as plt
 
 import tensorflow as tf
 
-import keras as ke
+#import keras as ke
 from keras import backend as K
 
 from keras.layers import Input, Dense, Dropout, Activation, BatchNormalization
-from keras.optimizers import SGD, Adam, RMSprop, Adadelta
+#from keras.optimizers import SGD, Adam, RMSprop, Adadelta
 from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.utils import np_utils, multi_gpu_model
+#from keras.utils import np_utils, multi_gpu_model
 
 from keras.callbacks import (
     Callback,
@@ -38,21 +38,21 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     r2_score,
-    mean_squared_error,
-    mean_absolute_error,
+    #mean_squared_error,
+    #mean_absolute_error,
     roc_auc_score,
-    confusion_matrix,
-    balanced_accuracy_score,
-    classification_report,
+    #confusion_matrix,
+    #balanced_accuracy_score,
+    #classification_report,
 )
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-from sklearn.metrics import (
-    recall_score,
-    auc,
-    roc_curve,
-    f1_score,
-    precision_recall_curve,
-)
+#from sklearn.metrics import (
+    #recall_score,
+    #auc,
+    #roc_curve,
+    #f1_score,
+    #precision_recall_curve,
+#)
 
 import adrp
 import candle
@@ -114,7 +114,9 @@ class MetricHistory(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         y_pred = self.model.predict(self.validation_data[0])
-        r2 = r2_score(self.validation_data[1], y_pred)
+        y_true = self.validation_data[1]
+        sample_weight = self.validation_data[2]
+        r2 = r2_score(self.validation_data[1], y_pred, sample_weight=sample_weight)
         corr, _ = pearsonr(self.validation_data[1].flatten(), y_pred.flatten())
         print("\nval_r2:", r2)
         print(y_pred.shape)
@@ -253,7 +255,7 @@ def run(params):
 
     inputs = Input(shape=(PS,))
 
-    if dense_layers != None:
+    if dense_layers is not None:
         if type(dense_layers) != list:
             dense_layers = list(dense_layers)
         for i, l in enumerate(dense_layers):
@@ -326,9 +328,9 @@ def run(params):
         min_lr=min_lr
     )
 
-    early_stop = EarlyStopping(monitor="val_loss", 
+    early_stop = EarlyStopping(monitor="val_loss",
                                patience=params['early_patience'],
-                               verbose=1, 
+                               verbose=1,
                                mode="auto")
 
     #count_array = np.random.random_integers(0, 10000, 20)
@@ -354,17 +356,31 @@ def run(params):
             test_bin = test_score.astype(int)
             train_count = count_array[train_bin].astype(float)
             test_count = count_array[test_bin].astype(float)
-            train_weight = 1./(train_count+1.0)
-            test_weight = 1./(test_count+1.0)
+            train_weight = 1. / (train_count + 1.0)
+            test_weight = 1. / (test_count + 1.0)
             print("Inverse sample weighting")
+            print("Test score, bin, count, weight:")
+            print(test_score[:10, ])
+            print(test_bin[:10, ])
+            print(test_count[:10, ])
+        elif (params['sample_weight_type'] == 'inverse_samples_sqrt'):
+            train_score = np.array(Y_train.values.tolist())
+            test_score = np.array(Y_test.values.tolist())
+            train_bin = train_score.astype(int)
+            test_bin = test_score.astype(int)
+            train_count = count_array[train_bin].astype(float)
+            test_count = count_array[test_bin].astype(float)
+            train_weight = 1. / np.sqrt(train_count + 1.0)
+            test_weight = 1. / np.sqrt(test_count + 1.0)
+            print("Inverse sqrt sample weighting")
             print("Test score, bin, count, weight:")
             print(test_score[:10, ])
             print(test_bin[:10, ])
             print(test_count[:10, ])
 
     else:
-        train_weight = np.ones(shape = (len(Y_train),))
-        test_weight = np.ones(shape = (len(Y_test),))
+        train_weight = np.ones(shape=(len(Y_train),))
+        test_weight = np.ones(shape=(len(Y_test),))
 
     print("Test weight:")
     print(test_weight[:10, ])

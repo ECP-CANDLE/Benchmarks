@@ -11,7 +11,7 @@ activation = 'elu'
 out_activation = 'relu'
 loss = 'mean_squared_error'
 optimizer = 'adam'
-dropout = 0.1163
+dropout = 0.1
 learning_rate = 0.0001
 momentum = 0.9
 scaling = 'minmax'
@@ -28,6 +28,17 @@ reduce_lr = True
 reduce_patience = 10
 reduce_ratio = 1e-5
 feature_subsample = 0
-
-[Monitor_Params]
-timeout = 360000
+verbose = None
+logfile = None
+train_bool = True
+shuffle = False
+profiling = False
+residual = False
+warmup_lr = False
+use_tb = False
+tsne = False
+use_sample_weight = False
+sample_weight_type = 'linear'
+framework = 'keras'
+[Monitor Params]
+timeout = 36000

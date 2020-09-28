@@ -88,7 +88,7 @@ additional_definitions = [
         "name": "sample_weight_type",
         "type": str,
         "default": 'linear',
-        "help": "type of sample weighting: choices ['linear', 'quadratic', 'inverse_samples']",
+        "help": "type of sample weighting: choices ['linear', 'quadratic', 'inverse_samples', 'inverse_samples_sqrt']",
     },
     # {'name':'shuffle',
     #'type': candle.str2bool,
@@ -234,7 +234,8 @@ def load_data(params, seed):
 
     bins = np.arange(0, 20)
     histogram, bin_edges = np.histogram(df_y, bins=bins, density=False)
-    print("Histogram of samples")
+    print("Histogram of samples (bins, counts)")
+    print(bin_edges)
     print(histogram)
 
 #    scaler = MaxAbsScaler()
