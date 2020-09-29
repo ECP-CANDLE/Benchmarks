@@ -19,7 +19,7 @@ class HiBERT(nn.Module):
     def forward(self, input_ids, input_mask, segment_ids, n_segs):
 
         n_segs = n_segs.view(-1)
-        input_ids_ = input_ids.view(-1, 512)[:n_segs]
+        input_ids_ = input_ids.view(-1, 512)[:n_segs].int()
         input_mask_ = input_mask.view(-1, 512)[:n_segs]
         segment_ids_ = segment_ids.view(-1, 512)[:n_segs]
 

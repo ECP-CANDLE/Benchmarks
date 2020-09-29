@@ -8,7 +8,10 @@
 #BSUB -alloc_flags "nvme smt4"
 
 NODES=$(cat ${LSB_DJOB_HOSTFILE} | sort | uniq | grep -v login | grep -v batch | wc -l)
+module load gcc
 module load ibm-wml-ce/1.6.2-3
+module unload darshan
+
 conda activate /ccs/home/iamshang/.conda/envs/shang
 export PYTHONPATH=/ccs/home/iamshang/lib/python3.6/site-packages:$PYTHONPATH
 
@@ -16,7 +19,7 @@ export PYTHONPATH=/ccs/home/iamshang/lib/python3.6/site-packages:$PYTHONPATH
 #module load gcc/6.4.0
 #conda activate /gpfs/alpine/proj-shared/med107/yngtodd/envs/bert2020
 
-WEIGHTS_PATH="gpfs/alpine/proj-shared/med107/g8o/bert_mimic_summit/savedmodels/ncbi_bert_base_pubmed_mimic_uncased"
+WEIGHTS_PATH="/gpfs/alpine/proj-shared/med107/g8o/bert_mimic_summit/savedmodels/ncbi_bert_base_pubmed_mimic_uncased"
 CMD="python optimize.py --pretrained_weights_path $WEIGHTS_PATH"
 
 jsrun -n$((NODES*6)) -a1 -c7 -g1 -r6 --bind=proportional-packed:7 --launch_distribution=packed $CMD  > running.log
