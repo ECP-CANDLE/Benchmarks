@@ -88,8 +88,7 @@ class MimicDatasetSynthetic(Dataset):
             self.seg_ids.append(seg_ids_)
             self.masks.append(masks_)
 
-            #sys.stdout.write("generating document %i      \r" % i)
-            #sys.stdout.flush()
+            print(f'Generating document: {i}')
 
     def __len__(self):
         return self.size

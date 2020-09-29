@@ -21,7 +21,7 @@ hvd.init()
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Bert Mimic Synth')
-    parser.add_argument('--batch_size', type=int, default=128,
+    parser.add_argument('--batch_size', type=int, default=1,
                         help='batch size')
     parser.add_argument('--num_epochs', type=int, default=10,
                         help='Adam learning rate')
@@ -129,7 +129,7 @@ def train(dataloader, sampler, model, optimizer, criterion, args, epoch):
         label_ids = batch["label"].to(args.device)
 
         loss = criterion(
-            logits.view(-1, num_classes), label_ids.view(-1, args.num_classes)
+            logits.view(-1, args.num_classes), label_ids.view(-1, args.num_classes)
         )
 
         loss.backward()
