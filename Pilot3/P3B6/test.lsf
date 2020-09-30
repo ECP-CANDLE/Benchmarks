@@ -4,7 +4,7 @@
 #BSUB -J bert_synth
 #BSUB -o log.out
 #BSUB -W 2:00
-#BSUB -nnodes 1
+#BSUB -nnodes 2
 #BSUB -alloc_flags "nvme smt4"
 
 NODES=$(cat ${LSB_DJOB_HOSTFILE} | sort | uniq | grep -v login | grep -v batch | wc -l)

@@ -16,8 +16,5 @@ class HiBERT(nn.Module):
             bert_load_path, num_labels=num_classes
         )
 
-    def forward(self, input_ids, input_mask, segment_ids, n_segs):
-        logits = self.bert(input_ids, input_mask, segment_ids, labels=None)
-        logits = torch.max(logits, 0)[0]
-        return logits
-
+    def forward(self, input_ids, input_mask, segment_ids):
+        return self.bert(input_ids, input_mask, segment_ids, labels=None)

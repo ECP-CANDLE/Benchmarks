@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import Dataset
 
 
-class MimicSyntheticDataset(Dataset):
+class MimicDatasetSynthetic(Dataset):
 
     def __init__(self,
             doc_length=512,
@@ -44,26 +44,27 @@ class MimicSyntheticDataset(Dataset):
         return torch.LongTensor(length).random_(0, num_vocab+1)
 
     def create_docs(self, length, num_vocab, num_docs):
-        docs = [random_doc(length, num_vocab) for _ in range(num_docs)]
+        docs = [self.random_doc(length, num_vocab) for _ in range(num_docs)]
         return torch.stack(docs)
 
     def random_mask(self, length):
         return torch.LongTensor(length).random_(0, 2)
 
     def create_masks(self, length, num_docs):
-        masks = [random_mask(length) for _ in range(num_docs)]
+        masks = [self.random_mask(length) for _ in range(num_docs)]
         return torch.stack(masks)
 
     def empty_segment_id(self, length):
         return torch.zeros(length, dtype=torch.long)
 
     def create_segment_ids(self, length, num_docs):
-        segment_ids = [empty_segment_id(length) for _ in range(num_docs)]
+        segment_ids = [self.empty_segment_id(length) for _ in range(num_docs)]
         return torch.stack(segment_ids)
 
     def random_multitask_label(self, num_classes):
-        return torch.LongTensor(num_classes).random_(0, 2)
+        return torch.FloatTensor(num_classes).random_(0, 2)
 
     def create_labels(self, num_classes, num_docs):
         labels = [self.random_multitask_label(num_classes) for _ in range(num_docs)]
+        return torch.stack(labels)
 
