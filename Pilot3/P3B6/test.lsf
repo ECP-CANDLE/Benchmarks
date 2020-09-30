@@ -3,7 +3,7 @@
 #BSUB -P med107
 #BSUB -J bert_synth
 #BSUB -o log.out
-#BSUB -W 1:00
+#BSUB -W 2:00
 #BSUB -nnodes 1
 #BSUB -alloc_flags "nvme smt4"
 
@@ -24,4 +24,4 @@ CMD="python optimize.py --pretrained_weights_path $WEIGHTS_PATH"
 
 #jsrun -n$((NODES*6)) -a1 -c7 -g1 -r6 --bind=proportional-packed:7 --launch_distribution=packed $CMD
 
-jsrun -n$((NODES*1)) -a1 -c7 -g1 --bind=proportional-packed:7 --launch_distribution=packed $CMD > run.log
+jsrun -n$((NODES*6)) -a1 -c7 -g1 --bind=proportional-packed:7 --launch_distribution=packed $CMD > run.log

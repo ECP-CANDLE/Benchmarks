@@ -149,8 +149,8 @@ def train(dataloader, sampler, model, optimizer, criterion, args, epoch):
 def validate(dataloader, model, args, epoch):
     model.eval()
 
-    val_preds = []
-    val_labels = []
+    preds = []
+    labels = []
 
     with torch.no_grad():
         for idx, batch in enumerate(dataloader):
@@ -176,7 +176,7 @@ def validate(dataloader, model, args, epoch):
     labels = torch.tensor(labels)
     labels_all = hvd.allgather(labels, name="val_labels_all").cpu().data.numpy()
 
-    valid_f1 = f1_score(val_labels_all.flatten(), val_preds_all.flatten())
+    valid_f1 = f1_score(labels_all.flatten(), preds_all.flatten())
 
     if hvd.rank() == 0:
         print(f"epoch: {epoch}, validation F1: {valid_f1}")
