@@ -1,4 +1,4 @@
-# Pilot1 ADRP Benchmark
+# ADRP Example 
 
 ## loads a csv file
 
