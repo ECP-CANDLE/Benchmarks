@@ -9,7 +9,6 @@ from pytorch_pretrained_bert import (
 class HiBERT(nn.Module):
 
     def __init__(self, bert_load_path, num_classes):
-
         super(HiBERT, self).__init__()
 
         self.bert = BertForSequenceClassification.from_pretrained(
