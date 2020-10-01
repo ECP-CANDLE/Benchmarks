@@ -21,7 +21,8 @@ output_dir='save_abs/EXP01/'
 experiment_id='01'
 run_id='1'
 save_path='save_abs/EXP01/'
-target_abs_acc=0.85
+min_abs_acc=0.85
+max_abs_frac=0.6
 
 [Monitor_Params]
 timeout=3600

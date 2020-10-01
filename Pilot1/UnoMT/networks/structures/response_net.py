@@ -1,10 +1,10 @@
-""" 
+"""
     File Name:          UnoPytorch/response_net.py
     Author:             Xiaotian Duan (xduan7)
     Email:              xduan7@uchicago.edu
     Date:               8/17/18
     Python Version:     3.6.6
-    File Description:   
+    File Description:
 
 """
 import torch
@@ -42,8 +42,8 @@ class RespNet(nn.Module):
 
         # Reduce the dimension
         self.__resp_net.add_module(
-            'dense_0',  nn.Linear(gene_latent_dim + drug_latent_dim + 1,
-                                  resp_layer_dim))
+            'dense_0',
+            nn.Linear(gene_latent_dim + drug_latent_dim + 1, resp_layer_dim))
 
         self.__resp_net.add_module('activation_0', nn.ReLU())
 

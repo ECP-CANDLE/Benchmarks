@@ -23,7 +23,7 @@ def get_parser(description='Run machine learning training algorithms implemented
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-b", "--bins", type=int, default=BINS,
                         help="number of evenly distributed bins to make when classification mode is turned on")
-    parser.add_argument("-c", "--classify",  action="store_true",
+    parser.add_argument("-c", "--classify", action="store_true",
                         help="convert the regression problem into classification based on category cutoffs")
     parser.add_argument("-d", "--data",
                         help="data file to train on")

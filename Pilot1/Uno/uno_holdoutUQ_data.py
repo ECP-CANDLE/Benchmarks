@@ -7,11 +7,11 @@ import os
 
 from keras import backend as K
 
-import data_utils_.uno as uno
+import uno as benchmark
 import candle
 
-import data_utils_.uno_combined_data_loader as uno_combined_data_loader
-
+from uno_UQ_keras2 import extension_from_parameters
+from uno_data import CombinedDataLoader
 
 logger = logging.getLogger(__name__)
 
@@ -21,12 +21,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 def initialize_parameters(default_model='uno_defaultUQ_model.txt'):
 
     # Build benchmark object
-    unoBmk = uno.BenchmarkUno(uno.file_path, default_model, 'keras',
-    prog='uno_holdoutUQ_data', desc='Build data split for UQ analysis in the problem of prediction of tumor response to drug pairs.')
+    unoBmk = benchmark.BenchmarkUno(benchmark.file_path, default_model, 'keras',
+                                    prog='uno_holdoutUQ_data', desc='Build data split for UQ analysis in the problem of prediction of tumor response to single or drug pairs.')
 
-    # Initialize parameters
+    # Finalize parameters
     gParameters = candle.finalize_parameters(unoBmk)
-    #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
 
@@ -34,14 +33,14 @@ def initialize_parameters(default_model='uno_defaultUQ_model.txt'):
 def run(params):
     args = candle.ArgumentStruct(**params)
     candle.set_seed(args.rng_seed)
-    ext = uno.extension_from_parameters(args)
+    ext = extension_from_parameters(args)
     candle.verify_path(args.save_path)
     prefix = args.save_path + ext
-    logfile = args.logfile if args.logfile else prefix+'.log'
-    uno.set_up_logger(logfile, logger, uno.loggerUno, args.verbose)
+    logfile = args.logfile if args.logfile else prefix + '.log'
+    candle.set_up_logger(logfile, logger, args.verbose)
     logger.info('Params: {}'.format(params))
 
-    loader = uno_combined_data_loader.CombinedDataLoader(args.rng_seed)
+    loader = CombinedDataLoader(args.rng_seed)
     loader.load(cache=args.cache,
                 ncols=args.feature_subsample,
                 agg_dose=args.agg_dose,
@@ -67,12 +66,12 @@ def run(params):
     train_split = 1 - val_split
 
     loader.partition_data(partition_by=args.partition_by,
-                            cv_folds=args.cv, train_split=train_split,
-                            val_split=val_split, cell_types=args.cell_types,
-                            by_cell=args.by_cell, by_drug=args.by_drug,
-                            cell_subset_path=args.cell_subset_path,
-                            drug_subset_path=args.drug_subset_path
-                        )
+                          cv_folds=args.cv, train_split=train_split,
+                          val_split=val_split, cell_types=args.cell_types,
+                          by_cell=args.by_cell, by_drug=args.by_drug,
+                          cell_subset_path=args.cell_subset_path,
+                          drug_subset_path=args.drug_subset_path
+                          )
 
     print('partition_by: ', args.partition_by)
     if args.partition_by == 'drug_pair':
@@ -89,7 +88,7 @@ def run(params):
             for item in pcs:
                 f.write('%s\n' % item)
         logger.info('Cell IDs in holdout set written in file: {}'.format(fname_cells))
-    else : #
+    else:
         fname_index = args.save_path + 'infer_index_ids'
         pins = loader.get_index_in_val()
         with open(fname_index, 'w') as f:

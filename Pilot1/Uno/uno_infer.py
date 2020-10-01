@@ -87,9 +87,12 @@ def main():
 
     # save to tsv
     headers = ['Sample', 'Drug1']
-    if not args.single: headers.append('Drug2')
-    if not args.agg_dose: headers.append('Dose1')
-    if not args.single and not args.agg_dose: headers.append('Dose2')
+    if not args.single:
+        headers.append('Drug2')
+    if not args.agg_dose:
+        headers.append('Dose1')
+    if not args.single and not args.agg_dose:
+        headers.append('Dose2')
     headers.append(target)
 
     df_pred.sort_values(headers, inplace=True)

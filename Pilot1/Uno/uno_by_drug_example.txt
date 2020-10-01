@@ -34,7 +34,7 @@ use_landmark_genes=True
 partition_by='cell'
 by_drug='paclitaxel'
 cache='cache.pac'
-gpus = [0]
+gpus=[0]
 
 [Monitor_Params]
 timeout=3600

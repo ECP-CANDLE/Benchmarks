@@ -426,7 +426,7 @@ def run(params):
         # Set the CLR first so it will invalidate the warmup_lr, reduce_lr flags if needed
         clr_args = candle.clr_set_args(params)
         if clr_args['mode'] is not None:
-             clrCallback = candle.clr_callback(**clr_args)
+            clrCallback = candle.clr_callback(**clr_args)
 
         candle_monitor = candle.CandleRemoteMonitor(params=params)
         timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])

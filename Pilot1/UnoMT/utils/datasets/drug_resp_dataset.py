@@ -1,4 +1,4 @@
-""" 
+"""
     File Name:          UnoPytorch/drug_resp_dataset.py
     Author:             Xiaotian Duan (xduan7)
     Email:              xduan7@uchicago.edu
@@ -429,7 +429,7 @@ class DrugRespDataset(data.Dataset):
         if not self.__disjoint_cells:
             # Make sure that cell lines are common
             common_cells = set(training_drug_resp_df['CELLNAME'].unique()) & \
-                           set(validation_drug_resp_df['CELLNAME'].unique())
+                set(validation_drug_resp_df['CELLNAME'].unique())
 
             training_drug_resp_df = training_drug_resp_df.loc[
                 training_drug_resp_df['CELLNAME'].isin(common_cells)]
@@ -439,7 +439,7 @@ class DrugRespDataset(data.Dataset):
         if not self.__disjoint_drugs:
             # Make sure that drugs are common
             common_drugs = set(training_drug_resp_df['DRUG_ID'].unique()) & \
-                           set(validation_drug_resp_df['DRUG_ID'].unique())
+                set(validation_drug_resp_df['DRUG_ID'].unique())
 
             training_drug_resp_df = training_drug_resp_df.loc[
                 training_drug_resp_df['DRUG_ID'].isin(common_drugs)]

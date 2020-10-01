@@ -1,4 +1,4 @@
-""" 
+"""
     File Name:          unoMT_baseline_pytorch.py
     File Description:   This has been taken from the unoMT original
                         scripts (written by Xiaotian Duan, xduan7@uchicago.edu)
@@ -21,18 +21,17 @@ import candle
 np.set_printoptions(precision=4)
 
 
-def initialize_parameters(default_model = 'unoMT_default_model.txt'):
+def initialize_parameters(default_model='unoMT_default_model.txt'):
 
     # Build benchmark object
     unoMTb = unoMT.unoMTBk(unoMT.file_path, default_model, 'pytorch',
-    prog='unoMT_baseline', desc='Multi-task combined single and combo drug prediction for cross-study data - Pilot 1')
-    
+                           prog='unoMT_baseline', desc='Multi-task combined single and combo drug prediction for cross-study data - Pilot 1')
+
     print("Created unoMT benchmark")
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(unoMTb)
     print("Parameters initialized")
-
 
     return gParameters
 
@@ -44,7 +43,7 @@ def run(params):
     candle.set_seed(seed)
     # Setting up random seed for reproducible and deterministic results
     seed_random_state(args.rng_seed)
- 
+
     # check for sufficient number of epochs to start validation
     if params['epochs'] < params['resp_val_start_epoch']:
         raise Exception('Number of epochs is less than validation threshold (resp_val_start_epoch)')
@@ -56,7 +55,7 @@ def run(params):
 
     candle.verify_path(params['save_path'])
     prefix = '{}{}'.format(params['save_path'], ext)
-    logfile = params['logfile'] if params['logfile'] else prefix+'.log'
+    logfile = params['logfile'] if params['logfile'] else prefix + '.log'
     candle.set_up_logger(logfile, unoMT.logger, params['verbose'])
     unoMT.logger.info('Params: {}'.format(params))
 
@@ -78,4 +77,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -18,7 +18,7 @@ def plot_ROC(fpr_keras, tpr_keras, auc_keras, fname, xlabel_add='', ylabel_add='
     if zoom:
         plt.xlim(0, 0.2)
         plt.ylim(0.8, 1)
-        
+
     plt.plot([0, 1], [0, 1], 'k--', label='No Skill')
     plt.plot(fpr_keras, tpr_keras, label='Keras (area = {:.3f})'.format(auc_keras))
     plt.xlabel('False positive rate' + xlabel_add)
@@ -40,7 +40,7 @@ def plot_RF(recall_keras, precision_keras, pr_keras, no_skill, fname, xlabel_add
     plt.legend(loc='best')
     plt.savefig(fname, bbox_inches='tight')
     plt.close()
-    
+
 
 def plot_confusion_matrix(cm, fname, classes, normalize=False, title='Confusion matrix'):
     """
@@ -53,7 +53,7 @@ def plot_confusion_matrix(cm, fname, classes, normalize=False, title='Confusion 
         print('Confusion matrix, without normalization')
     print(cm)
 
-    cmap=plt.cm.Blues
+    cmap = plt.cm.Blues
     plt.imshow(cm, interpolation='nearest', cmap=cmap)
     plt.title(title)
     plt.colorbar()
@@ -69,15 +69,5 @@ def plot_confusion_matrix(cm, fname, classes, normalize=False, title='Confusion 
     plt.ylabel('True label')
     plt.xlabel('Predicted label')
     plt.tight_layout()
-    plt.savefig(fname, bbox_inches='tight')
-    plt.close()
-
-def plot_array(nparray, xlabel, ylabel, title, fname):
-
-    plt.figure()
-    plt.plot(nparray, lw=3.)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.title(title)
     plt.savefig(fname, bbox_inches='tight')
     plt.close()

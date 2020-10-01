@@ -1,10 +1,10 @@
-""" 
+"""
     File Name:          UnoPytorch/random_seeding.py
     Author:             Xiaotian Duan (xduan7)
     Email:              xduan7@uchicago.edu
     Date:               8/22/18
     Python Version:     3.6.6
-    File Description:   
+    File Description:
 
 """
 import random
@@ -12,7 +12,7 @@ import numpy as np
 import torch
 
 
-def seed_random_state(rand_state: int=0):
+def seed_random_state(rand_state: int = 0):
     """seed_random_state(0)
 
     This function sets up with random seed in multiple libraries possibly used

@@ -667,11 +667,10 @@ def get_common_parser(parser):
 
 
     # Backend configuration
-    parser.add_argument("--gpus", nargs="*",
+    parser.add_argument("--gpus", nargs='+', type=int,
                         default=argparse.SUPPRESS,
-                        #default=[0],
-                        type=int,
                         help="set IDs of GPUs to use")
+
 
     # profiling flags
     parser.add_argument("-p", "--profiling", type=str2bool,
