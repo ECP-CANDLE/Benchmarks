@@ -1,7 +1,7 @@
 #!/bin/bash
 # Begin LSF directives
 #BSUB -P med107
-#BSUB -J bert_synth
+#BSUB -J bert_horovod
 #BSUB -o log.out
 #BSUB -W 2:00
 #BSUB -nnodes 2

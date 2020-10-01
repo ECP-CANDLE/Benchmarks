@@ -12,8 +12,7 @@ from torch.utils.data.distributed import DistributedSampler
 
 from sklearn.metrics import f1_score
 
-from bert2 import HiBERT
-#from mimic_synthetic_data import MimicDatasetSynthetic
+from bert import HiBERT
 from random_data import MimicDatasetSynthetic
 
 
@@ -22,7 +21,7 @@ hvd.init()
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Bert Mimic Synth')
-    parser.add_argument('--batch_size', type=int, default=1,
+    parser.add_argument('--batch_size', type=int, default=10,
                         help='batch size')
     parser.add_argument('--num_epochs', type=int, default=10,
                         help='Adam learning rate')
@@ -123,15 +122,12 @@ def train(dataloader, sampler, model, optimizer, criterion, args, epoch):
         input_ids = batch["tokens"].to(args.device)
         segment_ids = batch["seg_ids"].to(args.device)
         input_mask = batch["masks"].to(args.device)
-#        n_segs = batch["n_segs"].to(args.device)
 
-        print(f'inputs: {input_ids.shape}')
-        logits = model(input_ids, input_mask, segment_ids)# n_segs)
-
+        logits = model(input_ids, input_mask, segment_ids)
         label_ids = batch["label"].to(args.device)
 
         loss = criterion(
-            logits.view(-1, args.num_classes), label_ids.view(-1, args.num_classes)
+            logits.view(-1, args.num_classes), label_ids
         )
 
         loss.backward()
@@ -160,9 +156,8 @@ def validate(dataloader, model, args, epoch):
             input_ids = batch["tokens"].to(args.device)
             segment_ids = batch["seg_ids"].to(args.device)
             input_mask = batch["masks"].to(args.device)
-            #n_segs = batch["n_segs"].to(args.device)
 
-            logits = model(input_ids, input_mask, segment_ids)#, n_segs)
+            logits = model(input_ids, input_mask, segment_ids)
             logits = torch.nn.Sigmoid()(logits)
 
             logits = logits.view(-1, args.num_classes).cpu().data.numpy()

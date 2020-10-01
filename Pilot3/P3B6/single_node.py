@@ -106,15 +106,11 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
         segment_ids = batch["seg_ids"].to(args.device)
         input_mask = batch["masks"].to(args.device)
 
-        print(f'inputs: {input_ids.shape}')
         logits = model(input_ids, input_mask, segment_ids)# n_segs)
-
         label_ids = batch["label"].to(args.device)
 
-        print(f'label shape: {label_ids.shape}')
         loss = criterion(
-            logits.view(-1, args.num_classes), label_ids)#.view(-1, args.num_classes)
-        #)
+            logits.view(-1, args.num_classes), label_ids)
 
         loss.backward()
         optimizer.step()
@@ -189,7 +185,6 @@ def main():
     # Temporarily use argparse
     params = parse_args()
     run(params)
-
 
 
 if __name__ == "__main__":
