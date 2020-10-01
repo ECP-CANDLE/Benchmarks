@@ -124,10 +124,10 @@ def train(dataloader, sampler, model, optimizer, criterion, args, epoch):
         input_mask = batch["masks"].to(args.device)
 
         logits = model(input_ids, input_mask, segment_ids)
-        label_ids = batch["label"].to(args.device)
+        labels = batch["label"].to(args.device)
 
         loss = criterion(
-            logits.view(-1, args.num_classes), label_ids
+            logits.view(-1, args.num_classes), labels
         )
 
         loss.backward()
