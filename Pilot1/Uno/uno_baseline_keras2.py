@@ -37,7 +37,8 @@ def set_seed(seed):
 
     if K.backend() == 'tensorflow':
         import tensorflow as tf
-        tf.set_random_seed(seed)
+        #tf.set_random_seed(seed)
+        tf.compat.v1.random.set_random_seed(seed) # ALW changed to this on 9/30/20, otherwise this dies if using modern TensorFlow
         candle.set_parallelism_threads()
 
 
@@ -283,10 +284,13 @@ def run(params):
 
     if (len(args.gpus) > 0):
         import tensorflow as tf
-        config = tf.ConfigProto()
+        #config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto() # ALW changed to this on 9/30/20, otherwise this dies if using modern TensorFlow
+        #config = tf.compat.v1.ConfigProto(log_device_placement=True) # ALW
         config.gpu_options.allow_growth = True
         config.gpu_options.visible_device_list = ",".join(map(str, args.gpus))
-        K.set_session(tf.Session(config=config))
+        #K.set_session(tf.Session(config=config))
+        tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config)) # ALW changed to this on 9/30/20, otherwise this dies if using modern TensorFlow
 
     loader = CombinedDataLoader(seed=args.rng_seed)
     loader.load(cache=args.cache,

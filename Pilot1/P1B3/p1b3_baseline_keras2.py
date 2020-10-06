@@ -354,6 +354,7 @@ def run(gParameters):
 
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
 
+    #history = model.fit(train_gen, steps_per_epoch=train_steps, # this should be the deprecation fix
     history = model.fit_generator(train_gen, train_steps,
                                   epochs=gParameters['epochs'],
                                   validation_data=val_gen,
@@ -361,6 +362,7 @@ def run(gParameters):
                                   verbose=0,
                                   callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
                                   )
+                                  #callbacks=[checkpointer, loss_history, candleRemoteMonitor], # this just caused the job to hang on Biowulf
 
     benchmark.logger.removeHandler(fh)
     benchmark.logger.removeHandler(sh)

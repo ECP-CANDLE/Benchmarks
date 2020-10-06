@@ -48,7 +48,8 @@ def set_seed(seed):
 
     if K.backend() == 'tensorflow':
         import tensorflow as tf
-        tf.set_random_seed(seed)
+        #tf.set_random_seed(seed)
+        tf.compat.v1.random.set_random_seed(seed) # ALW changed to this on 9/30/20, otherwise this dies if using modern TensorFlow
         # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
         # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
         # K.set_session(sess)
