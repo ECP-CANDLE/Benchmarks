@@ -28,7 +28,7 @@ from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
 
 from uno_baseline_keras2 import verify_path, set_up_logger, extension_from_parameters, discretize, r2, mae, evaluate_prediction, log_evaluation
 from uno_baseline_keras2 import build_feature_model, build_model, initialize_parameters
-from uno_baseline_keras2 import LoggingCallback, PermanentDropout, MultiGPUCheckpoint, SimpleWeightSaver, Struct
+from uno_baseline_keras2 import LoggingCallback, PermanentDropout, MultiGPUCheckpoint, SimpleWeightSaver
 
 tf.compat.v1.disable_eager_execution()
 
@@ -49,7 +49,7 @@ def set_seed(seed):
 
 
 def run(params):
-    args = Struct(**params)
+    args = candle.ArgumentStruct(**params)
     set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
     verify_path(args.save_path)
@@ -278,7 +278,7 @@ def run(params):
         df_val[target + 'Error'] = y_val_pred - y_val
         df_pred_list.append(df_val)
 
-        candle.plot_metrics(history, title=None, skip_ep=0, outdir='./save/', add_lr=True)
+        candle.plot_metrics(history, title=None, skip_ep=0, outdir=os.path.dirname(args.save_path), add_lr=True)
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
