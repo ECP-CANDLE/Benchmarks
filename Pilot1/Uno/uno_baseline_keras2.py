@@ -267,13 +267,8 @@ def initialize_parameters(default_model='uno_default_model.txt'):
     return gParameters
 
 
-class Struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
-
 def run(params):
-    args = Struct(**params)
+    args = candle.ArgumentStruct(**params)
     set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
     verify_path(args.save_path)
