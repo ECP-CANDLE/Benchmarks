@@ -267,13 +267,8 @@ def initialize_parameters(default_model='uno_default_model.txt'):
     return gParameters
 
 
-class Struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
-
 def run(params):
-    args = Struct(**params)
+    args = candle.ArgumentStruct(**params)
     set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
     verify_path(args.save_path)
@@ -505,7 +500,7 @@ def run(params):
         df_val[target + 'Error'] = y_val_pred - y_val
         df_pred_list.append(df_val)
 
-        candle.plot_metrics(history, title=None, skip_ep=0, outdir='./save/', add_lr=True)
+        candle.plot_metrics(history, title=None, skip_ep=0, outdir=args.output_dir, add_lr=True)
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
