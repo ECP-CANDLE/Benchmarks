@@ -12,9 +12,11 @@ module load gcc
 module load open-ce
 module unload darshan
 
-conda activate /gpfs/alpine/proj-shared/med107/yngtodd/envs/opence
+MED106="/gpfs/alpine/proj-shared/med106"
+ENV_PATH="$MED106/envs/opence"
+WEIGHTS_PATH="$MED106/weights/ncbi_bert_base_pubmed_mimic_uncased"
+CMD="python single_node.py --pretrained_weights_path $WEIGHTS_PATH"
 
-WEIGHTS_PATH="/gpfs/alpine/proj-shared/med107/g8o/bert_mimic_summit/savedmodels/ncbi_bert_base_pubmed_mimic_uncased"
-CMD="python optimize.py --pretrained_weights_path $WEIGHTS_PATH"
+conda activate $ENV_PATH
 
 jsrun -n$((NODES*6)) -a1 -c7 -g1 --bind=proportional-packed:7 --launch_distribution=packed $CMD > run.log
