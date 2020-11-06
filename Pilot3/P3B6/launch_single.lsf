@@ -17,6 +17,4 @@ conda activate /gpfs/alpine/proj-shared/med107/yngtodd/envs/opence
 WEIGHTS_PATH="/gpfs/alpine/proj-shared/med107/g8o/bert_mimic_summit/savedmodels/ncbi_bert_base_pubmed_mimic_uncased"
 CMD="python single_node.py --pretrained_weights_path $WEIGHTS_PATH"
 
-#jsrun -n$((NODES*6)) -a1 -c7 -g1 -r6 --bind=proportional-packed:7 --launch_distribution=packed $CMD
-
 jsrun -n1 -a1 -c7 -g1 --bind=proportional-packed:7 --launch_distribution=packed $CMD > logs/run.log
