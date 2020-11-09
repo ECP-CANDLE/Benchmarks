@@ -11,7 +11,7 @@ from torch.utils.data.distributed import DistributedSampler
 
 from sklearn.metrics import f1_score
 
-from bert2 import HiBERT
+from bert import HiBERT
 from random_data import MimicDatasetSynthetic
 
 

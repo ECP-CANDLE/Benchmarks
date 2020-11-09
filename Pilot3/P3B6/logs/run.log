@@ -1,0 +1,10 @@
+epoch: 0, validation F1: 0.4919028340080972
+epoch: 1, validation F1: 0.5275735294117647
+epoch: 2, validation F1: 0.5723905723905723
+epoch: 3, validation F1: 0.42342342342342343
+epoch: 4, validation F1: 0.47773279352226716
+epoch: 5, validation F1: 0.4979757085020242
+epoch: 6, validation F1: 0.5514705882352942
+epoch: 7, validation F1: 0.42342342342342343
+epoch: 8, validation F1: 0.5404411764705883
+epoch: 9, validation F1: 0.47773279352226716

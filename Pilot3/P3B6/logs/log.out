@@ -1,0 +1,23 @@
+
+Lmod is automatically replacing "xl/16.1.1-5" with "gcc/6.4.0".
+
+
+Due to MODULEPATH changes, the following have been reloaded:
+  1) spectrum-mpi/10.3.1.2-20200121
+
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@batch3>
+Subject: Job 465758: <bert_synth> in cluster <summit> Done
+
+Job <bert_synth> was submitted from host <login2> by user <yngtodd> in cluster <summit> at Fri Nov  6 12:55:28 2020
+Job was executed on host(s) <1*batch3>, in queue <batch>, as user <yngtodd> in cluster <summit> at Fri Nov  6 12:55:48 2020
+                            <42*h31n17>
+</ccs/home/yngtodd> was used as the home directory.
+</gpfs/alpine/proj-shared/med107/yngtodd/src/Benchmarks/Pilot3/P3B6> was used as the working directory.
+Started at Fri Nov  6 12:55:48 2020
+Terminated at Fri Nov  6 12:57:32 2020
+Results reported at Fri Nov  6 12:57:32 2020
+
+The output (if any) is above this job summary.
+
