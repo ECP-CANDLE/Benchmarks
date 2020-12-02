@@ -1,0 +1,13 @@
+[Global_Params]
+model_name = 'p3b7'
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/'
+learning_rate = 2e-5
+eps = 1e-8
+kernel1 = 3
+kernel2 = 4
+kernel3 = 5
+embed_dim = 300
+n_filters = 100
+batch_size = 50
+num_epochs = 10
+rng_seed = 13
