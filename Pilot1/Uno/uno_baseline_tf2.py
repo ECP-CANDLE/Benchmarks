@@ -236,11 +236,10 @@ def run(params):
         else:
             logger.info('Data points per epoch: train = %d, val = %d, test = %d', train_gen.size, val_gen.size, test_gen.size)
             logger.info('Steps per epoch: train = %d, val = %d, test = %d', train_gen.steps, val_gen.steps, test_gen.steps)
-            history = model.fit_generator(train_gen, train_gen.steps,
-                                          epochs=args.epochs,
-                                          callbacks=callbacks,
-                                          validation_data=val_gen,
-                                          validation_steps=val_gen.steps)
+            history = model.fit(train_gen,
+                                epochs=args.epochs,
+                                callbacks=callbacks,
+                                validation_data=val_gen)
 
         # prediction on holdout(test) when exists or use validation set
         if test_gen.size > 0:

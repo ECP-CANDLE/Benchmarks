@@ -111,13 +111,14 @@ class MultiGPUCheckpoint(ModelCheckpoint):
 
 
 def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
+                        kernel_initializer='glorot_normal',
                         activation='relu', residual=False,
                         dropout_rate=0, permanent_dropout=True):
     x_input = Input(shape=input_shape)
     h = x_input
     for i, layer in enumerate(dense_layers):
         x = h
-        h = Dense(layer, activation=activation)(h)
+        h = Dense(layer, activation=activation, kernel_initializer=kernel_initializer)(h)
         if dropout_rate > 0:
             if permanent_dropout:
                 h = PermanentDropout(dropout_rate)(h)
@@ -150,6 +151,10 @@ class SimpleWeightSaver(Callback):
 def build_model(loader, args, permanent_dropout=True, silent=False):
     input_models = {}
     dropout_rate = args.dropout
+
+    initializer = 'glorot_normal' if args.initialization is None else args.initialization
+    kernel_initializer = candle.build_initializer(initializer, candle.keras_default_config(), args.rng_seed)
+
     for fea_type, shape in loader.feature_shapes.items():
         base_type = fea_type.split('.')[0]
         if base_type in ['cell', 'drug']:
@@ -162,6 +167,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
 
             box = build_feature_model(input_shape=shape, name=fea_type,
                                       dense_layers=dense_feature_layers,
+                                      kernel_initializer=kernel_initializer,
                                       dropout_rate=dropout_rate, permanent_dropout=permanent_dropout)
             if not silent:
                 logger.debug('Feature encoding submodel for %s:', fea_type)
@@ -186,7 +192,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
     h = merged
     for i, layer in enumerate(args.dense):
         x = h
-        h = Dense(layer, activation=args.activation)(h)
+        h = Dense(layer, activation=args.activation, kernel_initializer=kernel_initializer)(h)
         if dropout_rate > 0:
             if permanent_dropout:
                 h = PermanentDropout(dropout_rate)(h)
@@ -197,7 +203,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
                 h = keras.layers.add([h, x])
             except ValueError:
                 pass
-    output = Dense(1)(h)
+    output = Dense(1, kernel_initializer=kernel_initializer)(h)
 
     return Model(inputs, output)
 
