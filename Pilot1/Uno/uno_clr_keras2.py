@@ -215,15 +215,10 @@ def initialize_parameters(default_model='uno_clr_model.txt'):
     return gParameters
 
 
-class Struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
-
 def run(params):
 
     candle.check_flag_conflicts(params)
-    args = Struct(**params)
+    args = candle.ArgumentStruct(**params)
     candle.set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
     candle.verify_path(args.save_path)
@@ -234,10 +229,10 @@ def run(params):
 
     if (len(args.gpus) > 0):
         import tensorflow as tf
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         config.gpu_options.visible_device_list = ",".join(map(str, args.gpus))
-        K.set_session(tf.Session(config=config))
+        tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
 
     loader = CombinedDataLoader(seed=args.rng_seed)
     loader.load(cache=args.cache,
@@ -405,9 +400,9 @@ def run(params):
             callbacks.append(clrCallback)
 
         if args.use_exported_data is not None:
-            train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
-            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
-            test_gen = DataFeeder(partition='test', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose)
+            train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose, on_memory=args.on_memory_loader)
+            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose, on_memory=args.on_memory_loader)
+            test_gen = DataFeeder(partition='test', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose, on_memory=args.on_memory_loader)
         else:
             train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
             val_gen = CombinedDataGenerator(loader, partition='val', fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)
@@ -460,7 +455,7 @@ def run(params):
         df_val[target + 'Error'] = y_val_pred - y_val
         df_pred_list.append(df_val)
 
-        candle.plot_metrics(history, title=None, skip_ep=0, outdir='./save/', add_lr=True)
+        candle.plot_metrics(history, title=None, skip_ep=0, outdir=args.output_dir, add_lr=True)
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
