@@ -38,25 +38,9 @@ DATA_URL = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/'
 logger = logging.getLogger(__name__)
 
 
-def set_up_logger(verbose=False):
-    sh = logging.StreamHandler()
-    sh.setFormatter(logging.Formatter(''))
-    sh.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(sh)
-
-
-def set_seed(seed=SEED):
-    os.environ['PYTHONHASHSEED'] = '0'
-    np.random.seed(seed)
-    random.seed(seed)
-
-
 def get_file(url):
     fname = os.path.basename(url)
     return file_utils.get_file(fname, origin=url, cache_subdir='Pilot1')
-
 
 
 def read_IDs_file(fname):
@@ -548,7 +532,9 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         usecols = np.append([0], np.add(sorted(usecols), 2))
         df_cols = df_cols.iloc[:, usecols]
     if feature_subset:
-        with_prefix = lambda x: 'rnaseq.' + x if add_prefix else x
+        # with_prefix = lambda x: 'rnaseq.' + x if add_prefix else x
+        def with_prefix(x):
+            return 'rnaseq.' + x if add_prefix else x
         usecols = [0] + [i for i, c in enumerate(df_cols.columns) if with_prefix(c) in feature_subset]
         df_cols = df_cols.iloc[:, usecols]
 
@@ -731,7 +717,7 @@ class CombinedDataLoader(object):
                 partition_by = 'cell'
             else:
                 partition_by = 'drug_pair'
-                
+
         # Exclude specified cells / drugs / indices
         if exclude_cells != []:
             df_response = df_response[~df_response['Sample'].isin(exclude_cells)]
@@ -1021,30 +1007,22 @@ class CombinedDataLoader(object):
         if cache:
             self.save_to_cache(cache, params)
 
-
     def get_cells_in_val(self):
-    
         val_cell_ids = list(set(self.df_response.loc[self.val_indexes[0]]['Sample'].values))
-    
         return val_cell_ids
 
-
     def get_drugs_in_val(self):
-    
         if np.isin('Drug', self.df_response.columns.values):
             val_drug_ids = list(set(self.df_response.loc[self.val_indexes[0]]['Drug'].values))
         else:
             val_drug_ids = list(set(self.df_response.loc[self.val_indexes[0]]['Drug1'].values))
-    
+
         return val_drug_ids
 
-
     def get_index_in_val(self):
-    
         val_indices = list(set(self.val_indexes[0]))
-    
-        return val_indices
 
+        return val_indices
 
 
 class DataFeeder(keras.utils.Sequence):

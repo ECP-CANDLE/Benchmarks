@@ -365,7 +365,7 @@ def run(params):
         logger.info('Training contamination model:')
         contamination_cbk = candle.Contamination_Callback(x_train_list, y_train, args.a_max)
         model.compile(loss=candle.contamination_loss(nout, contamination_cbk.T_k, contamination_cbk.a, contamination_cbk.sigmaSQ, contamination_cbk.gammaSQ), optimizer=optimizer, metrics=[candle.mae_contamination_metric(nout),
-            candle.r2_contamination_metric(nout)])
+                      candle.r2_contamination_metric(nout)])
 
         # calculate trainable and non-trainable params
         params.update(candle.compute_trainable_params(model))
@@ -432,7 +432,7 @@ def run(params):
         dictCont = {'sigma': sigma, 'gamma': gamma, 'T': T}
         cpar_fname = prefix + '.contPar.joblib'
         dump(dictCont, cpar_fname)
-        
+
         y_tr_pred = model.predict(x_train_list, batch_size=args.batch_size)
         candle.plot_contamination(y_train, y_tr_pred.squeeze(), sigma, T, pred_name=target, figprefix=prefix)
 

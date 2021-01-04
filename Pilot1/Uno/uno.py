@@ -205,8 +205,7 @@ additional_definitions = [
     {'name': 'on_memory_loader',
         'type': candle.str2bool,
         'default': False,
-        'help': 'load dataset on host memory and read from memory'
-    },
+        'help': 'load dataset on host memory and read from memory'},
     {'name': 'growth_bins',
         'type': int,
         'default': 0,
