@@ -9,7 +9,7 @@ import random
 import numpy as np
 import pandas as pd
 
-import keras as krs # need for candle package load
+import keras as krs  # need for candle package load
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.python.keras import backend as K
@@ -26,7 +26,7 @@ import candle
 import uno_data
 from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
 
-from uno_baseline_keras2 import verify_path, set_up_logger, extension_from_parameters, discretize, r2, mae, evaluate_prediction, log_evaluation
+from uno_baseline_keras2 import extension_from_parameters, evaluate_prediction, log_evaluation
 from uno_baseline_keras2 import build_feature_model, build_model, initialize_parameters
 from uno_baseline_keras2 import LoggingCallback, PermanentDropout, MultiGPUCheckpoint, SimpleWeightSaver
 
@@ -36,26 +36,14 @@ logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-def set_seed(seed):
-    os.environ['PYTHONHASHSEED'] = '0'
-    np.random.seed(seed)
-
-    random.seed(seed)
-
-    if K.backend() == 'tensorflow':
-        import tensorflow as tf
-        tf.random.set_seed(seed)
-        candle.set_parallelism_threads()
-
-
 def run(params):
     args = candle.ArgumentStruct(**params)
-    set_seed(args.rng_seed)
+    candle.set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
-    verify_path(args.save_path)
+    candle.verify_path(args.save_path)
     prefix = args.save_path + ext
     logfile = args.logfile if args.logfile else prefix + '.log'
-    set_up_logger(logfile, args.verbose)
+    candle.set_up_logger(logfile, logger, args.verbose)
     logger.info('Params: {}'.format(params))
 
     if (len(args.gpus) > 0):
@@ -192,7 +180,7 @@ def run(params):
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
 
-        model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
+        model.compile(loss=args.loss, optimizer=optimizer, metrics=[candle.mae, candle.r2])
 
         # calculate trainable and non-trainable params
         params.update(candle.compute_trainable_params(model))

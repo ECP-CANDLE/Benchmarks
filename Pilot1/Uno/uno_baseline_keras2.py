@@ -29,41 +29,6 @@ logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-def set_seed(seed):
-    os.environ['PYTHONHASHSEED'] = '0'
-    np.random.seed(seed)
-
-    random.seed(seed)
-
-    if K.backend() == 'tensorflow':
-        import tensorflow as tf
-        #tf.set_random_seed(seed)
-        tf.compat.v1.random.set_random_seed(seed) # ALW changed to this on 9/30/20, otherwise this dies if using modern TensorFlow
-        candle.set_parallelism_threads()
-
-
-def verify_path(path):
-    folder = os.path.dirname(path)
-    if folder and not os.path.exists(folder):
-        os.makedirs(folder)
-
-
-def set_up_logger(logfile, verbose):
-    verify_path(logfile)
-    fh = logging.FileHandler(logfile)
-    fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
-    fh.setLevel(logging.DEBUG)
-
-    sh = logging.StreamHandler()
-    sh.setFormatter(logging.Formatter(''))
-    sh.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-    for log in [logger, uno_data.logger]:
-        log.setLevel(logging.DEBUG)
-        log.addHandler(fh)
-        log.addHandler(sh)
-
-
 def extension_from_parameters(args):
     """Construct string for saving model with annotation of parameters"""
     ext = ''
@@ -98,23 +63,6 @@ def extension_from_parameters(args):
                 ext += '.FD{}={}'.format(i + 1, n)
 
     return ext
-
-
-def discretize(y, bins=5):
-    percentiles = [100 / bins * (i + 1) for i in range(bins - 1)]
-    thresholds = [np.percentile(y, x) for x in percentiles]
-    classes = np.digitize(y, thresholds)
-    return classes
-
-
-def r2(y_true, y_pred):
-    SS_res = K.sum(K.square(y_true - y_pred))
-    SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
-    return (1 - SS_res / (SS_tot + K.epsilon()))
-
-
-def mae(y_true, y_pred):
-    return keras.metrics.mean_absolute_error(y_true, y_pred)
 
 
 def evaluate_prediction(y_true, y_pred):
@@ -269,23 +217,20 @@ def initialize_parameters(default_model='uno_default_model.txt'):
 
 def run(params):
     args = candle.ArgumentStruct(**params)
-    set_seed(args.rng_seed)
+    candle.set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
-    verify_path(args.save_path)
+    candle.verify_path(args.save_path)
     prefix = args.save_path + ext
     logfile = args.logfile if args.logfile else prefix + '.log'
-    set_up_logger(logfile, args.verbose)
+    candle.set_up_logger(logfile, logger, args.verbose)
     logger.info('Params: {}'.format(params))
 
     if (len(args.gpus) > 0):
         import tensorflow as tf
-        #config = tf.ConfigProto()
-        config = tf.compat.v1.ConfigProto() # ALW changed to this on 9/30/20, otherwise this dies if using modern TensorFlow
-        #config = tf.compat.v1.ConfigProto(log_device_placement=True) # ALW
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         config.gpu_options.visible_device_list = ",".join(map(str, args.gpus))
-        #K.set_session(tf.Session(config=config))
-        tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config)) # ALW changed to this on 9/30/20, otherwise this dies if using modern TensorFlow
+        tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
 
     loader = CombinedDataLoader(seed=args.rng_seed)
     loader.load(cache=args.cache,
@@ -414,7 +359,7 @@ def run(params):
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
 
-        model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
+        model.compile(loss=args.loss, optimizer=optimizer, metrics=[candle.mae, candle.r2])
 
         # calculate trainable and non-trainable params
         params.update(candle.compute_trainable_params(model))
@@ -446,7 +391,7 @@ def run(params):
 
         if args.use_exported_data is not None:
             train_gen = DataFeeder(filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose, on_memory=args.on_memory_loader)
-            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose,  on_memory=args.on_memory_loader)
+            val_gen = DataFeeder(partition='val', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose, on_memory=args.on_memory_loader)
             test_gen = DataFeeder(partition='test', filename=args.use_exported_data, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single, agg_dose=args.agg_dose, on_memory=args.on_memory_loader)
         else:
             train_gen = CombinedDataGenerator(loader, fold=fold, batch_size=args.batch_size, shuffle=args.shuffle, single=args.single)

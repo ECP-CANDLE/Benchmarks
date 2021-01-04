@@ -18,6 +18,7 @@ sys.path.append(lib_path2)
 import candle
 
 logger = logging.getLogger(__name__)
+candle.set_parallelism_threads()
 
 
 class BenchmarkUno(candle.Benchmark):

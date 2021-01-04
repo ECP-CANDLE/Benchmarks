@@ -29,40 +29,6 @@ logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 
-def set_seed(seed):
-    os.environ['PYTHONHASHSEED'] = '0'
-    np.random.seed(seed)
-
-    random.seed(seed)
-
-    if K.backend() == 'tensorflow':
-        import tensorflow as tf
-        tf.set_random_seed(seed)
-        candle.set_parallelism_threads()
-
-
-def verify_path(path):
-    folder = os.path.dirname(path)
-    if folder and not os.path.exists(folder):
-        os.makedirs(folder)
-
-
-def set_up_logger(logfile, verbose):
-    verify_path(logfile)
-    fh = logging.FileHandler(logfile)
-    fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
-    fh.setLevel(logging.DEBUG)
-
-    sh = logging.StreamHandler()
-    sh.setFormatter(logging.Formatter(''))
-    sh.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-    for log in [logger, uno_data.logger]:
-        log.setLevel(logging.DEBUG)
-        log.addHandler(fh)
-        log.addHandler(sh)
-
-
 def extension_from_parameters(args):
     """Construct string for saving model with annotation of parameters"""
     ext = ''
@@ -97,23 +63,6 @@ def extension_from_parameters(args):
                 ext += '.FD{}={}'.format(i + 1, n)
 
     return ext
-
-
-def discretize(y, bins=5):
-    percentiles = [100 / bins * (i + 1) for i in range(bins - 1)]
-    thresholds = [np.percentile(y, x) for x in percentiles]
-    classes = np.digitize(y, thresholds)
-    return classes
-
-
-def r2(y_true, y_pred):
-    SS_res = K.sum(K.square(y_true - y_pred))
-    SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
-    return (1 - SS_res / (SS_tot + K.epsilon()))
-
-
-def mae(y_true, y_pred):
-    return keras.metrics.mean_absolute_error(y_true, y_pred)
 
 
 def evaluate_prediction(y_true, y_pred):
@@ -275,12 +224,12 @@ def run(params):
 
     candle.check_flag_conflicts(params)
     args = Struct(**params)
-    set_seed(args.rng_seed)
+    candle.set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
-    verify_path(args.save_path)
+    candle.verify_path(args.save_path)
     prefix = args.save_path + ext
     logfile = args.logfile if args.logfile else prefix + '.log'
-    set_up_logger(logfile, args.verbose)
+    candle.set_up_logger(logfile, logger, args.verbose)
     logger.info('Params: {}'.format(params))
 
     if (len(args.gpus) > 0):
@@ -417,7 +366,7 @@ def run(params):
         if args.learning_rate:
             K.set_value(optimizer.lr, args.learning_rate)
 
-        model.compile(loss=args.loss, optimizer=optimizer, metrics=[mae, r2])
+        model.compile(loss=args.loss, optimizer=optimizer, metrics=[candle.mae, candle.r2])
 
         # calculate trainable and non-trainable params
         params.update(candle.compute_trainable_params(model))
