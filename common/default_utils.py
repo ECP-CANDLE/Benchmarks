@@ -636,7 +636,7 @@ def get_common_parser(parser):
 
     parser.add_argument("--initialization",
                         default=argparse.SUPPRESS,
-                        choices=['constant', 'uniform', 'normal', 'glorot_uniform', 'lecun_uniform', 'he_normal'],
+                        choices=['constant', 'uniform', 'normal', 'glorot_uniform', 'glorot_normal', 'lecun_uniform', 'he_normal'],
                         help="type of weight initialization; 'constant': to 0; 'uniform': to [-0.05,0.05], 'normal': mean 0, stddev 0.05; 'glorot_uniform': [-lim,lim] with lim = sqrt(6/(fan_in+fan_out)); 'lecun_uniform' : [-lim,lim] with lim = sqrt(3/fan_in); 'he_normal' : mean 0, stddev sqrt(2/fan_in)")
     parser.add_argument("--val_split", type=float,
                         default=argparse.SUPPRESS,

@@ -181,9 +181,9 @@ def build_initializer(type, kerasDefaults, seed=None, constant=0.):
                                          stddev=kerasDefaults['stddev_normal'],
                                          seed=seed)
 
-# Not generally available
-#    elif type == 'glorot_normal':
-#        return initializers.glorot_normal(seed=seed)
+    elif type == 'glorot_normal':
+        # aka Xavier normal initializer. keras default
+        return initializers.glorot_normal(seed=seed)
 
     elif type == 'glorot_uniform':
         return initializers.glorot_uniform(seed=seed)
