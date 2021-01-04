@@ -152,7 +152,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
     input_models = {}
     dropout_rate = args.dropout
 
-    initializer = 'glorot_normal' if args.initialization is None else args.initialization
+    initializer = 'glorot_normal' if hasattr(args, 'initialization') is False else args.initialization
     kernel_initializer = candle.build_initializer(initializer, candle.keras_default_config(), args.rng_seed)
 
     for fea_type, shape in loader.feature_shapes.items():
