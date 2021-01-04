@@ -15,8 +15,7 @@ def get_from_module(identifier, module_params, module_name,
     if isinstance(identifier, six.string_types):
         res = module_params.get(identifier)
         if not res:
-            raise Exception('Invalid ' + str(module_name) + ': ' +
-                            str(identifier))
+            raise Exception('Invalid ' + str(module_name) + ': ' + str(identifier))
         if instantiate and not kwargs:
             return res()
         elif instantiate and kwargs:
@@ -29,8 +28,7 @@ def get_from_module(identifier, module_params, module_name,
         if res:
             return res(**identifier)
         else:
-            raise Exception('Invalid ' + str(module_name) + ': ' +
-                            str(identifier))
+            raise Exception('Invalid ' + str(module_name) + ': ' + str(identifier))
     return identifier
 
 
@@ -70,7 +68,7 @@ def func_reconstruct_closure(values):
     src = '\n'.join(src)
     try:
         exec(src, globals())
-    except:
+    except Error:
         raise SyntaxError(src)
     return func(values).__closure__
 
@@ -131,7 +129,7 @@ class Progbar(object):
             prog = float(current) / self.target
             prog_width = int(self.width * prog)
             if prog_width > 0:
-                bar += ('=' * (prog_width-1))
+                bar += ('=' * (prog_width - 1))
                 if current < self.target:
                     bar += '>'
                 else:

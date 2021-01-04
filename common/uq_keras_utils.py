@@ -50,12 +50,12 @@ def abstention_loss(alpha, mask):
         base_pred = (1 - mask) * y_pred + K.epsilon()
         base_true = y_true
         base_cost = K.categorical_crossentropy(base_true, base_pred)
-        #abs_pred = K.mean(mask * y_pred, axis=-1)
+        # abs_pred = K.mean(mask * y_pred, axis=-1)
         abs_pred = K.sum(mask * y_pred, axis=-1)
         # add some small value to prevent NaN when prediction is abstained
-        abs_pred = K.clip(abs_pred, K.epsilon(), 1.-K.epsilon())
+        abs_pred = K.clip(abs_pred, K.epsilon(), 1. - K.epsilon())
 
-        #return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        # return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
         return K.mean((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
 
     loss.__name__ = 'abs_crossentropy'
@@ -88,12 +88,12 @@ def sparse_abstention_loss(alpha, mask):
         base_pred = (1 - mask) * y_pred + K.epsilon()
         base_true = y_true
         base_cost = K.sparse_categorical_crossentropy(base_true, base_pred)
-        #abs_pred = K.mean(mask * y_pred, axis=-1)
+        # abs_pred = K.mean(mask * y_pred, axis=-1)
         abs_pred = K.sum(mask * y_pred, axis=-1)
         # add some small value to prevent NaN when prediction is abstained
-        abs_pred = K.clip(abs_pred, K.epsilon(), 1.-K.epsilon())
+        abs_pred = K.clip(abs_pred, K.epsilon(), 1. - K.epsilon())
 
-        #return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        # return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
         return K.mean((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
 
     loss.__name__ = 'sparse_abs_crossentropy'
@@ -131,7 +131,7 @@ def abstention_acc_metric(nb_classes):
 
         # guard against divide by zero
         condition = K.greater(total_pred, total_abs)
-        abs_acc = K.switch(condition, true_pred/(total_pred - total_abs), total_pred/total_pred)
+        abs_acc = K.switch(condition, true_pred / (total_pred - total_abs), total_pred / total_pred)
         return abs_acc
 
     metric.__name__ = 'abstention_acc'
@@ -172,7 +172,7 @@ def sparse_abstention_acc_metric(nb_classes):
 
         # guard against divide by zero
         condition = K.greater(total_pred, total_abs)
-        abs_acc = K.switch(condition, true_pred/(total_pred - total_abs), total_pred/total_pred)
+        abs_acc = K.switch(condition, true_pred / (total_pred - total_abs), total_pred / total_pred)
         return abs_acc
 
     metric.__name__ = 'sparse_abstention_acc'
@@ -427,7 +427,7 @@ class AbstentionAdapt_Callback(Callback):
                 new_scale = min(new_scale, max_scale)
                 new_scale = max(new_scale, min_scale)
 
-                #print('Scaling factor: ', new_scale)
+                # print('Scaling factor: ', new_scale)
                 new_alpha_val *= new_scale
                 K.set_value(self.alpha, new_alpha_val)
                 print('Scaling factor: ', new_scale, ' new alpha, ', new_alpha_val)
@@ -458,7 +458,7 @@ def modify_labels(numclasses_out, ytrain, ytest, yval=None):
     assert(classestrain == classestest)
     if yval is not None:
         assert(classesval == classestest)
-    assert((classestrain+1) == numclasses_out)  # In this case only one other slot for abstention is created
+    assert((classestrain + 1) == numclasses_out)  # In this case only one other slot for abstention is created
 
     labels_train = np_utils.to_categorical(ytrain, numclasses_out)
     labels_test = np_utils.to_categorical(ytest, numclasses_out)
@@ -469,7 +469,7 @@ def modify_labels(numclasses_out, ytrain, ytest, yval=None):
     mask_vec = np.zeros(labels_train.shape)
     mask_vec[:, -1] = 1
     i = np.random.choice(range(labels_train.shape[0]))
-    sanity_check = mask_vec[i, :]*labels_train[i, :]
+    sanity_check = mask_vec[i, :] * labels_train[i, :]
     print(sanity_check.shape)
     if ytrain.ndim > 1:
         ll = ytrain.shape[1]
@@ -518,7 +518,7 @@ def add_model_output(modelIn, mode=None, num_add=None, activation=None):
     numlayers = len(modelIn.layers)
     # Find last dense layer
     i = -1
-    while 'dense' not in (modelIn.layers[i].name) and ((i+numlayers) > 0):
+    while 'dense' not in (modelIn.layers[i].name) and ((i + numlayers) > 0):
         i -= 1
     # Minimal verification about the validity of the layer found
     assert ((i + numlayers) >= 0)
@@ -533,8 +533,8 @@ def add_model_output(modelIn, mode=None, num_add=None, activation=None):
     elif mode == 'het':  # for heteroscedastic UQ
         new_output_size = 2 * modelIn.layers[i].output_shape[-1]
     else:
-        raise Exception('ERROR ! Type of mode specified ' \
-                        + 'for adding outputs to the model: ' \
+        raise Exception('ERROR ! Type of mode specified '
+                        + 'for adding outputs to the model: '
                         + mode + ' not implemented... Exiting')
 
     # Recover current layer options
@@ -550,10 +550,10 @@ def add_model_output(modelIn, mode=None, num_add=None, activation=None):
     # Create new Dense layer
     reconstructed_layer = Dense.from_config(config)
     # Connect new Dense last layer to previous one-before-last layer
-    additional = reconstructed_layer(modelIn.layers[i-1].output)
+    additional = reconstructed_layer(modelIn.layers[i - 1].output)
     # If the layer to replace is not the last layer, add the remainder layers
     if i < -1:
-        for j in range(i+1, 0):
+        for j in range(i + 1, 0):
             config_j = modelIn.layers[j].get_config()
             aux_j = layers.deserialize({'class_name': modelIn.layers[j].__class__.__name__,
                                         'config': config_j})
@@ -594,7 +594,7 @@ def r2_heteroscedastic_metric(nout):
 
         SS_res = K.sum(K.square(y_true - y_out))
         SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
-        return (1. - SS_res/(SS_tot + K.epsilon()))
+        return (1. - SS_res / (SS_tot + K.epsilon()))
 
     metric.__name__ = 'r2_heteroscedastic'
     return metric
@@ -733,7 +733,7 @@ def quantile_loss(quantile, y_true, y_pred):
     """
 
     error = (y_true - y_pred)
-    return K.mean(K.maximum(quantile*error, (quantile-1)*error))
+    return K.mean(K.maximum(quantile * error, (quantile - 1) * error))
 
 
 def triple_quantile_loss(nout, lowquantile, highquantile):
@@ -932,7 +932,7 @@ class Contamination_Callback(Callback):
         # Guarantee positivity in update
         eta = K.get_value(self.model.optimizer.lr)
         new_gmSQ = gmSQ_eval - eta * grad_gmSQ
-        while new_gmSQ < 0 or (new_gmSQ/gmSQ_eval) > 1000:
+        while new_gmSQ < 0 or (new_gmSQ / gmSQ_eval) > 1000:
             eta /= 2
             new_gmSQ = gmSQ_eval - eta * grad_gmSQ
         K.set_value(self.gammaSQ, new_gmSQ)
@@ -1020,15 +1020,15 @@ def r2_contamination_metric(nout):
         y_pred : Keras tensor
             Keras tensor with the predictions of the contamination model (no data index).
         """
-        #if nout > 1:
+        # if nout > 1:
         #    y_true_ = K.reshape(y_true[:, :-1], K.shape(y_pred))
-        #else:
+        # else:
         #    y_true_ = K.reshape(y_true[:, 0], K.shape(y_pred))
         y_true_ = K.reshape(y_true[:, :-1], K.shape(y_pred))
 
         SS_res = K.sum(K.square(y_true_ - y_pred))
         SS_tot = K.sum(K.square(y_true_ - K.mean(y_true_)))
-        return (1. - SS_res/(SS_tot + K.epsilon()))
+        return (1. - SS_res / (SS_tot + K.epsilon()))
 
     metric.__name__ = 'r2_contamination'
     return metric

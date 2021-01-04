@@ -56,11 +56,10 @@ def plot_error(y_true, y_pred, batch, file_ext, file_pre='output_dir', subsample
         y_shuf = np.random.permutation(y_true)
         plt.hist(y_shuf - y_true, bins, alpha=0.5, label='Random')
 
-    #plt.hist(diffs, bins, alpha=0.35-batch/100., label='Epoch {}'.format(batch+1))
-    plt.hist(diffs, bins, alpha=0.3, label='Epoch {}'.format(batch+1))
+    plt.hist(diffs, bins, alpha=0.3, label='Epoch {}'.format(batch + 1))
     plt.title("Histogram of errors in percentage growth")
     plt.legend(loc='upper right')
-    plt.savefig(file_pre+'.histogram'+file_ext+'.b'+str(batch)+'.png')
+    plt.savefig(file_pre + '.histogram' + file_ext + '.b' + str(batch) + '.png')
     plt.close()
 
     # Plot measured vs. predicted values
@@ -71,7 +70,7 @@ def plot_error(y_true, y_pred, batch, file_ext, file_pre='output_dir', subsample
             [y_true.min(), y_true.max()], 'k--', lw=4)
     ax.set_xlabel('Measured')
     ax.set_ylabel('Predicted')
-    plt.savefig(file_pre+'.diff'+file_ext+'.b'+str(batch)+'.png')
+    plt.savefig(file_pre + '.diff' + file_ext + '.b' + str(batch) + '.png')
     plt.close()
 
 
@@ -86,10 +85,11 @@ def plot_array(nparray, xlabel, ylabel, title, fname):
     plt.close()
 
 
-###### UTILS for UQ / CALIBRATION VISUALIZATION
+# UTILS for UQ / CALIBRATION VISUALIZATION
 
 
 from matplotlib.colors import LogNorm
+
 
 def plot_density_observed_vs_predicted(Ytest, Ypred, pred_name=None, figprefix=None):
     """Functionality to plot a 2D histogram of the distribution of observed (ground truth)
@@ -111,7 +111,7 @@ def plot_density_observed_vs_predicted(Ytest, Ypred, pred_name=None, figprefix=N
 
     xbins = 51
 
-    fig = plt.figure(figsize=(24, 18)) # (30, 16)
+    fig = plt.figure(figsize=(24, 18))  # (30, 16)
     ax = plt.gca()
     plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
     ax.plot([Ytest.min(), Ytest.max()], [Ytest.min(), Ytest.max()], 'r--', lw=4.)
@@ -119,7 +119,7 @@ def plot_density_observed_vs_predicted(Ytest, Ypred, pred_name=None, figprefix=N
     cb = plt.colorbar()
     ax.set_xlabel('Observed ' + pred_name, fontsize=38, labelpad=15.)
     ax.set_ylabel('Mean ' + pred_name + ' Predicted', fontsize=38, labelpad=15.)
-    ax.axis([Ytest.min()*0.98, Ytest.max()*1.02, Ytest.min()*0.98, Ytest.max()*1.02])
+    ax.axis([Ytest.min() * 0.98, Ytest.max() * 1.02, Ytest.min() * 0.98, Ytest.max() * 1.02])
     plt.setp(ax.get_xticklabels(), fontsize=32)
     plt.setp(ax.get_yticklabels(), fontsize=32)
     cb.ax.set_yticklabels(cb.ax.get_yticklabels(), fontsize=28)
@@ -153,14 +153,14 @@ def plot_2d_density_sigma_vs_error(sigma, yerror, method=None, figprefix=None):
     xbins = 51
     ybins = 31
 
-    fig = plt.figure(figsize=(24, 18)) # (30, 16)
+    fig = plt.figure(figsize=(24, 18))  # (30, 16)
     ax = plt.gca()
-    plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
+    plt.rc('xtick', labelsize=16)  # fontsize of the tick labels
     plt.hist2d(sigma, yerror, bins=[xbins, ybins], norm=LogNorm())
     cb = plt.colorbar()
     ax.set_xlabel('Standard Deviation (' + method + ')', fontsize=38, labelpad=15.)
     ax.set_ylabel('Error: Observed - Mean Predicted', fontsize=38, labelpad=15.)
-    ax.axis([sigma.min()*0.98, sigma.max()*1.02, -yerror.max(), yerror.max()])
+    ax.axis([sigma.min() * 0.98, sigma.max() * 1.02, -yerror.max(), yerror.max()])
     plt.setp(ax.get_xticklabels(), fontsize=32)
     plt.setp(ax.get_yticklabels(), fontsize=32)
     cb.ax.set_yticklabels(cb.ax.get_yticklabels(), fontsize=28)
@@ -197,16 +197,16 @@ def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     xbins = 21
     ybins = 31
 
-    H, xedges, yedges, img = plt.hist2d(sigma, yerror,# normed=True,
+    H, xedges, yedges, img = plt.hist2d(sigma, yerror,  # normed=True,
                                         bins=[xbins, ybins])
 
     fig = plt.figure(figsize=(18, 24))
     legend = []
-    for ii in range(4):#(H.shape[0]):
+    for ii in range(4):  # (H.shape[0]):
         if ii != 1:
-            plt.plot(yedges[0:H.shape[1]], H[ii, :]/np.sum(H[ii, :]),
+            plt.plot(yedges[0:H.shape[1]], H[ii, :] / np.sum(H[ii, :]),
                      marker='o', markersize=12, lw=6.)
-        legend.append(str((xedges[ii] + xedges[ii+1])/2))
+        legend.append(str((xedges[ii] + xedges[ii + 1]) / 2))
     plt.legend(legend, fontsize=28)
     ax = plt.gca()
     plt.title('Error Dist. per Standard Deviation for ' + method, fontsize=40)
@@ -450,7 +450,7 @@ def plot_contamination(y_true, y_pred, sigma, T=None, thresC=0.1, pred_name=None
     ax = plt.gca()
     ax.scatter(x, y_true[index], color='red', s=scale)
     if T is not None:
-        plt.scatter(x[indexC], y_true[indexC], color='green', s=scale)  #, alpha=0.8)
+        plt.scatter(x[indexC], y_true[indexC], color='green', s=scale)  # , alpha=0.8)
     plt.scatter(x, y_pred[index], color='orange', s=scale)
     plt.fill_between(x, auxGl[index], auxGh[index], color='gray', alpha=0.5)
     if T is not None:

@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-#__version__ = '0.0.0'
+# __version__ = '0.0.0'
 
-#import from data_utils
+# import from data_utils
 from data_utils import load_csv_data
 from data_utils import load_Xy_one_hot_data2
 from data_utils import load_Xy_data_noheader
@@ -11,10 +11,10 @@ from data_utils import discretize_dataframe
 from data_utils import discretize_array
 from data_utils import lookup
 
-#import from file_utils
+# import from file_utils
 from file_utils import get_file
 
-#import from default_utils
+# import from default_utils
 from default_utils import ArgumentStruct
 from default_utils import Benchmark
 from default_utils import str2bool
@@ -62,7 +62,7 @@ from feature_selection_utils import select_features_by_missing_values
 from feature_selection_utils import select_features_by_variation
 from feature_selection_utils import select_decorrelated_features
 
-# noise injection 
+# noise injection
 from noise_utils import label_flip
 from noise_utils import label_flip_correlated
 from noise_utils import add_gaussian_noise
@@ -75,10 +75,10 @@ from P1_utils import combat_batch_effect_removal
 # import benchmark-dependent utils
 import sys
 if 'keras' in sys.modules:
-    print ('Importing candle utils for keras')
-    #import from keras_utils
-    #from keras_utils import dense
-    #from keras_utils import add_dense
+    print('Importing candle utils for keras')
+    # import from keras_utils
+    # from keras_utils import dense
+    # from keras_utils import add_dense
     from keras_utils import build_initializer
     from keras_utils import build_optimizer
     from keras_utils import get_function
@@ -129,7 +129,7 @@ if 'keras' in sys.modules:
     from clr_keras_utils import clr_callback
 
 elif 'torch' in sys.modules:
-    print ('Importing candle utils for pytorch')
+    print('Importing candle utils for pytorch')
     from pytorch_utils import set_seed
     from pytorch_utils import build_optimizer
     from pytorch_utils import build_activation
@@ -137,9 +137,7 @@ elif 'torch' in sys.modules:
     from pytorch_utils import initialize
     from pytorch_utils import xent
     from pytorch_utils import mse
-    from pytorch_utils import set_parallelism_threads # for compatibility
+    from pytorch_utils import set_parallelism_threads  # for compatibility
 
 else:
     raise Exception('No backend has been specified.')
-
-
