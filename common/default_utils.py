@@ -75,9 +75,7 @@ def check_flag_conflicts(params):
                     flag_count += 1
         if flag_count > 1:
             raise Exception(
-                'ERROR ! Conflict in flag specification. ' +
-                'These flags should not be used together: ' + str(sorted(flag_list)) +
-                '... Exiting')
+                'ERROR ! Conflict in flag specification. These flags should not be used together: ' + str(sorted(flag_list)) + '... Exiting')
             # print("Warning: conflicting flags in ", flag_list)
             # exit()
 
@@ -940,9 +938,7 @@ class Benchmark:
 
         if (len(diff_set) > 0):
             raise Exception(
-                'ERROR ! Required parameters are not specified. ' +
-                'These required parameters have not been initialized: ' + str(sorted(diff_set)) + 
-                '... Exiting')
+                'ERROR ! Required parameters are not specified.  These required parameters have not been initialized: ' + str(sorted(diff_set)) + '... Exiting')
 
 
 def keras_default_config():

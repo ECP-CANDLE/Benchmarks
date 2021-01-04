@@ -145,9 +145,7 @@ def run(params):
     # compute statistics according to uqmode
     if uqmode == 'hom':
         if df_data.shape[1] < 9:
-            print('Too few columns... Asumming that a summary '
-                  + '(and not individual realizations) has been '
-                  + 'given as input')
+            print('Too few columns... Asumming that a summary  (and not individual realizations) has been  given as input')
             Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_homoscedastic_summary(df_data)
         else:  # all individual realizations
             Ytest, Ypred_mean, yerror, sigma, Ypred_std, pred_name = candle.compute_statistics_homoscedastic(df_data)
@@ -164,8 +162,7 @@ def run(params):
         Ytest, Ypred_mean, yerror, sigma_, Ypred_std, pred_name = candle.compute_statistics_homoscedastic(df_data)
         sigma_scalar = params['sigma']
         if sigma_scalar is None:
-            raise Exception('ERROR ! No sigma '
-                            + 'specified for contamination model... Exiting')
+            raise Exception('ERROR ! No sigma specified for contamination model... Exiting')
         sigma = sigma_scalar * np.ones(Ytest.shape[0])
         cov80p = coverage_80p(Ytest, Ypred_mean, sigma)
         print('Coverage (80%): ', cov80p)
@@ -178,14 +175,10 @@ def run(params):
         print('MSE: ', mse)
         print('MAE: ', mae)
         candle.plot_contamination(Ytest, Ypred_mean, sigma, pred_name=pred_name, figprefix=prefix)
-        print('Since in contamination model std prediction is '
-              + 'uniform for all samples, no point in '
-              + 'calibrating... Finishing')
+        print('Since in contamination model std prediction is uniform for all samples, no point in calibrating... Finishing')
         return
     else:
-        raise Exception('ERROR ! UQ mode specified '
-                        + 'for calibration: ' + uqmode + ' not '
-                        + 'implemented... Exiting')
+        raise Exception('ERROR ! UQ mode specified for calibration: ' + uqmode + ' not implemented... Exiting')
 
     print('Coverage (80%) before calibration: ', cov80p)
 

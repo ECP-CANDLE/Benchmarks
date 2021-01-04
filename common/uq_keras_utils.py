@@ -533,9 +533,7 @@ def add_model_output(modelIn, mode=None, num_add=None, activation=None):
     elif mode == 'het':  # for heteroscedastic UQ
         new_output_size = 2 * modelIn.layers[i].output_shape[-1]
     else:
-        raise Exception('ERROR ! Type of mode specified '
-                        + 'for adding outputs to the model: '
-                        + mode + ' not implemented... Exiting')
+        raise Exception('ERROR ! Type of mode specified for adding outputs to the model: ' + mode + ' not implemented... Exiting')
 
     # Recover current layer options
     config = modelIn.layers[i].get_config()
