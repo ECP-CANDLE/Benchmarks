@@ -222,7 +222,7 @@ def run(params):
         df_val = val_gen.get_response(copy=True)
         y_val = df_val[target].values
         y_shuf = np.random.permutation(y_val)
-        log_evaluation(evaluate_prediction(y_val, y_shuf),
+        log_evaluation(evaluate_prediction(y_val, y_shuf), logger,
                        description='Between random pairs in y_val:')
 
         if args.no_gen:
@@ -245,20 +245,20 @@ def run(params):
         if test_gen.size > 0:
             df_val = test_gen.get_response(copy=True)
             y_val = df_val[target].values
-            y_val_pred = model.predict_generator(test_gen, test_gen.steps + 1)
+            y_val_pred = model.predict(test_gen, steps=test_gen.steps + 1)
             y_val_pred = y_val_pred[:test_gen.size]
         else:
             if args.no_gen:
                 y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
             else:
                 val_gen.reset()
-                y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
+                y_val_pred = model.predict(val_gen, steps=val_gen.steps + 1)
                 y_val_pred = y_val_pred[:val_gen.size]
 
         y_val_pred = y_val_pred.flatten()
 
         scores = evaluate_prediction(y_val, y_val_pred)
-        log_evaluation(scores)
+        log_evaluation(scores, logger)
 
         # df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred - y_val)
         df_val['Predicted' + target] = y_val_pred
@@ -283,7 +283,7 @@ def run(params):
 
     if args.cv > 1:
         scores = evaluate_prediction(df_pred[target], df_pred['Predicted' + target])
-        log_evaluation(scores, description='Combining cross validation folds:')
+        log_evaluation(scores, logger, description='Combining cross validation folds:')
 
     for test_source in loader.test_sep_sources:
         test_gen = CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size, source=test_source)
@@ -300,7 +300,7 @@ def run(params):
             y_test_pred = y_test_pred[:test_gen.size]
         y_test_pred = y_test_pred.flatten()
         scores = evaluate_prediction(y_test, y_test_pred)
-        log_evaluation(scores, description='Testing on data from {} ({})'.format(test_source, n_test))
+        log_evaluation(scores, logger, description='Testing on data from {} ({})'.format(test_source, n_test))
 
     if K.backend() == 'tensorflow':
         K.clear_session()
