@@ -8,21 +8,21 @@ sys.path.append(lib_path2)
 import candle
 
 additional_definitions = [
-{'name':'learning_rate_min',
-    'action':'store',
-    'type':float},
-{'name':'log_interval',
-    'action':'store',
-    'type':int},
-{'name':'weight_decay',
-    'action':'store',
-    'type':float},
-{'name':'grad_clip',
-    'action':'store',
-    'type':int},
-{'name':'unrolled',
-    'action':'store',
-    'type':candle.str2bool},
+    {'name': 'learning_rate_min',
+        'action': 'store',
+        'type': float},
+    {'name': 'log_interval',
+        'action': 'store',
+        'type': int},
+    {'name': 'weight_decay',
+        'action': 'store',
+        'type': float},
+    {'name': 'grad_clip',
+        'action': 'store',
+        'type': int},
+    {'name': 'unrolled',
+        'action': 'store',
+        'type': candle.str2bool},
 ]
 
 required = [
@@ -48,5 +48,4 @@ class BenchmarkP3B6(candle.Benchmark):
         if required is not None:
             self.required = set(required)
         if additional_definitions is not None:
-                    self.additional_definitions = additional_definitions
-
+            self.additional_definitions = additional_definitions

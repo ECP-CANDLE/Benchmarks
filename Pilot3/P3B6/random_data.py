@@ -5,11 +5,11 @@ from torch.utils.data import Dataset
 class MimicDatasetSynthetic(Dataset):
 
     def __init__(self,
-            doc_length=512,
-            num_vocab=10_000,
-            num_docs=100,
-            num_classes=10
-        ):
+                 doc_length=512,
+                 num_vocab=10_000,
+                 num_docs=100,
+                 num_classes=10
+                 ):
 
         self.doc_length = doc_length
         self.num_vocab = num_vocab
@@ -41,7 +41,7 @@ class MimicDatasetSynthetic(Dataset):
         }
 
     def random_doc(self, length, num_vocab):
-        return torch.LongTensor(length).random_(0, num_vocab+1)
+        return torch.LongTensor(length).random_(0, num_vocab + 1)
 
     def create_docs(self, length, num_vocab, num_docs):
         docs = [self.random_doc(length, num_vocab) for _ in range(num_docs)]
@@ -67,4 +67,3 @@ class MimicDatasetSynthetic(Dataset):
     def create_labels(self, num_classes, num_docs):
         labels = [self.random_multitask_label(num_classes) for _ in range(num_docs)]
         return torch.stack(labels)
-

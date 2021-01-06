@@ -57,20 +57,20 @@ class hcan(object):
                              activation=self.activation, kernel_initializer=tf.contrib.layers.xavier_initializer())
 
         outputs = tf.matmul(Q, tf.transpose(K, [0, 2, 1]))
-        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
-        outputs = tf.where(tf.equal(outputs, 0), tf.ones_like(outputs)*-1000, outputs)
+        outputs = outputs / (K.get_shape().as_list()[-1]**0.5)
+        outputs = tf.where(tf.equal(outputs, 0), tf.ones_like(outputs) * -1000, outputs)
         outputs = tf.nn.dropout(tf.nn.softmax(outputs), self.dropout)
         outputs = tf.matmul(outputs, V)  # batch*sents x words x attention_size
 
         # word target attention
         Q = tf.compat.v1.get_variable('word_Q', (1, 1, self.attention_size),
                                       tf.float32, tf.orthogonal_initializer())
-        Q = tf.tile(Q, [batch_size*max_sents_, 1, 1])
+        Q = tf.tile(Q, [batch_size * max_sents_, 1, 1])
         V = outputs
 
         outputs = tf.matmul(Q, tf.transpose(outputs, [0, 2, 1]))
-        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
-        outputs = tf.where(tf.equal(outputs, 0), tf.ones_like(outputs)*-1000, outputs)
+        outputs = outputs / (K.get_shape().as_list()[-1]**0.5)
+        outputs = tf.where(tf.equal(outputs, 0), tf.ones_like(outputs) * -1000, outputs)
         outputs = tf.nn.dropout(tf.nn.softmax(outputs), self.dropout)
         outputs = tf.matmul(outputs, V)  # batch*sents x 1 x attention_size
 
@@ -86,8 +86,8 @@ class hcan(object):
                              activation=self.activation, kernel_initializer=tf.contrib.layers.xavier_initializer())
 
         outputs = tf.matmul(Q, tf.transpose(K, [0, 2, 1]))
-        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
-        outputs = tf.where(tf.equal(outputs, 0), tf.ones_like(outputs)*-1000, outputs)
+        outputs = outputs / (K.get_shape().as_list()[-1]**0.5)
+        outputs = tf.where(tf.equal(outputs, 0), tf.ones_like(outputs) * -1000, outputs)
         outputs = tf.nn.dropout(tf.nn.softmax(outputs), self.dropout)
         outputs = tf.matmul(outputs, V)  # batch x sents x attention_size
 
@@ -98,8 +98,8 @@ class hcan(object):
         V = outputs
 
         outputs = tf.matmul(Q, tf.transpose(outputs, [0, 2, 1]))
-        outputs = outputs/(K.get_shape().as_list()[-1]**0.5)
-        outputs = tf.where(tf.equal(outputs, 0), tf.ones_like(outputs)*-1000, outputs)
+        outputs = outputs / (K.get_shape().as_list()[-1]**0.5)
+        outputs = tf.where(tf.equal(outputs, 0), tf.ones_like(outputs) * -1000, outputs)
         outputs = tf.nn.dropout(tf.nn.softmax(outputs), self.dropout)
         outputs = tf.matmul(outputs, V)  # batch x 1 x attention_size
         doc_embeds = tf.nn.dropout(tf.squeeze(outputs, [1]), self.dropout)  # batch x attention_size
@@ -120,7 +120,7 @@ class hcan(object):
             label = tf.compat.v1.placeholder(tf.int32, shape=[None])
             self.labels.append(label)
             loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=logits[i], labels=label))
-            self.loss += loss/self.num_tasks
+            self.loss += loss / self.num_tasks
 
         if optimizer == 'adam':
             self.optimizer = tf.compat.v1.train.AdamOptimizer(lr, 0.9, 0.99)
@@ -174,15 +174,15 @@ class hcan(object):
             for start in range(0, len(data), batch_size):
 
                 # get batch index
-                if start+batch_size < len(data):
-                    stop = start+batch_size
+                if start + batch_size < len(data):
+                    stop = start + batch_size
                 else:
                     stop = len(data)
 
                 feed_dict = {self.doc_input: data[start: stop], self.dropout: self.dropout_keep}
                 for i in range(self.num_tasks):
                     feed_dict[self.labels[i]] = labels[i][start: stop]
-                retvals = self.sess.run(self.predictions+[self.optimizer, self.loss], feed_dict=feed_dict)
+                retvals = self.sess.run(self.predictions + [self.optimizer, self.loss], feed_dict=feed_dict)
                 loss = retvals[-1]
 
                 # track correct predictions
@@ -191,20 +191,20 @@ class hcan(object):
                     y_trues[i].extend(labels[i][start:stop])
 
                 sys.stdout.write("epoch %i, sample %i of %i, loss: %f        \r"
-                                 % (ep+1, stop, len(data), loss))
+                                 % (ep + 1, stop, len(data), loss))
                 sys.stdout.flush()
 
             # checkpoint after every epoch
-            print("\ntraining time: %.2f" % (time.time()-start_time))
+            print("\ntraining time: %.2f" % (time.time() - start_time))
 
             for i in range(self.num_tasks):
                 micro = f1_score(y_trues[i], y_preds[i], average='micro')
                 macro = f1_score(y_trues[i], y_preds[i], average='macro')
-                print("epoch %i task %i training micro/macro: %.4f, %.4f" % (ep+1, i+1, micro, macro))
+                print("epoch %i task %i training micro/macro: %.4f, %.4f" % (ep + 1, i + 1, micro, macro))
 
             scores, val_loss = self.score(validation_data[0], validation_data[1], batch_size=batch_size)
             for i in range(self.num_tasks):
-                print("epoch %i task %i validation micro/macro: %.4f, %.4f" % (ep+1, i+1, scores[i][0], scores[i][1]))
+                print("epoch %i task %i validation micro/macro: %.4f, %.4f" % (ep + 1, i + 1, scores[i][0], scores[i][1]))
             history.history.setdefault('val_loss', []).append(val_loss)
 
             # reset timer
@@ -218,8 +218,8 @@ class hcan(object):
         for start in range(0, len(data), batch_size):
 
             # get batch index
-            if start+batch_size < len(data):
-                stop = start+batch_size
+            if start + batch_size < len(data):
+                stop = start + batch_size
             else:
                 stop = len(data)
 
@@ -243,15 +243,15 @@ class hcan(object):
         for start in range(0, len(data), batch_size):
 
             # get batch index
-            if start+batch_size < len(data):
-                stop = start+batch_size
+            if start + batch_size < len(data):
+                stop = start + batch_size
             else:
                 stop = len(data)
 
             feed_dict = {self.doc_input: data[start: stop], self.dropout: 1.0}
             for i in range(self.num_tasks):
                 feed_dict[self.labels[i]] = labels[i][start: stop]
-            retvals = self.sess.run(self.predictions+[self.loss], feed_dict=feed_dict)
+            retvals = self.sess.run(self.predictions + [self.loss], feed_dict=feed_dict)
             loss.append(retvals[-1])
 
             for i in range(self.num_tasks):

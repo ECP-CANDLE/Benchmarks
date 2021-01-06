@@ -1,8 +1,8 @@
 from __future__ import print_function
 
 import numpy as np
-#import os, sys, gzip
-#import time
+# import os, sys, gzip
+# import time
 import keras
 
 from tf_mthcan import hcan
@@ -21,7 +21,7 @@ def initialize_parameters(default_model='p3b4_default_model.txt'):
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b3Bmk)
-    #bmk.logger.info('Params: {}'.format(gParameters))
+    # bmk.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
 
@@ -40,7 +40,7 @@ def fetch_data(gParameters):
 
 def run(gParameters):
 
-    #print(gParameters)
+    # print(gParameters)
 
     fpath = fetch_data(gParameters)
     # Get default parameters for initialization and optimizer functions
@@ -90,9 +90,9 @@ def run(gParameters):
     train_x = train_x.reshape((train_x.shape[0], max_lines, max_words))
     test_x = test_x.reshape((test_x.shape[0], max_lines, max_words))
 
-    #optional masking
+    # optional masking
     mask = []
-    for i in range(train_samples+test_samples):
+    for i in range(train_samples + test_samples):
         doc_mask = np.ones((1, max_lines, max_words))
         num_lines = np.random.randint(min_lines, max_lines)
         for j in range(num_lines):
@@ -129,7 +129,7 @@ def run(gParameters):
                 np.array(test_y[:, 3])
             ]
         ]
-        )
+    )
 
     return ret
 
@@ -145,6 +145,6 @@ if __name__ == '__main__':
     main()
 
     # try:
-        # K.clear_session()
+    #     K.clear_session()
     # except AttributeError:      # theano does not have this function
-        # pass
+    #     pass

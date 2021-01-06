@@ -3,11 +3,11 @@ Code to export keras architecture/placeholder weights for MT CNN
 Written by Mohammed Alawad
 Date: 10_20_2017
 """
-#np.random.seed(1337)
+# np.random.seed(1337)
 from keras.models import Model
 from keras.layers import Dense, Dropout, Input, Embedding
 from keras.layers import GlobalMaxPooling1D, Convolution1D
-#from keras.layers.convolutional import Conv1D
+# from keras.layers.convolutional import Conv1D
 from keras.layers.merge import Concatenate
 from keras.regularizers import l2
 
@@ -33,7 +33,7 @@ def init_export_network(task_names,
                            wv_space,
                            input_length=in_seq_len,
                            name="embedding",
-                           #embeddings_initializer=RandomUniform,
+                           # embeddings_initializer=RandomUniform,
                            embeddings_regularizer=l2(emb_l2))(model_input)
     # convolutional layer and dropout
     conv_blocks = []
@@ -53,13 +53,8 @@ def init_export_network(task_names,
     FC_models = []
     for i in range(len(task_names)):
         if i in task_list:
-            outlayer = Dense(num_classes[i], name=task_names[i], activation='softmax')(concat_drop)#, kernel_regularizer=l2(0.01))(concat_drop)
+            outlayer = Dense(num_classes[i], name=task_names[i], activation='softmax')(concat_drop)  # , kernel_regularizer=l2(0.01))(concat_drop)
             FC_models.append(outlayer)
-    '''
-    for i in range(len(num_classes)):
-        outlayer = Dense(num_classes[i], name="Dense"+str(i), activation='softmax')(concat_drop)#, kernel_regularizer=l2(0.01))(concat_drop)
-        FC_models.append(outlayer)
-    '''
 
     # the multitsk model
     model = Model(inputs=model_input, outputs=FC_models)

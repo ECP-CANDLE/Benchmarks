@@ -12,7 +12,7 @@ from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 from sklearn.metrics import f1_score
 '''
 
-#import keras
+# import keras
 
 import p3b3 as bmk
 import keras_mt_shared_cnn
@@ -28,7 +28,7 @@ def initialize_parameters(default_model='p3b3_default_model.txt'):
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b3Bmk)
-    #bmk.logger.info('Params: {}'.format(gParameters))
+    # bmk.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
 
@@ -89,7 +89,7 @@ def run_cnn(GP, train_x, train_y, test_x, test_y,
         emb_l2=emb_l2,
         w_l2=w_l2,
         optimizer=optimizer_run
-        )
+    )
 
     print(cnn.summary())
 
@@ -114,7 +114,7 @@ def run_cnn(GP, train_x, train_y, test_x, test_y,
         verbose=2,
         validation_data=validation_data,
         callbacks=[candleRemoteMonitor, timeoutMonitor]
-     )
+    )
 
     return history
 

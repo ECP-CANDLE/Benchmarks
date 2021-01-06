@@ -24,7 +24,7 @@ def initialize_parameters():
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b5_bench)
-    #bmk.logger.info('Params: {}'.format(gParameters))
+    # bmk.logger.info('Params: {}'.format(gParameters))
     return gParameters
 
 
@@ -132,5 +132,5 @@ def main():
     run(params)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
