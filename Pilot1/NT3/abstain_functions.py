@@ -48,6 +48,7 @@ abs_definitions = [
      'help': 'list of names corresponding to each task to use'},
 ]
 
+
 def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add_index):
 
     task_names = gParameters['task_names']
@@ -62,18 +63,18 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
     min_acc = gParameters['min_acc']
     alpha_scale_factor = gParameters['alpha_scale_factor']
 
-    #print('labels_test', labels_test)
-    #print('Add_index', add_index)
+    # print('labels_test', labels_test)
+    # print('Add_index', add_index)
 
     feature_test = X_test
     label_test = keras.utils.to_categorical(truths_test)
 
-    #loss = model.evaluate(feature_test, [label_test[0], label_test[1],label_test[2], label_test[3]])
+    # loss = model.evaluate(feature_test, [label_test[0], label_test[1],label_test[2], label_test[3]])
     loss = model.evaluate(feature_test, labels_val)
     avg_loss = avg_loss + loss[0]
 
     pred = model.predict(feature_test)
-    #print('pred',pred.shape, pred)
+    # print('pred',pred.shape, pred)
 
     abs_gain = gParameters['abs_gain']
     acc_gain = gParameters['acc_gain']
@@ -86,12 +87,12 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
             truth_test = truths_test[:, k]
             alpha_k = K.eval(alpha[k])
             pred_classes = pred[k].argmax(axis=-1)
-            #true_classes = labels_test[k].argmax(axis=-1)
+            # true_classes = labels_test[k].argmax(axis=-1)
             true_classes = truth_test
 
-            #print('pred_classes',pred_classes.shape, pred_classes)
-            #print('true_classes',true_classes.shape, true_classes)
-            #print('labels',label_test.shape, label_test)
+            # print('pred_classes',pred_classes.shape, pred_classes)
+            # print('true_classes',true_classes.shape, true_classes)
+            # print('labels',label_test.shape, label_test)
 
             true = K.eval(K.sum(K.cast(K.equal(pred_classes, true_classes), 'int64')))
             false = K.eval(K.sum(K.cast(K.not_equal(pred_classes, true_classes), 'int64')))
@@ -124,7 +125,7 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
             print('Scaling factor: ', new_scale)
             K.set_value(alpha[k], new_scale * alpha_k)
 
-            print_abs_stats(task_names[k], new_scale*alpha_k, true, false, abstain, max_abs[k])
+            print_abs_stats(task_names[k], new_scale * alpha_k, true, false, abstain, max_abs[k])
 
             ret_k.append(truth_test)
             ret_k.append(pred)
@@ -137,9 +138,10 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
             accs.append(1.0)
             accs.append(0.0)
 
-    write_abs_stats(gParameters['output_dir']+'abs_stats.csv', alpha, accs, abst)
+    write_abs_stats(gParameters['output_dir'] + 'abs_stats.csv', alpha, accs, abst)
 
     return ret, alpha
+
 
 def loss_param(alpha, mask):
     def loss(y_true, y_pred):
@@ -147,7 +149,7 @@ def loss_param(alpha, mask):
         cost = 0
 
         base_pred = (1 - mask) * y_pred
-        #base_true = (1 - mask) * y_true
+        # base_true = (1 - mask) * y_true
         base_true = y_true
 
         base_cost = K.sparse_categorical_crossentropy(base_true, base_pred)

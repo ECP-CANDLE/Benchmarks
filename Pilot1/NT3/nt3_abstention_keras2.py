@@ -25,6 +25,7 @@ additional_definitions = abs_definitions
 
 required = bmk.required
 
+
 class BenchmarkNT3Abs(candle.Benchmark):
     def set_locals(self):
         """Functionality to set variables specific for the benchmark
@@ -37,6 +38,7 @@ class BenchmarkNT3Abs(candle.Benchmark):
             self.required = set(bmk.required)
         if additional_definitions is not None:
             self.additional_definitions = abs_definitions + bmk.additional_definitions
+
 
 def initialize_parameters(default_model='nt3_noise_model.txt'):
 
@@ -91,11 +93,11 @@ def load_data(train_path, test_path, gParameters):
     # check if noise is on
     if gParameters['add_noise']:
         # check if we want noise correlated with a feature
-        if gParameters['noise_correlated']: 
-            Y_train, y_train_noise_gen = candle.label_flip_correlated(Y_train, 
-                                                              gParameters['label_noise'], X_train,
-                                                              gParameters['feature_col'],
-                                                              gParameters['feature_threshold'])
+        if gParameters['noise_correlated']:
+            Y_train, y_train_noise_gen = candle.label_flip_correlated(Y_train,
+                                                                      gParameters['label_noise'], X_train,
+                                                                      gParameters['feature_col'],
+                                                                      gParameters['feature_threshold'])
         # else add uncorrelated noise
         else:
             Y_train, y_train_noise_gen = candle.label_flip(Y_train, gParameters['label_noise'])
@@ -124,8 +126,8 @@ def run(gParameters):
     # first reverse the to_categorical
     Y_train = np.argmax(Y_train, axis=1)
     Y_test = np.argmax(Y_test, axis=1)
-    Y_train, Y_test = candle.modify_labels(gParameters['classes']+1, Y_train, Y_test)
-    #print(Y_test)
+    Y_train, Y_test = candle.modify_labels(gParameters['classes'] + 1, Y_train, Y_test)
+    # print(Y_test)
 
     print('X_train shape:', X_train.shape)
     print('X_test shape:', X_test.shape)
@@ -241,18 +243,16 @@ def run(gParameters):
 
     model.compile(loss=candle.abstention_loss(abstention_cbk.alpha, mask),
                   optimizer=optimizer,
-                  metrics=[# gParameters['metrics'], 
-                           candle.abstention_acc_metric(nb_classes),
-                           #candle.acc_class_i_metric(1), 
-                           #candle.abstention_acc_class_i_metric(nb_classes, 1),
+                  metrics=[candle.abstention_acc_metric(nb_classes),
+                           # candle.acc_class_i_metric(1),
+                           # candle.abstention_acc_class_i_metric(nb_classes, 1),
                            candle.abstention_metric(nb_classes)])
 
-
-    #model.compile(loss=abs_loss,
+    # model.compile(loss=abs_loss,
     #              optimizer=optimizer,
     #              metrics=abs_acc)
 
-    #model.compile(loss=gParameters['loss'],
+    # model.compile(loss=gParameters['loss'],
     #              optimizer=optimizer,
     #              metrics=[gParameters['metrics']])
 
@@ -269,8 +269,8 @@ def run(gParameters):
     path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
     # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
-    reduce_lr = ReduceLROnPlateau(monitor='abs_crossentropy', 
-                                  factor=0.1, patience=10, verbose=1, mode='auto', 
+    reduce_lr = ReduceLROnPlateau(monitor='abs_crossentropy',
+                                  factor=0.1, patience=10, verbose=1, mode='auto',
                                   epsilon=0.0001, cooldown=0, min_lr=0)
 
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
@@ -278,26 +278,26 @@ def run(gParameters):
 
     n_iters = 1
 
-    val_labels ={"activation_5":Y_test}
-    #for epoch in range(gParameters['epochs']):
+    val_labels = {"activation_5": Y_test}
+    # for epoch in range(gParameters['epochs']):
     #    print('Iteration = ', epoch)
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],
                         epochs=gParameters['epochs'],
-                        #initial_epoch=epoch,
-                        #epochs=epoch + n_iters,
+                        # initial_epoch=epoch,
+                        # epochs=epoch + n_iters,
                         verbose=1,
                         validation_data=(X_test, Y_test),
-                        #callbacks=[csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor]) # , abstention_cbk])
+                        # callbacks=[csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor]) # , abstention_cbk])
                         callbacks=[csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor, abstention_cbk])
 
     #    ret, alpha = adjust_alpha(gParameters, X_test, Y_test, val_labels, model, alpha, [nb_classes+1])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
-    alpha_trace = open(output_dir+"/alpha_trace","w+")
+    alpha_trace = open(output_dir + "/alpha_trace", "w+")
     for alpha in abstention_cbk.alphavalues:
-        alpha_trace.write(str(alpha)+'\n')
+        alpha_trace.write(str(alpha) + '\n')
     alpha_trace.close()
 
     if False:

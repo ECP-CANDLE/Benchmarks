@@ -61,7 +61,7 @@ data_path = args['in']
 
 # PL     = 6213   # 38 + 60483
 # PS     = 6212   # 60483
-DR    = 0.2      # Dropout rate
+DR = 0.2      # Dropout rate
 
 
 def r2(y_true, y_pred):
@@ -128,7 +128,7 @@ def load_data():
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
 
-X_train, _Y_train, X_val, _Y_val, X_test, _Y_test  = load_data()
+X_train, _Y_train, X_val, _Y_val, X_test, _Y_test = load_data()
 # move this inside the load_data function
 Y_train = _Y_train['AUC']
 Y_test = _Y_test['AUC']
@@ -236,7 +236,7 @@ Y_predict = model.predict(X_test)
 
 threshold = 0.5
 
-Y_pred_int  = (Y_predict[:, 0] < threshold).astype(np.int)
+Y_pred_int = (Y_predict[:, 0] < threshold).astype(np.int)
 Y_test_int = (Y_test[:, 0] < threshold).astype(np.int)
 
 print('creating table of predictions')

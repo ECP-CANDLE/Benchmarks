@@ -23,13 +23,13 @@ import candle
 
 def initialize_parameters(default_model='nt3_default_model.txt'):
 
-    import os # ADD THIS LINE
+    import os  # ADD THIS LINE
 
     # Build benchmark object
     nt3Bmk = bmk.BenchmarkNT3(
         bmk.file_path,
         # default_model, # ORIGINAL LINE
-        os.getenv('CANDLE_DEFAULT_MODEL_FILE'), # NEW LINE
+        os.getenv('CANDLE_DEFAULT_MODEL_FILE'),  # NEW LINE
         'keras',
         prog='nt3_baseline',
         desc='1D CNN to classify RNA sequence data in normal or tumor classes')
@@ -87,7 +87,7 @@ def load_data(train_path, test_path, gParameters):
     # check if noise is on for RNA-seq data
     elif gParameters['noise_gaussian']:
         X_train = candle.add_gaussian_noise(X_train, 0, gParameters['std_dev'])
-	    
+
     return X_train, Y_train, X_test, Y_test
 
 
@@ -145,7 +145,7 @@ def run(gParameters):
     # File "/gpfs/alpine/world-shared/med106/sw/condaenv-200408/lib/python3.6/site-packages/tensorflow_core/python/client/session.py", line 1460, in __init__
     #     session._session, options_ptr)
     K.clear_session()
-    
+
     model = Sequential()
 
     layer_list = list(range(0, len(gParameters['conv']), 3))

@@ -84,7 +84,7 @@ def load_data(train_path, test_path, gParameters):
     # check if noise is on for RNA-seq data
     elif gParameters['noise_gaussian']:
         X_train = candle.add_gaussian_noise(X_train, 0, gParameters['std_dev'])
-	    
+
     return X_train, Y_train, X_test, Y_test
 
 

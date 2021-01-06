@@ -354,7 +354,7 @@ class RunType(Enum):
 
 class RunStat(Enum):        # subplan execution status
     SCHEDULED = 'scheduled'
-    COMPLETE  = 'complete'
+    COMPLETE = 'complete'
 
 # planstat table, rows are returned via the PlanstatRow namedtuple
 
@@ -556,7 +556,7 @@ def db_connect(db_path):
 
     # create plan management tables on initial database allocation
     if conn and not prev_allocated:
-        complete  = execute_sql_stmt(conn, _planstat_ddl)
+        complete = execute_sql_stmt(conn, _planstat_ddl)
         complete &= execute_sql_stmt(conn, _runhist_ddl)
 
         if complete:
@@ -583,10 +583,10 @@ def plan_remove(db_path, plan_path):
     conn = db_connect(db_path)
     plan_key = _get_planstat_key(plan_path)
     stmt = _select_row_from_planstat.format(plan_key)
-    csr  = conn.cursor()
+    csr = conn.cursor()
     execute_sql_stmt(conn, stmt, cursor=csr)
     nrow = csr.rowcount
-    row  = csr.fetchone()
+    row = csr.fetchone()
 
     print("%d run history rows deleted" % nrow)
 
@@ -646,19 +646,19 @@ def plan_prep(db_path, plan_path, run_type=RunType.RUN_ALL):
     """
 
     # load the plan and retrieve identity info
-    plan_dict    = load_plan(plan_path)
-    create_date  = get_plan_create_date(plan_dict)
+    plan_dict = load_plan(plan_path)
+    create_date = get_plan_create_date(plan_dict)
     feature_sets = get_plan_fs_names(plan_dict)
-    partitions   = get_plan_fs_parts(plan_dict)
-    nbr_subplans    = get_plan_nbr_subplans(plan_dict)
+    partitions = get_plan_fs_parts(plan_dict)
+    nbr_subplans = get_plan_nbr_subplans(plan_dict)
 
     # de    termine if a plan of the given name has already been registered
     conn = db_connect(db_path)
     plan_key = _get_planstat_key(plan_path)
     stmt = _select_row_from_planstat.format(plan_key)
-    csr  = conn.cursor()
+    csr = conn.cursor()
     execute_sql_stmt(conn, stmt, cursor=csr)
-    row  = csr.fetchone()
+    row = csr.fetchone()
 
     if not row:
         rowid = -1
@@ -684,7 +684,7 @@ def plan_prep(db_path, plan_path, run_type=RunType.RUN_ALL):
     if not error and rowid < 0:
         feature_sets = str(feature_sets)
         feature_sets = feature_sets.replace("'", "")  # create string literal from list of str
-        partitions   = str(partitions)               # create string literal from list of int
+        partitions = str(partitions)               # create string literal from list of int
 
         stmt = _insert_planstat_plan.format(
             plan_key,
@@ -729,7 +729,7 @@ def start_subplan(db_path, plan_path, plan_id=None, subplan_id=None, run_type=No
     """
 
     conn = db_connect(db_path)
-    csr  = conn.cursor()
+    csr = conn.cursor()
     skip = False
 
     # skip previously completed work if RESTART
@@ -786,8 +786,8 @@ def stop_subplan(db_path, plan_id=None, subplan_id=None, comp_info_dict={}):
     """
 
     conn = db_connect(db_path)
-    csr  = conn.cursor()
-    curr_time  = datetime.now()
+    csr = conn.cursor()
+    curr_time = datetime.now()
     stop_time = curr_time.isoformat(timespec=ISO_TIMESTAMP)
 
     comp_dict = dict(mae=0.0, mse=0.0, r_square=0.0, weights_fn='N/A', unprocessed='')
@@ -807,8 +807,8 @@ def stop_subplan(db_path, plan_id=None, subplan_id=None, comp_info_dict={}):
         runhist_rec = RunhistRow._make(row)
         if runhist_rec.status != RunStat.COMPLETE.name:
             start_time = datetime.strptime(runhist_rec.start_time, ISO_TIMESTAMP_ENCODE)
-            duration   = curr_time - start_time
-            run_mins   = int((duration.total_seconds() + 59) / 60)
+            duration = curr_time - start_time
+            run_mins = int((duration.total_seconds() + 59) / 60)
 
             # update runhist record
             stmt = _insupd_completed_runhist.format(
@@ -848,7 +848,7 @@ def get_subplan_runhist(db_path, plan_id=None, subplan_id=None):
     """
     conn = db_connect(db_path)
     stmt = _select_row_from_runhist.format(plan_id, subplan_id)
-    csr  = conn.cursor()
+    csr = conn.cursor()
     execute_sql_stmt(conn, stmt, csr)
     row = csr.fetchone()
 
@@ -880,7 +880,7 @@ def _get_planstat_key(plan_path):
 
 def _delete_runhistory(conn, plan_id):
     """Delete RunhistRows containing the given plan_id."""
-    csr  = conn.cursor()
+    csr = conn.cursor()
     stmt = _delete_from_runhistory.format(plan_id)
     execute_sql_stmt(conn, stmt, cursor=csr, trap_exception=True)
     rowcount = csr.rowcount
@@ -1369,7 +1369,7 @@ def test2(plan_path, db_path):
     # run_type = RunType.RUN_ALL
 
     plan_name = os.path.basename(plan_path)
-    plan_id   = plan_prep(db_path, plan_name, run_type)
+    plan_id = plan_prep(db_path, plan_name, run_type)
 
     plan_dict = load_plan(plan_path)
     metadata, root_name = get_subplan(plan_dict)
@@ -1421,7 +1421,7 @@ def test1(plan_path, db_path):
     # run_type = RunType.RUN_ALL
 
     plan_name = os.path.basename(plan_path)
-    plan_id   = plan_prep(db_path, plan_name, run_type)
+    plan_id = plan_prep(db_path, plan_name, run_type)
 
     if (plan_id < 0):
         sys.exit("Terminating due to database detected error")
@@ -1464,7 +1464,7 @@ def test1(plan_path, db_path):
             if status < 0:
                 print("subplan: %s skipped, previously processed" % name)
 
-        select_one  = successor_names[listlen - 1]
+        select_one = successor_names[listlen - 1]
         parent_name = get_predecessor(plan_dict, select_one)
         print("%-16s is a successor of %-16s - all successors: %s" % (select_one, parent_name, successor_names))
 

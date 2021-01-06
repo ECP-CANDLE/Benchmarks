@@ -117,8 +117,8 @@ def run(gParameters):
     OPTIMIZER = candle.build_optimizer(gParameters['optimizer'],
                                        gParameters['learning_rate'],
                                        kerasDefaults)
-    PL     = 6213   # 38 + 60483
-    PS     = 6212   # 60483
+    PL = 6213   # 38 + 60483
+    PS = 6212   # 60483
 
     X_train, Y_train, X_test, Y_test = load_data(nb_classes, PL, gParameters)
 

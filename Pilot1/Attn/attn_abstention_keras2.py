@@ -45,17 +45,17 @@ additional_definitions = [
      'default': 0.7,
      'help': 'min target abstention accuracy'},
     {'name': 'max_abs_frac',
-      'type': float,
-      'default': 0.7,
-      'help': 'max target abstention fraction'},
+     'type': float,
+     'default': 0.7,
+     'help': 'max target abstention fraction'},
     {'name': 'acc_gain',
-      'type': float,
-      'default': 5.0,
-      'help': 'factor to weight accuracy when determining new alpha scale'},
+     'type': float,
+     'default': 5.0,
+     'help': 'factor to weight accuracy when determining new alpha scale'},
     {'name': 'abs_gain',
-      'type': float,
-      'default': 1.0,
-      'help': 'factor to weight abstention fraction when determining new alpha scale'},
+     'type': float,
+     'default': 1.0,
+     'help': 'factor to weight abstention fraction when determining new alpha scale'},
 ]
 
 required = [
@@ -208,8 +208,8 @@ def run(params):
     # Get default parameters for initialization and optimizer functions
     keras_defaults = candle.keras_default_config()
 
-    ##
-    X_train, _Y_train, X_val, _Y_val, X_test, _Y_test  = attn.load_data(params, seed)
+    #
+    X_train, _Y_train, X_val, _Y_val, X_test, _Y_test = attn.load_data(params, seed)
 
     # move this inside the load_data function
     Y_train = _Y_train['AUC']
@@ -257,10 +257,10 @@ def run(params):
     mask = np.zeros(nb_classes + 1)
     mask[-1] = 1
     alpha0 = 0.5  # In the long term this is not as important since alpha auto tunes, however it may require a large number of epochs to converge if set far away from target
-    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abstention_acc', 
-                                                     abs_monitor='val_abstention', 
-                                                     alpha0=alpha0, 
-                                                     alpha_scale_factor=params['alpha_scale_factor'], 
+    abstention_cbk = candle.AbstentionAdapt_Callback(acc_monitor='val_abstention_acc',
+                                                     abs_monitor='val_abstention',
+                                                     alpha0=alpha0,
+                                                     alpha_scale_factor=params['alpha_scale_factor'],
                                                      min_abs_acc=params['min_abs_acc'],
                                                      max_abs_frac=params['max_abs_frac'],
                                                      acc_gain=params['acc_gain'],
@@ -281,9 +281,9 @@ def run(params):
     model.compile(
         loss=candle.abstention_loss(abstention_cbk.alpha, mask),
         optimizer=optimizer,
-        metrics=['acc', tf_auc, 
-                 candle.abstention_acc_metric(nb_classes), 
-                 candle.acc_class_i_metric(1), 
+        metrics=['acc', tf_auc,
+                 candle.abstention_acc_metric(nb_classes),
+                 candle.acc_class_i_metric(1),
                  candle.abstention_acc_class_i_metric(nb_classes, 1),
                  candle.abstention_metric(nb_classes)])
 
@@ -315,7 +315,7 @@ def run(params):
 
     epochs = params['epochs']
     batch_size = params['batch_size']
-    history = model.fit(X_train, Y_train,  class_weight=d_class_weights,
+    history = model.fit(X_train, Y_train, class_weight=d_class_weights,
                         batch_size=batch_size,
                         epochs=epochs,
                         verbose=1,
@@ -345,27 +345,26 @@ def run(params):
 
     attn.logger.handlers = []
     df_testX = pd.DataFrame(X_test)
-    #print('df_testX.shape: ', df_testX.shape)
+    # print('df_testX.shape: ', df_testX.shape)
     cols = ['Y_test' + str(i) for i in range(Y_test.shape[1])]
     df_testY = pd.DataFrame(Y_test, columns=cols)
-    #print('df_testY.shape: ', df_testY.shape)
+    # print('df_testY.shape: ', df_testY.shape)
     df_test = pd.concat([df_testY, df_testX], axis=1)
-    #print('df_test.shape: ', df_test.shape)
+    # print('df_test.shape: ', df_test.shape)
     cols = ['Y_pred' + str(i) for i in range(Y_predict.shape[1])]
     df_pred = pd.DataFrame(Y_predict, columns=cols)
-    #print('df_pred.shape: ', df_pred.shape)
+    # print('df_pred.shape: ', df_pred.shape)
     df_test = pd.concat([df_pred, df_test], axis=1).reset_index(drop=True)
-    #print('df_test.shape: ', df_test.shape)
+    # print('df_test.shape: ', df_test.shape)
     fname = params['save_path'] + root_fname + '.dftest.tsv'
     df_test.to_csv(fname, sep='\t', index=False, float_format="%.3g")
-
 
     return history
 
 
 def evaluate_abstention(params, root_fname, nb_classes, Y_test, _Y_test, Y_predict, pos, total, score):
-    Y_pred_int  = np.argmax(Y_predict, axis=1).astype(np.int)
-    Y_test_int  = np.argmax(Y_test, axis=1).astype(np.int)
+    Y_pred_int = np.argmax(Y_predict, axis=1).astype(np.int)
+    Y_test_int = np.argmax(Y_test, axis=1).astype(np.int)
 
     # Get samples where it abstains from predicting
     Y_pred_abs = (Y_pred_int == nb_classes).astype(np.int)

@@ -193,7 +193,7 @@ def run(params):
     keras_defaults = candle.keras_default_config()
 
     ##
-    X_train, _Y_train, X_val, _Y_val, X_test, _Y_test  = attn.load_data(params, seed)
+    X_train, _Y_train, X_val, _Y_val, X_test, _Y_test = attn.load_data(params, seed)
 
     # move this inside the load_data function
     Y_train = _Y_train['AUC']
@@ -312,7 +312,7 @@ def evaluate_model(params, root_fname, nb_classes, Y_test, _Y_test, Y_predict, p
 
     threshold = 0.5
 
-    Y_pred_int  = (Y_predict[:, 0] < threshold).astype(np.int)
+    Y_pred_int = (Y_predict[:, 0] < threshold).astype(np.int)
     Y_test_int = (Y_test[:, 0] < threshold).astype(np.int)
 
     print('creating table of predictions')
