@@ -55,11 +55,6 @@ def init_export_network(task_names,
         if i in task_list:
             outlayer = Dense(num_classes[i], name=task_names[i], activation='softmax')(concat_drop)  # , kernel_regularizer=l2(0.01))(concat_drop)
             FC_models.append(outlayer)
-    '''
-    for i in range(len(num_classes)):
-        outlayer = Dense(num_classes[i], name="Dense"+str(i), activation='softmax')(concat_drop)#, kernel_regularizer=l2(0.01))(concat_drop)
-        FC_models.append(outlayer)
-    '''
 
     # the multitsk model
     model = Model(inputs=model_input, outputs=FC_models)
