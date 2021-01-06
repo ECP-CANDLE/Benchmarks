@@ -91,9 +91,9 @@ additional_definitions = [
         "help": "type of sample weighting: choices ['linear', 'quadratic', 'inverse_samples', 'inverse_samples_sqrt']",
     },
     # {'name':'shuffle',
-    #'type': candle.str2bool,
-    #'default': False,
-    #'help':'shuffle data'},
+    #  'type': candle.str2bool,
+    #  'default': False,
+    #  'help':'shuffle data'},
     {
         "name": "use_tb",
         "type": candle.str2bool,
@@ -184,6 +184,7 @@ def extension_from_parameters(params, framework=""):
 
     return ext
 
+
 def load_headers(desc_headers, train_headers, header_url):
 
     desc_headers = candle.get_file(
@@ -210,6 +211,7 @@ def load_headers(desc_headers, train_headers, header_url):
 
     return dh_dict, th_list
 
+
 def load_data(params, seed):
     header_url = params["header_url"]
     dh_dict, th_list = load_headers('descriptor_headers.csv', 'training_headers.csv', header_url)
@@ -217,8 +219,8 @@ def load_data(params, seed):
     desc_col_idx = [dh_dict[key] + offset for key in th_list]
 
     url = params["data_url"]
-    file_train = 'ml.'+params['base_name']+'.Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet'
-    #file_train = params["train_data"]
+    file_train = 'ml.' + params['base_name'] + '.Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet'
+    # file_train = params["train_data"]
     train_file = candle.get_file(
         file_train, url + file_train, cache_subdir="Pilot1"
     )
@@ -243,12 +245,13 @@ def load_data(params, seed):
     scaler = StandardScaler()
     df_x = scaler.fit_transform(df_x)
 
-    X_train, X_test, Y_train, Y_test = train_test_split(df_x, df_y, test_size= 0.20, random_state=42)
+    X_train, X_test, Y_train, Y_test = train_test_split(df_x, df_y, test_size=0.20, random_state=42)
 
     print('x_train shape:', X_train.shape)
     print('x_test shape:', X_test.shape)
 
     return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
+
 
 '''
 def load_data(params, seed):

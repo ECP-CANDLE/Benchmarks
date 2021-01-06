@@ -15,7 +15,7 @@ from operations import (
 )
 
 
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("darts_advanced")
 
 
@@ -49,7 +49,7 @@ def run(params):
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
-            batch_size=args.batch_size, shuffle=True)
+        batch_size=args.batch_size, shuffle=True)
 
     validloader = torch.utils.data.DataLoader(
         datasets.MNIST(
@@ -58,7 +58,7 @@ def run(params):
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
-            batch_size=args.batch_size, shuffle=True)
+        batch_size=args.batch_size, shuffle=True)
 
     tasks = {
         'digits': 10,
@@ -214,5 +214,5 @@ def main():
     run(params)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

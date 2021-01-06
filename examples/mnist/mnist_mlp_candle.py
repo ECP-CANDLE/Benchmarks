@@ -4,8 +4,10 @@ from keras import backend as K
 import mnist
 import candle
 
+
 def initialize_parameters():
-    mnist_common = mnist.MNIST(mnist.file_path,
+    mnist_common = mnist.MNIST(
+        mnist.file_path,
         'mnist_params.txt',
         'keras',
         prog='mnist_mlp',
@@ -17,6 +19,7 @@ def initialize_parameters():
     csv_logger = CSVLogger('{}/params.log'.format(gParameters))
 
     return gParameters
+
 
 def run(gParameters):
     ##########################################
@@ -70,8 +73,8 @@ def run(gParameters):
     model.summary()
 
     model.compile(loss='categorical_crossentropy',
-                optimizer=optimizer,
-                metrics=['accuracy'])
+                  optimizer=optimizer,
+                  metrics=['accuracy'])
 
     history = model.fit(x_train, y_train,
                         batch_size=batch_size,
@@ -86,9 +89,11 @@ def run(gParameters):
     ##########################################
     return history
 
+
 def main():
     gParameters = initialize_parameters()
     run(gParameters)
+
 
 if __name__ == '__main__':
     main()

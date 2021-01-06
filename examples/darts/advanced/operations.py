@@ -4,8 +4,8 @@ import torch.nn.functional as F
 
 """ DARTS operations contstructor """
 OPS = {
-    'none'    : lambda c, stride, affine: Identity(),
-    'conv_3'  : lambda c, stride, affine: ConvBlock(c, c, 3, stride),
+    'none': lambda c, stride, affine: Identity(),
+    'conv_3': lambda c, stride, affine: ConvBlock(c, c, 3, stride),
     'dil_conv': lambda c, stride, affine: DilConv(c, c, 3, stride, 2, 2, affine=affine)
 }
 
@@ -24,7 +24,7 @@ class Stem(nn.Module):
         cell_dim: the intermediate dimension size for
                   the remaining modules of the network.
     """
-    def __init__(self, in_channels: int=1, cell_dim: int=100, kernel_size=3):
+    def __init__(self, in_channels: int = 1, cell_dim: int = 100, kernel_size=3):
         super(Stem, self).__init__()
         self.stem = nn.Conv2d(in_channels, cell_dim, kernel_size)
 
@@ -91,4 +91,3 @@ class Identity(nn.Module):
 
     def forward(self, x):
         return x
-

@@ -4,8 +4,10 @@ from keras import backend as K
 import mnist
 import candle
 
+
 def initialize_parameters():
-    mnist_common = mnist.MNIST(mnist.file_path,
+    mnist_common = mnist.MNIST(
+        mnist.file_path,
         'mnist_params.txt',
         'keras',
         prog='mnist_cnn',
@@ -17,6 +19,7 @@ def initialize_parameters():
     csv_logger = CSVLogger('{}/params.log'.format(gParameters))
 
     return gParameters
+
 
 def run(gParameters):
     ##########################################
@@ -75,8 +78,8 @@ def run(gParameters):
 
     model = Sequential()
     model.add(Conv2D(32, kernel_size=(3, 3),
-                    activation='relu',
-                    input_shape=input_shape))
+                     activation='relu',
+                     input_shape=input_shape))
     model.add(Conv2D(64, (3, 3), activation='relu'))
     model.add(MaxPooling2D(pool_size=(2, 2)))
     model.add(Dropout(0.25))
@@ -86,14 +89,14 @@ def run(gParameters):
     model.add(Dense(num_classes, activation='softmax'))
 
     model.compile(loss=keras.losses.categorical_crossentropy,
-                optimizer=keras.optimizers.Adadelta(),
-                metrics=['accuracy'])
+                  optimizer=keras.optimizers.Adadelta(),
+                  metrics=['accuracy'])
 
     history = model.fit(x_train, y_train,
-            batch_size=batch_size,
-            epochs=epochs,
-            verbose=1,
-            validation_data=(x_test, y_test))
+                        batch_size=batch_size,
+                        epochs=epochs,
+                        verbose=1,
+                        validation_data=(x_test, y_test))
     score = model.evaluate(x_test, y_test, verbose=0)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
@@ -103,10 +106,12 @@ def run(gParameters):
 
     return history
 
+
 def main():
 
     gParameters = initialize_parameters()
     run(gParameters)
+
 
 if __name__ == '__main__':
     main()

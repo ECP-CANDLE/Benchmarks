@@ -1,30 +1,15 @@
 from __future__ import print_function
 
-#import itertools
-#import pandas as pd
 import numpy as np
-#import os
-#import sys
-#import gzip
-#import argparse
-#import sklearn
-
 import matplotlib
-
 matplotlib.use("Agg")
-
 import matplotlib.pyplot as plt
 
 import tensorflow as tf
 
-#import keras as ke
 from keras import backend as K
-
 from keras.layers import Input, Dense, Dropout, Activation, BatchNormalization
-#from keras.optimizers import SGD, Adam, RMSprop, Adadelta
 from keras.models import Sequential, Model, model_from_json, model_from_yaml
-#from keras.utils import np_utils, multi_gpu_model
-
 from keras.callbacks import (
     Callback,
     ModelCheckpoint,
@@ -38,21 +23,9 @@ from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     r2_score,
-    #mean_squared_error,
-    #mean_absolute_error,
     roc_auc_score,
-    #confusion_matrix,
-    #balanced_accuracy_score,
-    #classification_report,
 )
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-#from sklearn.metrics import (
-    #recall_score,
-    #auc,
-    #roc_curve,
-    #f1_score,
-    #precision_recall_curve,
-#)
 
 import adrp
 import candle
@@ -89,7 +62,7 @@ def auroc(y_true, y_pred):
     return score
 
 
-#def covariance(x, y):
+# def covariance(x, y):
 #    return K.mean(x * y) - K.mean(x) * K.mean(y)
 
 
@@ -100,11 +73,11 @@ def corr(y_true, y_pred):
     return cov / (K.sqrt(var1 * var2) + K.epsilon())
 
 
-#def xent(y_true, y_pred):
+# def xent(y_true, y_pred):
 #    return binary_crossentropy(y_true, y_pred)
 
 
-#def mse(y_true, y_pred):
+# def mse(y_true, y_pred):
 #    return mean_squared_error(y_true, y_pred)
 
 
@@ -315,8 +288,8 @@ def run(params):
     )
     csv_logger = CSVLogger(params["save_path"] + "agg_adrp.training.log")
 
-    #min_lr = params['learning_rate']*params['reduce_ratio']
-    min_lr=0.000000001
+    # min_lr = params['learning_rate']*params['reduce_ratio']
+    min_lr = 0.000000001
     reduce_lr = ReduceLROnPlateau(
         monitor="val_loss",
         factor=0.75,
@@ -333,8 +306,8 @@ def run(params):
                                verbose=1,
                                mode="auto")
 
-    #count_array = np.random.random_integers(0, 10000, 20)
-    #print(count_array)
+    # count_array = np.random.random_integers(0, 10000, 20)
+    # print(count_array)
 
     # history = parallel_model.fit(X_train, Y_train,
     epochs = params["epochs"]
@@ -385,7 +358,7 @@ def run(params):
     print("Test weight:")
     print(test_weight[:10, ])
 
-    print("calling model.fit with epochs={}".format(epochs))    
+    print("calling model.fit with epochs={}".format(epochs))
     history = model.fit(
         X_train,
         Y_train,

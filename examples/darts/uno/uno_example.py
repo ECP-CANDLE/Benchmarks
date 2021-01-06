@@ -10,7 +10,7 @@ import example_setup as bmk
 import darts
 import candle
 
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("darts_uno")
 
 
@@ -165,7 +165,6 @@ def train(trainloader,
     meter.save(args.save_path)
 
 
-
 def validate(validloader, model, criterion, args, tasks, meter, device):
     model.eval()
     with torch.no_grad():
@@ -195,5 +194,5 @@ def main():
     run(params)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()
