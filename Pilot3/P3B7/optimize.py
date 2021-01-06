@@ -13,7 +13,7 @@ from util import to_device
 from meters import AccuracyMeter
 
 from prune import (
-   create_prune_masks, remove_prune_masks
+    create_prune_masks, remove_prune_masks
 )
 
 
@@ -59,7 +59,7 @@ def create_data_loaders(datapath):
     """Initialize data loaders
 
     Args:
-        datapath: path to the synthetic data 
+        datapath: path to the synthetic data
 
     Returns:
         train, valid, test data loaders
@@ -115,11 +115,11 @@ def run(args):
     train_loader, valid_loader = create_data_loaders(datapath)
 
     hparams = Hparams(
-        kernel1   = args.kernel1,
-        kernel2   = args.kernel2,
-	kernel3   = args.kernel3, 
-	embed_dim = args.embed_dim,
-	n_filters = args.n_filters,
+        kernel1=args.kernel1,
+        kernel2=args.kernel2,
+        kernel3=args.kernel3,
+        embed_dim=args.embed_dim,
+        n_filters=args.n_filters,
     )
 
     model = MTCNN(TASKS, hparams)
@@ -146,4 +146,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

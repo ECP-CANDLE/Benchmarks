@@ -1,7 +1,7 @@
 import torch
 import argparse
-#import candle
-#import p3b6 as bmk
+# import candle
+# import p3b6 as bmk
 
 import numpy as np
 import horovod.torch as hvd
@@ -41,7 +41,7 @@ def parse_args():
                         help='weight decay')
     parser.add_argument('--device', type=str, default='cuda',
                         help='path to the model weights')
-    parser.add_argument('--pretrained_weights_path', type=str, 
+    parser.add_argument('--pretrained_weights_path', type=str,
                         help='path to the model weights')
 
     return parser.parse_args()
@@ -180,9 +180,9 @@ def validate(dataloader, model, args, epoch):
 
 
 def run(args):
-    #args = candle.ArgumentStruct(**params)
-    #args.cuda = torch.cuda.is_available()
-    #args.device = torch.device(f"cuda" if args.cuda else "cpu")
+    # args = candle.ArgumentStruct(**params)
+    # args.cuda = torch.cuda.is_available()
+    # args.device = torch.device(f"cuda" if args.cuda else "cpu")
 
     train_loader, train_sampler, valid_loader, test_loader = create_data_loaders(args)
 
@@ -212,11 +212,10 @@ def run(args):
 
 
 def main():
-    #params = initialize_parameters()
+    # params = initialize_parameters()
     # Temporarily use argparse
     params = parse_args()
     run(params)
-
 
 
 if __name__ == "__main__":

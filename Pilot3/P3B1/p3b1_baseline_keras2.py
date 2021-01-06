@@ -23,7 +23,7 @@ def initialize_parameters(default_model='p3b1_default_model.txt'):
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b1Bmk)
-    #bmk.logger.info('Params: {}'.format(gParameters))
+    # bmk.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
 
@@ -274,9 +274,9 @@ def run(gParameters):
     avg_loss /= float(gParameters['n_fold'])
 
     for task in range(n_feat):
-        print('Task', task+1, ':', features[task], '- Macro F1 score',
+        print('Task', task + 1, ':', features[task], '- Macro F1 score',
               f1_score(truth_array[task], pred_array[task], average='macro'))
-        print('Task', task+1, ':', features[task], '- Micro F1 score',
+        print('Task', task + 1, ':', features[task], '- Micro F1 score',
               f1_score(truth_array[task], pred_array[task], average='micro'))
 
     return avg_loss

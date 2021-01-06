@@ -21,7 +21,7 @@ class AccuracyMeter:
             self.accuracies[task] = acc
 
     def get_accuracy(self):
-         return self.accuracies
+        return self.accuracies
 
     def print_task_accuracies(self):
         for task, acc in self.accuracies.items():

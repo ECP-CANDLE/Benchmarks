@@ -23,7 +23,7 @@ def initialize_parameters(default_model='p3b2_default_model.txt'):
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b2Bmk)
-    #bmk.logger.info('Params: {}'.format(gParameters))
+    # bmk.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
 
@@ -50,7 +50,7 @@ def run(gParameters):
 
     origin = gParameters['data_url']
     train_data = gParameters['train_data']
-    data_loc = candle.fetch_file(origin+train_data, untar=True, md5_hash=None, subdir='Pilot3')
+    data_loc = candle.fetch_file(origin + train_data, untar=True, md5_hash=None, subdir='Pilot3')
 
     print('Data downloaded and stored at: ' + data_loc)
     data_path = os.path.dirname(data_loc)
@@ -64,7 +64,7 @@ def run(gParameters):
     dropout = gParameters['dropout']
     recurrent_dropout = gParameters['recurrent_dropout']
     n_epochs = gParameters['epochs']
-    data_train = data_path+'/data.pkl'
+    data_train = data_path + '/data.pkl'
     verbose = gParameters['verbose']
     savedir = gParameters['output_dir']
     do_sample = gParameters['do_sample']

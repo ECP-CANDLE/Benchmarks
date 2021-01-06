@@ -28,7 +28,7 @@ def remove_prune_masks(model: nn.Module):
     """Remove the `model` pruning masks.
 
     This is called after training with pruning so that
-    we can save our model weights without the 
+    we can save our model weights without the
     reparametrization of pruning.
 
     Args:
