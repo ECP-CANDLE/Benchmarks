@@ -46,8 +46,8 @@ def full_conv_mol_auto(bead_k_size=20, mol_k_size=12, weights_path=None, input_s
             encoded = Dropout(drop)(encoded)
 
         elif i == 2:
-            encoded = Convolution2D(l, input_shape[1]/(mol_k_size*bead_k_size),
-                                    strides=(1, input_shape[1]/(mol_k_size*bead_k_size)), padding='same',
+            encoded = Convolution2D(l, input_shape[1] / (mol_k_size * bead_k_size),
+                                    strides=(1, input_shape[1] / (mol_k_size * bead_k_size)), padding='same',
                                     activation=nonlinearity, kernel_regularizer=l2(l2_reg),
                                     kernel_initializer='glorot_normal', use_bias=bias)(encoded)
             encoded = BatchNormalization()(encoded)
@@ -67,16 +67,16 @@ def full_conv_mol_auto(bead_k_size=20, mol_k_size=12, weights_path=None, input_s
             encoded = Dropout(drop)(encoded)
 
     for i, l in reversed(list(enumerate(hidden_layers))):
-        if i < len(hidden_layers)-1:
-            if i == len(hidden_layers)-2:
+        if i < len(hidden_layers) - 1:
+            if i == len(hidden_layers) - 2:
                 decoded = Conv2DTranspose(l, 1, strides=(1, 1), padding='same',
                                           activation=nonlinearity, kernel_regularizer=l2(l2_reg),
                                           kernel_initializer='glorot_normal', use_bias=bias)(encoded)
                 decoded = BatchNormalization()(decoded)
                 decoded = Dropout(drop)(decoded)
             elif i == 1:
-                decoded = Conv2DTranspose(l, input_shape[1]/(mol_k_size*bead_k_size),
-                                          strides=(1, input_shape[1]/(mol_k_size*bead_k_size)), padding='same',
+                decoded = Conv2DTranspose(l, input_shape[1] / (mol_k_size * bead_k_size),
+                                          strides=(1, input_shape[1] / (mol_k_size * bead_k_size)), padding='same',
                                           activation=nonlinearity, kernel_regularizer=l2(l2_reg),
                                           kernel_initializer='glorot_normal', use_bias=bias)(decoded)
                 decoded = BatchNormalization()(decoded)
@@ -144,8 +144,8 @@ def conv_dense_mol_auto(bead_k_size=20, mol_k_size=12, weights_path=None, input_
             encoded = Dropout(drop)(encoded)
 
     for i, l in reversed(list(enumerate(hidden_layers))):
-        if i < len(hidden_layers)-1:
-            if i == len(hidden_layers)-2:
+        if i < len(hidden_layers) - 1:
+            if i == len(hidden_layers) - 2:
                 decoded = Dense(l, activation=nonlinearity, kernel_regularizer=l2(l2_reg),
                                 kernel_initializer='glorot_normal', use_bias=bias)(encoded)
                 decoded = BatchNormalization()(decoded)
@@ -190,8 +190,8 @@ def dense_auto(weights_path=None, input_shape=(784,), hidden_layers=None, nonlin
             encoded = Dropout(drop)(encoded)
 
     for i, l in reversed(list(enumerate(hidden_layers))):
-        if i < len(hidden_layers)-1:
-            if i == len(hidden_layers)-2:
+        if i < len(hidden_layers) - 1:
+            if i == len(hidden_layers) - 2:
                 decoded = Dense(l, activation=nonlinearity, kernel_regularizer=l2(l2_reg))(encoded)
                 decoded = BatchNormalization()(decoded)
                 decoded = Dropout(drop)(decoded)
@@ -211,22 +211,23 @@ def dense_auto(weights_path=None, input_shape=(784,), hidden_layers=None, nonlin
 
     return model, encoder
 
-def dense_simple(weights_path=None,input_shape=(784,),nonlinearity='relu'):
-    model=Sequential()
-    ## encoder
-    model.add(Dense(512,input_shape=input_shape,activation=nonlinearity))
+
+def dense_simple(weights_path=None, input_shape=(784,), nonlinearity='relu'):
+    model = Sequential()
+    # encoder
+    model.add(Dense(512, input_shape=input_shape, activation=nonlinearity))
     BatchNormalization()
-    model.add(Dense(256,activation=nonlinearity))
+    model.add(Dense(256, activation=nonlinearity))
     BatchNormalization()
-    model.add(Dense(128,activation=nonlinearity))
+    model.add(Dense(128, activation=nonlinearity))
     BatchNormalization()
-    model.add(Dense(64,activation=nonlinearity))
+    model.add(Dense(64, activation=nonlinearity))
     BatchNormalization()
-    model.add(Dense(32,activation=nonlinearity))
+    model.add(Dense(32, activation=nonlinearity))
     BatchNormalization()
-    model.add(Dense(16,activation=nonlinearity))
+    model.add(Dense(16, activation=nonlinearity))
     BatchNormalization()
-    ## decoder
+    # decoder
     model.add(Dense(32))
     BatchNormalization()
     model.add(Dense(64))
@@ -237,7 +238,7 @@ def dense_simple(weights_path=None,input_shape=(784,),nonlinearity='relu'):
     BatchNormalization()
     model.add(Dense(512))
     BatchNormalization()
-    model.add(Dense(input_shape[0],activation='linear'))
+    model.add(Dense(input_shape[0], activation='linear'))
     if weights_path:
         print('Loading Model')
         model.load_weights(weights_path)
