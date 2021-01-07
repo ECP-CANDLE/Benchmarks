@@ -7,12 +7,13 @@ import numpy as np
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from data import P3B3
+from data import P3B3, Egress
 from mtcnn import MTCNN, Hparams
 from util import to_device
 from meters import AccuracyMeter
 
 from prune import (
+    negative_prune, min_max_prune,
     create_prune_masks, remove_prune_masks
 )
 
@@ -23,6 +24,21 @@ TASKS = {
     'behavior': 3,
     'grade': 3,
 }
+
+TASKS = {
+    'site': 70,
+    'subsite': 325,
+    'laterality': 7,
+    'histology': 575,
+    'behaviour': 4,
+    'grade': 9 
+}
+
+TRAIN_F1_MICRO = F1Meter(TASKS, 'micro')
+VALID_F1_MICRO = F1Meter(TASKS, 'micro')
+
+TRAIN_F1_MACRO = F1Meter(TASKS, 'macro')
+VALID_F1_MACRO = F1Meter(TASKS, 'macro')
 
 
 def initialize_parameters():
@@ -55,7 +71,7 @@ def fetch_data(gParameters):
     return fpath
 
 
-def create_data_loaders(datapath):
+def get_synthetic_data(args):
     """Initialize data loaders
 
     Args:
@@ -64,23 +80,41 @@ def create_data_loaders(datapath):
     Returns:
         train, valid, test data loaders
     """
+    datapath = fetch_data(args)
     train_data = P3B3(datapath, 'train')
     valid_data = P3B3(datapath, 'test')
-
     trainloader = DataLoader(train_data, batch_size=args.batch_size)
     validloader = DataLoader(valid_data, batch_size=args.batch_size)
     return trainloader, validloader
 
 
-def train(dataloader, model, optimizer, criterion, args, epoch):
+def get_egress_data(args, tasks):
+    """Initialize egress tokenized data loaders
+
+    Args:
+        args: CANDLE ArgumentStruct
+        tasks: dictionary of the number of classes for each task
+
+    Returns:
+        train, valid, test data loaders
+    """
+    train_data = Egress('./data', 'train')
+    valid_data = Egress('./data', 'valid')
+    train_loader = DataLoader(train_data, batch_size=args.batch_size)
+    valid_loader = DataLoader(valid_data, batch_size=args.batch_size)
+    return train_loader, valid_loader
+
+
+def train(dataloader, model, optimizer, args, epoch):
     model.train()
 
     epoch_loss = 0.0
     for idx, (data, target) in enumerate(dataloader):
         optimizer.zero_grad()
-        data = data.to(device)
-        target = to_device(target, device)
+        data, target = data.to(device), to_device(target, device)
         logits = model(data)
+        _ = TRAIN_F1_MICRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
+        _ = TRAIN_F1_MACRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
         loss = model.loss_value(logits, target, reduce="mean")
         loss.backward()
         optimizer.step()
@@ -99,6 +133,8 @@ def validate(dataloader, model, args, epoch):
             data = data.to(device)
             target = to_device(target, device)
             logits = model(data)
+            _ = VALID_F1_MICRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
+            _ = VALID_F1_MACRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
             accmeter.update(logits, target)
 
     accmeter.update_accuracy()
@@ -106,13 +142,22 @@ def validate(dataloader, model, args, epoch):
     accmeter.print_task_accuracies()
 
 
+def save_dataframe(metrics, filename):
+    """Save F1 metrics"""
+    df = pd.DataFrame(metrics, index=[0])
+    path = Path(ARGS.savepath).joinpath(f'f1/{filename}.csv')
+    df.to_csv(path, index=False)
+
+
 def run(args):
     args = candle.ArgumentStruct(**params)
     args.cuda = torch.cuda.is_available()
     args.device = torch.device(f"cuda" if args.cuda else "cpu")
 
-    datapath = fetch_data(args)
-    train_loader, valid_loader = create_data_loaders(datapath)
+    if args.use_synthetic:
+        train_loader, valid_loader = get_synthetic_data(args)
+    else:
+        train_loader, valid_loader = get_egress_data(tasks)
 
     hparams = Hparams(
         kernel1=args.kernel1,
@@ -130,10 +175,8 @@ def run(args):
         model.parameters(), lr=args.learning_rate, eps=args.eps
     )
 
-    criterion = nn.CrossEntropyLoss().to(device)
-
     for epoch in range(args.num_epochs):
-        train(train_loader, model, optimizer, criterion, args, epoch)
+        train(train_loader, model, optimizer, args, epoch)
         validate(valid_loader, model, args, epoch)
 
     model = remove_prune_masks(model)
