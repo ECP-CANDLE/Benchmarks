@@ -200,12 +200,14 @@ def run(gParameters):
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
+    ckpt = candle.CandleCheckpointCallback(".", checksum_model=True)
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],
                         epochs=gParameters['epochs'],
                         verbose=1,
                         validation_data=(X_test, Y_test),
-                        callbacks=[csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor])
+                        callbacks=[csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor,
+                                   ckpt])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
