@@ -265,3 +265,54 @@ class MultiGPUCheckpoint(ModelCheckpoint):
             self.model = model.layers[-2]
         else:
             self.model = model
+
+class CandleCheckpointCallback(Callback):
+
+    """
+    Keras Callback for CANDLE-compliant Benchmarks to use for checkpointing
+    Creates a JSON file alongside the weights and optimizer checkpoints
+    that includes important metadata, particularly for restarting and
+    tracking complex workflows.
+    """
+
+    def __init__(self, model_file, optimizer_file=None, logger=None,
+                 save_best_only=True, save_weights_only=True,
+                 save_best_stat=None,
+                 metadata=None):
+        """
+        Parameters
+        ----------
+            model_file : string
+                Main model weights checkpoint file.
+                Must be a writable file path.
+            optimizer_file : string
+                Checkpoint file for optimizer state.
+                May be None to disable.
+            logger : Logger
+                The logger to use.
+                May be None to disable.
+            save_best_only : boolean
+                If true, only save when save_best_stat has improved.
+            save_best_stat : string
+                Required when save_best_only=True, else unused.
+                The stat in logs.model to track for improvement.
+            metadata : string
+                Arbitrary string to add to the JSON file regarding
+                hardware location, etc.
+        """
+        self.model_file = model_file
+        self.optimizer_file = optimizer_file
+        self.logger = logger
+        self.save_best_only = save_best_only
+        self.save_best_stat = save_best_stat
+        self.save_weights_only = save_weights_only
+        self.metadata = metadata
+
+    def on_epoch_end(self, epoch, logs):
+        pass
+        # super.on_epoch_end() # to save/ckpt-work # takes longer
+        # checksum save/ckpt-work/h5 # optionally
+        # rename save/ckpt-latest to save/ckpt-old # copy h5?
+        # # ^ obliterates old ckpt-old
+        # write to save/ckpt-work/ckpt-info.json
+        # atomic-rename save/ckpt-work to save/ckpt-latest
