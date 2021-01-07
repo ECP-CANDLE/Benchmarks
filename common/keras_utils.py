@@ -278,7 +278,8 @@ class CandleCheckpointCallback(Callback):
     def __init__(self, model_file, optimizer_file=None, logger=None,
                  save_best_only=True, save_weights_only=True,
                  save_best_stat=None,
-                 metadata=None):
+                 checksum_model=False, checksum_optimizer=False,
+                 metadata=None, clean=True):
         """
         Parameters
         ----------
@@ -296,9 +297,19 @@ class CandleCheckpointCallback(Callback):
             save_best_stat : string
                 Required when save_best_only=True, else unused.
                 The stat in logs.model to track for improvement.
+            checksum_model : boolean
+                If True, compute a checksum for the model
+                and store it in the JSON
+            checksum_optimizer : boolean
+                If True, compute a checksum for the optimizer
+                and store it in the JSON
             metadata : string
                 Arbitrary string to add to the JSON file regarding
-                hardware location, etc.
+                job ID, hardware location, etc.
+                May be None or an empty string.
+            clean : boolean
+                If True, remove old checkpoints immediately.
+                If False, one extra old checkpoint will remain on disk.
         """
         self.model_file = model_file
         self.optimizer_file = optimizer_file
@@ -306,13 +317,91 @@ class CandleCheckpointCallback(Callback):
         self.save_best_only = save_best_only
         self.save_best_stat = save_best_stat
         self.save_weights_only = save_weights_only
+        self.checksum_model = checksum_model
+        self.checksum_optimizer = checksum_optimizer
         self.metadata = metadata
+        self.timestamp_last = None
+        self.clean = clean
 
     def on_epoch_end(self, epoch, logs):
-        pass
-        # super.on_epoch_end() # to save/ckpt-work # takes longer
-        # checksum save/ckpt-work/h5 # optionally
-        # rename save/ckpt-latest to save/ckpt-old # copy h5?
-        # # ^ obliterates old ckpt-old
-        # write to save/ckpt-work/ckpt-info.json
-        # atomic-rename save/ckpt-work to save/ckpt-latest
+        """
+        Normally, ckpt-good is the best saved state.
+        When updating:
+        1. Write current state to ckpt-work
+        2. Rename ckpt-good to ckpt-old
+        3. Rename ckpt-work to ckpt-good
+        4. Delete ckpt-old
+        """
+        # print("logs: %s" % str(logs.keys()))
+        # TODO: Check save_best_only
+        dir_work = "save/ckpt-work"
+        dir_good = "save/ckpt-good"
+        dir_old  = "save/ckpt-old"
+        if not os.path.exists(dir_work):
+            os.makedirs(dir_work)
+        self.model.save(dir_work+"/model.h5", save_format="h5")
+        if self.optimizer_file is not None:
+            pass # TODO: optimizer_save()
+        self.checksums(dir_work)
+        self.write_json(dir_work+"/ckpt-info.json", epoch)
+        import shutil
+        if os.path.exists(dir_old):
+            shutil.rmtree(dir_old)
+        do_clean = self.clean
+        if os.path.exists(dir_good):
+            os.rename(dir_good, dir_old)
+        else:
+            do_clean = False
+        os.rename(dir_work, dir_good)
+        if do_clean:
+            shutil.rmtree(dir_old)
+
+    def checksums(self, dir_work):
+        """ Simple checksum dispatch """
+        if self.checksum_model:
+            self.cksum_model = \
+                self.checksum_file(dir_work+"/model.h5")
+        else:
+            self.cksum_model = "__DISABLED__"
+        if self.checksum_optimizer:
+            self.cksum_optimizer = \
+                self.checksum_file(dir_work+"/optimizer.h5")
+        else:
+            self.cksum_optimizer = "__DISABLED__"
+
+    def checksum_file(self, filename):
+        """ Read file, compute checksum, return it. """
+        import zlib
+        chunk_size = 10*1024*1024
+        with open(filename, "rb") as fp:
+            checksum = 0
+            while True:
+                chunk = fp.read(chunk_size)
+                if not chunk:
+                    break
+                checksum = zlib.crc32(chunk, checksum)
+        return str(checksum)
+
+    def write_json(self, jsonfile, epoch):
+        from datetime import datetime
+        now = datetime.now()
+        D = {}
+        D["epoch"] = epoch
+        D["save_best_only"] = self.save_best_only
+        D["save_best_stat"] = self.save_best_stat
+        D["model_file"] = "model.h5"
+        D["optimizer_file"] = "optimizer.h5"
+        D["checksum_model"] = self.cksum_model
+        D["checksum_optimizer"] = self.cksum_optimizer
+        D["timestamp"] = now.strftime("%Y-%m-%d %H:%M:%S")
+        if self.timestamp_last == None:
+            time_elapsed = "__FIRST__"
+        else:
+            time_elapsed = (now - self.timestamp_last).total_seconds()
+        self.timestamp_last = now
+        D["time_elapsed"] = time_elapsed
+        D["metadata"] = self.metadata
+        import json
+        with open(jsonfile, "w") as fp:
+            json.dump(D, fp)
+            fp.write("\n")
