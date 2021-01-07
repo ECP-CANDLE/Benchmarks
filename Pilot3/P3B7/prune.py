@@ -180,6 +180,21 @@ def negative_prune(module, name, amount):
     return module
 
 
+def get_layers_to_prune(model: nn.Module):
+    """Get layers to be pruned""" 
+    layers = []
+    for name, module in model.named_modules():
+        # prune amount % of connections in all 1D-conv layers
+        if isinstance(module, torch.nn.Conv1d):
+            layers.append((module, 'weight'))
+        # prune amount/2 of connections in all linear layers
+        elif isinstance(module, torch.nn.Linear):
+            layers.append((module, 'weight'))
+            print(f'Pruning {module}')
+
+    return layers
+
+
 def create_prune_masks(model: nn.Module):
     """Update the `model` with pruning masks.
 
