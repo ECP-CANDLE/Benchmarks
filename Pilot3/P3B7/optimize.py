@@ -78,17 +78,15 @@ def get_synthetic_data(args):
         datapath: path to the synthetic data
 
     Returns:
-        train, valid, test data loaders
+        train and valid data
     """
     datapath = fetch_data(args)
     train_data = P3B3(datapath, 'train')
     valid_data = P3B3(datapath, 'test')
-    trainloader = DataLoader(train_data, batch_size=args.batch_size)
-    validloader = DataLoader(valid_data, batch_size=args.batch_size)
-    return trainloader, validloader
+    return train_data, valid_data
 
 
-def get_egress_data(args, tasks):
+def get_egress_data(tasks):
     """Initialize egress tokenized data loaders
 
     Args:
@@ -96,20 +94,18 @@ def get_egress_data(args, tasks):
         tasks: dictionary of the number of classes for each task
 
     Returns:
-        train, valid, test data loaders
+        train and valid data 
     """
     train_data = Egress('./data', 'train')
     valid_data = Egress('./data', 'valid')
-    train_loader = DataLoader(train_data, batch_size=args.batch_size)
-    valid_loader = DataLoader(valid_data, batch_size=args.batch_size)
-    return train_loader, valid_loader
+    return train_data, valid_data
 
 
-def train(dataloader, model, optimizer, args, epoch):
-    model.train()
+def train(model, loader, optimizer, device, epoch):
+    accmeter = AccuracyMeter(TASKS, loader)
 
-    epoch_loss = 0.0
-    for idx, (data, target) in enumerate(dataloader):
+    total_loss = 0
+    for idx, (data, target) in enumerate(loader):
         optimizer.zero_grad()
         data, target = data.to(device), to_device(target, device)
         logits = model(data)
@@ -118,28 +114,40 @@ def train(dataloader, model, optimizer, args, epoch):
         loss = model.loss_value(logits, target, reduce="mean")
         loss.backward()
         optimizer.step()
-        epoch_loss += loss.item()
+        total_loss += loss.item()
+        accmeter.update(logits, target)
 
-    epoch_loss /= len(loader.dataset)
-    print(f"epoch: {epoch}, loss: {epoch_loss}")
+    avg_loss = total_loss / len(loader.dataset)
+
+    accmeter.update_accuracy()
+    print(f'\nEpoch {epoch} Training Accuracy:')
+    accmeter.print_task_accuracies()
+    accmeter.reset()
+    return avg_loss
 
 
-def validate(dataloader, model, args, epoch):
-    model.eval()
+def evaluate(model, loader, device):
     accmeter = AccuracyMeter(TASKS, loader)
 
+    loss = 0
+    model.eval()
     with torch.no_grad():
-        for idx, (data, target) in enumerate(dataloader):
-            data = data.to(device)
-            target = to_device(target, device)
+        for idx, (data, target) in enumerate(loader):
+            data, target = data.to(device), to_device(target, device)
             logits = model(data)
             _ = VALID_F1_MICRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
             _ = VALID_F1_MACRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
+            loss += model.loss_value(logits, target, reduce="mean").item()
             accmeter.update(logits, target)
 
     accmeter.update_accuracy()
-    print(f'Rank: {RANK} Validation accuracy:')
+
+    print(f'Validation accuracy:')
     accmeter.print_task_accuracies()
+
+    loss /= len(loader.dataset)
+
+    return loss
 
 
 def save_dataframe(metrics, filename):
@@ -155,29 +163,42 @@ def run(args):
     args.device = torch.device(f"cuda" if args.cuda else "cpu")
 
     if args.use_synthetic:
-        train_loader, valid_loader = get_synthetic_data(args)
+        train_data, valid_data = get_synthetic_data(args)
+	hparams = Hparams(
+            kernel1=args.kernel1,
+	    kernel2=args.kernel2,
+	    kernel3=args.kernel3,
+	    embed_dim=args.embed_dim,
+	    n_filters=args.n_filters,
+	)
     else:
-        train_loader, valid_loader = get_egress_data(tasks)
+        train_data, valid_data = get_egress_data(tasks)
+	hparams = Hparams(
+            kernel1=args.kernel1,
+	    kernel2=args.kernel2,
+	    kernel3=args.kernel3,
+	    embed_dim=args.embed_dim,
+	    n_filters=args.n_filters,
+            vocab_size=len(train_data.vocab) 
+	)
 
-    hparams = Hparams(
-        kernel1=args.kernel1,
-        kernel2=args.kernel2,
-        kernel3=args.kernel3,
-        embed_dim=args.embed_dim,
-        n_filters=args.n_filters,
-    )
+    train_loader = DataLoader(train_data, batch_size=args.batch_size)
+    valid_loader = DataLoader(valid_data, batch_size=args.batch_size)
 
-    model = MTCNN(TASKS, hparams)
+    model = MTCNN(TASKS, hparams).to(args.device)
     model = create_prune_masks(model)
-    model.to(args.device)
 
     optimizer = torch.optim.Adam(
         model.parameters(), lr=args.learning_rate, eps=args.eps
     )
 
-    for epoch in range(args.num_epochs):
-        train(train_loader, model, optimizer, args, epoch)
-        validate(valid_loader, model, args, epoch)
+    train_epoch_loss = []
+    valid_epoch_loss = []
+    for epoch in range(args.epochs):
+        train_loss = train(model, train_loader, optimizer, args, device, epoch)
+        valid_loss = evaluate(model, valid_loader, args, device, epoch)
+        train_epoch_loss.append(train_loss)
+        valid_epoch_loss.append(valid_loss)
 
     model = remove_prune_masks(model)
 
