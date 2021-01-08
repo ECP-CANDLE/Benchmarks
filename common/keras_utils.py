@@ -13,6 +13,7 @@ from keras.models import Model
 
 from scipy.stats.stats import pearsonr
 
+from default_utils import set_up_logger
 from default_utils import set_seed as set_seed_defaultUtils
 
 import warnings
@@ -275,11 +276,11 @@ class CandleCheckpointCallback(Callback):
     tracking complex workflows.
     """
 
-    def __init__(self, model_file, logger=None,
+    def __init__(self, model_file, logger="DEFAULT",
                  save_best_only=True, save_weights_only=True,
                  save_best_stat=None,
                  checksum_model=False,
-                 metadata=None, clean=True):
+                 metadata=None, clean=True, verbose=False):
         """
         Parameters
         ----------
@@ -288,7 +289,7 @@ class CandleCheckpointCallback(Callback):
                 Must be a writable file path.
             logger : Logger
                 The logger to use.
-                May be None to disable.
+                May be None to disable or "DEFAULT" to use the default.
             save_best_only : boolean
                 If true, only save when save_best_stat has improved.
             save_best_stat : string
@@ -304,9 +305,16 @@ class CandleCheckpointCallback(Callback):
             clean : boolean
                 If True, remove old checkpoints immediately.
                 If False, one extra old checkpoint will remain on disk.
+            verbose : boolean
+                If True, more verbose logging
+                Passed to default_utils.set_up_logger(verbose) for this logger
         """
         self.model_file = model_file
         self.logger = logger
+        if self.logger == "DEFAULT":
+            import logging
+            self.logger = logging.getLogger("CandleCheckpointCallback")
+            set_up_logger("save/ckpt.log", self.logger, verbose=verbose)
         self.save_best_only = save_best_only
         self.save_best_stat = save_best_stat
         self.save_weights_only = save_weights_only
@@ -314,6 +322,8 @@ class CandleCheckpointCallback(Callback):
         self.metadata = metadata
         self.timestamp_last = None
         self.clean = clean
+        self.info("CandleCheckpointCallback initialized: metadata='%s'" %
+                  self.metadata)
 
     def on_epoch_end(self, epoch, logs):
         """
@@ -331,7 +341,9 @@ class CandleCheckpointCallback(Callback):
         dir_old  = "save/ckpt-old"
         if not os.path.exists(dir_work):
             os.makedirs(dir_work)
-        self.model.save(dir_work+"/model.h5", save_format="h5")
+        model_file = dir_work+"/model.h5"
+        self.debug("writing model to: '%s'" % model_file)
+        self.model.save(model_file, save_format="h5")
         self.checksum(dir_work)
         self.write_json(dir_work+"/ckpt-info.json", epoch)
         import shutil
@@ -388,3 +400,11 @@ class CandleCheckpointCallback(Callback):
         with open(jsonfile, "w") as fp:
             json.dump(D, fp)
             fp.write("\n")
+
+    def info(self, message):
+        if self.logger is not None:
+            self.logger.info(message)
+
+    def debug(self, message):
+        if self.logger is not None:
+            self.logger.debug(message)
