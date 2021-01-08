@@ -31,7 +31,7 @@ TASKS = {
     'laterality': 7,
     'histology': 575,
     'behaviour': 4,
-    'grade': 9 
+    'grade': 9
 }
 
 TRAIN_F1_MICRO = F1Meter(TASKS, 'micro')
@@ -94,7 +94,7 @@ def get_egress_data(tasks):
         tasks: dictionary of the number of classes for each task
 
     Returns:
-        train and valid data 
+        train and valid data
     """
     train_data = Egress('./data', 'train')
     valid_data = Egress('./data', 'valid')
@@ -164,23 +164,23 @@ def run(args):
 
     if args.use_synthetic:
         train_data, valid_data = get_synthetic_data(args)
-	hparams = Hparams(
-            kernel1=args.kernel1,
-	    kernel2=args.kernel2,
-	    kernel3=args.kernel3,
-	    embed_dim=args.embed_dim,
-	    n_filters=args.n_filters,
-	)
+    hparams = Hparams(
+        kernel1=args.kernel1,
+        kernel2=args.kernel2,
+        kernel3=args.kernel3,
+        embed_dim=args.embed_dim,
+        n_filters=args.n_filters,
+    )
     else:
         train_data, valid_data = get_egress_data(tasks)
-	hparams = Hparams(
-            kernel1=args.kernel1,
-	    kernel2=args.kernel2,
-	    kernel3=args.kernel3,
-	    embed_dim=args.embed_dim,
-	    n_filters=args.n_filters,
-            vocab_size=len(train_data.vocab) 
-	)
+    hparams = Hparams(
+        kernel1=args.kernel1,
+        kernel2=args.kernel2,
+        kernel3=args.kernel3,
+        embed_dim=args.embed_dim,
+        n_filters=args.n_filters,
+        vocab_size=len(train_data.vocab)
+    )
 
     train_loader = DataLoader(train_data, batch_size=args.batch_size)
     valid_loader = DataLoader(valid_data, batch_size=args.batch_size)

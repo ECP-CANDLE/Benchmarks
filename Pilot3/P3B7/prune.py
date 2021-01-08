@@ -42,18 +42,18 @@ class MinMaxPrune(BasePruningMethod):
             # # topk will have .indices and .values
             # mask.view(-1)[topk.indices] = 0
             values = []
-            indices=[]
-            for i in range(0,nparams_toprune):
-                best = self.minimax(0, 0, True, tNP,-1000,1000)
-                numpy.append(values,best)
-                bestInd=numpy.where(tNP == best)
-                numpy.append(indices,bestInd)
-                tNP= numpy.delete(tNP,bestInd)
+            indices = []
+            for i in range(0, nparams_toprune):
+                best = self.minimax(0, 0, True, tNP, -1000, 1000)
+                numpy.append(values, best)
+                bestInd = numpy.where(tNP == best)
+                numpy.append(indices, bestInd)
+                tNP = numpy.delete(tNP, bestInd)
             mask.view(-1)[indices] = 0
         return mask
 
     def minimax(self, depth, nodeIndex, maximizingPlayer, values, alpha, beta):
-        #https://www.geeksforgeeks.org/minimax-algorithm-in-game-theory-set-4-alpha-beta-pruning/
+        # https://www.geeksforgeeks.org/minimax-algorithm-in-game-theory-set-4-alpha-beta-pruning/
         MIN = -1000
         MAX = 1000
         # Terminating condition. i.e
@@ -146,7 +146,7 @@ class NegativePrune(BasePruningMethod):
             # )
             # topk will have .indices and .values
             t[t < 0] = 0
-            indices = torch.nonzero((t==0),as_tuple=True)
+            indices = torch.nonzero((t == 0), as_tuple=True)
             mask.view(-1)[indices] = 0
         return mask
 
@@ -181,7 +181,7 @@ def negative_prune(module, name, amount):
 
 
 def get_layers_to_prune(model: nn.Module):
-    """Get layers to be pruned""" 
+    """Get layers to be pruned"""
     layers = []
     for name, module in model.named_modules():
         # prune amount % of connections in all 1D-conv layers
@@ -237,4 +237,3 @@ def remove_prune_masks(model: nn.Module):
             prune.remove(module, name='weight', amount=0.2)
 
     return model
-

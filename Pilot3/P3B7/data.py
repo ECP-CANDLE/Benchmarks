@@ -135,11 +135,11 @@ class Tokenizer:
 
     def tokenize(self, data):
         """Tokenize a dataset"""
-        # Build the vocabulary 
+        # Build the vocabulary
         for doc in tqdm(data):
             for token in doc:
                 self.vocab.add_word(token)
-        
+
         # Tokenize
         idss = []
         for doc in data:
@@ -151,7 +151,7 @@ class Tokenizer:
         return torch.stack(idss)
 
     def inverse_tokenize(self):
-        self.vocab.inverse = {v:k for k, v in self.vocab.word2idx.items()}
+        self.vocab.inverse = {v: k for k, v in self.vocab.word2idx.items()}
 
 
 class Egress(Dataset):
@@ -159,12 +159,12 @@ class Egress(Dataset):
 
     Targets have six classes, with the following number of classes:
 
-    site: 70, 
-    subsite: 325, 
+    site: 70,
+    subsite: 325,
     laterality: 7,
-    histology: 575, 
-    behaviour: 4, 
-    grade: 9 
+    histology: 575,
+    behaviour: 4,
+    grade: 9
 
     Args:
         root: path to store the data
@@ -261,4 +261,3 @@ class Egress(Dataset):
 
     def __getitem__(self, idx):
         return self.data[idx], self._index_target(idx)
-
