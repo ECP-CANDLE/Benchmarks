@@ -257,7 +257,7 @@ def generate_index_distribution_from_block_list(numTrain, numTest, numValidation
     # Fill validation partition
     indexValidation = None
     if numBlocksValidation > 0:
-        maxSizeValidation = blockSize * numBlocksValidation  + remainder
+        maxSizeValidation = blockSize * numBlocksValidation + remainder
         indexValidation = fill_array(blocksValidation, maxSizeValidation, numData, numBlocksTotal, blockSize)
     # Fill test partition
     indexTest = None

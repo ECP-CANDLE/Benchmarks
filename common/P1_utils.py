@@ -357,7 +357,7 @@ def generate_gene_set_data(data, genes, gene_name_type='entrez', gene_set_catego
         gene_set_category = gene_set_category + '.v7.0.entrez.gmt'
     if gene_name_type == 'symbols':
         gene_set_category = gene_set_category + '.v7.0.symbols.gmt'
-    f = open(data_dir  + gene_set_category, 'r')
+    f = open(data_dir + gene_set_category, 'r')
     x = f.readlines()
     gene_sets = {}
     for i in range(len(x)):
