@@ -323,8 +323,11 @@ class CandleCheckpointCallback(Callback):
         self.metadata = metadata
         self.timestamp_last = None
         self.clean = clean
-        self.info("CandleCheckpointCallback initialized: metadata='%s'" %
-                  self.metadata)
+        self.info("Callback initialized.")
+        if self.metadata is not None:
+            self.info("metadata='%s'" % self.metadata)
+        if self.save_best_only:
+            self.info("save_best_stat='%s'" % self.save_best_stat)
 
     def on_epoch_end(self, epoch, logs):
         """
