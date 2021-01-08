@@ -355,7 +355,7 @@ class CandleCheckpointCallback(Callback):
             self.cksum_model = "__DISABLED__"
 
     def checksum_file(self, filename):
-        """ Read file, compute checksum, return it. """
+        """ Read file, compute checksum, return it as a string. """
         import zlib
         chunk_size = 10*1024*1024
         with open(filename, "rb") as fp:
