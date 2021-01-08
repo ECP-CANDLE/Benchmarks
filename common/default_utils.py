@@ -125,7 +125,10 @@ def verify_path(path):
         os.makedirs(folder)
 
 
-def set_up_logger(logfile, logger, verbose):
+def set_up_logger(logfile, logger, verbose=False,
+                  fmt_line="[%(asctime)s %(process)d] %(message)s",
+                  fmt_date="%Y-%m-%d %H:%M:%S"
+                  ):
     """ Set up the event logging system. Two handlers are created.
         One to send log records to a specified file and
         one to send log records to the (defaulf) sys.stderr stream.
@@ -147,7 +150,7 @@ def set_up_logger(logfile, logger, verbose):
     """
     verify_path(logfile)
     fh = logging.FileHandler(logfile)
-    fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+    fh.setFormatter(logging.Formatter(fmt_line, datefmt=fmt_date))
     fh.setLevel(logging.DEBUG)
 
     sh = logging.StreamHandler()
