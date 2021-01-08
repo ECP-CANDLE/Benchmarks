@@ -275,10 +275,10 @@ class CandleCheckpointCallback(Callback):
     tracking complex workflows.
     """
 
-    def __init__(self, model_file, optimizer_file=None, logger=None,
+    def __init__(self, model_file, logger=None,
                  save_best_only=True, save_weights_only=True,
                  save_best_stat=None,
-                 checksum_model=False, checksum_optimizer=False,
+                 checksum_model=False,
                  metadata=None, clean=True):
         """
         Parameters
@@ -286,9 +286,6 @@ class CandleCheckpointCallback(Callback):
             model_file : string
                 Main model weights checkpoint file.
                 Must be a writable file path.
-            optimizer_file : string
-                Checkpoint file for optimizer state.
-                May be None to disable.
             logger : Logger
                 The logger to use.
                 May be None to disable.
@@ -300,9 +297,6 @@ class CandleCheckpointCallback(Callback):
             checksum_model : boolean
                 If True, compute a checksum for the model
                 and store it in the JSON
-            checksum_optimizer : boolean
-                If True, compute a checksum for the optimizer
-                and store it in the JSON
             metadata : string
                 Arbitrary string to add to the JSON file regarding
                 job ID, hardware location, etc.
@@ -312,13 +306,11 @@ class CandleCheckpointCallback(Callback):
                 If False, one extra old checkpoint will remain on disk.
         """
         self.model_file = model_file
-        self.optimizer_file = optimizer_file
         self.logger = logger
         self.save_best_only = save_best_only
         self.save_best_stat = save_best_stat
         self.save_weights_only = save_weights_only
         self.checksum_model = checksum_model
-        self.checksum_optimizer = checksum_optimizer
         self.metadata = metadata
         self.timestamp_last = None
         self.clean = clean
@@ -340,9 +332,7 @@ class CandleCheckpointCallback(Callback):
         if not os.path.exists(dir_work):
             os.makedirs(dir_work)
         self.model.save(dir_work+"/model.h5", save_format="h5")
-        if self.optimizer_file is not None:
-            pass # TODO: optimizer_save()
-        self.checksums(dir_work)
+        self.checksum(dir_work)
         self.write_json(dir_work+"/ckpt-info.json", epoch)
         import shutil
         if os.path.exists(dir_old):
@@ -356,18 +346,13 @@ class CandleCheckpointCallback(Callback):
         if do_clean:
             shutil.rmtree(dir_old)
 
-    def checksums(self, dir_work):
+    def checksum(self, dir_work):
         """ Simple checksum dispatch """
         if self.checksum_model:
             self.cksum_model = \
                 self.checksum_file(dir_work+"/model.h5")
         else:
             self.cksum_model = "__DISABLED__"
-        if self.checksum_optimizer:
-            self.cksum_optimizer = \
-                self.checksum_file(dir_work+"/optimizer.h5")
-        else:
-            self.cksum_optimizer = "__DISABLED__"
 
     def checksum_file(self, filename):
         """ Read file, compute checksum, return it. """
@@ -390,9 +375,7 @@ class CandleCheckpointCallback(Callback):
         D["save_best_only"] = self.save_best_only
         D["save_best_stat"] = self.save_best_stat
         D["model_file"] = "model.h5"
-        D["optimizer_file"] = "optimizer.h5"
         D["checksum_model"] = self.cksum_model
-        D["checksum_optimizer"] = self.cksum_optimizer
         D["timestamp"] = now.strftime("%Y-%m-%d %H:%M:%S")
         if self.timestamp_last == None:
             time_elapsed = "__FIRST__"
