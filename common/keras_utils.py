@@ -348,14 +348,18 @@ class CandleCheckpointCallback(Callback):
         self.write_json(dir_work+"/ckpt-info.json", epoch)
         import shutil
         if os.path.exists(dir_old):
+            self.debug("removing: '%s'" % dir_old)
             shutil.rmtree(dir_old)
         do_clean = self.clean
         if os.path.exists(dir_good):
+            self.debug("renaming: '%s' -> '%s'" % (dir_good, dir_old))
             os.rename(dir_good, dir_old)
         else:
             do_clean = False
+        self.debug("renaming: '%s' -> '%s'" % (dir_work, dir_good))
         os.rename(dir_work, dir_good)
         if do_clean:
+            self.debug("removing: '%s'" % dir_old)
             shutil.rmtree(dir_old)
 
     def checksum(self, dir_work):
