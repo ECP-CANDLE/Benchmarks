@@ -314,7 +314,8 @@ class CandleCheckpointCallback(Callback):
         if self.logger == "DEFAULT":
             import logging
             self.logger = logging.getLogger("CandleCheckpointCallback")
-            set_up_logger("save/ckpt.log", self.logger, verbose=verbose)
+            set_up_logger("save/ckpt.log", self.logger, verbose=verbose,
+                          fmt_line="%(asctime)s CandleCheckpoint: %(message)s")
         self.save_best_only = save_best_only
         self.save_best_stat = save_best_stat
         self.save_weights_only = save_weights_only
