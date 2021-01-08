@@ -37,4 +37,3 @@ class SeedControl:
             'Numpy': self.s.numpy,
             'Torch': self.s.torch
         }
-

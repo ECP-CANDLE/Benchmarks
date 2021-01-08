@@ -6,8 +6,8 @@ fh = logging.FileHandler('darts_accuracy.log')
 logger.addHandler(fh)
 
 
-def log_accuracy(accuracy, split: str='train'):
-    """ Log the average accuracy 
+def log_accuracy(accuracy, split: str = 'train'):
+    """ Log the average accuracy
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ def log_accuracy(accuracy, split: str='train'):
     logger.info(acc_info)
 
 
-def log_single_accuracy(accuracy, split: str='train'):
+def log_single_accuracy(accuracy, split: str = 'train'):
     """ Log the average accuracy for a single task
 
     Parameters

@@ -9,16 +9,16 @@ from darts.api import Model
 
 
 OPS = {
-    'none'        : lambda c, stride, affine: Zero(stride),
-    'avg_pool_3'  : lambda c, stride, affine: nn.AvgPool1d(3, stride=stride, padding=1, count_include_pad=False),
-    'max_pool_3'  : lambda c, stride, affine: nn.MaxPool1d(3, stride=stride, padding=1),
+    'none': lambda c, stride, affine: Zero(stride),
+    'avg_pool_3': lambda c, stride, affine: nn.AvgPool1d(3, stride=stride, padding=1, count_include_pad=False),
+    'max_pool_3': lambda c, stride, affine: nn.MaxPool1d(3, stride=stride, padding=1),
     'skip_connect': lambda c, stride, affine: Identity() if stride == 1 else FactorizedReduce(c, c, affine=affine),
-    'sep_conv_3'  : lambda c, stride, affine: SepConv(c, c, 3, stride, 1, affine=affine),
-    'sep_conv_5'  : lambda c, stride, affine: SepConv(c, c, 5, stride, 2, affine=affine),
-    'sep_conv_7'  : lambda c, stride, affine: SepConv(c, c, 7, stride, 3, affine=affine),
-    'dil_conv_3'  : lambda c, stride, affine: DilConv(c, c, 3, stride, 2, 2, affine=affine),
-    'dil_conv_5'  : lambda c, stride, affine: DilConv(c, c, 5, stride, 4, 2, affine=affine),
-    'convblock_7' : lambda c, stride, affine: ConvBlock(c, c, 7, stride, 3, affine=affine),
+    'sep_conv_3': lambda c, stride, affine: SepConv(c, c, 3, stride, 1, affine=affine),
+    'sep_conv_5': lambda c, stride, affine: SepConv(c, c, 5, stride, 2, affine=affine),
+    'sep_conv_7': lambda c, stride, affine: SepConv(c, c, 7, stride, 3, affine=affine),
+    'dil_conv_3': lambda c, stride, affine: DilConv(c, c, 3, stride, 2, 2, affine=affine),
+    'dil_conv_5': lambda c, stride, affine: DilConv(c, c, 5, stride, 4, 2, affine=affine),
+    'convblock_7': lambda c, stride, affine: ConvBlock(c, c, 7, stride, 3, affine=affine),
 }
 
 

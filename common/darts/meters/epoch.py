@@ -16,7 +16,7 @@ class EpochMeter:
 
     def reset(self):
         self.loss = []
-        self.acc = { task: [] for task, _ in self.acc_meter.meters.items() }
+        self.acc = {task: [] for task, _ in self.acc_meter.meters.items()}
 
     def update_batch_loss(self, loss, batch_size):
         self.loss_meter.update(loss, batch_size)
