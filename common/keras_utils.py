@@ -309,6 +309,7 @@ class CandleCheckpointCallback(Callback):
                 If True, more verbose logging
                 Passed to default_utils.set_up_logger(verbose) for this logger
         """
+        import math
         self.model_file = model_file
         self.logger = logger
         if self.logger == "DEFAULT":
@@ -318,6 +319,7 @@ class CandleCheckpointCallback(Callback):
                           fmt_line="%(asctime)s CandleCheckpoint: %(message)s")
         self.save_best_only = save_best_only
         self.save_best_stat = save_best_stat
+        self.best_stat_last = math.inf
         self.save_weights_only = save_weights_only
         self.checksum_model = checksum_model
         self.metadata = metadata
@@ -346,6 +348,7 @@ class CandleCheckpointCallback(Callback):
         if not os.path.exists(dir_work):
             os.makedirs(dir_work)
         model_file = dir_work+"/model.h5"
+        if not self.save_check(logs): return
         self.debug("writing model to: '%s'" % model_file)
         self.model.save(model_file, save_format="h5")
         self.checksum(dir_work)
@@ -365,6 +368,33 @@ class CandleCheckpointCallback(Callback):
         if do_clean:
             self.debug("removing: '%s'" % dir_old)
             shutil.rmtree(dir_old)
+
+    def save_check(self, logs):
+        """
+        Make sure we want to save this epoch based on the
+        model metrics in given logs
+        """
+        if not self.save_best_only:
+            return True # easy- save everything!
+        if self.save_best_stat not in logs.keys():
+            raise(Exception(("CandleCheckpointCallback: " +
+                             "save_best_stat='%s' " +
+                             "not in list of model metrics: %s") %
+                            (self.save_best_stat, str(logs.keys()))))
+        if   logs[self.save_best_stat] < self.best_stat_last:
+            symbol =                  "<"
+        elif logs[self.save_best_stat] > self.best_stat_last:
+            symbol =                  ">"
+        else:
+            symbol =                  "="
+        self.debug("metrics: current=%f %s last=%f" %
+                   (logs[self.save_best_stat], symbol, self.best_stat_last))
+        if logs[self.save_best_stat] < self.best_stat_last:
+            self.best_stat_last = logs[self.save_best_stat]
+            return True # model improved- save!
+        # else- not saving:
+        self.debug("not writing this epoch.")
+        return False
 
     def checksum(self, dir_work):
         """ Simple checksum dispatch """
