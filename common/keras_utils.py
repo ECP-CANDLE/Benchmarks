@@ -279,6 +279,7 @@ class CandleCheckpointCallback(Callback):
     def __init__(self, model_file, logger="DEFAULT",
                  save_best_only=True, save_weights_only=True,
                  save_best_stat=None,
+                 skip_epochs=0,
                  checksum_model=False,
                  metadata=None, clean=True, verbose=False):
         """
@@ -317,6 +318,7 @@ class CandleCheckpointCallback(Callback):
             self.logger = logging.getLogger("CandleCheckpointCallback")
             set_up_logger("save/ckpt.log", self.logger, verbose=verbose,
                           fmt_line="%(asctime)s CandleCheckpoint: %(message)s")
+        self.skip_epochs = skip_epochs
         self.save_best_only = save_best_only
         self.save_best_stat = save_best_stat
         self.best_stat_last = math.inf
@@ -348,9 +350,12 @@ class CandleCheckpointCallback(Callback):
         if not os.path.exists(dir_work):
             os.makedirs(dir_work)
         model_file = dir_work+"/model.h5"
-        if not self.save_check(logs): return
+        if not self.save_check(logs, epoch): return
         self.debug("writing model to: '%s'" % model_file)
-        self.model.save(model_file, save_format="h5")
+        #self.model.save(model_file, save_format="h5")
+        self.model.save(dir_work+"/model.h5")  # save_format="h5")
+        #if self.optimizer_file is not None:
+        #    pass # TODO: optimizer_save()
         self.checksum(dir_work)
         self.write_json(dir_work+"/ckpt-info.json", epoch)
         import shutil
@@ -369,11 +374,15 @@ class CandleCheckpointCallback(Callback):
             self.debug("removing: '%s'" % dir_old)
             shutil.rmtree(dir_old)
 
-    def save_check(self, logs):
+    def save_check(self, logs, epoch):
         """
         Make sure we want to save this epoch based on the
         model metrics in given logs
         """
+        # skip early epochs to improve speed 
+        if epoch < self.skip_epochs:
+            self.debug("Model saving disabled until epoch %d" % self.skip_epochs)
+            return False
         if not self.save_best_only:
             return True # easy- save everything!
         if self.save_best_stat not in logs.keys():
