@@ -10,6 +10,7 @@ import numpy as np
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
+from torch2trt import torch2trt
 
 from sklearn.metrics import f1_score
 
@@ -199,14 +200,22 @@ def run(args):
         model.to('cpu'), {torch.nn.Linear}, dtype=torch.qint8
     )
 
+    batch = next(iter(train_loader))
+    input_ids = batch["tokens"].to(device)
+    segment_ids = batch["seg_ids"].to(device)
+    input_mask = batch["masks"].to(device)
+
+    model_trt = torch2trt(model, [(input_ids, segment_ids, input_mask)])
     model = model.to('cpu')
 
     #print(quantized_model)
     print_size_of_model(model)
     print_size_of_model(quantized_model)
+    print_size_of_model(model_trt)
 
     time_evaluation(valid_loader, model, args, device='cpu')
     time_evaluation(valid_loader, quantized_model, args, device='cpu')
+    time_evaluation(valid_loader, model_trt, args, device='cuda')
 
 
 def main():
