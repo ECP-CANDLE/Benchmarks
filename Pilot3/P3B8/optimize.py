@@ -3,7 +3,7 @@ import time
 import torch
 import argparse
 # import candle
-# import p3b6 as bmk
+# import p3b8 as bmk
 
 import numpy as np
 
@@ -48,15 +48,15 @@ def parse_args():
 def initialize_parameters():
     """ Initialize the parameters for the P3B5 benchmark """
 
-    p3b5_bench = bmk.BenchmarkP3B5(
+    p3b8_bench = bmk.BenchmarkP3B8(
         bmk.file_path,
         "default_model.txt",
         "pytorch",
-        prog="p3b6",
-        desc="BERT bench",
+        prog="p3b8",
+        desc="BERT Quantized",
     )
 
-    gParameters = candle.finalize_parameters(p3b6)
+    gParameters = candle.finalize_parameters(p3b8_bench)
     return gParameters
 
 
@@ -161,6 +161,7 @@ def time_evaluation(dataloader, model, args, device):
     loss = validate(dataloader, model, args, device, epoch=0)
     elapsed = time.time() - s
     print(f"\telapsed time (seconds): {elapsed:.1f}")
+
 
 def print_size_of_model(model):
     torch.save(model.state_dict(), "temp.p")
