@@ -34,8 +34,8 @@ required = [
 ]
 
 
-class BenchmarkP3B6(candle.Benchmark):
-    """ Benchmark for P3B6 """
+class BenchmarkP3B8(candle.Benchmark):
+    """ Benchmark for Quantized BERT """
 
     def set_locals(self):
         """ Set parameters for the benchmark.
