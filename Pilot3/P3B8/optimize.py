@@ -136,7 +136,7 @@ def validate(dataloader, model, args, epoch):
             segment_ids = batch["seg_ids"].to(args.device)
             input_mask = batch["masks"].to(args.device)
 
-            logits = model(input_ids, input_mask, segment_ids)  # , n_segs)
+            logits = model(input_ids, input_mask, segment_ids)
             logits = torch.nn.Sigmoid()(logits)
 
             logits = logits.view(-1, args.num_classes).cpu().data.numpy()
@@ -147,7 +147,6 @@ def validate(dataloader, model, args, epoch):
     labels = np.concatenate(labels, 0)
 
     preds = torch.tensor(preds)
-
     labels = torch.tensor(labels)
 
     valid_f1 = f1_score(labels.flatten(), preds.flatten())
