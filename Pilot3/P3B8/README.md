@@ -1,4 +1,4 @@
-# P3B6 BERT Quantized
+# P3B8 BERT Quantized
 
 Quantizing BERT on synthetic data that imitates the Mimic dataset.
 
