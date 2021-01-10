@@ -1,0 +1,1276 @@
+[
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 13:58:40.377135",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.1490964889526367
+        },
+        "validation_loss": {
+            "set": 2.363271951675415
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 14.438837s, loss: 3.1490964889526367, val_loss: 2.363271951675415"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0040196875
+        },
+        "end_time": {
+            "set": "2021-01-09 13:58:54.848010"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 13:59:59.199811",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.116190195083618
+        },
+        "validation_loss": {
+            "set": 2.319931745529175
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.787167s, loss: 3.116190195083618, val_loss: 2.319931745529175"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0032827869444444443
+        },
+        "end_time": {
+            "set": "2021-01-09 14:00:11.017844"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:11:53.261776",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.1306474208831787
+        },
+        "validation_loss": {
+            "set": 2.3470003604888916
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.897114s, loss: 3.1306474208831787, val_loss: 2.3470003604888916"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0033132480555555554
+        },
+        "end_time": {
+            "set": "2021-01-09 14:12:05.189469"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:13:51.127112",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.1569411754608154
+        },
+        "validation_loss": {
+            "set": 2.38917875289917
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.709278s, loss: 3.1569411754608154, val_loss: 2.38917875289917"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0032611255555555557
+        },
+        "end_time": {
+            "set": "2021-01-09 14:14:02.867164"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:24:16.838282",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.089740753173828
+        },
+        "validation_loss": {
+            "set": 2.303847074508667
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.767333s, loss: 3.089740753173828, val_loss: 2.303847074508667"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0032773377777777775
+        },
+        "end_time": {
+            "set": "2021-01-09 14:24:28.636698"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:24:56.855276",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.093346118927002
+        },
+        "validation_loss": {
+            "set": 2.311321496963501
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.735183s, loss: 3.093346118927002, val_loss: 2.311321496963501"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.003268414166666667
+        },
+        "end_time": {
+            "set": "2021-01-09 14:25:08.621567"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:28:18.367298",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.1526994705200195
+        },
+        "validation_loss": {
+            "set": 2.354775905609131
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.923516s, loss: 3.1526994705200195, val_loss: 2.354775905609131"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0033206816666666666
+        },
+        "end_time": {
+            "set": "2021-01-09 14:28:30.321752"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:29:46.833660",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.13159441947937
+        },
+        "validation_loss": {
+            "set": 2.324489116668701
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.780724s, loss: 3.13159441947937, val_loss: 2.324489116668701"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.003280931388888889
+        },
+        "end_time": {
+            "set": "2021-01-09 14:29:58.645013"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:37:11.987027",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.1313717365264893
+        },
+        "validation_loss": {
+            "set": 2.374232769012451
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.929559s, loss: 3.1313717365264893, val_loss: 2.374232769012451"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0033223063888888887
+        },
+        "end_time": {
+            "set": "2021-01-09 14:37:23.947330"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:42:31.487987",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.132990837097168
+        },
+        "validation_loss": {
+            "set": 2.3843162059783936
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 12.052077s, loss: 3.132990837097168, val_loss: 2.3843162059783936"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.003356370277777778
+        },
+        "end_time": {
+            "set": "2021-01-09 14:42:43.570920"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:44:37.305494",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.1672306060791016
+        },
+        "validation_loss": {
+            "set": 2.401529312133789
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 12.057134s, loss: 3.1672306060791016, val_loss: 2.401529312133789"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.003357688611111111
+        },
+        "end_time": {
+            "set": "2021-01-09 14:44:49.393173"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:45:32.968993",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.0750725269317627
+        },
+        "validation_loss": {
+            "set": 2.3066608905792236
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.844262s, loss: 3.0750725269317627, val_loss: 2.3066608905792236"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.003300468888888889
+        },
+        "end_time": {
+            "set": "2021-01-09 14:45:44.850681"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:57:43.851661",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.089177131652832
+        },
+        "validation_loss": {
+            "set": 2.31186842918396
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 12.464957s, loss: 3.089177131652832, val_loss: 2.31186842918396"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.003472791111111111
+        },
+        "end_time": {
+            "set": "2021-01-09 14:57:56.353709"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 14:59:09.475988",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.103468418121338
+        },
+        "validation_loss": {
+            "set": 2.3327748775482178
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.847421s, loss: 3.103468418121338, val_loss: 2.3327748775482178"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.003299616388888889
+        },
+        "end_time": {
+            "set": "2021-01-09 14:59:21.354607"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 15:01:36.451297",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.0980165004730225
+        },
+        "validation_loss": {
+            "set": 2.3167219161987305
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.939262s, loss: 3.0980165004730225, val_loss: 2.3167219161987305"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0033249691666666667
+        },
+        "end_time": {
+            "set": "2021-01-09 15:01:48.421186"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 15:03:01.532451",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.1537375450134277
+        },
+        "validation_loss": {
+            "set": 2.4132776260375977
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 11.904792s, loss: 3.1537375450134277, val_loss: 2.4132776260375977"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0033153747222222224
+        },
+        "end_time": {
+            "set": "2021-01-09 15:03:13.467800"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+][
+    {
+        "experiment_id": "EXP000",
+        "run_id": "RUN000",
+        "parameters": [
+            "data_url: ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot3/",
+            "train_data: P3B3_data.tar.gz",
+            "model_name: p3b3",
+            "learning_rate: 0.0001",
+            "batch_size: 10",
+            "epochs: 1",
+            "dropout: 0.5",
+            "optimizer: adam",
+            "wv_len: 300",
+            "filter_sizes: 3",
+            "filter_sets: 3",
+            "num_filters: 100",
+            "emb_l2: 0.001",
+            "w_l2: 0.01",
+            "task_list: [0, 2, 3]",
+            "task_names: ['site', 'laterality', 'histology', 'grade']",
+            "verbose: None",
+            "logfile: None",
+            "train_bool: True",
+            "experiment_id: EXP000",
+            "run_id: RUN000",
+            "shuffle: False",
+            "profiling: False",
+            "train_features: data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv",
+            "train_truths: data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv",
+            "valid_features: data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv",
+            "valid_truths: data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv",
+            "output_files: result0_0.csv;result1_0.csv;result2_0.csv",
+            "case: CenterZ",
+            "fig: False",
+            "data_type: <class 'numpy.float32'>",
+            "output_dir: /gpfs/alpine/med107/proj-shared/yngtodd/src/Benchmarks/Pilot3/P3B8/Output/EXP000/RUN000",
+            "rng_seed: 7102",
+            "timeout: -1"
+        ],
+        "start_time": "2021-01-09 15:20:04.645594",
+        "status": "Started"
+    },
+    {
+        "run_id": "RUN000",
+        "status": {
+            "set": "Running"
+        },
+        "training_loss": {
+            "set": 3.097731590270996
+        },
+        "validation_loss": {
+            "set": 2.3371975421905518
+        },
+        "run_progress": {
+            "add": [
+                "epoch: 1/1, duration: 12.008443s, loss: 3.097731590270996, val_loss: 2.3371975421905518"
+            ]
+        }
+    },
+    {
+        "run_id": "RUN000",
+        "runtime_hours": {
+            "set": 0.0033441900000000004
+        },
+        "end_time": {
+            "set": "2021-01-09 15:20:16.684678"
+        },
+        "status": {
+            "set": "Finished"
+        },
+        "date_modified": {
+            "set": "NOW"
+        }
+    }
+]
