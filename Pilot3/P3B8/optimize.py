@@ -1,3 +1,5 @@
+import os
+import time
 import torch
 import argparse
 # import candle
@@ -123,7 +125,7 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
             print(f"epoch: {epoch}, batch: {idx}, loss: {train_loss}")
 
 
-def validate(dataloader, model, args, epoch):
+def validate(dataloader, model, args, device, epoch):
     model.eval()
 
     preds = []
@@ -132,9 +134,9 @@ def validate(dataloader, model, args, epoch):
     with torch.no_grad():
         for idx, batch in enumerate(dataloader):
 
-            input_ids = batch["tokens"].to(args.device)
-            segment_ids = batch["seg_ids"].to(args.device)
-            input_mask = batch["masks"].to(args.device)
+            input_ids = batch["tokens"].to(device)
+            segment_ids = batch["seg_ids"].to(device)
+            input_mask = batch["masks"].to(device)
 
             logits = model(input_ids, input_mask, segment_ids)
             logits = torch.nn.Sigmoid()(logits)
@@ -154,12 +156,11 @@ def validate(dataloader, model, args, epoch):
     print(f"epoch: {epoch}, validation F1: {valid_f1}")
 
 
-def time_evaluation(dataloader, model, args):
+def time_evaluation(dataloader, model, args, device):
     s = time.time()
-    loss = validate(dataloader, model, args)
+    loss = validate(dataloader, model, args, device, epoch=0)
     elapsed = time.time() - s
-    print(f"loss: {loss0:.3f}\nelapsed time (seconds): {elapsed1:.1f}")
-
+    print(f"\telapsed time (seconds): {elapsed:.1f}")
 
 def print_size_of_model(model):
     torch.save(model.state_dict(), "temp.p")
@@ -191,19 +192,20 @@ def run(args):
 
     for epoch in range(args.num_epochs):
         train(train_loader, model, optimizer, criterion, args, epoch)
-        validate(valid_loader, model, args, epoch)
+        validate(valid_loader, model, args, args.device, epoch)
 
     quantized_model = torch.quantization.quantize_dynamic(
-        model, {torch.nn.Linear}, dtype=torch.qint8
+        model.to('cpu'), {torch.nn.Linear}, dtype=torch.qint8
     )
 
-    print(quantized_model)
+    model = model.to('cpu')
 
+    #print(quantized_model)
     print_size_of_model(model)
     print_size_of_model(quantized_model)
 
-    time_evaluation(dataloader, model, args)
-    time_evaluation(dataloader, quantized_model, args)
+    time_evaluation(valid_loader, model, args, device='cpu')
+    time_evaluation(valid_loader, quantized_model, args, device='cpu')
 
 
 def main():

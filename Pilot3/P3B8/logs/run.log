@@ -1,10 +1,16 @@
-epoch: 0, validation F1: 0.5632286995515695
-epoch: 1, validation F1: 0.5524663677130045
-epoch: 2, validation F1: 0.43934426229508194
-epoch: 3, validation F1: 0.3754601226993865
-epoch: 4, validation F1: 0.3607361963190184
-epoch: 5, validation F1: 0.17886178861788618
-epoch: 6, validation F1: 0.5614349775784754
-epoch: 7, validation F1: 0.4886699507389162
-epoch: 8, validation F1: 0.5381165919282511
-epoch: 9, validation F1: 0.5434977578475336
+epoch: 0, validation F1: 0.4353591160220994
+epoch: 1, validation F1: 0.4353591160220994
+epoch: 2, validation F1: 0.5792531120331951
+epoch: 3, validation F1: 0.4975124378109453
+epoch: 4, validation F1: 0.4975124378109453
+epoch: 5, validation F1: 0.4975124378109453
+epoch: 6, validation F1: 0.4975124378109453
+epoch: 7, validation F1: 0.4975124378109453
+epoch: 8, validation F1: 0.4975124378109453
+epoch: 9, validation F1: 0.4975124378109453
+Size (MB): 438.043912
+Size (MB): 181.507765
+epoch: 0, validation F1: 0.4975124378109453
+	elapsed time (seconds): 26.4
+epoch: 0, validation F1: 0.4975124378109453
+	elapsed time (seconds): 27.8
