@@ -41,6 +41,8 @@ def parse_args():
                         help='path to the model weights')
     parser.add_argument('--pretrained_weights_path', type=str,
                         help='path to the model weights')
+    parser.add_argument('--verbose', action='store_true',
+                        help='verbose mode prints the quantized model')
 
     return parser.parse_args()
 
@@ -201,7 +203,9 @@ def run(args):
 
     model = model.to('cpu')
 
-    #print(quantized_model)
+    if args.verbose:
+        print(quantized_model)
+
     print_size_of_model(model)
     print_size_of_model(quantized_model)
 
