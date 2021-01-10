@@ -154,6 +154,19 @@ def validate(dataloader, model, args, epoch):
     print(f"epoch: {epoch}, validation F1: {valid_f1}")
 
 
+def time_evaluation(dataloader, model, args):
+    s = time.time()
+    loss = validate(dataloader, model, args)
+    elapsed = time.time() - s
+    print(f"loss: {loss0:.3f}\nelapsed time (seconds): {elapsed1:.1f}")
+
+
+def print_size_of_model(model):
+    torch.save(model.state_dict(), "temp.p")
+    print('Size (MB):', os.path.getsize("temp.p")/1e6)
+    os.remove('temp.p')
+
+
 def run(args):
     # args = candle.ArgumentStruct(**params)
     # args.cuda = torch.cuda.is_available()
@@ -161,7 +174,9 @@ def run(args):
 
     train_loader, valid_loader, test_loader = create_data_loaders(args)
 
-    model = model = HiBERT(args.pretrained_weights_path, args.num_classes)
+    model = model = HiBERT(
+        args.pretrained_weights_path, args.num_classes
+    )
     model.to(args.device)
 
     params = [
@@ -177,6 +192,18 @@ def run(args):
     for epoch in range(args.num_epochs):
         train(train_loader, model, optimizer, criterion, args, epoch)
         validate(valid_loader, model, args, epoch)
+
+    quantized_model = torch.quantization.quantize_dynamic(
+        model, {torch.nn.Linear}, dtype=torch.qint8
+    )
+
+    print(quantized_model)
+
+    print_size_of_model(model)
+    print_size_of_model(quantized_model)
+
+    time_evaluation(dataloader, model, args)
+    time_evaluation(dataloader, quantized_model, args)
 
 
 def main():

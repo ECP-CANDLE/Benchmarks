@@ -1,0 +1,22 @@
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@batch5>
+Subject: Job 644464: <bert_quantized> in cluster <summit> Exited
+
+Job <bert_quantized> was submitted from host <login1> by user <yngtodd> in cluster <summit> at Sat Jan  9 21:20:46 2021
+Job was executed on host(s) <1*batch5>, in queue <batch>, as user <yngtodd> in cluster <summit> at Sat Jan  9 21:20:51 2021
+                            <42*h33n06>
+</ccs/home/yngtodd> was used as the home directory.
+</gpfs/alpine/proj-shared/med107/yngtodd/src/Benchmarks/Pilot3/P3B8> was used as the working directory.
+Started at Sat Jan  9 21:20:51 2021
+Terminated at Sat Jan  9 21:22:18 2021
+Results reported at Sat Jan  9 21:22:18 2021
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file <logs/quant644464.e> for stderr output of this job.
+
