@@ -123,8 +123,7 @@ def given_drugs(args, loader):
         index = df.index[df['Drug'].isin(include_drugs)]
     else:
         df = df_response[['Drug1', 'Drug2']]
-        index = df.index[df['Drug1'].isin(include_drugs) |
-                         df['Drug2'].isin(include_drugs)]
+        index = df.index[df['Drug1'].isin(include_drugs) | df['Drug2'].isin(include_drugs)]
 
     # Update object
     test_gen.index = index

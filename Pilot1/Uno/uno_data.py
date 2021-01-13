@@ -498,7 +498,7 @@ def load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=None, usecols=
 def encode_sources(sources):
     df = pd.get_dummies(sources, prefix='source', prefix_sep='.')
     df['Source'] = sources
-    source_l1 = df['Source'].str.extract('^(\S+)\.', expand=False)
+    source_l1 = df['Source'].str.extract(r'^(\S+)\.', expand=False)
     df1 = pd.get_dummies(source_l1, prefix='source.L1', prefix_sep='.')
     df = pd.concat([df1, df], axis=1)
     df = df.set_index('Source').reset_index()
@@ -967,9 +967,9 @@ class CombinedDataLoader(object):
             df_drug_ids = df_drug_ids.merge(df_selected_drugs).drop_duplicates()
         logger.info('  %d selected drugs with feature and response data', df_drug_ids.shape[0])
 
-        df_response = df_response[df_response['Sample'].isin(df_cell_ids['Sample']) &
-                                  df_response['Drug1'].isin(df_drug_ids['Drug']) &
-                                  (df_response['Drug2'].isin(df_drug_ids['Drug']) | df_response['Drug2'].isnull())]
+        df_response = df_response[df_response['Sample'].isin(df_cell_ids['Sample'])
+                                  & df_response['Drug1'].isin(df_drug_ids['Drug'])
+                                  & (df_response['Drug2'].isin(df_drug_ids['Drug']) | df_response['Drug2'].isnull())]
 
         df_response = df_response[df_response['Source'].isin(train_sep_sources + test_sep_sources)]
 

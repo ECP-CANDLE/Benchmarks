@@ -53,8 +53,8 @@ class FromFileDataGenerator(object):
 
         if offset == self.df_data.shape[1]:
             raise Exception('ERROR ! Feature names from model are not in file. '
-                            'These are features in model: ' + str(sorted(feature_names)) +
-                            '... Exiting')
+                            + 'These are features in model: ' + str(sorted(feature_names))
+                            + '... Exiting')
 
         return offset
 
