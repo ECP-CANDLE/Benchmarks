@@ -80,9 +80,7 @@ def memory_usage(device):
         total, used = os.popen(
             'nvidia-smi --query-gpu=memory.total,memory.used --format=csv,nounits,noheader'
         ).read().split('\n')[device_idx].split(',')
-    except:
-        raise ValueError(
-            f'Attempted to query CUDA device {device_idx}, does this system have that many GPUs?'
-        )
+    except ValueError:
+            print(f'Attempted to query CUDA device {device_idx}, does this system have that many GPUs?')
 
     return Usage(device, int(total), int(used))

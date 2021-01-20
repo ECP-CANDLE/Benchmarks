@@ -240,9 +240,9 @@ def new(c, num_classes, num_layers, criterion, device, steps=4, multiplier=4, st
     However, its weights are left untouched.
     :return:
     """
-    model = Network(c, num_classes, num_layers, criterion, steps, multiplier, stem_multiplier).to(device)
+    model = ConvNetwork(c, num_classes, num_layers, criterion, steps, multiplier, stem_multiplier).to(device)
 
-    for x, y in zip(model_new.arch_parameters(), self.arch_parameters()):
+    for x, y in zip(model.arch_parameters(), model.arch_parameters()):
         x.data.copy_(y.data)
 
     return model
