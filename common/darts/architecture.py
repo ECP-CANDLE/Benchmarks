@@ -45,13 +45,11 @@ class Architecture:
         loss = self.model.loss(data, target)
         # flatten current weights
         theta = F.flatten(self.model.parameters()).detach()
-        # theta: torch.Size([1930618])
-        # print('theta:', theta.shape)
         try:
             # fetch momentum data from theta optimizer
             moment = F.flatten(optimizer.state[v]['momentum_buffer'] for v in self.model.parameters())
             moment.mul_(self.momentum)
-        except:
+        except Exception:
             moment = torch.zeros_like(theta)
 
         # flatten all gradients
