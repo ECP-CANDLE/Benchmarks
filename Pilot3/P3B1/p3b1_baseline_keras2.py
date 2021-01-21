@@ -50,9 +50,9 @@ def build_model(gParameters, kerasDefaults,
 
     n_out_nodes = []
 
-    for l in range(len(Y_train)):
-        truth_train = np.array(Y_train[l], dtype='int32')
-        truth_test = np.array(Y_test[l], dtype='int32')
+    for idx in range(len(Y_train)):
+        truth_train = np.array(Y_train[idx], dtype='int32')
+        truth_test = np.array(Y_test[idx], dtype='int32')
 
         mv = int(np.max(truth_train))
 
@@ -91,11 +91,11 @@ def build_model(gParameters, kerasDefaults,
     trainable_count = 0
     non_trainable_count = 0
 
-    for l in range(len(individual_nnet_spec)):
+    for idx in range(len(individual_nnet_spec)):
         indiv_layers = [shared_layers[-1]]
-        for k in range(len(individual_nnet_spec[l]) + 1):
-            if k < len(individual_nnet_spec[l]):
-                layer = Dense(individual_nnet_spec[l][k],
+        for k in range(len(individual_nnet_spec[idx]) + 1):
+            if k < len(individual_nnet_spec[idx]):
+                layer = Dense(individual_nnet_spec[idx][k],
                               activation=gParameters['activation'],
                               name='indiv_layer_' + str(l) + '_' + str(k))(indiv_layers[-1])
                 indiv_layers.append(layer)
@@ -103,7 +103,7 @@ def build_model(gParameters, kerasDefaults,
                     layer = Dropout(gParameters['dropout'])(indiv_layers[-1])
                     indiv_layers.append(layer)
             else:
-                layer = Dense(n_out_nodes[l],
+                layer = Dense(n_out_nodes[idx],
                               activation=gParameters['out_activation'],
                               name='out_' + str(l))(indiv_layers[-1])
                 indiv_layers.append(layer)
