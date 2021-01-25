@@ -30,7 +30,7 @@ def get_file(url):
     return candle.fetch_file(url, 'Pilot1')
 
 
-def impute_and_scale(df, scaling='std'):
+def impute_and_scale(df, scaling='std', keepcols=None):
     """Impute missing values with mean and scale data included in pandas dataframe.
 
     Parameters
@@ -41,7 +41,12 @@ def impute_and_scale(df, scaling='std'):
         type of scaling to apply
     """
 
-    df = df.dropna(axis=1, how='all')
+    if keepcols is None:
+        df = df.dropna(axis=1, how='all')
+    else:
+        df = df[keepcols].copy()
+        all_na_cols = df.columns[df.isna().all()]
+        df[all_na_cols] = 0
 
     imputer = Imputer(strategy='mean')
     mat = imputer.fit_transform(df)
@@ -289,8 +294,12 @@ def load_drug_set_descriptors(drug_set='ALMANAC', ncols=None, scaling='std', add
     if ncols and ncols < total:
         usecols = np.random.choice(total, size=ncols, replace=False)
         df2 = df2.iloc[:, usecols]
+        keepcols = None
+    else:
+        train_ref = load_drug_descriptors(add_prefix=add_prefix)
+        keepcols = train_ref.columns[1:]
 
-    df2 = impute_and_scale(df2, scaling)
+    df2 = impute_and_scale(df2, scaling, keepcols=keepcols)
     df2 = df2.astype(np.float32)
 
     df_dg = pd.concat([df1, df2], axis=1)
