@@ -1,15 +1,15 @@
 from __future__ import absolute_import
 
-from keras import backend as K
+from tensorflow.keras import backend as K
 
-from keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback
 
-from keras.models import Model
-from keras.layers import Dense
-from keras import layers
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense
+from tensorflow.keras import layers
 
-from keras.utils import np_utils
-from keras.metrics import mean_squared_error, mean_absolute_error
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.metrics import mean_squared_error, mean_absolute_error
 
 import numpy as np
 
@@ -460,10 +460,10 @@ def modify_labels(numclasses_out, ytrain, ytest, yval=None):
         assert(classesval == classestest)
     assert((classestrain + 1) == numclasses_out)  # In this case only one other slot for abstention is created
 
-    labels_train = np_utils.to_categorical(ytrain, numclasses_out)
-    labels_test = np_utils.to_categorical(ytest, numclasses_out)
+    labels_train = to_categorical(ytrain, numclasses_out)
+    labels_test = to_categorical(ytest, numclasses_out)
     if yval is not None:
-        labels_val = np_utils.to_categorical(yval, numclasses_out)
+        labels_val = to_categorical(yval, numclasses_out)
 
     # For sanity check
     mask_vec = np.zeros(labels_train.shape)

@@ -74,7 +74,7 @@ from P1_utils import combat_batch_effect_removal
 
 # import benchmark-dependent utils
 import sys
-if 'keras' in sys.modules:
+if 'keras' in sys.modules or 'tensorflow' in sys.modules:
     print('Importing candle utils for keras')
     # import from keras_utils
     # from keras_utils import dense
