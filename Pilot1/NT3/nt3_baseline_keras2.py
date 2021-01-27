@@ -201,7 +201,7 @@ def run(gParameters):
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
     ckpt = candle.CandleCheckpointCallback(".", 
-                                           skip_epochs=5,
+                                           skip_epochs=0,
                                            checksum_model=False,
                                            verbose=True, save_best_stat='loss')
     history = model.fit(X_train, Y_train,
