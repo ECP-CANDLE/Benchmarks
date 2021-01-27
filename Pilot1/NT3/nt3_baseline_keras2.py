@@ -84,7 +84,7 @@ def load_data(train_path, test_path, gParameters):
     # check if noise is on for RNA-seq data
     elif gParameters['noise_gaussian']:
         X_train = candle.add_gaussian_noise(X_train, 0, gParameters['std_dev'])
-	    
+
     return X_train, Y_train, X_test, Y_test
 
 
@@ -200,7 +200,10 @@ def run(gParameters):
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
-    ckpt = candle.CandleCheckpointCallback(".", checksum_model=True)
+    ckpt = candle.CandleCheckpointCallback(".", 
+                                           skip_epochs=5,
+                                           checksum_model=False,
+                                           verbose=True, save_best_stat='loss')
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],
                         epochs=gParameters['epochs'],
