@@ -346,18 +346,13 @@ class CandleCheckpointCallback(Callback):
         if do_clean:
             shutil.rmtree(dir_old)
 
-    def checksums(self, dir_work):
+    def checksum(self, dir_work):
         """ Simple checksum dispatch """
         if self.checksum_model:
             self.cksum_model = \
                 self.checksum_file(dir_work+"/model.h5")
         else:
             self.cksum_model = "__DISABLED__"
-        if self.checksum_optimizer:
-            self.cksum_optimizer = \
-                self.checksum_file(dir_work+"/optimizer.h5")
-        else:
-            self.cksum_optimizer = "__DISABLED__"
 
     def checksum_file(self, filename):
         """ Read file, compute checksum, return it. """
