@@ -39,10 +39,18 @@ def r2(y_true, y_pred):
     return (1 - SS_res / (SS_tot + K.epsilon()))
 
 
-def tf_auc(y_true, y_pred):
-    auc = tf.metrics.auc(y_true, y_pred)[1]
-    K.get_session().run(tf.local_variables_initializer())
-    return auc
+#def tf_auc(y_true, y_pred):
+#    #auc = tf.metrics.auc(y_true, y_pred)[1]
+#    #K.get_session().run(tf.local_variables_initializer())
+#    #return auc
+#    m = tf.keras.metrics.AUC(num_thresholds=3)
+#    m.update_state(y_true, y_pred)
+#    K.get_session().run(tf.local_variables_initializer())
+#    print('y_true {} {}'.format(y_true.shape, y_true))
+#    print('y_pred {} {}'.format(y_pred.shape, y_pred))
+#    print(m.result())
+#    auc = m.result().numpy()
+#    return auc
 
 
 def auroc(y_true, y_pred):
@@ -248,7 +256,8 @@ def run(params):
                   # optimizer=Adam(lr=0.00001),
                   # optimizer=RMSprop(lr=0.0001),
                   # optimizer=Adadelta(),
-                  metrics=['acc', tf_auc])
+                  #metrics=['acc', tf_auc])
+                   metrics=['acc', ke.metrics.AUC(name='tf_auc')])
 
     # set up a bunch of callbacks to do work during model training..
 
