@@ -276,18 +276,15 @@ class CandleCheckpointCallback(Callback):
     tracking complex workflows.
     """
 
-    def __init__(self, model_file, logger="DEFAULT",
+    def __init__(self, logger="DEFAULT",
                  save_best_only=True, save_weights_only=True,
                  save_best_stat=None,
                  skip_epochs=0,
                  checksum_model=False,
-                 metadata=None, clean=True, verbose=False):
+                 metadata=None, clean=True, verbose=True):
         """
         Parameters
         ----------
-            model_file : string
-                Main model weights checkpoint file.
-                Must be a writable file path.
             logger : Logger
                 The logger to use.
                 May be None to disable or "DEFAULT" to use the default.
@@ -313,7 +310,6 @@ class CandleCheckpointCallback(Callback):
                 Passed to default_utils.set_up_logger(verbose) for this logger
         """
         import math
-        self.model_file = model_file
         self.logger = logger
         if self.logger == "DEFAULT":
             import logging
