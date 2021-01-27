@@ -296,6 +296,8 @@ class CandleCheckpointCallback(Callback):
             save_best_stat : string
                 Required when save_best_only=True, else unused.
                 The stat in logs.model to track for improvement.
+            skip_epochs : int
+                Number of initial epochs to skip before writing checkpoints
             checksum_model : boolean
                 If True, compute a checksum for the model
                 and store it in the JSON
