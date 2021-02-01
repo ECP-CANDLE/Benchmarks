@@ -438,7 +438,7 @@ class CandleCheckpointCallback(Callback):
         D["save_best_only"] = self.save_best_only
         D["save_best_stat"] = self.save_best_stat
         D["model_file"] = "model.h5"
-        D["checksum_model"] = self.cksum_model
+        D["checksum"] = self.cksum_model
         D["timestamp"] = now.strftime("%Y-%m-%d %H:%M:%S")
         if self.timestamp_last == None:
             time_elapsed = "__FIRST__"
@@ -479,14 +479,22 @@ def restart(gParameters, model, verbose=True):
     dir_work = "save/ckpt-work"
     dir_good = "save/ckpt-good"
     dir_old  = "save/ckpt-old"
-    model_file = dir_good+"/model.h5"
-    result = None
-    if os.path.exists(model_file):
-        logger.info("restarting: " + model_file)
-        result = restart_json(gParameters, logger, dir_good)
-        logger.info("restarted: epoch=%i timestamp=%s" %
-                    (result["epoch"], result["timestamp"]))
-        model.reload(model_file)
+    model_file = dir_good + "/model.h5"
+    if not os.path.exists(model_file):
+        return None
+    logger.info("restarting: " + model_file)
+    result = restart_json(gParameters, logger, dir_good)
+    logger.info("restarting: epoch=%i timestamp=%s" %
+                (result["epoch"], result["timestamp"]))
+    start = time.time()
+    stats = os.stat(model_file)
+    MB = stats.st_size / (1024*1024)
+    model.load_weights(model_file)
+    stop = time.time()
+    duration = stop - start
+    rate = MB / duration
+    logger.info("model read:  %0.3f MB in %0.3f seconds (%0.2f MB/s)." %
+                (MB, duration, rate))
     return result
 
 def restart_json(gParameters, logger, directory):
