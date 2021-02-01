@@ -89,6 +89,7 @@ if 'keras' in sys.modules:
     from keras_utils import LoggingCallback
     from keras_utils import MultiGPUCheckpoint
     from keras_utils import CandleCheckpointCallback
+    from keras_utils import restart
     from keras_utils import r2
     from keras_utils import mae
     from keras_utils import mse

@@ -21,8 +21,9 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from sklearn.metrics import r2_score
 
+import json
 import os
-
+import time
 
 def set_parallelism_threads():
     """ Set the number of parallel threads according to the number available on the hardware
@@ -267,6 +268,15 @@ class MultiGPUCheckpoint(ModelCheckpoint):
         else:
             self.model = model
 
+"""
+Hyperparameters that affect CANDLE checkpoint/restart:
+
+checksum: boolean: If True, use checksums on model.h5.  Default: True.
+restart:  boolean: If True, automatically try to restart from model.h5.
+                   Default: True
+
+"""
+            
 class CandleCheckpointCallback(Callback):
 
     """
@@ -349,11 +359,7 @@ class CandleCheckpointCallback(Callback):
             os.makedirs(dir_work)
         model_file = dir_work+"/model.h5"
         if not self.save_check(logs, epoch): return
-        self.debug("writing model to: '%s'" % model_file)
-        #self.model.save(model_file, save_format="h5")
-        self.model.save(model_file)  # save_format="h5")
-        self.checksum(dir_work)
-        self.write_json(dir_work+"/ckpt-info.json", epoch)
+        self.write_model(dir_work, epoch)
         import shutil
         if os.path.exists(dir_old):
             self.debug("removing: '%s'" % dir_old)
@@ -369,7 +375,7 @@ class CandleCheckpointCallback(Callback):
         if do_clean:
             self.debug("removing: '%s'" % dir_old)
             shutil.rmtree(dir_old)
-
+            
     def save_check(self, logs, epoch):
         """
         Make sure we want to save this epoch based on the
@@ -401,26 +407,28 @@ class CandleCheckpointCallback(Callback):
         self.debug("not writing this epoch.")
         return False
 
+    def write_model(self, dir_work, epoch):
+        """ Do the I/O, report stats """
+        model_file = dir_work + "/model.h5"
+        self.debug("writing model to: '%s'" % model_file)
+        start = time.time()
+        self.model.save(model_file)  # save_format="h5")
+        stop = time.time()
+        duration = stop - start
+        stats = os.stat(model_file)
+        MB = stats.st_size / (1024*1024)
+        rate = MB / duration
+        self.debug("model wrote: %0.3f MB in %0.3f seconds (%0.2f MB/s)." %
+                   (MB, duration, rate))
+        self.checksum(dir_work)
+        self.write_json(dir_work+"/ckpt-info.json", epoch)
+    
     def checksum(self, dir_work):
         """ Simple checksum dispatch """
         if self.checksum_model:
-            self.cksum_model = \
-                self.checksum_file(dir_work+"/model.h5")
+            self.cksum_model = checksum_file(self.logger, dir_work+"/model.h5")
         else:
             self.cksum_model = "__DISABLED__"
-
-    def checksum_file(self, filename):
-        """ Read file, compute checksum, return it as a string. """
-        import zlib
-        chunk_size = 10*1024*1024
-        with open(filename, "rb") as fp:
-            checksum = 0
-            while True:
-                chunk = fp.read(chunk_size)
-                if not chunk:
-                    break
-                checksum = zlib.crc32(chunk, checksum)
-        return str(checksum)
 
     def write_json(self, jsonfile, epoch):
         from datetime import datetime
@@ -439,7 +447,6 @@ class CandleCheckpointCallback(Callback):
         self.timestamp_last = now
         D["time_elapsed"] = time_elapsed
         D["metadata"] = self.metadata
-        import json
         with open(jsonfile, "w") as fp:
             json.dump(D, fp)
             fp.write("\n")
@@ -451,3 +458,86 @@ class CandleCheckpointCallback(Callback):
     def debug(self, message):
         if self.logger is not None:
             self.logger.debug(message)
+
+def restart(gParameters, model, verbose=True):
+    """
+    Possibly restarts model from CheckpointCallback according to given
+    settings and the ckpt-info.json
+
+    return 
+           The JSON dict if the restart happened or
+           None if the restart did not happen.
+    """
+    import logging
+    logger = logging.getLogger("Candle.restart")
+    set_up_logger("save/ckpt.log", logger, verbose=verbose,
+                  fmt_line="%(asctime)s CANDLE restart(): %(message)s")
+
+    if disabled(gParameters, "restart"):
+        return
+    
+    dir_work = "save/ckpt-work"
+    dir_good = "save/ckpt-good"
+    dir_old  = "save/ckpt-old"
+    model_file = dir_good+"/model.h5"
+    result = None
+    if os.path.exists(model_file):
+        logger.info("restarting: " + model_file)
+        result = restart_json(gParameters, logger, dir_good)
+        logger.info("restarted: epoch=%i timestamp=%s" %
+                    (result["epoch"], result["timestamp"]))
+        model.reload(model_file)
+    return result
+
+def restart_json(gParameters, logger, directory):
+    json_file = directory + "/ckpt-info.json"
+    if not os.path.exists(json_file):
+        msg = "restart_json(): in: %s model exists but not json!" % \
+              directory
+        logger.info(msg)
+        if not disabled(gParameters, "require_json"):
+            raise Exception(msg)
+    with open(json_file) as fp:
+        J = json.load(fp)
+    print(str(J))
+
+    if not disabled(gParameters, "checksum"):
+        checksum = checksum_file(logger, directory + "/model.h5")
+        if checksum != J["checksum"]:
+            raise Exception("checksum mismatch! directory: " %
+                            directory)
+    
+    return J
+
+
+def enabled(gParameters, key):
+    """ Is this parameter set to True? """
+    return key in gParameters and gParameters[key]
+
+
+def disabled(gParameters, key):
+    """ Is this parameter set to False? """
+    return key in gParameters and not gParameters[key]
+
+    
+def checksum_file(logger, filename):
+    """ Read file, compute checksum, return it as a string. """
+    import zlib
+    start = time.time()
+    chunk_size = 10*1024*1024
+    total = 0
+    with open(filename, "rb") as fp:
+        checksum = 0
+        while True:
+            chunk = fp.read(chunk_size)
+            if not chunk:
+                break
+            total += len(chunk)
+            checksum = zlib.crc32(chunk, checksum)
+    stop = time.time()
+    MB = total / (1024*1024)
+    duration = stop - start
+    rate = MB / duration
+    logger.info("checksummed: %0.3f MB in %.3f seconds (%.2f MB/s)." %
+                (MB, duration, rate))
+    return str(checksum)
