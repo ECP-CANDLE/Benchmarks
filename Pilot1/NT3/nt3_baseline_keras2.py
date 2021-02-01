@@ -184,6 +184,13 @@ def run(gParameters):
                   optimizer=optimizer,
                   metrics=[gParameters['metrics']])
 
+    initial_epoch = 0
+
+    J = candle.restart(gParameters, model)
+    if J is not None:
+        initial_epoch = J['epoch']
+        print('initial_epoch: %i' % initial_epoch)
+
     output_dir = gParameters['output_dir']
 
     if not os.path.exists(output_dir):
@@ -201,11 +208,12 @@ def run(gParameters):
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
     ckpt = candle.CandleCheckpointCallback(skip_epochs=0,
-                                           checksum_model=False,
+                                           checksum_model=True,
                                            verbose=True, save_best_stat='loss')
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],
                         epochs=gParameters['epochs'],
+                        initial_epoch=initial_epoch,
                         verbose=1,
                         validation_data=(X_test, Y_test),
                         callbacks=[csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor,
