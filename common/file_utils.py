@@ -73,10 +73,9 @@ def get_file_from_modac(fname, origin):
     headers = {'Content-Type': 'application/json'}
     auth = (modac_user, modac_pass)
     url = origin + '/download'
-    print(url)
+    print("Downloading: " + url + " ...")
     r = requests.post(url, data = data, headers = headers, auth = auth)
     r.raise_for_status()
-    print(r.status_code)
     print('Saving file to:' + fname)
     out_file = open(fname, "wb")
     out_file.write(r.content)
