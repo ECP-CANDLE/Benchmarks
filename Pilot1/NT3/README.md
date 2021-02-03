@@ -6,6 +6,11 @@ The full set of expression features contains 60,483 float columns transformed fr
 It is useful for studying the difference and transformation of latent representation between normal and tumor tissues. 
 The model also acts as a quality control check for synthetically generated gene expression profiles.
 
+## Data
+The model is trained on the balanced 700 matched normal-tumor gene expression profile pairs available from the NCI genomic data commons. 
+The full set of expression features contains 60,483 float columns from RNA-seq [FPKM-UQ](https://docs.gdc.cancer.gov/Encyclopedia/pages/HTSeq-FPKM-UQ/) values. This model achieves around 98% classification accuracy. 
+The associated metadata for the samples can be found [here](http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/normal-tumor/matched_normal_samples.metadata.tsv). 
+
 ## Profile runs
 We have run the same configuration across multiple machines and compared the resource utilization. 
 ```
