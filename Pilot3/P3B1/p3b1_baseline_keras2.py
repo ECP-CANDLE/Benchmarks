@@ -97,7 +97,7 @@ def build_model(gParameters, kerasDefaults,
             if k < len(individual_nnet_spec[idx]):
                 layer = Dense(individual_nnet_spec[idx][k],
                               activation=gParameters['activation'],
-                              name='indiv_layer_' + str(l) + '_' + str(k))(indiv_layers[-1])
+                              name='indiv_layer_' + str(idx) + '_' + str(k))(indiv_layers[-1])
                 indiv_layers.append(layer)
                 if gParameters['dropout'] > 0:
                     layer = Dropout(gParameters['dropout'])(indiv_layers[-1])
@@ -105,7 +105,7 @@ def build_model(gParameters, kerasDefaults,
             else:
                 layer = Dense(n_out_nodes[idx],
                               activation=gParameters['out_activation'],
-                              name='out_' + str(l))(indiv_layers[-1])
+                              name='out_' + str(idx))(indiv_layers[-1])
                 indiv_layers.append(layer)
 
         indiv_layers_arr.append(indiv_layers)
