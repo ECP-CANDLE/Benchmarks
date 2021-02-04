@@ -11,6 +11,7 @@ from six.moves.urllib.error import URLError, HTTPError
 
 import requests
 from generic_utils import Progbar
+from  modac_utils import get_file_from_modac
 
 
 # Under Python 2, 'urlretrieve' relies on FancyURLopener from legacy
@@ -37,50 +38,6 @@ if sys.version_info[0] == 2:
                 fd.write(chunk)
 else:
     from six.moves.urllib.request import urlretrieve
-
-
-modac_user = None
-modac_pass = None
-def get_file_from_modac(fname, origin):
-    """ Downloads a file from the "Model and Data Clearning House" (MoDAC)
-    repository. Users should already have a MoDAC account to download the data.
-    Accounts can be created on modac.cancer.gov
-
-        Parameters
-        ----------
-        fname : string
-            path on disk to save the file
-        origin : string
-            original MoDAC URL of the file
-
-        Returns
-        ----------
-        Path to the downloaded file      
-    """
-
-    print('Downloading data from modac.cancer.gov, make sure you have an account first.')
-
-    global modac_user
-    global modac_pass
-    if modac_user is None: 
-        modac_user = input("MoDaC Username: ")
-
-    if modac_pass is None:
-        import getpass 
-        modac_pass = getpass.getpass("MoDaC Password: ")
-
-    data = {}
-    headers = {'Content-Type': 'application/json'}
-    auth = (modac_user, modac_pass)
-    url = origin + '/download'
-    print("Downloading: " + url + " ...")
-    r = requests.post(url, data = data, headers = headers, auth = auth)
-    r.raise_for_status()
-    print('Saving file to:' + fname)
-    out_file = open(fname, "wb")
-    out_file.write(r.content)
-    out_file.close()
-    return fname
 
 def get_file(fname, origin, untar=False,
              # md5_hash=None, datadir='../Data/common'):

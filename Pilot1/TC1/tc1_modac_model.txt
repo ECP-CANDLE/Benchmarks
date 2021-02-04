@@ -1,5 +1,5 @@
 [Global_Params]
-data_url = 'https://modac.cancer.gov/api/dataObject/NCI_DOE_Archive/JDACS4C/JDACS4C_Pilot_1/tumor_classifier_model_tc1/'
+data_url = 'https://modac.cancer.gov/api/v2/dataObject/NCI_DOE_Archive/JDACS4C/JDACS4C_Pilot_1/tumor_classifier_model_tc1/'
 train_data = 'type_18_300_train.csv'
 test_data = 'type_18_300_test.csv'
 model_name = 'tc1'
