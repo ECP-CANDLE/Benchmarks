@@ -681,6 +681,13 @@ def get_common_parser(parser):
     parser.add_argument("--clr_gamma", type=float, default=argparse.SUPPRESS,
                         help="Gamma parameter for learning cycle LR.")
 
+    # checkpoint restart
+    parser.add_argument("--restart", type=str2bool,
+                        default=False,
+                        help="restart from a saved checkpoint file")
+    parser.add_argument("--checksum", type=str2bool,
+                        default=True,
+                        help="validate the restart file with checksum")
     return parser
 
 

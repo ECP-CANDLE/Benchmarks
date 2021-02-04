@@ -273,7 +273,7 @@ Hyperparameters that affect CANDLE checkpoint/restart:
 
 checksum: boolean: If True, use checksums on model.h5.  Default: True.
 restart:  boolean: If True, automatically try to restart from model.h5.
-                   Default: True
+                   Default: False
 
 """
             
