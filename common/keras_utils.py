@@ -287,8 +287,10 @@ class CandleCheckpointCallback(Callback):
     """
 
     def __init__(self, logger="DEFAULT",
-                 save_best_only=True, save_weights_only=True,
+                 save_best_only=True, 
+                 save_weights_only=True,
                  save_best_stat=None,
+                 best_stat_last=None,
                  skip_epochs=0,
                  checksum_model=False,
                  metadata=None, clean=True, verbose=True):
@@ -329,7 +331,10 @@ class CandleCheckpointCallback(Callback):
         self.skip_epochs = skip_epochs
         self.save_best_only = save_best_only
         self.save_best_stat = save_best_stat
-        self.best_stat_last = math.inf
+        if best_stat_last is not None:
+            self.best_stat_last = best_stat_last
+        else:
+            self.best_stat_last = math.inf
         self.save_weights_only = save_weights_only
         self.checksum_model = checksum_model
         self.metadata = metadata
@@ -437,6 +442,7 @@ class CandleCheckpointCallback(Callback):
         D["epoch"] = epoch
         D["save_best_only"] = self.save_best_only
         D["save_best_stat"] = self.save_best_stat
+        D["best_stat_last"] = self.best_stat_last
         D["model_file"] = "model.h5"
         D["checksum"] = self.cksum_model
         D["timestamp"] = now.strftime("%Y-%m-%d %H:%M:%S")

@@ -185,10 +185,12 @@ def run(gParameters):
                   metrics=[gParameters['metrics']])
 
     initial_epoch = 0
+    best_stat_last = None
 
     J = candle.restart(gParameters, model)
     if J is not None:
         initial_epoch = J['epoch']
+        best_stat_last=J['best_stat_last']
         print('initial_epoch: %i' % initial_epoch)
 
     output_dir = gParameters['output_dir']
@@ -209,6 +211,7 @@ def run(gParameters):
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
     ckpt = candle.CandleCheckpointCallback(skip_epochs=0,
                                            checksum_model=True,
+                                           best_stat_last=best_stat_last,
                                            verbose=True, save_best_stat='loss')
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],
