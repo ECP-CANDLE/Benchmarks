@@ -51,6 +51,11 @@ def initialize_parameters(default_model='attn_default_model.txt'):
             desc='Fully connected networks with attention for experimantal use'
             )
     gParameters = candle.finalize_parameters(attnBmk)
+    if 'sample_size' in gParameters:
+        gParameters['sample_size'] = int(gParameters['sample_size'])
+    if 'training_size' in gParameters:
+        gParameters['training_size'] = int(gParameters['training_size'])
+
     return gParameters
 
 def subset_data (X_train, Y_train, params):
