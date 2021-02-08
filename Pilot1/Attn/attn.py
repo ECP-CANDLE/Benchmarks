@@ -21,6 +21,14 @@ logger = logging.getLogger(__name__)
 candle.set_parallelism_threads()
 
 additional_definitions = [
+    {'name': 'sample_size',
+     'action': 'store',
+     'type': int,
+     'help': 'sample size for activations'},
+    {'name': 'training_size',
+     'action': 'store',
+     'type': int,
+     'help': 'training data size'},
     {'name': 'latent_dim',
      'action': 'store',
      'type': int,
@@ -163,6 +171,7 @@ def load_data(params, seed):
 
     print('x_train shape:', X_train.shape)
     print('x_test shape:', X_test.shape)
+    print('x_val shape:', X_val.shape)
 
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
