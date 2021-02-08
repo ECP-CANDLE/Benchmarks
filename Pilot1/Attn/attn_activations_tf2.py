@@ -154,7 +154,7 @@ def run(params):
 
     #os.environ["CUDA_VISIBLE_DEVICES"]="0";
     X_train, Y_train = subset_data(X_train, Y_train, params)
-    print('sampled training data size {} and labels {}'.format(_X_train.shape,_Y_train.shape))
+    print('sampled training data size {} and labels {}'.format(X_train.shape,Y_train.shape))
     history_1 = model_1.fit(X_train, Y_train, class_weight=d_class_weights,
                                 batch_size=params['batch_size'],
                                 epochs=params['epochs'],
@@ -172,8 +172,10 @@ def run(params):
 
     # get activations on those data points, 50000 is 5x (num_neurons in the widest hidden layer)
     # x = X_test.iloc[1:ARG1].to_numpy()
-    _i = int(params['sample_size'])  ## JAMAL, why is params['sample_size'] not an int?
-    x = X_test.iloc[1:_i].to_numpy()
+    if 'sample_size' in params:
+        x = X_test.iloc[1:params['sample_size']].to_numpy()
+    else:
+        x = X_test.to_numpy()
     activations_1 = get_activations(model_1, x, auto_compile=True)
     activations_2 = get_activations(model_2, x, auto_compile=True)
 
