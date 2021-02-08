@@ -14,55 +14,30 @@ chmod u+x ./Anaconda3-2020.02-Linux-x86_64.sh
 export PATH=$HOME/anaconda3/bin:$PATH
 
 # Install additonal modules not shipped with Anaconda
-conda install -y -c conda-forge tensorflow-gpu=1
-conda install -y -c anaconda hdf5
-conda install -y -c conda-forge keras=2
-conda install -y -c anaconda pandas
+conda install -y -c conda-forge tensorflow-gpu=2
+conda install -y pandas pytables blosc'<1.19'
 conda install -y -c anaconda scikit-learn 
 conda install -y -c anaconda matplotlib
 conda install -y -c conda-forge pygpu
 conda install -y -c anaconda pytorch
-conda install numba
-conda install astropy
-conda install patsy
-conda install statsmodels
-conda install requests
-conda install torch
-conda install pytorch
-conda install -c conda-forge tqdm
-conda update -c conda-forge numpy
+conda install -y numba
+conda install -y astropy
+conda install -y patsy
+conda install -y statsmodels
+conda install -y  requests
+conda install -y -c conda-forge tqdm
+conda update  -y -c conda-forge numpy
+conda install -y pyyaml=3.13
 
 # Download the source files for the benchmarks
 git clone https://github.com/ECP-Candle/benchmarks
 
-# Run the Pilot1 benchmark
-pushd benchmarks/Pilot1/P1B1/
-python p1b1_baseline_keras2.py 
-popd
-
-pushd benchmarks/Pilot1/P1B2/
-python p1b2_baseline_keras2.py
-popd
-
-pushd benchmarks/Pilot1/P1B3/
-python p1b3_baseline_keras2.py
+# Run the Pilot1 benchmarks
+pushd benchmarks/Pilot1/Attn/
+python attn_baseline_keras2.py 
 popd
 
 # Run the Pilot2 benchmarks
-pushd benchmarks/Pilot2/P2B1/
-python p2b1_baseline_keras1.py
-popd
 
-pushd benchmarks/Pilot2/P2B2/
-python p2b2_baseline_keras1.py
-popd
 
-# Run the Pilot3 benchmarks
-pushd benchmarks/Pilot3/P3B1/
-python p3b1_baseline_keras2.py
-popd
-
-pushd benchmarks/Pilot3/P3B2/
-python p3b2_baseline_keras2.py
-popd 
-
+# Run the Pilot2 benchmarks
