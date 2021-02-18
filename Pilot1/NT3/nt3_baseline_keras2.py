@@ -189,8 +189,8 @@ def run(gParameters):
 
     J = candle.restart(gParameters, model)
     if J is not None:
-        initial_epoch = J['epoch']
-        best_stat_last=J['best_stat_last']
+        initial_epoch  = J['epoch']
+        best_stat_last = J['best_stat_last']
         print('initial_epoch: %i' % initial_epoch)
 
     output_dir = gParameters['output_dir']
@@ -209,10 +209,13 @@ def run(gParameters):
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
-    ckpt = candle.CandleCheckpointCallback(skip_epochs=0,
-                                           checksum_model=True,
-                                           best_stat_last=best_stat_last,
-                                           verbose=True, save_best_stat='loss')
+
+    gParameters['skip_epochs'] = 0
+    gParameters['best_stat_last'] = best_stat_last
+    gParameters['save_best_stat'] = 'loss'
+
+    ckpt = candle.CandleCheckpointCallback(gParameters,
+                                           verbose=True, )
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],
                         epochs=gParameters['epochs'],
