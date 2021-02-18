@@ -365,7 +365,7 @@ def param_type_check_int(key, value, type_):
     if type_ == ParamType.INTEGER_N:
         if result < 0:
             raise(ValueError(("parameter: '%s' is '%s' " +
-                              "but must be greater than 0") %
+                              "but must be non-negative") %
                              (key, str(value))))
     return result
 
