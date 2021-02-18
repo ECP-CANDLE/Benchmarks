@@ -114,19 +114,31 @@ class CandleCheckpointCallback(Callback):
 
     def scan_params(self, gParameters):
         """ Simply translate gParameters into instance fields """
-        self.skip_epochs = param(gParameters, "skip_epochs", 0)
-        self.save_best_only = param(gParameters, "save_best_only", False)
-        self.save_best_stat = param(gParameters, "save_best_stat", 'loss')
-        self.best_stat_last = param(gParameters, "best_stat_last", None)
+        self.skip_epochs = param(gParameters, "skip_epochs",
+                                 0, ParamType.INTEGER_N)
+        print("skip: %i" % self.skip_epochs)
+        self.save_best_only = param(gParameters, "save_best_only",
+                                    False, ParamType.BOOLEAN)
+        self.save_best_stat = param(gParameters, "save_best_stat",
+                                    'loss', ParamType.STRING)
+        self.best_stat_last = param(gParameters, "best_stat_last",
+                                    None, ParamType.STRING)
         if self.best_stat_last is None:
             # TODO: Handle positive/negative metrics
             import math
             self.best_stat_last = math.inf
-        self.save_weights_only = param(gParameters, "save_weights_only", True)
-        self.checksum_enabled = param(gParameters, "checksum", True)
-        self.metadata = param(gParameters, "metadata", None)
-        self.timestamp_last = param(gParameters, "timestamp_last", None)
-        self.clean = param(gParameters, "clean", False)
+        self.save_weights_only = param(gParameters, "save_weights_only",
+                                       True, ParamType.BOOLEAN)
+        self.save_interval = param(gParameters, "save_interval",
+                                   1, ParamType.INTEGER_N)
+        self.checksum_enabled = param(gParameters, "checksum",
+                                      True, ParamType.BOOLEAN)
+        self.metadata = param(gParameters, "metadata",
+                              None, ParamType.STRING)
+        self.timestamp_last = param(gParameters, "timestamp_last",
+                                    None, ParamType.STRING)
+        self.clean = param(gParameters, "clean",
+                           False, ParamType.BOOLEAN)
 
     def on_epoch_end(self, epoch, logs):
         """
@@ -306,19 +318,66 @@ def restart_json(gParameters, logger, directory):
     return J
 
 
+from enum import Enum, unique
+@unique
+class ParamType(Enum):
+    STRING    = 1
+    BOOLEAN   = 2
+    INTEGER   = 3
+    """ integer: non-negative """
+    INTEGER_N = 4
+
 def enabled(gParameters, key):
     """ Is this parameter set to True? """
     return key in gParameters and gParameters[key]
-
 
 def disabled(gParameters, key):
     """ Is this parameter set to False? """
     return key in gParameters and not gParameters[key]
 
-def param(gParameters, key, dflt):
+def param(gParameters, key, dflt, type_=ParamType.STRING):
     if key in gParameters:
-        return gParameters[key]
-    return dflt
+        result = gParameters[key]
+    else:
+        result = dflt
+    result = param_type_check(key, result, type_)
+    return result
+
+def param_type_check(key, value, type_):
+    if value is None:
+        return value
+    if type_ == ParamType.STRING:
+        return str(value)
+    if type_ == ParamType.INTEGER or type_ == ParamType.INTEGER_N:
+        return param_type_check_int(key, value, type_)
+    if type_ == ParamType.BOOLEAN:
+        return param_type_check_bool(key, value)
+
+def param_type_check_int(key, value, type_):
+    if type(value) == int:
+        result = value
+    else:
+        try:
+            result = int(value)
+        except:
+            raise(ValueError("parameter: '%s' is '%s' but must be a %s" %
+                             key, str(value), str(type_)))
+    if type_ == ParamType.INTEGER_N:
+        if result < 0:
+            raise(ValueError(("parameter: '%s' is '%s' " +
+                              "but must be greater than 0") %
+                             (key, str(value))))
+    return result
+
+def param_type_check_bool(key, value):
+    if type(value) == bool:
+        return value
+    try:
+        v = str2bool(value)
+    except:
+        raise(ValueError("parameter: '%s' is '%s' but must be a %s" %
+                         key, str(value), str(ParamType.BOOLEAN)))
+    return v
 
 def checksum_file(logger, filename):
     """ Read file, compute checksum, return it as a string. """

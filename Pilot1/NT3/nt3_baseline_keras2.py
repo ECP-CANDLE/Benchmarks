@@ -99,6 +99,24 @@ def run(gParameters):
     train_file = candle.get_file(file_train, url + file_train, cache_subdir='Pilot1')
     test_file = candle.get_file(file_test, url + file_test, cache_subdir='Pilot1')
 
+    model = Sequential()
+
+    initial_epoch = 0
+    best_stat_last = None
+
+    J = candle.restart(gParameters, model)
+    if J is not None:
+        initial_epoch  = J['epoch']
+        best_stat_last = J['best_stat_last']
+        print('initial_epoch: %i' % initial_epoch)
+
+    gParameters['skip_epochs'] = 0
+    gParameters['best_stat_last'] = best_stat_last
+    gParameters['save_best_stat'] = 'loss'
+
+    ckpt = candle.CandleCheckpointCallback(gParameters,
+                                           verbose=True)
+
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
     print('X_train shape:', X_train.shape)
@@ -116,8 +134,6 @@ def run(gParameters):
 
     print('X_train shape:', X_train.shape)
     print('X_test shape:', X_test.shape)
-
-    model = Sequential()
 
     layer_list = list(range(0, len(gParameters['conv']), 3))
     for _, i in enumerate(layer_list):
@@ -184,15 +200,6 @@ def run(gParameters):
                   optimizer=optimizer,
                   metrics=[gParameters['metrics']])
 
-    initial_epoch = 0
-    best_stat_last = None
-
-    J = candle.restart(gParameters, model)
-    if J is not None:
-        initial_epoch  = J['epoch']
-        best_stat_last = J['best_stat_last']
-        print('initial_epoch: %i' % initial_epoch)
-
     output_dir = gParameters['output_dir']
 
     if not os.path.exists(output_dir):
@@ -210,12 +217,6 @@ def run(gParameters):
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
 
-    gParameters['skip_epochs'] = 0
-    gParameters['best_stat_last'] = best_stat_last
-    gParameters['save_best_stat'] = 'loss'
-
-    ckpt = candle.CandleCheckpointCallback(gParameters,
-                                           verbose=True, )
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],
                         epochs=gParameters['epochs'],
