@@ -26,4 +26,4 @@ noise_gaussian = False
 std_dev = 0.5
 timeout = 3600
 restart = True
-checksum = False
+ckpt_checksum = False
