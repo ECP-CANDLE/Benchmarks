@@ -6,40 +6,36 @@ CANDLE checkpoint/restart utilities for Keras
 
 Hyperparameters that affect CANDLE checkpoint/restart:
 
-checksum : boolean
-    If True, use checksums on model.h5.
-    Default: True.
-
 restart :  "OFF" | "AUTO" | "REQUIRED"
     If AUTO or REQUIRED, automatically try to restart from most recent
     (highest epoch) model.h5.
     REQUIRED will fail if a model cannot be found.
     Default: True
 
-save_best_only : boolean
+ckpt_save_best : boolean
     If true, only save when save_best_stat has improved.
     Default: False
 
-save_best_stat : string
+ckpt_save_best_stat : string
     Required when save_best_only=True, else unused.
     The stat in logs.model to track for improvement.
 
-skip_epochs : int
+ckpt_skip_epochs : int
     Number of initial epochs to skip before writing checkpoints
     Default: 0
 
-checksum : boolean
+ckpt_checksum : boolean
     If True, compute a checksum for the model
     and store it in the JSON
     Default: True
 
-metadata : string
+ckpt_metadata : string
     Arbitrary string to add to the JSON file regarding
     job ID, hardware location, etc.
     May be None or an empty string.
     Default: None
 
-clean : boolean
+ckpt_clean : boolean
     If True, remove old checkpoints immediately.
     If False, one extra old checkpoint will remain on disk.
     Default: False
@@ -114,30 +110,30 @@ class CandleCheckpointCallback(Callback):
 
     def scan_params(self, gParameters):
         """ Simply translate gParameters into instance fields """
-        self.skip_epochs = param(gParameters, "skip_epochs",
+        self.skip_epochs = param(gParameters, "ckpt_skip_epochs",
                                  0, ParamType.INTEGER_N)
         print("skip: %i" % self.skip_epochs)
-        self.save_best_only = param(gParameters, "save_best_only",
+        self.save_best_only = param(gParameters, "ckpt_save_best_only",
                                     False, ParamType.BOOLEAN)
-        self.save_best_stat = param(gParameters, "save_best_stat",
+        self.save_best_stat = param(gParameters, "ckpt_save_best_stat",
                                     'loss', ParamType.STRING)
-        self.best_stat_last = param(gParameters, "best_stat_last",
+        self.best_stat_last = param(gParameters, "ckpt_best_stat_last",
                                     None, ParamType.STRING)
         if self.best_stat_last is None:
             # TODO: Handle positive/negative metrics
             import math
             self.best_stat_last = math.inf
-        self.save_weights_only = param(gParameters, "save_weights_only",
+        self.save_weights_only = param(gParameters, "ckpt_save_weights_only",
                                        True, ParamType.BOOLEAN)
-        self.save_interval = param(gParameters, "save_interval",
+        self.save_interval = param(gParameters, "ckpt_save_interval",
                                    1, ParamType.INTEGER_N)
-        self.checksum_enabled = param(gParameters, "checksum",
+        self.checksum_enabled = param(gParameters, "ckpt_checksum",
                                       True, ParamType.BOOLEAN)
         self.metadata = param(gParameters, "metadata",
                               None, ParamType.STRING)
-        self.timestamp_last = param(gParameters, "timestamp_last",
+        self.timestamp_last = param(gParameters, "ckpt_timestamp_last",
                                     None, ParamType.STRING)
-        self.clean = param(gParameters, "clean",
+        self.clean = param(gParameters, "ckpt_clean",
                            False, ParamType.BOOLEAN)
 
     def on_epoch_end(self, epoch, logs):
@@ -233,7 +229,7 @@ class CandleCheckpointCallback(Callback):
         from datetime import datetime
         now = datetime.now()
         D = {}
-        D["epoch"] = epoch
+        D["epoch"] = epoch+1
         D["save_best_only"] = self.save_best_only
         D["save_best_stat"] = self.save_best_stat
         D["best_stat_last"] = self.best_stat_last
@@ -309,7 +305,7 @@ def restart_json(gParameters, logger, directory):
         J = json.load(fp)
     print(str(J))
 
-    if not disabled(gParameters, "checksum"):
+    if not disabled(gParameters, "ckpt_checksum"):
         checksum = checksum_file(logger, directory + "/model.h5")
         if checksum != J["checksum"]:
             raise Exception("checksum mismatch! directory: " %
@@ -400,3 +396,38 @@ def checksum_file(logger, filename):
     logger.info("checksummed: %0.3f MB in %.3f seconds (%.2f MB/s)." %
                 (MB, duration, rate))
     return str(checksum)
+
+def ckpt_parser(parser):
+
+    parser.add_argument("--restart", type=str2bool,
+                        default=True,
+                        help="restart from a saved checkpoint file")
+    parser.add_argument("--ckpt_checksum", type=str2bool,
+                        default=True,
+                        help="validate the restart file with checksum"),
+    parser.add_argument("--ckpt_save_best", type=str2bool,
+                        default=True,
+                        help="Toggle saving best model"),
+    parser.add_argument("--ckpt_save_best_metric", type=str,
+                        default=True,
+                        help="Metric for determining when to save best model"),
+    parser.add_argument("--ckpt_save_each", type=str2bool,
+                        default=False,
+                        help="Toggle saving model at every step"),
+    parser.add_argument("--ckpt_save_interval", type=int,
+                        default=1,
+                        help="Interval to save checkpoints"),
+    parser.add_argument("--ckpt_keep_mode",
+                        choices=['all','count','last'],
+                        help="Checkpoint saving mode. choices are 'all','count','last' "),
+    parser.add_argument("--ckpt_keep_count", type=int,
+                        default=3,
+                        help="Number of checkpoints to save"),
+    parser.add_argument("--ckpt_skip_epochs", type=int,
+                        default=0,
+                        help="Number of epochs to skip before saving epochs"),
+    parser.add_argument("--ckpt_directory", type=str,
+                        default='./save',
+                        help="Base directory to save checkpoints")    
+
+    return parser
