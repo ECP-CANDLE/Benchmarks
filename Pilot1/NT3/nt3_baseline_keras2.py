@@ -104,13 +104,6 @@ def run(gParameters):
     initial_epoch = 0
     best_stat_last = None
 
-    gParameters['skip_epochs'] = 0
-    gParameters['best_stat_last'] = best_stat_last
-    gParameters['save_best_stat'] = 'loss'
-
-    ckpt = candle.CandleCheckpointCallback(gParameters,
-                                           verbose=True)
-
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
     print('X_train shape:', X_train.shape)
@@ -170,6 +163,13 @@ def run(gParameters):
         initial_epoch  = J['epoch']
         best_stat_last = J['best_stat_last']
         print('initial_epoch: %i' % initial_epoch)
+
+    gParameters['ckpt_skip_epochs'] = 0
+    gParameters['ckpt_best_stat_last'] = best_stat_last
+    gParameters['ckpt_save_best_stat'] = 'loss'
+
+    ckpt = candle.CandleCheckpointCallback(gParameters,
+                                           verbose=True)
 
 # Reference case
 # model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
