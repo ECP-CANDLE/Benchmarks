@@ -6,9 +6,43 @@ CANDLE checkpoint/restart utilities for Keras
 
 Hyperparameters that affect CANDLE checkpoint/restart:
 
-checksum: boolean: If True, use checksums on model.h5.  Default: True.
-restart:  boolean: If True, automatically try to restart from model.h5.
-                   Default: False
+checksum : boolean
+    If True, use checksums on model.h5.
+    Default: True.
+
+restart :  "OFF" | "AUTO" | "REQUIRED"
+    If AUTO or REQUIRED, automatically try to restart from most recent
+    (highest epoch) model.h5.
+    REQUIRED will fail if a model cannot be found.
+    Default: True
+
+save_best_only : boolean
+    If true, only save when save_best_stat has improved.
+    Default: False
+
+save_best_stat : string
+    Required when save_best_only=True, else unused.
+    The stat in logs.model to track for improvement.
+
+skip_epochs : int
+    Number of initial epochs to skip before writing checkpoints
+    Default: 0
+
+checksum : boolean
+    If True, compute a checksum for the model
+    and store it in the JSON
+    Default: True
+
+metadata : string
+    Arbitrary string to add to the JSON file regarding
+    job ID, hardware location, etc.
+    May be None or an empty string.
+    Default: None
+
+clean : boolean
+    If True, remove old checkpoints immediately.
+    If False, one extra old checkpoint will remain on disk.
+    Default: False
 
 Usage:
 
@@ -53,37 +87,13 @@ class CandleCheckpointCallback(Callback):
     tracking complex workflows.
     """
 
-    def __init__(self, logger="DEFAULT",
-                 save_best_only=True,
-                 save_weights_only=True,
-                 save_best_stat=None,
-                 best_stat_last=None,
-                 skip_epochs=0,
-                 checksum_model=False,
-                 metadata=None, clean=True, verbose=True):
+    def __init__(self, gParameters, logger="DEFAULT", verbose=True):
         """
         Parameters
         ----------
             logger : Logger
                 The logger to use.
                 May be None to disable or "DEFAULT" to use the default.
-            save_best_only : boolean
-                If true, only save when save_best_stat has improved.
-            save_best_stat : string
-                Required when save_best_only=True, else unused.
-                The stat in logs.model to track for improvement.
-            skip_epochs : int
-                Number of initial epochs to skip before writing checkpoints
-            checksum_model : boolean
-                If True, compute a checksum for the model
-                and store it in the JSON
-            metadata : string
-                Arbitrary string to add to the JSON file regarding
-                job ID, hardware location, etc.
-                May be None or an empty string.
-            clean : boolean
-                If True, remove old checkpoints immediately.
-                If False, one extra old checkpoint will remain on disk.
             verbose : boolean
                 If True, more verbose logging
                 Passed to default_utils.set_up_logger(verbose) for this logger
@@ -95,23 +105,40 @@ class CandleCheckpointCallback(Callback):
             self.logger = logging.getLogger("CandleCheckpointCallback")
             set_up_logger("save/ckpt.log", self.logger, verbose=verbose,
                           fmt_line="%(asctime)s CandleCheckpoint: %(message)s")
-        self.skip_epochs = skip_epochs
-        self.save_best_only = save_best_only
-        self.save_best_stat = save_best_stat
-        if best_stat_last is not None:
-            self.best_stat_last = best_stat_last
-        else:
-            self.best_stat_last = math.inf
-        self.save_weights_only = save_weights_only
-        self.checksum_model = checksum_model
-        self.metadata = metadata
-        self.timestamp_last = None
-        self.clean = clean
+        self.scan_params(gParameters)
         self.info("Callback initialized.")
         if self.metadata is not None:
             self.info("metadata='%s'" % self.metadata)
         if self.save_best_only:
             self.info("save_best_stat='%s'" % self.save_best_stat)
+
+    def scan_params(self, gParameters):
+        """ Simply translate gParameters into instance fields """
+        self.skip_epochs = param(gParameters, "skip_epochs",
+                                 0, ParamType.INTEGER_N)
+        print("skip: %i" % self.skip_epochs)
+        self.save_best_only = param(gParameters, "save_best_only",
+                                    False, ParamType.BOOLEAN)
+        self.save_best_stat = param(gParameters, "save_best_stat",
+                                    'loss', ParamType.STRING)
+        self.best_stat_last = param(gParameters, "best_stat_last",
+                                    None, ParamType.STRING)
+        if self.best_stat_last is None:
+            # TODO: Handle positive/negative metrics
+            import math
+            self.best_stat_last = math.inf
+        self.save_weights_only = param(gParameters, "save_weights_only",
+                                       True, ParamType.BOOLEAN)
+        self.save_interval = param(gParameters, "save_interval",
+                                   1, ParamType.INTEGER_N)
+        self.checksum_enabled = param(gParameters, "checksum",
+                                      True, ParamType.BOOLEAN)
+        self.metadata = param(gParameters, "metadata",
+                              None, ParamType.STRING)
+        self.timestamp_last = param(gParameters, "timestamp_last",
+                                    None, ParamType.STRING)
+        self.clean = param(gParameters, "clean",
+                           False, ParamType.BOOLEAN)
 
     def on_epoch_end(self, epoch, logs):
         """
@@ -197,7 +224,7 @@ class CandleCheckpointCallback(Callback):
 
     def checksum(self, dir_work):
         """ Simple checksum dispatch """
-        if self.checksum_model:
+        if self.checksum_enabled:
             self.cksum_model = checksum_file(self.logger, dir_work+"/model.h5")
         else:
             self.cksum_model = "__DISABLED__"
@@ -291,15 +318,66 @@ def restart_json(gParameters, logger, directory):
     return J
 
 
+from enum import Enum, unique
+@unique
+class ParamType(Enum):
+    STRING    = 1
+    BOOLEAN   = 2
+    INTEGER   = 3
+    """ integer: non-negative """
+    INTEGER_N = 4
+
 def enabled(gParameters, key):
     """ Is this parameter set to True? """
     return key in gParameters and gParameters[key]
-
 
 def disabled(gParameters, key):
     """ Is this parameter set to False? """
     return key in gParameters and not gParameters[key]
 
+def param(gParameters, key, dflt, type_=ParamType.STRING):
+    if key in gParameters:
+        result = gParameters[key]
+    else:
+        result = dflt
+    result = param_type_check(key, result, type_)
+    return result
+
+def param_type_check(key, value, type_):
+    if value is None:
+        return value
+    if type_ == ParamType.STRING:
+        return str(value)
+    if type_ == ParamType.INTEGER or type_ == ParamType.INTEGER_N:
+        return param_type_check_int(key, value, type_)
+    if type_ == ParamType.BOOLEAN:
+        return param_type_check_bool(key, value)
+
+def param_type_check_int(key, value, type_):
+    if type(value) == int:
+        result = value
+    else:
+        try:
+            result = int(value)
+        except:
+            raise(ValueError("parameter: '%s' is '%s' but must be a %s" %
+                             key, str(value), str(type_)))
+    if type_ == ParamType.INTEGER_N:
+        if result < 0:
+            raise(ValueError(("parameter: '%s' is '%s' " +
+                              "but must be non-negative") %
+                             (key, str(value))))
+    return result
+
+def param_type_check_bool(key, value):
+    if type(value) == bool:
+        return value
+    try:
+        v = str2bool(value)
+    except:
+        raise(ValueError("parameter: '%s' is '%s' but must be a %s" %
+                         key, str(value), str(ParamType.BOOLEAN)))
+    return v
 
 def checksum_file(logger, filename):
     """ Read file, compute checksum, return it as a string. """
