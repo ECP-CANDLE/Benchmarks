@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 candle.set_parallelism_threads()
 
 additional_definitions = [
+    {'name': 'cca_epsilon',
+     'type': float,
+     'help': 'removes neurons with very small activations during SVD.'},
     {'name': 'sample_size',
      'action': 'store',
      'type': int,
