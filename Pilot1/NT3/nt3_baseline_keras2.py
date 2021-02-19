@@ -104,12 +104,6 @@ def run(gParameters):
     initial_epoch = 0
     best_stat_last = None
 
-    J = candle.restart(gParameters, model)
-    if J is not None:
-        initial_epoch  = J['epoch']
-        best_stat_last = J['best_stat_last']
-        print('initial_epoch: %i' % initial_epoch)
-
     gParameters['skip_epochs'] = 0
     gParameters['best_stat_last'] = best_stat_last
     gParameters['save_best_stat'] = 'loss'
@@ -170,6 +164,12 @@ def run(gParameters):
                 model.add(Dropout(gParameters['dropout']))
     model.add(Dense(gParameters['classes']))
     model.add(Activation(gParameters['out_activation']))
+
+    J = candle.restart(gParameters, model)
+    if J is not None:
+        initial_epoch  = J['epoch']
+        best_stat_last = J['best_stat_last']
+        print('initial_epoch: %i' % initial_epoch)
 
 # Reference case
 # model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
