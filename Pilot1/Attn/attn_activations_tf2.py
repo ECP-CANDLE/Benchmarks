@@ -2,15 +2,18 @@ from tensorflow.keras import utils, Input, Model
 from tensorflow.keras.metrics import AUC
 from tensorflow.keras.layers import concatenate, multiply
 from tensorflow.keras.layers import Dense, Dropout, Activation, BatchNormalization
+from tensorflow.keras.initializers import GlorotNormal
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.callbacks import CSVLogger, ReduceLROnPlateau
 from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.models import model_from_json, model_from_yaml
 
 from sklearn.utils.class_weight import compute_class_weight
 from keract import get_activations
 import numpy as np
 import pandas as pd
 import os, sys
+from pathlib import Path
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
@@ -25,15 +28,23 @@ import cca_core
 # build the model (this can come from attn_baseline_keras2.py)
 def build_model(params, PS=0):
     inputs = Input(shape=(PS,))
-    x = Dense(params['dense'][0], activation=params['activation'][0])(inputs)
+    x = Dense(params['dense'][0],
+            kernel_initializer=GlorotNormal(seed=np.random.randint(1,1000)),
+            activation=params['activation'][0])(inputs)
     x = BatchNormalization()(x)
-    a = Dense(params['dense'][1], activation=params['activation'][1])(x)
+    a = Dense(params['dense'][1],
+            kernel_initializer=GlorotNormal(seed=np.random.randint(1,1000)),
+            activation=params['activation'][1])(x)
     a = BatchNormalization()(a)
-    b = Dense(params['dense'][2], activation=params['activation'][2])(x)
+    b = Dense(params['dense'][2],
+            kernel_initializer=GlorotNormal(seed=np.random.randint(1,1000)),
+            activation=params['activation'][2])(x)
     x = multiply([a, b])
 
     for i in range(3, len(params['dense']) - 1):
-        x = Dense(params['dense'][i], activation=params['activation'][i])(x)
+        x = Dense(params['dense'][i],
+                kernel_initializer=GlorotNormal(seed=np.random.randint(1,1000)),
+                activation=params['activation'][i])(x)
         x = BatchNormalization()(x)
         x = Dropout(params['dropout'])(x)
 
@@ -59,7 +70,7 @@ def initialize_parameters(default_model='attn_default_model.txt'):
     return gParameters
 
 def subset_data (X_train, Y_train, params):
-    if params['training_size'] > 0:
+    if 'training_size' in params and params['training_size'] > 0:
         if params['training_size'] > X_train.shape[0]:
             print ('setting training_size to {}'. format(X_train.shape[0]))
             return X_train, Y_train
@@ -74,31 +85,136 @@ def subset_data (X_train, Y_train, params):
 
             X_train.drop(['_Y1','_Y2'], axis=1, inplace=True)
             _X_train.drop(['_Y1','_Y2'], axis=1, inplace=True)
+    else:
+        _X_train, _Y_train = X_train, Y_train
 
     return _X_train, _Y_train
 
-# start run method
+def save_and_test_saved_model(params, model, root_fname, X_train, X_test, Y_test):
+    save_path = os.path.join(params['save_path'], '')
+    if not os.path.exists(save_path):
+        #os.mkdir(save_path)
+        Path.mkdir(save_path, parents=True, exist_ok=True)
+
+    # serialize model to JSON
+    model_json = model.to_json()
+    with open(save_path + root_fname + ".model.json", "w") as json_file:
+        json_file.write(model_json)
+
+    # serialize model to YAML
+    model_yaml = model.to_yaml()
+    with open(save_path + root_fname + ".model.yaml", "w") as yaml_file:
+        yaml_file.write(model_yaml)
+
+    # serialize weights to HDF5
+    model.save_weights(save_path + root_fname + ".model.h5")
+    print("Saved model to disk")
+
+    # load json and create model
+    json_file = open(save_path + root_fname + '.model.json', 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model_json = model_from_json(loaded_model_json)
+
+    # load yaml and create model
+    yaml_file = open(save_path + root_fname + '.model.yaml', 'r')
+    loaded_model_yaml = yaml_file.read()
+    yaml_file.close()
+    loaded_model_yaml = model_from_yaml(loaded_model_yaml)
+
+    # load weights into new model
+    loaded_model_json.load_weights(
+            save_path + root_fname + ".model.h5"
+            )
+    print("Loaded json model from disk")
+
+    # evaluate json loaded model on test data
+    loaded_model_json.compile(
+            loss='binary_crossentropy',
+            optimizer=params['optimizer'],
+            metrics=['accuracy']
+            )
+    score_json = loaded_model_json.evaluate(X_test, Y_test, verbose=0)
+
+    print('json Validation loss:', score_json[0])
+    print('json Validation accuracy:', score_json[1])
+
+    print("json %s: %.2f%%" % (
+        loaded_model_json.metrics_names[1], score_json[1] * 100)
+        )
+
+    # load weights into new model
+    loaded_model_yaml.load_weights(
+            save_path + root_fname + ".model.h5"
+            )
+    print("Loaded yaml model from disk")
+
+    # evaluate loaded model on test data
+    loaded_model_yaml.compile(
+            loss='binary_crossentropy',
+            optimizer=params['optimizer'],
+            metrics=['accuracy']
+            )
+    score_yaml = loaded_model_yaml.evaluate(X_test, Y_test, verbose=0)
+
+    print('yaml Validation loss:', score_yaml[0])
+    print('yaml Validation accuracy:', score_yaml[1])
+    print("yaml %s: %.2f%%" % (
+        loaded_model_yaml.metrics_names[1], score_yaml[1] * 100)
+        )
+
+    # predict using loaded yaml model on test and training data
+    predict_yaml_train = loaded_model_yaml.predict(X_train)
+    predict_yaml_test = loaded_model_yaml.predict(X_test)
+
+    print('Yaml_train_shape:', predict_yaml_train.shape)
+    print('Yaml_test_shape:', predict_yaml_test.shape)
+
+    predict_yaml_train_classes = np.argmax(predict_yaml_train, axis=1)
+    predict_yaml_test_classes = np.argmax(predict_yaml_test, axis=1)
+    np.savetxt(
+            save_path + root_fname + "_predict_yaml_train.csv",
+            predict_yaml_train,
+            delimiter=",",
+            fmt="%.3f"
+            )
+    np.savetxt(
+            save_path + root_fname + "_predict_yaml_test.csv",
+            predict_yaml_test,
+            delimiter=",",
+            fmt="%.3f")
+
+    np.savetxt(
+            save_path + root_fname + "_predict_yaml_train_classes.csv",
+            predict_yaml_train_classes,
+            delimiter=",",
+            fmt="%d"
+            )
+    np.savetxt(
+            save_path + root_fname + "_predict_yaml_test_classes.csv",
+            predict_yaml_test_classes,
+            delimiter=",",
+            fmt="%d"
+            )
+
 # start run
 def run(params):
     args = candle.ArgumentStruct(**params)
     seed = args.rng_seed
     candle.set_seed(seed)
 
-        # Construct extension to save model
+    # Construct extension to save model
     ext = attn.extension_from_parameters(params, 'keras')
     candle.verify_path(params['save_path'])
     prefix = '{}{}'.format(params['save_path'], ext)
     logfile = params['logfile'] if params['logfile'] else prefix + '.log'
-    root_fname = 'Agg_attn_bin'
     candle.set_up_logger(logfile, attn.logger, params['verbose'])
     attn.logger.info('Params: {}'.format(params))
 
     # Get default parameters for initialization and optimizer functions
     keras_defaults = candle.keras_default_config()
 
-    # load data (this can come from attn.py)
-    # train_file = "../../Benchmarks/Data/Pilot1/top_21_1fold_001.h5"
-    # print('processing h5 in file {}'.format(train_file))
+    # Load the data
     X_train, _Y_train, X_val, _Y_val, X_test, _Y_test = attn.load_data(
             params,
             params['rng_seed']
@@ -119,6 +235,7 @@ def run(params):
     class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
     d_class_weights = dict(enumerate(class_weights))
 
+    # Build the models
     model_1 = build_model(params, PS=X_train.shape[1])
     model_2 = build_model(params, PS=X_train.shape[1])
 
@@ -179,11 +296,54 @@ def run(params):
     activations_1 = get_activations(model_1, x, auto_compile=True)
     activations_2 = get_activations(model_2, x, auto_compile=True)
 
-    # make the first dim the neurons, the second dim the activations, one activation per sample per neuron
-    act1 = pd.DataFrame(activations_1['dense_1']).transpose()
+    for i in range(0, len(model_1.layers)):
+        if 'dense' in model_1.layers[i].name:
+    #        print('{}\t{}'.format(i, model_1.layers[i].name))
+    #        # make the first dim the neurons, the second dim the activations, one activation per sample per neuron
+    #        act1 = pd.DataFrame(activations_1[model_1.layers[i].name]).transpose()
+    #        print (act1.shape)
+
+    #        act2= pd.DataFrame(activations_2[model_2.layers[i].name]).transpose()
+    #        print (act2.shape)
+
+    #        act1 = act1.replace([np.inf, -np.inf], np.nan)
+    #        act1 = act1.dropna(how="any").to_numpy()
+    #        print (act1.shape)
+
+    #        act2 = act2.replace([np.inf, -np.inf], np.nan)
+    #        act2 = act2.dropna(how="any").to_numpy()
+    #        print (act2.shape)
+
+    #        results = cca_core.get_cca_similarity(act1, act2,
+    #                verbose=True, epsilon=params['cca_epsilon'])
+
+            results = compute_cca(i, model_1, model_2, x, epsilon=params['cca_epsilon'])
+
+            print('Single number for summarizing similarity of pair {} layer {} is {:.4f}'.format(
+                os.getpid(),
+                i,
+                np.mean(results["cca_coef1"]))
+                )
+
+
+    save_and_test_saved_model(params, model_1, 'attn_1', X_train, X_test, Y_test)
+    save_and_test_saved_model(params, model_2, 'attn_2', X_train, X_test, Y_test)
+
+    return history_1, history_2
+
+def compute_cca(i, model_1, model_2, x, epsilon=0):
+
+    # get activations. This is inefficient when compute_cca is called in a loop
+    # another variant would be to pass in layer names and activations
+
+    activations_1 = get_activations(model_1, x, auto_compile=True)
+    activations_2 = get_activations(model_2, x, auto_compile=True)
+    print('{}\t{}'.format(i, model_1.layers[i].name))
+
+    act1 = pd.DataFrame(activations_1[model_1.layers[i].name]).transpose()
     print (act1.shape)
 
-    act2= pd.DataFrame(activations_2['dense_10']).transpose()
+    act2= pd.DataFrame(activations_2[model_2.layers[i].name]).transpose()
     print (act2.shape)
 
     act1 = act1.replace([np.inf, -np.inf], np.nan)
@@ -194,13 +354,9 @@ def run(params):
     act2 = act2.dropna(how="any").to_numpy()
     print (act2.shape)
 
-    results = cca_core.get_cca_similarity(act1, act2, verbose=True)
-    print('Single number for summarizing similarity of pair {} is {:.4f}'.format(
-        os.getpid(),
-        np.mean(results["cca_coef1"]))
-        )
+    results = cca_core.get_cca_similarity(act1, act2, verbose=True, epsilon=epsilon)
+    return results
 
-    return history_1, history_2
 
 def main():
     params = initialize_parameters()
