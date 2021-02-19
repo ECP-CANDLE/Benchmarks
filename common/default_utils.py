@@ -681,14 +681,20 @@ def get_common_parser(parser):
     parser.add_argument("--clr_gamma", type=float, default=argparse.SUPPRESS,
                         help="Gamma parameter for learning cycle LR.")
 
+    parser = ckpt_parser(parser)
+
+    return parser
+
+
+def ckpt_parser(parser):
     # checkpoint restart
     parser.add_argument("--restart", type=str2bool,
-                        default=argparse.SUPPRESS,
+                        default=True,
                         help="restart from a saved checkpoint file")
     parser.add_argument("--ckpt_checksum", type=str2bool,
                         default=True,
                         help="validate the restart file with checksum"),
-    parser.add_argument("--ckpt_save_best", type=str2bool,
+    parser.add_argument("--ckpt_save_best_only", type=str2bool,
                         default=True,
                         help="Toggle saving best model"),
     parser.add_argument("--ckpt_save_best_metric", type=str,
@@ -701,7 +707,7 @@ def get_common_parser(parser):
                         default=1,
                         help="Interval to save checkpoints"),
     parser.add_argument("--ckpt_keep_mode",
-                        choices=['all','count','last'],
+                        choices=['all', 'count', 'last'],
                         help="Checkpoint saving mode. choices are 'all','count','last' "),
     parser.add_argument("--ckpt_keep_count", type=int,
                         default=3,
@@ -709,9 +715,10 @@ def get_common_parser(parser):
     parser.add_argument("--ckpt_skip_epochs", type=int,
                         default=0,
                         help="Number of epochs to skip before saving epochs"),
-    parser.add_argument("--ckpt_save_interval", type=str,
+    parser.add_argument("--ckpt_directory", type=str,
                         default='./save',
-                        help="Base directory to save checkpoints")    
+                        help="Base directory to save checkpoints")
+
     return parser
 
 
