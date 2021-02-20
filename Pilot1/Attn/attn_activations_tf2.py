@@ -203,6 +203,11 @@ def run(params):
     seed = args.rng_seed
     candle.set_seed(seed)
 
+    if 'cca_epsilon' in params:
+        cca_epsilon = params['cca_epsilon']
+    else:
+        cca_epsilon = 1e-10
+     
     # Construct extension to save model
     ext = attn.extension_from_parameters(params, 'keras')
     candle.verify_path(params['save_path'])
@@ -315,13 +320,15 @@ def run(params):
     #        print (act2.shape)
 
     #        results = cca_core.get_cca_similarity(act1, act2,
-    #                verbose=True, epsilon=params['cca_epsilon'])
+    #                verbose=True, epsilon=cca_epsilon)
 
-            results = compute_cca(i, model_1, model_2, x, epsilon=params['cca_epsilon'])
+            results = compute_cca(i, model_1, model_2, x, epsilon=cca_epsilon)
 
-            print('Single number for summarizing similarity of pair {} layer {} is {:.4f}'.format(
+            print('Mean CCA Coef of pair {} with training size {} at layer {} after {} epochs is {:.4f}'.format(
                 os.getpid(),
+                params['training_size'],
                 i,
+                params['epochs'],
                 np.mean(results["cca_coef1"]))
                 )
 
