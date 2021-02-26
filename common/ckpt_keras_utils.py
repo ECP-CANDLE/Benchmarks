@@ -183,10 +183,10 @@ class CandleCheckpointCallback(Callback):
         if not self.save_best_only:
             return True # easy- save everything!
         if self.save_best_stat not in logs.keys():
-            raise(Exception(("CandleCheckpointCallback: " +
+            raise Exception(("CandleCheckpointCallback: " +
                              "save_best_stat='%s' " +
                              "not in list of model metrics: %s") %
-                            (self.save_best_stat, str(logs.keys()))))
+                            (self.save_best_stat, str(logs.keys())))
         if   logs[self.save_best_stat] < self.best_stat_last:
             symbol =                  "<"
         elif logs[self.save_best_stat] > self.best_stat_last:
@@ -356,13 +356,13 @@ def param_type_check_int(key, value, type_):
         try:
             result = int(value)
         except:
-            raise(ValueError("parameter: '%s' is '%s' but must be a %s" %
-                             key, str(value), str(type_)))
+            raise ValueError("parameter: '%s' is '%s' but must be a %s" %
+                             key, str(value), str(type_))
     if type_ == ParamType.INTEGER_N:
         if result < 0:
-            raise(ValueError(("parameter: '%s' is '%s' " +
+            raise ValueError(("parameter: '%s' is '%s' " +
                               "but must be non-negative") %
-                             (key, str(value))))
+                             (key, str(value)))
     return result
 
 def param_type_check_bool(key, value):
@@ -371,8 +371,8 @@ def param_type_check_bool(key, value):
     try:
         v = str2bool(value)
     except:
-        raise(ValueError("parameter: '%s' is '%s' but must be a %s" %
-                         key, str(value), str(ParamType.BOOLEAN)))
+        raise ValueError("parameter: '%s' is '%s' but must be a %s" %
+                         key, str(value), str(ParamType.BOOLEAN))
     return v
 
 def checksum_file(logger, filename):
