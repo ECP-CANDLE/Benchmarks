@@ -119,7 +119,7 @@ class CandleCheckpointCallback(Callback):
         self.save_best_stat = param(gParameters, "ckpt_save_best_stat",
                                     'loss', ParamType.STRING)
         self.best_stat_last = param(gParameters, "ckpt_best_stat_last",
-                                    None, ParamType.STRING)
+                                    None, ParamType.FLOAT)
         if self.best_stat_last is None:
             # TODO: Handle positive/negative metrics
             import math
@@ -318,14 +318,17 @@ def restart_json(gParameters, logger, directory):
     return J
 
 
-from enum import Enum, unique
+from enum import Enum, unique, auto
 @unique
 class ParamType(Enum):
-    STRING    = 1
-    BOOLEAN   = 2
-    INTEGER   = 3
+    STRING    = auto()
+    BOOLEAN   = auto()
+    INTEGER   = auto()
     """ integer: non-negative """
-    INTEGER_N = 4
+    INTEGER_N = auto()
+    FLOAT     = auto()
+    FLOAT_N   = auto()
+
 
 def enabled(gParameters, key):
     """ Is this parameter set to True? """
@@ -349,12 +352,27 @@ def param(gParameters, key, dflt, type_=ParamType.STRING):
 def param_type_check(key, value, type_):
     if value is None:
         return value
-    if type_ == ParamType.STRING:
+    if type_ is ParamType.STRING:
         return str(value)
-    if type_ == ParamType.INTEGER or type_ == ParamType.INTEGER_N:
-        return param_type_check_int(key, value, type_)
-    if type_ == ParamType.BOOLEAN:
+    if type_ is ParamType.BOOLEAN:
         return param_type_check_bool(key, value)
+    if type_ is ParamType.INTEGER or type_ is ParamType.INTEGER_N:
+        return param_type_check_int(key, value, type_)
+    if type_ is ParamType.FLOAT or type_ is ParamType.FLOAT_N:
+        return param_type_check_float(key, value, type_)
+    raise ValueError("param_type_check(): unknown type: '%s'" %
+                     str(type_))
+
+
+def param_type_check_bool(key, value):
+    if type(value) == bool:
+        return value
+    try:
+        v = str2bool(value)
+    except:
+        raise ValueError("parameter: '%s' is '%s' but must be a %s" %
+                         key, str(value), str(ParamType.BOOLEAN))
+    return v
 
 
 def param_type_check_int(key, value, type_):
@@ -374,15 +392,21 @@ def param_type_check_int(key, value, type_):
     return result
 
 
-def param_type_check_bool(key, value):
-    if type(value) == bool:
-        return value
-    try:
-        v = str2bool(value)
-    except:
-        raise ValueError("parameter: '%s' is '%s' but must be a %s" %
-                         key, str(value), str(ParamType.BOOLEAN))
-    return v
+def param_type_check_float(key, value, type_):
+    if type(value) == float:
+        result = value
+    else:
+        try:
+            result = float(value)
+        except:
+            raise ValueError("parameter: '%s' is '%s' but must be a %s" %
+                             (key, str(value), str(type_)))
+    if type_ == ParamType.FLOAT_N:
+        if result < 0:
+            raise ValueError(("parameter: '%s' is '%s' " +
+                              "but must be non-negative") %
+                             (key, str(value)))
+    return result
 
 
 def checksum_file(logger, filename):
