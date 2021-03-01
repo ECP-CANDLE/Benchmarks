@@ -440,6 +440,6 @@ def ckpt_parser(parser):
                         help="Number of epochs to skip before saving epochs"),
     parser.add_argument("--ckpt_directory", type=str,
                         default='./save',
-                        help="Base directory to save checkpoints")    
+                        help="Base directory to save checkpoints")
 
     return parser
