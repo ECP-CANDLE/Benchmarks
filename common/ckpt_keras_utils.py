@@ -62,7 +62,8 @@ import json
 import os
 import time
 
-from default_utils import set_up_logger
+from default_utils import set_up_logger, str2bool
+from keras.models import Model
 from keras.callbacks import Callback, ModelCheckpoint
 
 class MultiGPUCheckpoint(ModelCheckpoint):
