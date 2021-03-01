@@ -66,6 +66,7 @@ from default_utils import set_up_logger, str2bool
 from keras.models import Model
 from keras.callbacks import Callback, ModelCheckpoint
 
+
 class MultiGPUCheckpoint(ModelCheckpoint):
 
     def set_model(self, model):
@@ -179,10 +180,11 @@ class CandleCheckpointCallback(Callback):
         """
         # skip early epochs to improve speed
         if epoch < self.skip_epochs:
-            self.debug("Model saving disabled until epoch %d" % self.skip_epochs)
+            self.debug("Model saving disabled until epoch %d" %
+                       self.skip_epochs)
             return False
         if not self.save_best_only:
-            return True # easy- save everything!
+            return True  # easy- save everything!
         if self.save_best_stat not in logs.keys():
             raise Exception(("CandleCheckpointCallback: " +
                              "save_best_stat='%s' " +
@@ -198,7 +200,7 @@ class CandleCheckpointCallback(Callback):
                    (logs[self.save_best_stat], symbol, self.best_stat_last))
         if logs[self.save_best_stat] < self.best_stat_last:
             self.best_stat_last = logs[self.save_best_stat]
-            return True # model improved- save!
+            return True  # model improved- save!
         # else- not saving:
         self.debug("not writing this epoch.")
         return False
@@ -217,7 +219,7 @@ class CandleCheckpointCallback(Callback):
         self.debug("model wrote: %0.3f MB in %0.3f seconds (%0.2f MB/s)." %
                    (MB, duration, rate))
         self.checksum(dir_work)
-        self.write_json(dir_work+"/ckpt-info.json", epoch)
+        self.write_json(dir_work + "/ckpt-info.json", epoch)
 
     def checksum(self, dir_work):
         """ Simple checksum dispatch """
@@ -255,6 +257,7 @@ class CandleCheckpointCallback(Callback):
     def debug(self, message):
         if self.logger is not None:
             self.logger.debug(message)
+
 
 def restart(gParameters, model, verbose=True):
     """
@@ -294,6 +297,7 @@ def restart(gParameters, model, verbose=True):
                 (MB, duration, rate))
     return result
 
+
 def restart_json(gParameters, logger, directory):
     json_file = directory + "/ckpt-info.json"
     if not os.path.exists(json_file):
@@ -328,9 +332,11 @@ def enabled(gParameters, key):
     """ Is this parameter set to True? """
     return key in gParameters and gParameters[key]
 
+
 def disabled(gParameters, key):
     """ Is this parameter set to False? """
     return key in gParameters and not gParameters[key]
+
 
 def param(gParameters, key, dflt, type_=ParamType.STRING):
     if key in gParameters:
@@ -339,6 +345,7 @@ def param(gParameters, key, dflt, type_=ParamType.STRING):
         result = dflt
     result = param_type_check(key, result, type_)
     return result
+
 
 def param_type_check(key, value, type_):
     if value is None:
@@ -349,6 +356,7 @@ def param_type_check(key, value, type_):
         return param_type_check_int(key, value, type_)
     if type_ == ParamType.BOOLEAN:
         return param_type_check_bool(key, value)
+
 
 def param_type_check_int(key, value, type_):
     if type(value) == int:
@@ -366,6 +374,7 @@ def param_type_check_int(key, value, type_):
                              (key, str(value)))
     return result
 
+
 def param_type_check_bool(key, value):
     if type(value) == bool:
         return value
@@ -375,6 +384,7 @@ def param_type_check_bool(key, value):
         raise ValueError("parameter: '%s' is '%s' but must be a %s" %
                          key, str(value), str(ParamType.BOOLEAN))
     return v
+
 
 def checksum_file(logger, filename):
     """ Read file, compute checksum, return it as a string. """
@@ -397,6 +407,7 @@ def checksum_file(logger, filename):
     logger.info("checksummed: %0.3f MB in %.3f seconds (%.2f MB/s)." %
                 (MB, duration, rate))
     return str(checksum)
+
 
 def ckpt_parser(parser):
 
