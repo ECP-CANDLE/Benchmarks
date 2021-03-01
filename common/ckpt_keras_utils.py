@@ -96,7 +96,6 @@ class CandleCheckpointCallback(Callback):
                 If True, more verbose logging
                 Passed to default_utils.set_up_logger(verbose) for this logger
         """
-        import math
         self.logger = logger
         if self.logger == "DEFAULT":
             import logging
