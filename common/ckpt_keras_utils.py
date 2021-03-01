@@ -238,7 +238,7 @@ class CandleCheckpointCallback(Callback):
         D["model_file"] = "model.h5"
         D["checksum"] = self.cksum_model
         D["timestamp"] = now.strftime("%Y-%m-%d %H:%M:%S")
-        if self.timestamp_last == None:
+        if self.timestamp_last is None:
             time_elapsed = "__FIRST__"
         else:
             time_elapsed = (now - self.timestamp_last).total_seconds()
@@ -430,7 +430,8 @@ def ckpt_parser(parser):
                         help="Interval to save checkpoints"),
     parser.add_argument("--ckpt_keep_mode",
                         choices=['all','count','last'],
-                        help="Checkpoint saving mode. choices are 'all','count','last' "),
+                        help="Checkpoint saving mode. " +
+                             "choices are 'all','count','last' "),
     parser.add_argument("--ckpt_keep_count", type=int,
                         default=3,
                         help="Number of checkpoints to save"),
