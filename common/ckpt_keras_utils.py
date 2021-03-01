@@ -383,7 +383,7 @@ def param_type_check_int(key, value, type_):
             result = int(value)
         except:
             raise ValueError("parameter: '%s' is '%s' but must be a %s" %
-                             key, str(value), str(type_))
+                             (key, str(value), str(type_)))
     if type_ == ParamType.INTEGER_N:
         if result < 0:
             raise ValueError(("parameter: '%s' is '%s' " +
