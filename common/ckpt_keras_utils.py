@@ -380,8 +380,8 @@ def param_type_check_bool(key, value):
     try:
         v = str2bool(value)
     except:
-        raise ValueError("parameter: '%s' is '%s' but must be a %s" %
-                         key, str(value), str(ParamType.BOOLEAN))
+        raise TypeError("parameter: '%s' is '%s' but must be a %s" %
+                        key, str(value), str(ParamType.BOOLEAN))
     return v
 
 
@@ -392,13 +392,13 @@ def param_type_check_int(key, value, type_):
         try:
             result = int(value)
         except:
-            raise ValueError("parameter: '%s' is '%s' but must be a %s" %
-                             (key, str(value), str(type_)))
+            raise TypeError("parameter: '%s' is '%s' but must be a %s" %
+                            (key, str(value), str(type_)))
     if type_ == ParamType.INTEGER_N:
         if result < 0:
-            raise ValueError(("parameter: '%s' is '%s' " +
-                              "but must be non-negative") %
-                             (key, str(value)))
+            raise TypeError(("parameter: '%s' is '%s' " +
+                             "but must be non-negative") %
+                            (key, str(value)))
     return result
 
 
@@ -409,13 +409,13 @@ def param_type_check_float(key, value, type_):
         try:
             result = float(value)
         except:
-            raise ValueError("parameter: '%s' is '%s' but must be a %s" %
-                             (key, str(value), str(type_)))
+            raise TypeError("parameter: '%s' is '%s' but must be a %s" %
+                            (key, str(value), str(type_)))
     if type_ == ParamType.FLOAT_N:
         if result < 0:
-            raise ValueError(("parameter: '%s' is '%s' " +
-                              "but must be non-negative") %
-                             (key, str(value)))
+            raise TypeError(("parameter: '%s' is '%s' " +
+                             "but must be non-negative") %
+                            (key, str(value)))
     return result
 
 
