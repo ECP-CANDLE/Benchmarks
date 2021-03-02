@@ -10,7 +10,7 @@ restart :  "OFF" | "AUTO" | "REQUIRED"
     If AUTO or REQUIRED, automatically try to restart from most recent
     (highest epoch) model.h5.
     REQUIRED will fail if a model cannot be found.
-    Default: True
+    Default: "AUTO"
 
 ckpt_save_best : boolean
     If true, only save when save_best_stat has improved.
@@ -272,7 +272,9 @@ def restart(gParameters, model, verbose=True):
     set_up_logger("save/ckpt.log", logger, verbose=verbose,
                   fmt_line="%(asctime)s CANDLE restart(): %(message)s")
 
-    if disabled(gParameters, "restart"):
+    param_restart = param(gParameters, "restart", "AUTO",
+                          allowed=["OFF", "AUTO", "REQUIRED"])
+    if param_restart == "OFF":
         return
 
     dir_work = "save/ckpt-work"
@@ -280,6 +282,11 @@ def restart(gParameters, model, verbose=True):
     dir_old  = "save/ckpt-old"
     model_file = dir_good + "/model.h5"
     if not os.path.exists(model_file):
+        if param_restart == "REQUIRED":
+            raise Exception("restart==REQUIRED but no checkpoint" +
+                            "could be found!")
+        # We must be under AUTO - proceed without restart
+        assert(param_restart == "AUTO")
         return None
     logger.info("restarting: " + model_file)
     result = restart_json(gParameters, logger, dir_good)
@@ -340,12 +347,15 @@ def disabled(gParameters, key):
     return key in gParameters and not gParameters[key]
 
 
-def param(gParameters, key, dflt, type_=ParamType.STRING):
+def param(gParameters, key, dflt,
+          type_=ParamType.STRING, allowed=None):
     if key in gParameters:
         result = gParameters[key]
     else:
         result = dflt
     result = param_type_check(key, result, type_)
+    param_allowed(key, result, allowed)
+
     return result
 
 
@@ -431,6 +441,17 @@ def checksum_file(logger, filename):
                 (MB, duration, rate))
     return str(checksum)
 
+
+def param_allowed(key, value, allowed):
+    """
+    Check that the value is in the list of allowed values
+    If allowed is None, there is no check, simply success
+    """
+    if allowed is None: return
+    if value not in allowed:
+        raise ValueError(("hyperparameter '%s'='%s' is not in the " +
+                          "list of allowed values: %s") %
+                         (key, value, str(allowed)))
 
 def ckpt_parser(parser):
 
