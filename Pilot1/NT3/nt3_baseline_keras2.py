@@ -167,7 +167,6 @@ def run(gParameters):
         print('initial_epoch: %i' % initial_epoch)
 
     gParameters['ckpt_skip_epochs']    = 0
-    # gParameters['ckpt_best_stat_last'] = 1  # 's'  # best_stat_last
     gParameters['ckpt_save_best_stat'] = 'loss'
     gParameters['ckpt_keep_modulus'] = 2
     gParameters['ckpt_keep_limit'] = 3
