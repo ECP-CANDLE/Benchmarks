@@ -31,7 +31,7 @@ ckpt_checksum : boolean
 
 ckpt_keep_all : boolean
 
-ckpt_keep_count
+ckpt_keep_limit: Maximal number of checkpoints to keep.
 
 ckpt_metadata : string
     Arbitrary string to add to the JSON file regarding
