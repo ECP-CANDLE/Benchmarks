@@ -291,6 +291,7 @@ class CandleCheckpointCallback(Callback):
         # Consider most recent epochs first:
         for epoch in reversed(self.epochs):
             if not self.keep(epoch, epoch_now, kept):
+                deleted += 1
                 self.delete(epoch)
             else:
                 kept += 1
