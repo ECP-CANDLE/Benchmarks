@@ -29,16 +29,15 @@ ckpt_checksum : boolean
     and store it in the JSON
     Default: True
 
+ckpt_keep_all : boolean
+
+ckpt_keep_count
+
 ckpt_metadata : string
     Arbitrary string to add to the JSON file regarding
     job ID, hardware location, etc.
     May be None or an empty string.
     Default: None
-
-ckpt_clean : boolean
-    If True, remove old checkpoints immediately.
-    If False, one extra old checkpoint will remain on disk.
-    Default: False
 
 Usage:
 
@@ -56,11 +55,19 @@ Usage:
                         initial_epoch=initial_epoch,
                         ...
                         callbacks=[... , ckpt])
+
+  Optionally, log a final report:
+
+    ckpt.report_final()
+
 """
 
 import json
 import os
+import shutil
 import time
+
+from pathlib import PosixPath
 
 from default_utils import set_up_logger, str2bool
 from keras.models import Model
@@ -103,19 +110,35 @@ class CandleCheckpointCallback(Callback):
             set_up_logger("save/ckpt.log", self.logger, verbose=verbose,
                           fmt_line="%(asctime)s CandleCheckpoint: %(message)s")
         self.scan_params(gParameters)
+        # List of epoch integers this instance has written.
+        # Sorted from smallest to largest.
+        self.epochs = []
+        # The best epoch wrt metric.  Do not delete this!
+        self.epoch_best = 0
+        self.report_initial()
+
+    def report_initial(self):
+        """ Simply report that we are ready to run """
         self.info("Callback initialized.")
         if self.metadata is not None:
             self.info("metadata='%s'" % self.metadata)
-        if self.save_best_only:
+        if self.save_best_stat is not None:
             self.info("save_best_stat='%s'" % self.save_best_stat)
+        self.info("PWD: " + os.getcwd())
+        self.info("ckpt_directory: %s" %
+                  PosixPath(self.ckpt_directory).resolve())
 
     def scan_params(self, gParameters):
         """ Simply translate gParameters into instance fields """
         self.skip_epochs = param(gParameters, "ckpt_skip_epochs",
-                                 0, ParamType.INTEGER_N)
+                                 0, ParamType.INTEGER_NN)
         print("skip: %i" % self.skip_epochs)
-        self.save_best_only = param(gParameters, "ckpt_save_best_only",
-                                    False, ParamType.BOOLEAN)
+        self.ckpt_directory = param(gParameters, "ckpt_directory",
+                                    "./save", ParamType.STRING)
+        self.save_each = param(gParameters, "ckpt_save_each",
+                               False, ParamType.BOOLEAN)
+        self.save_interval = param(gParameters, "ckpt_save_interval",
+                                   False, ParamType.INTEGER_NN)
         self.save_best_stat = param(gParameters, "ckpt_save_best_stat",
                                     'loss', ParamType.STRING)
         self.best_stat_last = param(gParameters, "ckpt_best_stat_last",
@@ -126,63 +149,66 @@ class CandleCheckpointCallback(Callback):
             self.best_stat_last = math.inf
         self.save_weights_only = param(gParameters, "ckpt_save_weights_only",
                                        True, ParamType.BOOLEAN)
-        self.save_interval = param(gParameters, "ckpt_save_interval",
-                                   1, ParamType.INTEGER_N)
         self.checksum_enabled = param(gParameters, "ckpt_checksum",
                                       True, ParamType.BOOLEAN)
+        self.keep_all = param(gParameters, "ckpt_keep_all",
+                              False, ParamType.BOOLEAN)
+        self.keep_limit = param(gParameters, "ckpt_keep_limit",
+                                1000000, ParamType.INTEGER_GZ)
+        self.keep_modulus = param(gParameters, "ckpt_keep_modulus",
+                                  1, ParamType.INTEGER_GZ)
         self.metadata = param(gParameters, "metadata",
                               None, ParamType.STRING)
         self.timestamp_last = param(gParameters, "ckpt_timestamp_last",
                                     None, ParamType.STRING)
-        self.clean = param(gParameters, "ckpt_clean",
-                           False, ParamType.BOOLEAN)
+        self.cwd = os.getcwd()
 
     def on_epoch_end(self, epoch, logs):
         """
-        Normally, ckpt-good is the best saved state.
-        When updating:
-        1. Write current state to ckpt-work
-        2. Rename ckpt-good to ckpt-old
-        3. Rename ckpt-work to ckpt-good
-        4. Delete ckpt-old
+        Normally, ckpts/best is the best saved state,
+              and ckpts/last is the last saved state.
+        Procedure:
+        1. Write current state to ckpts/work
+        2. Rename ckpts/work to ckpts/epoch/NNN
+        3. If best, link ckpts/best to ckpts/epoch/NNN
+        4. Link ckpts/last to ckpts/epoch/NNN
+        5. Clean up old ckpts according to keep policy
         """
-        # print("logs: %s" % str(logs.keys()))
-        # TODO: Check save_best_only
-        dir_work = "save/ckpt-work"
-        dir_good = "save/ckpt-good"
-        dir_old  = "save/ckpt-old"
-        if not os.path.exists(dir_work):
-            os.makedirs(dir_work)
-        model_file = dir_work+"/model.h5"
+        dir_root   = PosixPath(self.ckpt_directory).resolve()
+        dir_work   = dir_root/"ckpts/work"
+        dir_best   = dir_root/"ckpts/best"  # a soft link
+        dir_last   = dir_root/"ckpts/last"  # a soft link
+        dir_epochs = dir_root/"ckpts/epochs"
+        dir_this   = dir_epochs / ("%03i" % epoch)
+
         if not self.save_check(logs, epoch): return
+        if os.path.exists(dir_this):
+            self.debug("remove:  '%s'" % self.relpath(dir_this))
+            shutil.rmtree(dir_this)
+        os.makedirs(dir_epochs, exist_ok=True)
+        os.makedirs(dir_work,   exist_ok=True)
         self.write_model(dir_work, epoch)
-        import shutil
-        if os.path.exists(dir_old):
-            self.debug("removing: '%s'" % dir_old)
-            shutil.rmtree(dir_old)
-        do_clean = self.clean
-        if os.path.exists(dir_good):
-            self.debug("renaming: '%s' -> '%s'" % (dir_good, dir_old))
-            os.rename(dir_good, dir_old)
-        else:
-            do_clean = False
-        self.debug("renaming: '%s' -> '%s'" % (dir_work, dir_good))
-        os.rename(dir_work, dir_good)
-        if do_clean:
-            self.debug("removing: '%s'" % dir_old)
-            shutil.rmtree(dir_old)
+        self.debug("rename:  '%s' -> '%s'" %
+                   (self.relpath(dir_work), self.relpath(dir_this)))
+        os.rename(dir_work, dir_this)
+        self.epochs.append(epoch)
+        if self.epoch_best == epoch:
+            self.symlink(dir_this, dir_best)
+        self.symlink(dir_this, dir_last)
+        self.clean(epoch)
 
     def save_check(self, logs, epoch):
         """
         Make sure we want to save this epoch based on the
         model metrics in given logs
+        Also updates epoch_best if appropriate
         """
         # skip early epochs to improve speed
         if epoch < self.skip_epochs:
             self.debug("Model saving disabled until epoch %d" %
                        self.skip_epochs)
             return False
-        if not self.save_best_only:
+        if self.save_each:
             return True  # easy- save everything!
         if self.save_best_stat not in logs.keys():
             raise Exception(("CandleCheckpointCallback: " +
@@ -199,15 +225,20 @@ class CandleCheckpointCallback(Callback):
                    (logs[self.save_best_stat], symbol, self.best_stat_last))
         if logs[self.save_best_stat] < self.best_stat_last:
             self.best_stat_last = logs[self.save_best_stat]
-            return True  # model improved- save!
+            # The model improved- save!
+            self.epoch_best = epoch
+            return True
         # else- not saving:
         self.debug("not writing this epoch.")
         return False
 
     def write_model(self, dir_work, epoch):
-        """ Do the I/O, report stats """
-        model_file = dir_work + "/model.h5"
-        self.debug("writing model to: '%s'" % model_file)
+        """
+        Do the I/O, report stats
+        dir_work: A PosixPath
+        """
+        model_file = dir_work / "model.h5"
+        self.debug("writing model to: '%s'" % self.relpath(model_file))
         start = time.time()
         self.model.save(model_file)  # save_format="h5")
         stop = time.time()
@@ -218,12 +249,16 @@ class CandleCheckpointCallback(Callback):
         self.debug("model wrote: %0.3f MB in %0.3f seconds (%0.2f MB/s)." %
                    (MB, duration, rate))
         self.checksum(dir_work)
-        self.write_json(dir_work + "/ckpt-info.json", epoch)
+        self.write_json(dir_work / "ckpt-info.json", epoch)
 
     def checksum(self, dir_work):
-        """ Simple checksum dispatch """
+        """
+        Simple checksum dispatch
+        dir_work: A PosixPath
+        """
         if self.checksum_enabled:
-            self.cksum_model = checksum_file(self.logger, dir_work+"/model.h5")
+            self.cksum_model = checksum_file(self.logger,
+                                             dir_work / "model.h5")
         else:
             self.cksum_model = "__DISABLED__"
 
@@ -232,7 +267,7 @@ class CandleCheckpointCallback(Callback):
         now = datetime.now()
         D = {}
         D["epoch"] = epoch+1
-        D["save_best_only"] = self.save_best_only
+        D["save_each"] = self.save_each
         D["save_best_stat"] = self.save_best_stat
         D["best_stat_last"] = self.best_stat_last
         D["model_file"] = "model.h5"
@@ -249,6 +284,56 @@ class CandleCheckpointCallback(Callback):
             json.dump(D, fp)
             fp.write("\n")
 
+    def clean(self, epoch_now):
+        """ Return number of checkpoints kept and deleted """
+        deleted = 0
+        kept = 0
+        # Consider most recent epochs first:
+        for epoch in reversed(self.epochs):
+            if not self.keep(epoch, epoch_now, kept):
+                self.delete(epoch)
+            else:
+                kept += 1
+        return (kept, deleted)
+
+    def keep(self, epoch, epoch_now, kept):
+        """ return True if we are keeping this epoch """
+        if epoch == epoch_now:
+            # We just wrote this!
+            return True
+        if self.keep_all:
+            # User wants to keep everything
+            return True
+        if self.epoch_best == epoch:
+            # This is the best epoch
+            return True
+        if epoch % self.keep_modulus == 0:
+            if kept < self.keep_limit:
+                return True
+        # No reason to save this: delete it:
+        return False
+
+    def delete(self, epoch):
+        dir_old = "save/ckpts/epochs/%03i" % epoch
+        if os.path.exists(dir_old):
+            self.debug("removing: '%s'" % dir_old)
+            shutil.rmtree(dir_old)
+        else:
+            self.info("checkpoint for epoch=%i disappeared!" %
+                      epoch)
+        self.epochs.remove(epoch)
+
+    def symlink(self, src, dst):
+        """ Like os.symlink, but overwrites dst and logs """
+        self.debug("linking: '%s' -> '%s'" %
+                   (self.relpath(dst), self.relpath(src)))
+        if os.path.lexists(dst):
+            os.remove(dst)
+        os.symlink(src, dst)
+
+    def relpath(self, p):
+        return p.relative_to(self.cwd)
+
     def info(self, message):
         if self.logger is not None:
             self.logger.info(message)
@@ -256,6 +341,12 @@ class CandleCheckpointCallback(Callback):
     def debug(self, message):
         if self.logger is not None:
             self.logger.debug(message)
+
+    def report_final(self):
+        self.info("checkpoints kept: %i" %
+                  len(self.epochs))
+        self.info("checkpoints list: %s" %
+                  str(self.epochs))
 
 
 def restart(gParameters, model, verbose=True):
@@ -277,10 +368,8 @@ def restart(gParameters, model, verbose=True):
     if param_restart == "OFF":
         return
 
-    dir_work = "save/ckpt-work"
-    dir_good = "save/ckpt-good"
-    dir_old  = "save/ckpt-old"
-    model_file = dir_good + "/model.h5"
+    dir_last = "save/ckpts/last"
+    model_file = dir_last + "/model.h5"
     if not os.path.exists(model_file):
         if param_restart == "REQUIRED":
             raise Exception("restart==REQUIRED but no checkpoint" +
@@ -289,7 +378,7 @@ def restart(gParameters, model, verbose=True):
         assert(param_restart == "AUTO")
         return None
     logger.info("restarting: " + model_file)
-    result = restart_json(gParameters, logger, dir_good)
+    result = restart_json(gParameters, logger, dir_last)
     logger.info("restarting: epoch=%i timestamp=%s" %
                 (result["epoch"], result["timestamp"]))
     start = time.time()
@@ -314,8 +403,9 @@ def restart_json(gParameters, logger, directory):
             raise Exception(msg)
     with open(json_file) as fp:
         J = json.load(fp)
-    print(str(J))
-
+    # print(str(J))
+    logger.debug("ckpt-info.json contains:")
+    logger.debug(json.dumps(J, indent=2))
     if not disabled(gParameters, "ckpt_checksum"):
         checksum = checksum_file(logger, directory + "/model.h5")
         if checksum != J["checksum"]:
@@ -328,13 +418,15 @@ def restart_json(gParameters, logger, directory):
 from enum import Enum, unique, auto
 @unique
 class ParamType(Enum):
-    STRING    = auto()
-    BOOLEAN   = auto()
-    INTEGER   = auto()
+    STRING     = auto()
+    BOOLEAN    = auto()
+    INTEGER    = auto()
     """ integer: non-negative """
-    INTEGER_N = auto()
-    FLOAT     = auto()
-    FLOAT_N   = auto()
+    INTEGER_NN = auto()
+    """ integer: greater-than-zero """
+    INTEGER_GZ = auto()
+    FLOAT      = auto()
+    FLOAT_NN   = auto()
 
 
 def enabled(gParameters, key):
@@ -355,7 +447,6 @@ def param(gParameters, key, dflt,
         result = dflt
     result = param_type_check(key, result, type_)
     param_allowed(key, result, allowed)
-
     return result
 
 
@@ -366,9 +457,12 @@ def param_type_check(key, value, type_):
         return str(value)
     if type_ is ParamType.BOOLEAN:
         return param_type_check_bool(key, value)
-    if type_ is ParamType.INTEGER or type_ is ParamType.INTEGER_N:
+    if type_ is ParamType.INTEGER    or \
+       type_ is ParamType.INTEGER_NN or \
+       type_ is ParamType.INTEGER_GZ:
         return param_type_check_int(key, value, type_)
-    if type_ is ParamType.FLOAT or type_ is ParamType.FLOAT_N:
+    if type_ is ParamType.FLOAT    or \
+       type_ is ParamType.FLOAT_NN:
         return param_type_check_float(key, value, type_)
     raise ValueError("param_type_check(): unknown type: '%s'" %
                      str(type_))
@@ -394,10 +488,15 @@ def param_type_check_int(key, value, type_):
         except:
             raise TypeError("parameter: '%s' is '%s' but must be a %s" %
                             (key, str(value), str(type_)))
-    if type_ == ParamType.INTEGER_N:
+    if type_ == ParamType.INTEGER_NN:
         if result < 0:
             raise TypeError(("parameter: '%s' is '%s' " +
                              "but must be non-negative") %
+                            (key, str(value)))
+    if type_ == ParamType.INTEGER_GZ:
+        if result <= 0:
+            raise TypeError(("parameter: '%s' is '%s' " +
+                             "but must be greater-than-zero") %
                             (key, str(value)))
     return result
 
@@ -411,7 +510,7 @@ def param_type_check_float(key, value, type_):
         except:
             raise TypeError("parameter: '%s' is '%s' but must be a %s" %
                             (key, str(value), str(type_)))
-    if type_ == ParamType.FLOAT_N:
+    if type_ == ParamType.FLOAT_NN:
         if result < 0:
             raise TypeError(("parameter: '%s' is '%s' " +
                              "but must be non-negative") %
@@ -477,9 +576,9 @@ def ckpt_parser(parser):
                         choices=['all','count','last'],
                         help="Checkpoint saving mode. " +
                              "choices are 'all','count','last' "),
-    parser.add_argument("--ckpt_keep_count", type=int,
-                        default=3,
-                        help="Number of checkpoints to save"),
+    parser.add_argument("--ckpt_keep_limit", type=int,
+                        default=1000000,
+                        help="Limit checkpoints to keep"),
     parser.add_argument("--ckpt_skip_epochs", type=int,
                         default=0,
                         help="Number of epochs to skip before saving epochs"),

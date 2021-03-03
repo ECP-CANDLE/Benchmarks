@@ -158,15 +158,19 @@ def run(gParameters):
     model.add(Dense(gParameters['classes']))
     model.add(Activation(gParameters['out_activation']))
 
+    gParameters['restart'] = 'AUTO'
     J = candle.restart(gParameters, model)
     if J is not None:
         initial_epoch  = J['epoch']
         best_stat_last = J['best_stat_last']
+        gParameters['ckpt_best_stat_last'] = best_stat_last
         print('initial_epoch: %i' % initial_epoch)
 
-    gParameters['ckpt_skip_epochs'] = 0
-    gParameters['ckpt_best_stat_last'] = best_stat_last
+    gParameters['ckpt_skip_epochs']    = 0
+    # gParameters['ckpt_best_stat_last'] = 1  # 's'  # best_stat_last
     gParameters['ckpt_save_best_stat'] = 'loss'
+    gParameters['ckpt_keep_modulus'] = 2
+    gParameters['ckpt_keep_limit'] = 3
 
     ckpt = candle.CandleCheckpointCallback(gParameters,
                                            verbose=True)
@@ -227,6 +231,8 @@ def run(gParameters):
                                    ckpt])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
+
+    ckpt.report_final()
 
     if False:
         print('Test score:', score[0])
