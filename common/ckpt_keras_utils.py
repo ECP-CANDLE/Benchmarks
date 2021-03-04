@@ -574,6 +574,7 @@ def param_allowed(key, value, allowed):
                           "list of allowed values: %s") %
                          (key, value, str(allowed)))
 
+
 def ckpt_parser(parser):
 
     parser.add_argument("--restart", type=str2bool,
