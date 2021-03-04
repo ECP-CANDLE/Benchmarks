@@ -419,12 +419,13 @@ def restart_json(gParameters, logger, directory):
 from enum import Enum, unique, auto
 @unique
 class ParamType(Enum):
+    """ Possible gParameters types """
     STRING     = auto()
     BOOLEAN    = auto()
     INTEGER    = auto()
-    """ integer: non-negative """
+    # integer: non-negative
     INTEGER_NN = auto()
-    """ integer: greater-than-zero """
+    # integer: greater-than-zero
     INTEGER_GZ = auto()
     FLOAT      = auto()
     FLOAT_NN   = auto()
