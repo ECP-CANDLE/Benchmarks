@@ -567,29 +567,29 @@ def ckpt_parser(parser):
                         help="restart from a saved checkpoint file")
     parser.add_argument("--ckpt_checksum", type=str2bool,
                         default=True,
-                        help="validate the restart file with checksum"),
+                        help="validate the restart file with checksum")
     parser.add_argument("--ckpt_save_best", type=str2bool,
                         default=True,
-                        help="Toggle saving best model"),
+                        help="Toggle saving best model")
     parser.add_argument("--ckpt_save_best_metric", type=str,
                         default=True,
-                        help="Metric for determining when to save best model"),
+                        help="Metric for determining when to save best model")
     parser.add_argument("--ckpt_save_each", type=str2bool,
                         default=False,
-                        help="Toggle saving model at every step"),
+                        help="Toggle saving model at every step")
     parser.add_argument("--ckpt_save_interval", type=int,
                         default=1,
-                        help="Interval to save checkpoints"),
+                        help="Interval to save checkpoints")
     parser.add_argument("--ckpt_keep_mode",
                         choices=['all','count','last'],
                         help="Checkpoint saving mode. " +
-                             "choices are 'all','count','last' "),
+                             "choices are 'all','count','last' ")
     parser.add_argument("--ckpt_keep_limit", type=int,
                         default=1000000,
-                        help="Limit checkpoints to keep"),
+                        help="Limit checkpoints to keep")
     parser.add_argument("--ckpt_skip_epochs", type=int,
                         default=0,
-                        help="Number of epochs to skip before saving epochs"),
+                        help="Number of epochs to skip before saving epochs")
     parser.add_argument("--ckpt_directory", type=str,
                         default='./save',
                         help="Base directory to save checkpoints")
