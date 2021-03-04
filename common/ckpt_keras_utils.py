@@ -83,6 +83,11 @@ class MultiGPUCheckpoint(ModelCheckpoint):
             self.model = model
 
 
+class ParamRequired:
+    """ Indicates that the user params must contain this key """
+    pass
+
+
 class CandleCheckpointCallback(Callback):
 
     """
@@ -130,6 +135,8 @@ class CandleCheckpointCallback(Callback):
 
     def scan_params(self, gParameters):
         """ Simply translate gParameters into instance fields """
+        self.epoch_max = param(gParameters, "epochs",
+                               ParamRequired(), ParamType.INTEGER_NN)
         self.skip_epochs = param(gParameters, "ckpt_skip_epochs",
                                  0, ParamType.INTEGER_NN)
         print("skip: %i" % self.skip_epochs)
@@ -209,7 +216,10 @@ class CandleCheckpointCallback(Callback):
                        self.skip_epochs)
             return False
         if self.save_each:
-            return True  # easy- save everything!
+            return True  # Easy- save everything!
+        if epoch == self.epoch_max - 1:
+            self.info("Writing final epoch %i ..." % epoch)
+            return True  # Final epoch - save!
         if self.save_best_stat not in logs.keys():
             raise Exception(("CandleCheckpointCallback: " +
                              "save_best_stat='%s' " +
@@ -447,6 +457,8 @@ def param(gParameters, key, dflt,
     if key in gParameters:
         result = gParameters[key]
     else:
+        if isinstance(dflt, ParamRequired):
+            raise Exception("param key must be provided: '%s'" % key)
         result = dflt
     result = param_type_check(key, result, type_)
     param_allowed(key, result, allowed)
