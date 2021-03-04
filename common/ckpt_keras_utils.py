@@ -510,7 +510,7 @@ def param_type_check_int(key, value, type_):
 
 
 def param_type_check_float(key, value, type_):
-    if type(value) == float:
+    if isinstance(value, float):
         result = value
     else:
         try:
