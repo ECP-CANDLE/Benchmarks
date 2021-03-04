@@ -163,7 +163,7 @@ class CandleCheckpointCallback(Callback):
                                     None, ParamType.STRING)
         self.cwd = os.getcwd()
 
-    def on_epoch_end(self, epoch, logs):
+    def on_epoch_end(self, epoch, logs=None):
         """
         Normally, ckpts/best is the best saved state,
               and ckpts/last is the last saved state.
