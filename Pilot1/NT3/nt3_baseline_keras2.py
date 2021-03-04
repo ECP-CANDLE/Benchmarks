@@ -102,7 +102,7 @@ def run(gParameters):
     model = Sequential()
 
     initial_epoch = 0
-    best_stat_last = None
+    best_metric_last = None
 
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
@@ -158,16 +158,16 @@ def run(gParameters):
     model.add(Dense(gParameters['classes']))
     model.add(Activation(gParameters['out_activation']))
 
-    gParameters['restart'] = 'AUTO'
     J = candle.restart(gParameters, model)
     if J is not None:
         initial_epoch  = J['epoch']
-        best_stat_last = J['best_stat_last']
-        gParameters['ckpt_best_stat_last'] = best_stat_last
+        best_metric_last = J['best_metric_last']
+        gParameters['ckpt_best_metric_last'] = best_metric_last
         print('initial_epoch: %i' % initial_epoch)
 
     gParameters['ckpt_skip_epochs']    = 0
-    gParameters['ckpt_save_best_stat'] = 'loss'
+    # gParameters['ckpt_best_metric_last'] = 1  # 's'  # best_metric_last
+    gParameters['ckpt_save_best_metric'] = 'loss'
     gParameters['ckpt_keep_modulus'] = 2
     gParameters['ckpt_keep_limit'] = 3
 

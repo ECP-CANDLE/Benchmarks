@@ -688,8 +688,8 @@ def get_common_parser(parser):
 
 def ckpt_parser(parser):
     # checkpoint restart
-    parser.add_argument("--restart", type=str2bool,
-                        default=True,
+    parser.add_argument("--ckpt_mode", type=str,
+                        default='auto',
                         help="restart from a saved checkpoint file")
     parser.add_argument("--ckpt_checksum", type=str2bool,
                         default=True,

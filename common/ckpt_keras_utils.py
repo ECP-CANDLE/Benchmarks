@@ -6,19 +6,19 @@ CANDLE checkpoint/restart utilities for Keras
 
 Hyperparameters that affect CANDLE checkpoint/restart:
 
-restart :  "OFF" | "AUTO" | "REQUIRED"
-    If AUTO or REQUIRED, automatically try to restart from most recent
+ckpt_mode :  "off" | "auto" | "required"
+    If 'auto' or 'required', automatically try to restart from most recent
     (highest epoch) model.h5.
-    REQUIRED will fail if a model cannot be found.
-    Default: "AUTO"
+    'required' will fail if a model cannot be found.
+    Default: "auto"
 
 ckpt_save_best : boolean
-    If true, only save when save_best_stat has improved.
+    If true, only save when save_best_metric has improved.
     Default: False
 
-ckpt_save_best_stat : string
+ckpt_save_best_metric : string
     Required when save_best_only=True, else unused.
-    The stat in logs.model to track for improvement.
+    The metric in logs.model to track for improvement.
 
 ckpt_skip_epochs : int
     Number of initial epochs to skip before writing checkpoints
@@ -122,8 +122,8 @@ class CandleCheckpointCallback(Callback):
         self.info("Callback initialized.")
         if self.metadata is not None:
             self.info("metadata='%s'" % self.metadata)
-        if self.save_best_stat is not None:
-            self.info("save_best_stat='%s'" % self.save_best_stat)
+        if self.save_best_metric is not None:
+            self.info("save_best_metric='%s'" % self.save_best_metric)
         self.info("PWD: " + os.getcwd())
         self.info("ckpt_directory: %s" %
                   PosixPath(self.ckpt_directory).resolve())
@@ -139,14 +139,14 @@ class CandleCheckpointCallback(Callback):
                                False, ParamType.BOOLEAN)
         self.save_interval = param(gParameters, "ckpt_save_interval",
                                    False, ParamType.INTEGER_NN)
-        self.save_best_stat = param(gParameters, "ckpt_save_best_stat",
+        self.save_best_metric = param(gParameters, "ckpt_save_best_metric",
                                     'loss', ParamType.STRING)
-        self.best_stat_last = param(gParameters, "ckpt_best_stat_last",
+        self.best_metric_last = param(gParameters, "ckpt_best_metric_last",
                                     None, ParamType.FLOAT)
-        if self.best_stat_last is None:
+        if self.best_metric_last is None:
             # TODO: Handle positive/negative metrics
             import math
-            self.best_stat_last = math.inf
+            self.best_metric_last = math.inf
         self.save_weights_only = param(gParameters, "ckpt_save_weights_only",
                                        True, ParamType.BOOLEAN)
         self.checksum_enabled = param(gParameters, "ckpt_checksum",
@@ -210,21 +210,21 @@ class CandleCheckpointCallback(Callback):
             return False
         if self.save_each:
             return True  # easy- save everything!
-        if self.save_best_stat not in logs.keys():
+        if self.save_best_metric not in logs.keys():
             raise Exception(("CandleCheckpointCallback: " +
-                             "save_best_stat='%s' " +
+                             "save_best_metric='%s' " +
                              "not in list of model metrics: %s") %
-                            (self.save_best_stat, str(logs.keys())))
-        if   logs[self.save_best_stat] < self.best_stat_last:
+                            (self.save_best_metric, str(logs.keys())))
+        if   logs[self.save_best_metric] < self.best_metric_last:
             symbol =                  "<"
-        elif logs[self.save_best_stat] > self.best_stat_last:
+        elif logs[self.save_best_metric] > self.best_metric_last:
             symbol =                  ">"
         else:
             symbol =                  "="
         self.debug("metrics: current=%f %s last=%f" %
-                   (logs[self.save_best_stat], symbol, self.best_stat_last))
-        if logs[self.save_best_stat] < self.best_stat_last:
-            self.best_stat_last = logs[self.save_best_stat]
+                   (logs[self.save_best_metric], symbol, self.best_metric_last))
+        if logs[self.save_best_metric] < self.best_metric_last:
+            self.best_metric_last = logs[self.save_best_metric]
             # The model improved- save!
             self.epoch_best = epoch
             return True
@@ -268,8 +268,8 @@ class CandleCheckpointCallback(Callback):
         D = {}
         D["epoch"] = epoch+1
         D["save_each"] = self.save_each
-        D["save_best_stat"] = self.save_best_stat
-        D["best_stat_last"] = self.best_stat_last
+        D["save_best_metric"] = self.save_best_metric
+        D["best_metric_last"] = self.best_metric_last
         D["model_file"] = "model.h5"
         D["checksum"] = self.cksum_model
         D["timestamp"] = now.strftime("%Y-%m-%d %H:%M:%S")
@@ -364,19 +364,31 @@ def restart(gParameters, model, verbose=True):
     set_up_logger("save/ckpt.log", logger, verbose=verbose,
                   fmt_line="%(asctime)s CANDLE restart(): %(message)s")
 
+<<<<<<< Updated upstream
     param_restart = param(gParameters, "restart", "AUTO",
                           allowed=["OFF", "AUTO", "REQUIRED"])
     if param_restart == "OFF":
         return None
+=======
+    param_ckpt_mode = param(gParameters, "ckpt_mode", "auto",
+                          allowed=["off", "auto", "required"])
+    if param_ckpt_mode == "off":
+        return
+>>>>>>> Stashed changes
 
     dir_last = "save/ckpts/last"
     model_file = dir_last + "/model.h5"
     if not os.path.exists(model_file):
-        if param_restart == "REQUIRED":
-            raise Exception("restart==REQUIRED but no checkpoint" +
+        if param_ckpt_mode == "required":
+            raise Exception("ckpt_mode=='required' but no checkpoint" +
                             "could be found!")
+<<<<<<< Updated upstream
         # We must be under AUTO - proceed without restart
         assert param_restart == "AUTO"
+=======
+        # We must be under auto - proceed without restart
+        assert(param_ckpt_mode == "auto")
+>>>>>>> Stashed changes
         return None
     logger.info("restarting: %s", model_file)
     result = restart_json(gParameters, logger, dir_last)
@@ -562,8 +574,8 @@ def param_allowed(key, value, allowed):
 
 def ckpt_parser(parser):
 
-    parser.add_argument("--restart", type=str2bool,
-                        default=True,
+    parser.add_argument("--ckpt_mode", type=str,
+                        default='auto',
                         help="restart from a saved checkpoint file")
     parser.add_argument("--ckpt_checksum", type=str2bool,
                         default=True,
