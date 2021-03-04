@@ -376,7 +376,7 @@ def restart(gParameters, model, verbose=True):
             raise Exception("restart==REQUIRED but no checkpoint" +
                             "could be found!")
         # We must be under AUTO - proceed without restart
-        assert(param_restart == "AUTO")
+        assert param_restart == "AUTO"
         return None
     logger.info("restarting: " + model_file)
     result = restart_json(gParameters, logger, dir_last)
