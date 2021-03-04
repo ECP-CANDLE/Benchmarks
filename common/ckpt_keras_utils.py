@@ -367,7 +367,7 @@ def restart(gParameters, model, verbose=True):
     param_restart = param(gParameters, "restart", "AUTO",
                           allowed=["OFF", "AUTO", "REQUIRED"])
     if param_restart == "OFF":
-        return
+        return None
 
     dir_last = "save/ckpts/last"
     model_file = dir_last + "/model.h5"
