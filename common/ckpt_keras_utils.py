@@ -378,10 +378,10 @@ def restart(gParameters, model, verbose=True):
         # We must be under AUTO - proceed without restart
         assert param_restart == "AUTO"
         return None
-    logger.info("restarting: " + model_file)
+    logger.info("restarting: %s", model_file)
     result = restart_json(gParameters, logger, dir_last)
-    logger.info("restarting: epoch=%i timestamp=%s" %
-                (result["epoch"], result["timestamp"]))
+    logger.info("restarting: epoch=%i timestamp=%s",
+                result["epoch"], result["timestamp"])
     start = time.time()
     stats = os.stat(model_file)
     MB = stats.st_size / (1024*1024)
@@ -389,8 +389,8 @@ def restart(gParameters, model, verbose=True):
     stop = time.time()
     duration = stop - start
     rate = MB / duration
-    logger.info("model read:  %0.3f MB in %0.3f seconds (%0.2f MB/s)." %
-                (MB, duration, rate))
+    logger.info("model read:  %0.3f MB in %0.3f seconds (%0.2f MB/s).",
+                MB, duration, rate)
     return result
 
 
