@@ -371,7 +371,9 @@ def restart(gParameters, model, verbose=True):
     """
     import logging
     logger = logging.getLogger("Candle.restart")
-    set_up_logger("save/ckpt.log", logger, verbose=verbose,
+    directory = param(gParameters, "ckpt_directory", "./save")
+    set_up_logger(directory + "/ckpt.log", logger,
+                  verbose=verbose,
                   fmt_line="%(asctime)s CANDLE restart(): %(message)s")
 
     param_restart = param(gParameters, "restart", "AUTO",
