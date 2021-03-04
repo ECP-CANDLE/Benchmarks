@@ -454,7 +454,11 @@ def param(gParameters, key, dflt,
 
 
 def param_type_check(key, value, type_):
-    """ Check that value is of type - if not, raise TypeError """
+    """
+    Check that value is convertable to given type:
+          if not, raise TypeError
+    Return the value as converted to given type
+    """
     if value is None:
         return value
     if type_ is ParamType.STRING:
