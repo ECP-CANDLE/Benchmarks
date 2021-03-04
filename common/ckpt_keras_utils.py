@@ -442,6 +442,7 @@ def disabled(gParameters, key):
 
 def param(gParameters, key, dflt,
           type_=ParamType.STRING, allowed=None):
+    """ Pull key from parameters with type checks and conversions """
     if key in gParameters:
         result = gParameters[key]
     else:
@@ -452,6 +453,7 @@ def param(gParameters, key, dflt,
 
 
 def param_type_check(key, value, type_):
+    """ Check that value is of type - if not, raise TypeError """
     if value is None:
         return value
     if type_ is ParamType.STRING:
