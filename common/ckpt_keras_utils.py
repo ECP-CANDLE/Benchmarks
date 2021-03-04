@@ -477,7 +477,7 @@ def param_type_check(key, value, type_):
 
 
 def param_type_check_bool(key, value):
-    if type(value) == bool:
+    if isinstance(value, bool):
         return value
     try:
         v = str2bool(value)
@@ -488,7 +488,7 @@ def param_type_check_bool(key, value):
 
 
 def param_type_check_int(key, value, type_):
-    if type(value) == int:
+    if isinstance(value, int):
         result = value
     else:
         try:
