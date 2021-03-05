@@ -353,6 +353,9 @@ class CandleCheckpointCallback(Callback):
         if self.logger is not None:
             self.logger.debug(message)
 
+    def on_train_end(self):
+        self.report_final()
+
     def report_final(self):
         self.info("checkpoints kept: %i" %
                   len(self.epochs))
