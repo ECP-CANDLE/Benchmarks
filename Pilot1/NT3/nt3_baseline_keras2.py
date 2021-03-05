@@ -158,6 +158,7 @@ def run(gParameters):
     model.add(Dense(gParameters['classes']))
     model.add(Activation(gParameters['out_activation']))
 
+    gParameters['ckpt_checksum'] = False
     J = candle.restart(gParameters, model)
     if J is not None:
         initial_epoch  = J['epoch']
@@ -167,8 +168,10 @@ def run(gParameters):
 
     gParameters['ckpt_skip_epochs']    = 0
     # gParameters['ckpt_best_metric_last'] = 1  # 's'  # best_metric_last
+    gParameters['ckpt_save_best'] = True
     gParameters['ckpt_save_best_metric'] = 'loss'
-    gParameters['ckpt_keep_modulus'] = 2
+    gParameters['ckpt_save_interval'] = 3
+    gParameters['ckpt_keep_interval'] = 4
     gParameters['ckpt_keep_limit'] = 3
 
     ckpt = candle.CandleCheckpointCallback(gParameters,

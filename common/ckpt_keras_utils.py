@@ -12,17 +12,27 @@ ckpt_mode :  "off" | "auto" | "required"
     'required' will fail if a model cannot be found.
     Default: "auto"
 
+ckpt_save_all : boolean
+    If True, save every epoch, ignoring other save settings.
+    Default: False
+
 ckpt_save_best : boolean
-    If true, only save when save_best_metric has improved.
+    If True, save whenever save_best_metric has improved.
     Default: False
 
 ckpt_save_best_metric : string
-    Required when save_best_only=True, else unused.
+    Required when ckpt_save_best=True, else unused.
     The metric in logs.model to track for improvement.
+    Default: None
 
-ckpt_skip_epochs : int
+ckpt_skip_epochs : integer
     Number of initial epochs to skip before writing checkpoints
     Default: 0
+
+ckpt_save_interval: integer
+    Save whenever epoch % save_interval == 0.
+    Set save_interval=0 to disable these checkpoints (save nothing).
+    Default: 1 (save everything)
 
 ckpt_checksum : boolean
     If True, compute a checksum for the model
@@ -30,8 +40,30 @@ ckpt_checksum : boolean
     Default: True
 
 ckpt_keep_all : boolean
+    If True, simply retain all checkpoints,
+    and ignore keep_interval and keep_limit.
+    Default: False
 
-ckpt_keep_limit: Maximal number of checkpoints to keep.
+ckpt_keep_limit: integer
+    Maximal number of checkpoints to keep.
+    This can be set lower to reduce disk usage.
+    Default: 1000000
+
+ckpt_keep_interval: Retain only checkpoints such that
+    epoch % keep_interval == 0
+    (in addition to the last ckpt and the best ckpt).
+    Set keep_interval=0 to discard these checkpoints
+    (retain nothing except last and best).
+    This can be set higher to reduce disk usage.
+    Default: 1 (retain everything)
+
+ckpt_directory: string
+    The top directory to use.
+    Default: "./save"
+    Typical user values:
+    "/tmp/user/ckpts": I.e. I am going to move these myself.
+    "/other-fs/user/ckpts": I.e. My working FS is different from the FS
+                            I want to use for checkpoints.
 
 ckpt_metadata : string
     Arbitrary string to add to the JSON file regarding
@@ -59,6 +91,30 @@ Usage:
   Optionally, log a final report:
 
     ckpt.report_final()
+
+Controlling restart:
+
+Most restart control options are in gParameters.
+
+Normally, restart() looks at the soft link ckpts/last,
+which should point to a good ckpt directory number in epochs/*
+and restarts from there.
+
+To roll back, simply re-link ckpts/last to point to
+a different directory number in epochs/* .
+Any later epochs will simply be overwritten
+(and a debug message will be reported).
+
+If ckpts/last is missing or a broken link,
+restart() will start from scratch.
+
+Keep policy:
+
+The ckpt_keep settings only apply to the current run.
+Checkpoints from prior runs will never be deleted by clean().
+You may simply remove any of them.
+Normally you will not want to remove the one pointed to by ckpts/last,
+but if you do, restart() will simply start from scratch.
 
 """
 
@@ -127,7 +183,7 @@ class CandleCheckpointCallback(Callback):
         self.info("Callback initialized.")
         if self.metadata is not None:
             self.info("metadata='%s'" % self.metadata)
-        if self.save_best_metric is not None:
+        if self.save_best:
             self.info("save_best_metric='%s'" % self.save_best_metric)
         self.info("PWD: " + os.getcwd())
         self.info("ckpt_directory: %s" %
@@ -141,18 +197,20 @@ class CandleCheckpointCallback(Callback):
                                  0, ParamType.INTEGER_NN)
         self.ckpt_directory = param(gParameters, "ckpt_directory",
                                     "./save", ParamType.STRING)
-        self.save_each = param(gParameters, "ckpt_save_each",
+        self.save_all = param(gParameters, "ckpt_save_all",
+                              False, ParamType.BOOLEAN)
+        self.save_best = param(gParameters, "ckpt_save_best",
                                False, ParamType.BOOLEAN)
-        self.save_interval = param(gParameters, "ckpt_save_interval",
-                                   False, ParamType.INTEGER_NN)
         self.save_best_metric = param(gParameters, "ckpt_save_best_metric",
-                                      'loss', ParamType.STRING)
+                                      None, ParamType.STRING)
         self.best_metric_last = param(gParameters, "ckpt_best_metric_last",
                                       None, ParamType.FLOAT)
         if self.best_metric_last is None:
             # TODO: Handle positive/negative metrics
             import math
             self.best_metric_last = math.inf
+        self.save_interval = param(gParameters, "ckpt_save_interval",
+                                   1, ParamType.INTEGER_NN)
         self.save_weights_only = param(gParameters, "ckpt_save_weights_only",
                                        True, ParamType.BOOLEAN)
         self.checksum_enabled = param(gParameters, "ckpt_checksum",
@@ -161,8 +219,8 @@ class CandleCheckpointCallback(Callback):
                               False, ParamType.BOOLEAN)
         self.keep_limit = param(gParameters, "ckpt_keep_limit",
                                 1000000, ParamType.INTEGER_GZ)
-        self.keep_modulus = param(gParameters, "ckpt_keep_modulus",
-                                  1, ParamType.INTEGER_GZ)
+        self.keep_interval = param(gParameters, "ckpt_keep_interval",
+                                  1, ParamType.INTEGER_NN)
         self.metadata = param(gParameters, "metadata",
                               None, ParamType.STRING)
         self.timestamp_last = param(gParameters, "ckpt_timestamp_last",
@@ -171,6 +229,9 @@ class CandleCheckpointCallback(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         """
+        Note: We immediately increment epoch
+        from index-from-0 to index-from-1
+        to match the TensorFlow output.
         Normally, ckpts/best is the best saved state,
               and ckpts/last is the last saved state.
         Procedure:
@@ -180,6 +241,9 @@ class CandleCheckpointCallback(Callback):
         4. Link ckpts/last to ckpts/epoch/NNN
         5. Clean up old ckpts according to keep policy
         """
+
+        epoch += 1
+
         dir_root   = PosixPath(self.ckpt_directory).resolve()
         dir_work   = dir_root/"ckpts/work"
         dir_best   = dir_root/"ckpts/best"  # a soft link
@@ -214,11 +278,25 @@ class CandleCheckpointCallback(Callback):
             self.debug("Model saving disabled until epoch %d" %
                        self.skip_epochs)
             return False
-        if self.save_each:
+        if self.save_all:
             return True  # Easy- save everything!
-        if epoch == self.epoch_max - 1:
+        if epoch == self.epoch_max:
             self.info("Writing final epoch %i ..." % epoch)
             return True  # Final epoch - save!
+        if self.save_interval != 0 and epoch % self.save_interval == 0:
+            return True  # We are on the save_interval: save!
+        if self.save_check_best(logs, epoch):
+            # The model improved- save!
+            self.epoch_best = epoch
+            return True
+        # else- not saving:
+        self.debug("not writing this epoch.")
+        return False
+
+    def save_check_best(self, logs, epoch):
+        self.info("save_check_best(): %s" % str(self.save_best))
+        if not self.save_best:
+            return False
         if self.save_best_metric not in logs.keys():
             raise Exception(("CandleCheckpointCallback: " +
                              "save_best_metric='%s' " +
@@ -231,14 +309,11 @@ class CandleCheckpointCallback(Callback):
         else:
             symbol =                  "="
         self.debug("metrics: current=%f %s last=%f" %
-                   (logs[self.save_best_metric], symbol, self.best_metric_last))
+                   (logs[self.save_best_metric], symbol,
+                    self.best_metric_last))
         if logs[self.save_best_metric] < self.best_metric_last:
             self.best_metric_last = logs[self.save_best_metric]
-            # The model improved- save!
-            self.epoch_best = epoch
             return True
-        # else- not saving:
-        self.debug("not writing this epoch.")
         return False
 
     def write_model(self, dir_work, epoch):
@@ -275,8 +350,8 @@ class CandleCheckpointCallback(Callback):
         from datetime import datetime
         now = datetime.now()
         D = {}
-        D["epoch"] = epoch+1
-        D["save_each"] = self.save_each
+        D["epoch"] = epoch
+        D["save_all"] = self.save_all
         D["save_best_metric"] = self.save_best_metric
         D["best_metric_last"] = self.best_metric_last
         D["model_file"] = "model.h5"
@@ -317,7 +392,7 @@ class CandleCheckpointCallback(Callback):
         if self.epoch_best == epoch:
             # This is the best epoch
             return True
-        if epoch % self.keep_modulus == 0:
+        if self.keep_interval != 0 and epoch % self.keep_interval == 0:
             if kept < self.keep_limit:
                 return True
         # No reason to save this: delete it:
@@ -352,7 +427,7 @@ class CandleCheckpointCallback(Callback):
         if self.logger is not None:
             self.logger.debug(message)
 
-    def on_train_end(self):
+    def on_train_end(self, logs=None):
         self.report_final()
 
     def report_final(self):
@@ -589,9 +664,9 @@ def ckpt_parser(parser):
                         default=True,
                         help="Toggle saving best model")
     parser.add_argument("--ckpt_save_best_metric", type=str,
-                        default=True,
+                        default=None,
                         help="Metric for determining when to save best model")
-    parser.add_argument("--ckpt_save_each", type=str2bool,
+    parser.add_argument("--ckpt_save_all", type=str2bool,
                         default=False,
                         help="Toggle saving model at every step")
     parser.add_argument("--ckpt_save_interval", type=int,
