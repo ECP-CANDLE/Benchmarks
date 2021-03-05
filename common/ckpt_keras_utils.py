@@ -139,7 +139,6 @@ class CandleCheckpointCallback(Callback):
                                ParamRequired(), ParamType.INTEGER_NN)
         self.skip_epochs = param(gParameters, "ckpt_skip_epochs",
                                  0, ParamType.INTEGER_NN)
-        print("skip: %i" % self.skip_epochs)
         self.ckpt_directory = param(gParameters, "ckpt_directory",
                                     "./save", ParamType.STRING)
         self.save_each = param(gParameters, "ckpt_save_each",
@@ -147,9 +146,9 @@ class CandleCheckpointCallback(Callback):
         self.save_interval = param(gParameters, "ckpt_save_interval",
                                    False, ParamType.INTEGER_NN)
         self.save_best_metric = param(gParameters, "ckpt_save_best_metric",
-                                    'loss', ParamType.STRING)
+                                      'loss', ParamType.STRING)
         self.best_metric_last = param(gParameters, "ckpt_best_metric_last",
-                                    None, ParamType.FLOAT)
+                                      None, ParamType.FLOAT)
         if self.best_metric_last is None:
             # TODO: Handle positive/negative metrics
             import math
