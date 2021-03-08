@@ -303,11 +303,11 @@ class CandleCheckpointCallback(Callback):
                              "not in list of model metrics: %s") %
                             (self.save_best_metric, str(logs.keys())))
         if   logs[self.save_best_metric] < self.best_metric_last:
-            symbol =                  "<"
+            symbol =                    "<"
         elif logs[self.save_best_metric] > self.best_metric_last:
-            symbol =                  ">"
+            symbol =                    ">"
         else:
-            symbol =                  "="
+            symbol =                    "="
         self.debug("metrics: current=%f %s last=%f" %
                    (logs[self.save_best_metric], symbol,
                     self.best_metric_last))
