@@ -220,7 +220,7 @@ class CandleCheckpointCallback(Callback):
         self.keep_limit = param(gParameters, "ckpt_keep_limit",
                                 1000000, ParamType.INTEGER_GZ)
         self.keep_interval = param(gParameters, "ckpt_keep_interval",
-                                  1, ParamType.INTEGER_NN)
+                                   1, ParamType.INTEGER_NN)
         self.metadata = param(gParameters, "metadata",
                               None, ParamType.STRING)
         self.timestamp_last = param(gParameters, "ckpt_timestamp_last",
