@@ -324,7 +324,7 @@ class CandleCheckpointCallback(Callback):
         model_file = dir_work / "model.h5"
         self.debug("writing model to: '%s'" % self.relpath(model_file))
         start = time.time()
-        self.model.save(model_file)  # save_format="h5")
+        self.model.save(model_file)  # save_format="h5"
         stop = time.time()
         duration = stop - start
         stats = os.stat(model_file)
