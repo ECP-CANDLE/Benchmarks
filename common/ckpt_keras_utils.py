@@ -210,7 +210,6 @@ class CandleCheckpointCallback(Callback):
         self.best_metric_last = param(gParameters, "ckpt_best_metric_last",
                                       None, ParamType.FLOAT)
         if self.best_metric_last is None:
-            # TODO: Handle positive/negative metrics
             import math
             self.best_metric_last = math.inf
         self.save_interval = param(gParameters, "ckpt_save_interval",
@@ -306,17 +305,46 @@ class CandleCheckpointCallback(Callback):
                              "save_best_metric='%s' " +
                              "not in list of model metrics: %s") %
                             (self.save_best_metric, str(logs.keys())))
+
+        # Known metrics and direction of progress
+        known_metrics = {"loss":         "-",
+                         "accuracy":     "+",
+                         "val_loss":     "-",
+                         "val_accuracy": "+",
+                         "lr":           "-"}
+
+        if self.save_best_metric not in known_metrics.keys():
+            raise Exception(("CandleCheckpointCallback: " +
+                             "save_best_metric='%s' " +
+                             "not in list of known_metrics: %s") %
+                            (self.save_best_metric,
+                             str(known_metrics.keys())))
+
+        # Logging:
         if   logs[self.save_best_metric] < self.best_metric_last:
             symbol =                    "<"
         elif logs[self.save_best_metric] > self.best_metric_last:
             symbol =                    ">"
         else:
             symbol =                    "="
-        self.debug("metrics: current=%f %s last=%f" %
-                   (logs[self.save_best_metric], symbol,
-                    self.best_metric_last))
-        if logs[self.save_best_metric] < self.best_metric_last:
+        self.debug("metrics: %s: current=%f %s last=%f" %
+                   (self.save_best_metric,
+                    logs[self.save_best_metric],
+                    symbol, self.best_metric_last))
+
+        # Check for improvement:
+        improved = False  # did the metric improve this epoch?
+        if   known_metrics[self.save_best_metric] == "-":
+            if logs[self.save_best_metric] < self.best_metric_last:
+                improved = True
+        elif known_metrics[self.save_best_metric] == "+":
+            if logs[self.save_best_metric] > self.best_metric_last:
+                improved = True
+        else:
+            assert(False)
+        if improved:
             self.best_metric_last = logs[self.save_best_metric]
+            self.epoch_best = epoch
             return True
         return False
 
