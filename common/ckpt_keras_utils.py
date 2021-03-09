@@ -281,6 +281,11 @@ class CandleCheckpointCallback(Callback):
             self.debug("model saving disabled until epoch %d" %
                        self.skip_epochs)
             return False
+        # Do this first- it may set epoch_best:
+        if self.save_check_best(logs, epoch):
+            # The model improved- save!
+            self.epoch_best = epoch
+            return True
         if self.save_all:
             return True  # Easy- save everything!
         if epoch == self.epoch_max:
@@ -288,10 +293,6 @@ class CandleCheckpointCallback(Callback):
             return True  # Final epoch - save!
         if self.save_interval != 0 and epoch % self.save_interval == 0:
             return True  # We are on the save_interval: save!
-        if self.save_check_best(logs, epoch):
-            # The model improved- save!
-            self.epoch_best = epoch
-            return True
         # else- not saving:
         self.debug("not writing this epoch.")
         return False
