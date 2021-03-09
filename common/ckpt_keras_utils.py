@@ -116,6 +116,10 @@ You may simply remove any of them.
 Normally you will not want to remove the one pointed to by ckpts/last,
 but if you do, restart() will simply start from scratch.
 
+Logging:
+
+A log of ckpt operations is in ckpt_directory/ckpt.log
+
 """
 
 import json
