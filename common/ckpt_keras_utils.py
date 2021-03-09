@@ -278,13 +278,13 @@ class CandleCheckpointCallback(Callback):
         """
         # skip early epochs to improve speed
         if epoch < self.skip_epochs:
-            self.debug("Model saving disabled until epoch %d" %
+            self.debug("model saving disabled until epoch %d" %
                        self.skip_epochs)
             return False
         if self.save_all:
             return True  # Easy- save everything!
         if epoch == self.epoch_max:
-            self.info("Writing final epoch %i ..." % epoch)
+            self.info("writing final epoch %i ..." % epoch)
             return True  # Final epoch - save!
         if self.save_interval != 0 and epoch % self.save_interval == 0:
             return True  # We are on the save_interval: save!
@@ -297,7 +297,6 @@ class CandleCheckpointCallback(Callback):
         return False
 
     def save_check_best(self, logs, epoch):
-        self.info("save_check_best(): %s" % str(self.save_best))
         if not self.save_best:
             return False
         if self.save_best_metric not in logs.keys():
@@ -401,7 +400,11 @@ class CandleCheckpointCallback(Callback):
             fp.write("\n")
 
     def clean(self, epoch_now):
-        """ Return number of checkpoints kept and deleted """
+        """
+        Clean old epoch directories
+              in accordance with ckpt_keep policies.
+        Return number of checkpoints kept and deleted
+        """
         deleted = 0
         kept = 0
         # Consider most recent epochs first:
@@ -414,7 +417,10 @@ class CandleCheckpointCallback(Callback):
         return (kept, deleted)
 
     def keep(self, epoch, epoch_now, kept):
-        """ return True if we are keeping this epoch """
+        """
+        kept: Number of epochs already kep
+        return True if we are keeping this epoch
+        """
         if epoch == epoch_now:
             # We just wrote this!
             return True
@@ -427,7 +433,7 @@ class CandleCheckpointCallback(Callback):
         if self.keep_interval != 0 and epoch % self.keep_interval == 0:
             if kept < self.keep_limit:
                 return True
-        # No reason to save this: delete it:
+        # No reason to keep this: delete it:
         return False
 
     def delete(self, epoch):
