@@ -6,7 +6,7 @@ Sample histology images from a trained histology image model.
 
 > python sample.py --batch=32 --top=top.pt --bottom=bottom.pt --vqvae=histology.pt sample32.jpg
 
-This examples generates 32 images (256px) combined into one output file.
+This example generates 32 images (256px) combined into one output file.
 
 ![Generated histology image samples](sample32.jpg)
 
