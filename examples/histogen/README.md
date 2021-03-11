@@ -6,14 +6,18 @@ Sample histology images from a trained histology image model.
 
 1. Download trained models into `checkpoint` folder.
 
-> cd checkpoint
-> wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/histology.pt
-> wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/top.pt
-> wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/bottom.pt
+```
+cd checkpoint
+wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/histology.pt
+wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/top.pt
+wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/bottom.pt
+```
 
 2. Sample images.
 
-> python sample.py --batch=32 --top=top.pt --bottom=bottom.pt --vqvae=histology.pt sample32.jpg
+```
+python sample.py --batch=32 --top=top.pt --bottom=bottom.pt --vqvae=histology.pt sample32.jpg
+```
 
 This example generates 32 images (256px) combined into one output file.
 
@@ -30,8 +34,9 @@ The code is from a PyTorch implementation of VQ-VAE-2:
 
 An example training data set of 81,378 histology images can be downloaded here:
 
-> wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/svs_png.zip
-
+```
+wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/svs_png.zip
+```
 
 ## Requisite
 
