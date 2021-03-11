@@ -8,13 +8,13 @@ Sample histology images from a trained histology image model.
 
 This examples generates 32 images (256px) combined into one output file.
 
-![Generated histology image samples](sample32.png)
+![Generated histology image samples](sample32.jpg)
 
 ## Model
 
 The code is from a PyTorch implementation of VQ-VAE-2:
 
-![Implementation of Generating Diverse High-Fidelity Images with VQ-VAE-2 in PyTorch](https://github.com/rosinality/vq-vae-2-pytorch)
+[Implementation of Generating Diverse High-Fidelity Images with VQ-VAE-2 in PyTorch](https://github.com/rosinality/vq-vae-2-pytorch)
 
 
 ## Training data
