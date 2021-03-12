@@ -6,19 +6,15 @@ CANDLE checkpoint/restart utilities for Keras
 
 Hyperparameters that affect CANDLE checkpoint/restart:
 
-ckpt_mode :  "off" | "auto" | "required"
+ckpt_restart_mode :  "off" | "auto" | "required"
     If 'auto' or 'required', automatically try to restart from most recent
     (highest epoch) model.h5.
     'required' will fail if a model cannot be found.
     Default: "auto"
 
-ckpt_save_all : boolean
-    If True, save every epoch, ignoring other save settings.
-    Default: False
-
 ckpt_save_best : boolean
     If True, save whenever save_best_metric has improved.
-    Default: False
+    Default: True
 
 ckpt_save_best_metric : string
     Required when ckpt_save_best=True, else unused.
@@ -39,23 +35,14 @@ ckpt_checksum : boolean
     and store it in the JSON
     Default: True
 
-ckpt_keep_all : boolean
-    If True, simply retain all checkpoints,
-    and ignore keep_interval and keep_limit.
-    Default: False
+ckpt_keep_mode : string
+    "linear" or "exponential" (NYI)
+    Default: "linear"
 
-ckpt_keep_limit: integer
+ckpt_keep_limit: integer GZ
     Maximal number of checkpoints to keep.
     This can be set lower to reduce disk usage.
     Default: 1000000
-
-ckpt_keep_interval: Retain only checkpoints such that
-    epoch % keep_interval == 0
-    (in addition to the last ckpt and the best ckpt).
-    Set keep_interval=0 to discard these checkpoints
-    (retain nothing except last and best).
-    This can be set higher to reduce disk usage.
-    Default: 1 (retain everything)
 
 ckpt_directory: string
     The top directory to use.
@@ -201,10 +188,8 @@ class CandleCheckpointCallback(Callback):
                                  0, ParamType.INTEGER_NN)
         self.ckpt_directory = param(gParameters, "ckpt_directory",
                                     "./save", ParamType.STRING)
-        self.save_all = param(gParameters, "ckpt_save_all",
-                              False, ParamType.BOOLEAN)
         self.save_best = param(gParameters, "ckpt_save_best",
-                               False, ParamType.BOOLEAN)
+                               True, ParamType.BOOLEAN)
         self.save_best_metric = param(gParameters, "ckpt_save_best_metric",
                                       None, ParamType.STRING)
         self.best_metric_last = param(gParameters, "ckpt_best_metric_last",
@@ -218,12 +203,11 @@ class CandleCheckpointCallback(Callback):
                                        True, ParamType.BOOLEAN)
         self.checksum_enabled = param(gParameters, "ckpt_checksum",
                                       True, ParamType.BOOLEAN)
-        self.keep_all = param(gParameters, "ckpt_keep_all",
-                              False, ParamType.BOOLEAN)
+        self.keep_mode = param(gParameters, "ckpt_keep_mode",
+                               "linear", ParamType.STRING,
+                               allowed=["all", "linear"])
         self.keep_limit = param(gParameters, "ckpt_keep_limit",
                                 1000000, ParamType.INTEGER_GZ)
-        self.keep_interval = param(gParameters, "ckpt_keep_interval",
-                                   1, ParamType.INTEGER_NN)
         self.metadata = param(gParameters, "metadata",
                               None, ParamType.STRING)
         self.timestamp_last = param(gParameters, "ckpt_timestamp_last",
@@ -356,6 +340,7 @@ class CandleCheckpointCallback(Callback):
         model_file = dir_work / "model.h5"
         self.debug("writing model to: '%s'" % self.relpath(model_file))
         start = time.time()
+        # TODO: Implement save_weights_only
         self.model.save(model_file)  # save_format="h5"
         stop = time.time()
         duration = stop - start
@@ -419,7 +404,7 @@ class CandleCheckpointCallback(Callback):
 
     def keep(self, epoch, epoch_now, kept):
         """
-        kept: Number of epochs already kep
+        kept: Number of epochs already kept
         return True if we are keeping this epoch
         """
         if epoch == epoch_now:
@@ -693,18 +678,21 @@ def param_allowed(key, value, allowed):
 
 def ckpt_parser(parser):
 
-    parser.add_argument("--ckpt_mode", type=str,
+    parser.add_argument("--ckpt_restart_mode", type=str,
                         default='auto',
-                        help="restart from a saved checkpoint file")
+                        help="When to restart from a saved checkpoint file")
     parser.add_argument("--ckpt_checksum", type=str2bool,
                         default=True,
-                        help="validate the restart file with checksum")
+                        help="Checksum the restart file after read+write")
     parser.add_argument("--ckpt_save_best", type=str2bool,
                         default=True,
                         help="Toggle saving best model")
     parser.add_argument("--ckpt_save_best_metric", type=str,
                         default=None,
                         help="Metric for determining when to save best model")
+    parser.add_argument("--ckpt_save_weights_only", type=str2bool,
+                        default=False,
+                        help="Toggle saving only weights (not optimizer)")
     parser.add_argument("--ckpt_save_all", type=str2bool,
                         default=False,
                         help="Toggle saving model at every step")
@@ -712,9 +700,9 @@ def ckpt_parser(parser):
                         default=1,
                         help="Interval to save checkpoints")
     parser.add_argument("--ckpt_keep_mode",
-                        choices=['all','count','last'],
+                        choices=['all','linear'],
                         help="Checkpoint saving mode. " +
-                             "choices are 'all','count','last' ")
+                             "choices are 'all' or 'linear'")
     parser.add_argument("--ckpt_keep_limit", type=int,
                         default=1000000,
                         help="Limit checkpoints to keep")
@@ -723,6 +711,6 @@ def ckpt_parser(parser):
                         help="Number of epochs to skip before saving epochs")
     parser.add_argument("--ckpt_directory", type=str,
                         default='./save',
-                        help="Base directory to save checkpoints")
+                        help="Base directory in which to save checkpoints")
 
     return parser
