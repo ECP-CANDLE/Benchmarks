@@ -205,7 +205,7 @@ class CandleCheckpointCallback(Callback):
                                       True, ParamType.BOOLEAN)
         self.keep_mode = param(gParameters, "ckpt_keep_mode",
                                "linear", ParamType.STRING,
-                               allowed=["all", "linear"])
+                               allowed=[None, "all", "linear"])
         self.keep_limit = param(gParameters, "ckpt_keep_limit",
                                 1000000, ParamType.INTEGER_GZ)
         self.metadata = param(gParameters, "metadata",
@@ -270,8 +270,6 @@ class CandleCheckpointCallback(Callback):
             # The model improved- save!
             self.epoch_best = epoch
             return True
-        if self.save_all:
-            return True  # Easy- save everything!
         if epoch == self.epoch_max:
             self.info("writing final epoch %i ..." % epoch)
             return True  # Final epoch - save!
@@ -368,7 +366,6 @@ class CandleCheckpointCallback(Callback):
         now = datetime.now()
         D = {}
         D["epoch"] = epoch
-        D["save_all"] = self.save_all
         D["save_best_metric"] = self.save_best_metric
         D["best_metric_last"] = self.best_metric_last
         D["model_file"] = "model.h5"
@@ -410,15 +407,11 @@ class CandleCheckpointCallback(Callback):
         if epoch == epoch_now:
             # We just wrote this!
             return True
-        if self.keep_all:
-            # User wants to keep everything
-            return True
         if self.epoch_best == epoch:
             # This is the best epoch
             return True
-        if self.keep_interval != 0 and epoch % self.keep_interval == 0:
-            if kept < self.keep_limit:
-                return True
+        if kept < self.keep_limit:
+            return True
         # No reason to keep this: delete it:
         return False
 
@@ -477,7 +470,7 @@ def restart(gParameters, model, verbose=True):
                   verbose=verbose,
                   fmt_line="%(asctime)s CANDLE restart(): %(message)s")
 
-    param_ckpt_mode = param(gParameters, "restart", "auto",
+    param_ckpt_mode = param(gParameters, "restart_mode", "auto",
                             allowed=["off", "auto", "required"])
     if param_ckpt_mode == "off":
         return None
@@ -692,10 +685,7 @@ def ckpt_parser(parser):
                         help="Metric for determining when to save best model")
     parser.add_argument("--ckpt_save_weights_only", type=str2bool,
                         default=False,
-                        help="Toggle saving only weights (not optimizer)")
-    parser.add_argument("--ckpt_save_all", type=str2bool,
-                        default=False,
-                        help="Toggle saving model at every step")
+                        help="Toggle saving only weights (not optimizer) (NYI)")
     parser.add_argument("--ckpt_save_interval", type=int,
                         default=1,
                         help="Interval to save checkpoints")
