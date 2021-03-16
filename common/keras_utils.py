@@ -13,7 +13,7 @@ from keras.models import Model
 
 from scipy.stats.stats import pearsonr
 
-from default_utils import set_up_logger
+from helper_utils import set_up_logger
 from default_utils import set_seed as set_seed_defaultUtils
 
 import warnings

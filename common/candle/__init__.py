@@ -17,14 +17,17 @@ from file_utils import get_file
 # import from default_utils
 from default_utils import ArgumentStruct
 from default_utils import Benchmark
-from default_utils import str2bool
 from default_utils import finalize_parameters
-from default_utils import fetch_file
-from default_utils import verify_path
 from default_utils import keras_default_config
-from default_utils import set_up_logger
 from default_utils import check_flag_conflicts
 
+# import from helper_utils
+from helper_utils import fetch_file
+from helper_utils import set_up_logger
+from helper_utils import verify_path
+from helper_utils import str2bool
+
+# import from generic_utils
 from generic_utils import Progbar
 
 # import from viz_utils

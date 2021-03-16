@@ -5,12 +5,10 @@ import random
 from pprint import pprint
 import inspect
 
-import logging
 import warnings
 
 import os
 import sys
-import gzip
 import argparse
 try:
     import configparser
@@ -23,7 +21,8 @@ sys.path.append(lib_path)
 
 work_path = os.path.dirname(os.path.realpath(__file__))
 
-from file_utils import get_file
+from helper_utils import eval_string_as_list_of_lists, str2bool
+from ckpt_keras_utils import ckpt_parser
 
 # Seed for random generation -- default value
 DEFAULT_SEED = 7102
@@ -75,197 +74,8 @@ def check_flag_conflicts(params):
                     flag_count += 1
         if flag_count > 1:
             raise Exception(
-                'ERROR ! Conflict in flag specification. These flags should not be used together: ' + str(sorted(flag_list)) + '... Exiting')
-            # print("Warning: conflicting flags in ", flag_list)
-            # exit()
-
-# IO UTILS
-
-
-def fetch_file(link, subdir, untar=False, md5_hash=None):
-    """ Convert URL to file path and download the file
-        if it is not already present in spedified cache.
-
-        Parameters
-        ----------
-        link : link path
-            URL of the file to download
-        subdir : directory path
-            Local path to check for cached file.
-        untar : boolean
-            Flag to specify if the file to download should
-            be decompressed too.
-            (default: False, no decompression)
-        md5_hash : MD5 hash
-            Hash used as a checksum to verify data integrity.
-            Verification is carried out if a hash is provided.
-            (default: None, no verification)
-
-        Return
-        ----------
-        local path to the downloaded, or cached, file.
-    """
-
-    fname = os.path.basename(link)
-    return get_file(fname, origin=link, untar=untar, md5_hash=md5_hash, cache_subdir=subdir)
-
-
-def verify_path(path):
-    """ Verify if a directory path exists locally. If the path
-        does not exist, but is a valid path, it recursivelly creates
-        the specified directory path structure.
-
-        Parameters
-        ----------
-        path : directory path
-            Description of local directory path
-    """
-    folder = os.path.dirname(path)
-    if folder and not os.path.exists(folder):
-        os.makedirs(folder)
-
-
-def set_up_logger(logfile, logger, verbose=False,
-                  fmt_line="[%(asctime)s %(process)d] %(message)s",
-                  fmt_date="%Y-%m-%d %H:%M:%S"
-                  ):
-    """ Set up the event logging system. Two handlers are created.
-        One to send log records to a specified file and
-        one to send log records to the (defaulf) sys.stderr stream.
-        The logger and the file handler are set to DEBUG logging level.
-        The stream handler is set to INFO logging level, or to DEBUG
-        logging level if the verbose flag is specified.
-        Logging messages which are less severe than the level set will
-        be ignored.
-
-        Parameters
-        ----------
-        logfile : filename
-            File to store the log records
-        logger : logger object
-            Python object for the logging interface
-        verbose : boolean
-            Flag to increase the logging level from INFO to DEBUG. It
-            only applies to the stream handler.
-    """
-    verify_path(logfile)
-    fh = logging.FileHandler(logfile)
-    fh.setFormatter(logging.Formatter(fmt_line, datefmt=fmt_date))
-    fh.setLevel(logging.DEBUG)
-
-    sh = logging.StreamHandler()
-    sh.setFormatter(logging.Formatter(''))
-    sh.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(fh)
-    logger.addHandler(sh)
-
-
-# REFORMATING UTILS
-
-
-def eval_string_as_list(str_read, separator, dtype):
-    """ Parse a string and convert it into a list of lists.
-
-        Parameters
-        ----------
-        str_read : string
-            String read (from configuration file or command line, for example)
-        separator : character
-            Character that specifies the separation between the lists
-        dtype : data type
-            Data type to decode the elements of the list
-
-        Return
-        ----------
-        decoded_list : list
-            List extracted from string and with elements of the
-            specified type.
-    """
-
-    # Figure out desired type
-    ldtype = dtype
-    if ldtype is None:
-        ldtype = np.int32
-
-    # Split list
-    decoded_list = []
-    out_list = str_read.split(separator)
-
-    # Convert to desired type
-    for el in out_list:
-        decoded_list.append(ldtype(el))
-
-    return decoded_list
-
-
-def eval_string_as_list_of_lists(str_read, separator_out, separator_in, dtype):
-    """ Parse a string and convert it into a list of lists.
-
-        Parameters
-        ----------
-        str_read : string
-            String read (from configuration file or command line, for example)
-        separator_out : character
-            Character that specifies the separation between the outer level lists
-        separator_in : character
-            Character that specifies the separation between the inner level lists
-        dtype : data type
-            Data type to decode the elements of the lists
-
-        Return
-        ----------
-        decoded_list : list
-            List of lists extracted from string and with elements of the specified type.
-    """
-
-    # Figure out desired type
-    ldtype = dtype
-    if ldtype is None:
-        ldtype = np.int32
-
-    # Split outer list
-    decoded_list = []
-    out_list = str_read.split(separator_out)
-    # Split each internal list
-    for line in out_list:
-        in_list = []
-        elem = line.split(separator_in)
-        # Convert to desired type
-        for el in elem:
-            in_list.append(ldtype(el))
-        decoded_list.append(in_list)
-
-    return decoded_list
-
-
-def str2bool(v):
-    """This is taken from:
-        https://stackoverflow.com/questions/15008758/parsing-boolean-values-with-argparse
-        Because type=bool is not interpreted as a bool and action='store_true' cannot be
-        undone.
-
-        Parameters
-        ----------
-        v : string
-            String to interpret
-
-        Return
-        ----------
-        Boolean value. It raises and exception if the provided string cannot
-        be interpreted as a boolean type.
-        Strings recognized as boolean True :
-            'yes', 'true', 't', 'y', '1' and uppercase versions (where applicable).
-        Strings recognized as boolean False :
-            'no', 'false', 'f', 'n', '0' and uppercase versions (where applicable).
-    """
-    if v.lower() in ('yes', 'true', 't', 'y', '1'):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+                'ERROR ! Conflict in flag specification. These flags should not be used together: '
+                + str(sorted(flag_list)) + '... Exiting')
 
 # CLASS DEFINITIONS
 
@@ -686,39 +496,6 @@ def get_common_parser(parser):
     return parser
 
 
-def ckpt_parser(parser):
-    # checkpoint restart
-    parser.add_argument("--ckpt_mode", type=str,
-                        default='auto',
-                        help="restart from a saved checkpoint file")
-    parser.add_argument("--ckpt_checksum", type=str2bool,
-                        default=True,
-                        help="validate the restart file with checksum"),
-    parser.add_argument("--ckpt_save_best_metric", type=str,
-                        default=None,
-                        help="Metric for determining when to save best model"),
-    parser.add_argument("--ckpt_save_each", type=str2bool,
-                        default=False,
-                        help="Toggle saving model at every step"),
-    parser.add_argument("--ckpt_save_interval", type=int,
-                        default=1,
-                        help="Interval to save checkpoints"),
-    parser.add_argument("--ckpt_keep_mode",
-                        choices=['all', 'count', 'last'],
-                        help="Checkpoint saving mode. choices are 'all','count','last' "),
-    parser.add_argument("--ckpt_keep_count", type=int,
-                        default=3,
-                        help="Number of checkpoints to save"),
-    parser.add_argument("--ckpt_skip_epochs", type=int,
-                        default=0,
-                        help="Number of epochs to skip before saving epochs"),
-    parser.add_argument("--ckpt_directory", type=str,
-                        default='./save',
-                        help="Base directory to save checkpoints")
-
-    return parser
-
-
 def args_overwrite_config(args, config):
     """Overwrite configuration parameters with
         parameters specified via command-line.
@@ -858,7 +635,7 @@ class Benchmark:
         # Parse has been split between arguments that are common with the default neon parser
         # and all the other options
         parser = self.parser
-        if self.framework is not 'neon':
+        if self.framework != 'neon':
             parser = get_default_neon_parser(parser)
         parser = get_common_parser(parser)
 
