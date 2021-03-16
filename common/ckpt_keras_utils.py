@@ -116,7 +116,7 @@ import time
 
 from pathlib import PosixPath
 
-from default_utils import set_up_logger, str2bool
+from helper_utils import set_up_logger, str2bool
 from keras.models import Model
 from keras.callbacks import Callback, ModelCheckpoint
 
@@ -638,7 +638,7 @@ def checksum_file(logger, filename):
     """ Read file, compute checksum, return it as a string. """
     import zlib
     start = time.time()
-    chunk_size = 10*1024*1024
+    chunk_size = 10 * 1024 * 1024
     total = 0
     with open(filename, "rb") as fp:
         checksum = 0
@@ -649,7 +649,7 @@ def checksum_file(logger, filename):
             total += len(chunk)
             checksum = zlib.crc32(chunk, checksum)
     stop = time.time()
-    MB = total / (1024*1024)
+    MB = total / (1024 * 1024)
     duration = stop - start
     rate = MB / duration
     logger.info("checksummed: %0.3f MB in %.3f seconds (%.2f MB/s)." %
@@ -670,37 +670,41 @@ def param_allowed(key, value, allowed):
 
 
 def ckpt_parser(parser):
-
+    # global
     parser.add_argument("--ckpt_restart_mode", type=str,
                         default='auto',
-                        help="When to restart from a saved checkpoint file")
+                        choices=['off', 'auto', 'required'],
+                        help="Mode to restart from a saved checkpoint file, " + 
+                        "choices are 'off', 'auto', 'required'")
     parser.add_argument("--ckpt_checksum", type=str2bool,
-                        default=True,
+                        default='true',
                         help="Checksum the restart file after read+write")
-    parser.add_argument("--ckpt_save_best", type=str2bool,
-                        default=True,
-                        help="Toggle saving best model")
-    parser.add_argument("--ckpt_save_best_metric", type=str,
-                        default=None,
-                        help="Metric for determining when to save best model")
-    parser.add_argument("--ckpt_save_weights_only", type=str2bool,
-                        default=False,
-                        help="Toggle saving only weights (not optimizer) (NYI)")
-    parser.add_argument("--ckpt_save_interval", type=int,
-                        default=1,
-                        help="Interval to save checkpoints")
-    parser.add_argument("--ckpt_keep_mode",
-                        choices=['all','linear'],
-                        help="Checkpoint saving mode. " +
-                             "choices are 'all' or 'linear'")
-    parser.add_argument("--ckpt_keep_limit", type=int,
-                        default=1000000,
-                        help="Limit checkpoints to keep")
     parser.add_argument("--ckpt_skip_epochs", type=int,
                         default=0,
                         help="Number of epochs to skip before saving epochs")
     parser.add_argument("--ckpt_directory", type=str,
                         default='./save',
                         help="Base directory in which to save checkpoints")
+    # saving 
+    parser.add_argument("--ckpt_save_best", type=str2bool,
+                        default='true',
+                        help="Toggle saving best model")
+    parser.add_argument("--ckpt_save_best_metric", type=str,
+                        default=None,
+                        help="Metric for determining when to save best model")
+    parser.add_argument("--ckpt_save_weights_only", type=str2bool,
+                        default='false',
+                        help="Toggle saving only weights (not optimizer) (NYI)")
+    parser.add_argument("--ckpt_save_interval", type=int,
+                        default=1,
+                        help="Interval to save checkpoints")
+    # keeping
+    parser.add_argument("--ckpt_keep_mode",
+                        choices=['linear', 'exponential'],
+                        help="Checkpoint saving mode. " +
+                             "choices are 'linear' or 'exponential' ")
+    parser.add_argument("--ckpt_keep_limit", type=int,
+                        default=1000000,
+                        help="Limit checkpoints to keep")
 
     return parser
