@@ -1,7 +1,7 @@
 # Improving cancer type classifier with synthetic data
 
 We demonstrate the value of generator models in boosting the performance of predictive models.
-In this example, we first train a conditional variational autoencoder (CVAE) to learn the distribution of RNAseq data for cancer cell line samples. We then generate synthetic gene expression levels (942 landmark genes) by sampling from the latent representation along with a random type index. Adding the synthetic samples to the original training data, we hypothesize that a model trained under the otherwise same conditions would get enhanced performance. This is validated by our experiments in training a simple type classifier network and testing the classification accuracy on the holdout data not seen by the generator.
+In this example, we first train a conditional variational autoencoder (CVAE) to learn the distribution of RNAseq data for cancer cell line samples. We then generate synthetic gene expression levels (of landmark genes defined by the [NIH LINCS1000 program](https://lincsproject.org/LINCS/tools/workflows/find-the-best-place-to-obtain-the-lincs-l1000-data)) by sampling from the latent representation along with a random type index. Adding the synthetic samples to the original training data, we hypothesize that a model trained under the otherwise same conditions would get enhanced performance. This is validated by our experiments in training a simple type classifier network and testing the classification accuracy on the holdout data not seen by the generator.
 
 ![Test accuracy comparison](test-accuracy-comparison-20-types.png)
 
