@@ -1,6 +1,5 @@
 import random
 import numpy as np
-from keras.utils import np_utils
 
 
 def label_flip(y_data_categorical, y_noise_level):

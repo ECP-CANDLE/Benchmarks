@@ -11,15 +11,15 @@ import sklearn
 
 import tensorflow as tf
 
-import keras as ke
-from keras import backend as K
+import tensorflow.keras as ke
+from tensorflow.keras import backend as K
 
-from keras.layers import Input, Dense, Dropout, Activation, BatchNormalization
-from keras.optimizers import SGD, Adam, RMSprop, Adadelta
-from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.utils import np_utils, multi_gpu_model
+from tensorflow.keras.layers import Input, Dense, Dropout, Activation, BatchNormalization
+from tensorflow.keras.optimizers import SGD, Adam, RMSprop, Adadelta
+from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
+from tensorflow.keras.utils import to_categorical, multi_gpu_model
 
-from keras.callbacks import Callback, ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import train_test_split
@@ -43,7 +43,7 @@ def r2(y_true, y_pred):
 
 def tf_auc(y_true, y_pred):
     auc = tf.metrics.auc(y_true, y_pred)[1]
-    K.get_session().run(tf.local_variables_initializer())
+    K.get_session().run(tf.compat.v1.local_variables_initializer())
     return auc
 
 
@@ -217,9 +217,9 @@ def run(params):
 
     nb_classes = params['dense'][-1]
 
-    Y_train = np_utils.to_categorical(Y_train, nb_classes)
-    Y_test = np_utils.to_categorical(Y_test, nb_classes)
-    Y_val = np_utils.to_categorical(Y_val, nb_classes)
+    Y_train = to_categorical(Y_train, nb_classes)
+    Y_test = to_categorical(Y_test, nb_classes)
+    Y_val = to_categorical(Y_val, nb_classes)
 
     y_integers = np.argmax(Y_train, axis=1)
     class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
