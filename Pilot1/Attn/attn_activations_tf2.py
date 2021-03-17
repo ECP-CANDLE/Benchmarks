@@ -302,34 +302,18 @@ def run(params):
     activations_2 = get_activations(model_2, x, auto_compile=True)
 
     for i in range(0, len(model_1.layers)):
+        print ('layer {} with name {}'.format(i, model_1.layers[i].name))
         if 'dense' in model_1.layers[i].name:
-    #        print('{}\t{}'.format(i, model_1.layers[i].name))
-    #        # make the first dim the neurons, the second dim the activations, one activation per sample per neuron
-    #        act1 = pd.DataFrame(activations_1[model_1.layers[i].name]).transpose()
-    #        print (act1.shape)
-
-    #        act2= pd.DataFrame(activations_2[model_2.layers[i].name]).transpose()
-    #        print (act2.shape)
-
-    #        act1 = act1.replace([np.inf, -np.inf], np.nan)
-    #        act1 = act1.dropna(how="any").to_numpy()
-    #        print (act1.shape)
-
-    #        act2 = act2.replace([np.inf, -np.inf], np.nan)
-    #        act2 = act2.dropna(how="any").to_numpy()
-    #        print (act2.shape)
-
-    #        results = cca_core.get_cca_similarity(act1, act2,
-    #                verbose=True, epsilon=cca_epsilon)
-
             results = compute_cca(i, model_1, model_2, x, epsilon=cca_epsilon)
+            svcca_results = compute_svcca(i, model_1, model_2, x, epsilon=cca_epsilon)
 
-            print('Mean CCA Coef of pair {} with training size {} at layer {} after {} epochs is {:.4f}'.format(
+            print('Mean CCA Coef and SVCCA Coef of pair {} with training size {} at layer {} after {} epochs is {:.4f} and {:4f}'.format(
                 os.getpid(),
                 params['training_size'],
                 i,
                 params['epochs'],
-                np.mean(results["cca_coef1"]))
+                np.mean(results["cca_coef1"]),
+                np.mean(svcca_results["cca_coef1"]))
                 )
 
 
@@ -348,21 +332,62 @@ def compute_cca(i, model_1, model_2, x, epsilon=0):
     print('{}\t{}'.format(i, model_1.layers[i].name))
 
     act1 = pd.DataFrame(activations_1[model_1.layers[i].name]).transpose()
-    print (act1.shape)
-
     act2= pd.DataFrame(activations_2[model_2.layers[i].name]).transpose()
+    print (act1.shape)
     print (act2.shape)
 
     act1 = act1.replace([np.inf, -np.inf], np.nan)
     act1 = act1.dropna(how="any").to_numpy()
-    print (act1.shape)
-
     act2 = act2.replace([np.inf, -np.inf], np.nan)
     act2 = act2.dropna(how="any").to_numpy()
+    print (act1.shape)
     print (act2.shape)
 
     results = cca_core.get_cca_similarity(act1, act2, verbose=True, epsilon=epsilon)
     return results
+
+def compute_svcca (i, model_1, model_2, x, epsilon=0):
+
+    activations_1 = get_activations(model_1, x, auto_compile=True)
+    activations_2 = get_activations(model_2, x, auto_compile=True)
+    print('{}\t{}'.format(i, model_1.layers[i].name))
+
+    act1 = pd.DataFrame(activations_1[model_1.layers[i].name]).transpose()
+    act2= pd.DataFrame(activations_2[model_2.layers[i].name]).transpose()
+    print (act1.shape)
+    print (act2.shape)
+
+    act1 = act1.replace([np.inf, -np.inf], np.nan)
+    act1 = act1.dropna(how="any").to_numpy()
+    act2 = act2.replace([np.inf, -np.inf], np.nan)
+    act2 = act2.dropna(how="any").to_numpy()
+    print (act1.shape)
+    print (act2.shape)
+
+    # Mean subtract activations
+    cact1 = act1 - np.mean(act1, axis=1, keepdims=True)
+    cact2 = act2 - np.mean(act2, axis=1, keepdims=True)
+
+    # Perform SVD
+    U1, s1, V1 = np.linalg.svd(cact1, full_matrices=False)
+    U2, s2, V2 = np.linalg.svd(cact2, full_matrices=False)
+
+    num_sv = 20
+    if cact1.shape[0] >= num_sv:
+        svacts1 = np.dot(s1[:num_sv]*np.eye(num_sv), V1[:num_sv])
+        svacts2 = np.dot(s2[:num_sv]*np.eye(num_sv), V2[:num_sv])
+        svcca_results = cca_core.get_cca_similarity(svacts1, svacts2, epsilon=1e-10, verbose=False)
+
+    else:
+        print('number of rows {} in activations is less than number of singular vectors {}'.format(
+            cact1.shape[0], num_sv))
+
+        num_sv = cact1.shape[0]
+        svacts1 = np.dot(s1[:num_sv]*np.eye(num_sv), V1[:num_sv])
+        svacts2 = np.dot(s2[:num_sv]*np.eye(num_sv), V2[:num_sv])
+        svcca_results = cca_core.get_cca_similarity(svacts1, svacts2, epsilon=1e-10, verbose=False)
+
+    return svcca_results
 
 
 def main():
