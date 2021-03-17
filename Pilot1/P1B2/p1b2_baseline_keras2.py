@@ -4,13 +4,13 @@ import argparse
 
 import numpy as np
 
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model, Sequential
-from keras.layers import Activation, Dense, Dropout, Input
-from keras.initializers import RandomUniform
-from keras.callbacks import Callback, ModelCheckpoint
-from keras.regularizers import l2
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model, Sequential
+from tensorflow.keras.layers import Activation, Dense, Dropout, Input
+from tensorflow.keras.initializers import RandomUniform
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint
+from tensorflow.keras.regularizers import l2
 
 import p1b2
 import candle

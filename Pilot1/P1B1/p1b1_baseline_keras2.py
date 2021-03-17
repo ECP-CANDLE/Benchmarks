@@ -2,13 +2,13 @@ from __future__ import print_function
 
 import numpy as np
 
-import keras
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model
-from keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda, AlphaDropout
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from keras.metrics import binary_crossentropy, mean_squared_error
+import tensorflow.keras as keras
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import BatchNormalization, Dense, Dropout, Input, Lambda, AlphaDropout
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from tensorflow.keras.metrics import binary_crossentropy, mean_squared_error
 from scipy.stats.stats import pearsonr
 from sklearn.manifold import TSNE
 

@@ -11,11 +11,11 @@ import sys
 
 import numpy as np
 
-from keras import backend as K
-from keras import metrics
-from keras.models import Sequential
-from keras.layers import Activation, BatchNormalization, Dense, Dropout, LocallyConnected1D, Conv1D, MaxPooling1D, Flatten, Conv2D, LocallyConnected2D
-from keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
+from tensorflow.keras import backend as K
+from tensorflow.keras import metrics
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Dropout, LocallyConnected1D, Conv1D, MaxPooling1D, Flatten, Conv2D, LocallyConnected2D
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
 
 # For non-interactive plotting
 import matplotlib as mpl
