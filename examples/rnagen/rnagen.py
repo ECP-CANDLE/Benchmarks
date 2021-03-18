@@ -21,6 +21,7 @@ lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
 import file_utils
+import candle
 
 DATA_URL = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/rnagen/'
 
@@ -47,13 +48,6 @@ def parse_args():
                         help='random seed state')
 
     return parser.parse_args()
-
-
-def set_seed(seed):
-    os.environ['PYTHONHASHSEED'] = str(seed)
-    random.seed(seed)
-    np.random.seed(seed)
-    tf.random.set_random_seed(seed)
 
 
 def get_file(url):
@@ -361,7 +355,7 @@ def xy_from_df(df, shuffle=False):
 
 def main():
     args = parse_args()
-    set_seed(args.seed)
+    candle.set_seed(args.seed)
     params = vars(args)
     print(f'{args}')
 
