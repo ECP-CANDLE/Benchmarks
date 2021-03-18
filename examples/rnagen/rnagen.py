@@ -53,7 +53,7 @@ def set_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
-    tf.random.set_random_seed(seed)
+    tf.random.set_seed(seed)
 
 
 def get_file(url):
