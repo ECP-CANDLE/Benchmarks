@@ -50,7 +50,7 @@ def set_seed(seed):
     if K.backend() == 'tensorflow':
         import tensorflow as tf
         if tf.__version__ < "2.0.0":
-            tf.set_random_seed(seed)
+            tf.compat.v1.set_random_seed(seed)
         else:
             tf.random.set_seed(seed)
 
