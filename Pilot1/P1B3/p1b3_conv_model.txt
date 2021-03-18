@@ -1,5 +1,5 @@
 [Global_Params]
-conv = [[10, 10, 5],[ 10, 10, 5]]
+conv = [10, 10, 5, 10, 10, 5]
 pool = 10
 batch_size = 100
 epochs = 1
