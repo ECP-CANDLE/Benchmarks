@@ -26,6 +26,7 @@ DATA_URL = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/rnagen/
 
 logger = logging.getLogger(__name__)
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='RNAseq generator')
     parser.add_argument('-d', '--latent_dim', type=int, default=10,
@@ -47,15 +48,18 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def set_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
     tf.random.set_seed(seed)
 
+
 def get_file(url):
     fname = os.path.basename(url)
     return file_utils.get_file(fname, origin=url, cache_subdir='Examples')
+
 
 def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):
     """Impute missing values with mean and scale data included in pandas dataframe.
@@ -94,11 +98,13 @@ def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):
 
     return df
 
+
 def load_cell_type():
     path = get_file(DATA_URL + 'combined_cancer_types')
     df = pd.read_csv(path, engine='c', sep='\t', header=None)
     df.columns = ['Sample', 'type']
     return df
+
 
 def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True,
                      use_landmark_genes=False, use_filtered_genes=False,
@@ -170,6 +176,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
 
     return df
 
+
 def load_top_cell_types(n=10, scaling='minmax'):
     df_cell = load_cell_rnaseq(use_landmark_genes=True, preprocess_rnaseq='source_scale', scaling=scaling)
     df_type = load_cell_type()
@@ -177,6 +184,7 @@ def load_top_cell_types(n=10, scaling='minmax'):
     type_counts = dict(df.type.value_counts().nlargest(n))
     df_top_types = df[df.type.isin(type_counts.keys())]
     return df_top_types
+
 
 def train_type_classifier(x, y, batch_size=256, epochs=2, verbose=1):
     input_shape = (x.shape[1],)
@@ -192,11 +200,14 @@ def train_type_classifier(x, y, batch_size=256, epochs=2, verbose=1):
 
     return model
 
+
 def evaluate_model(model, df):
     return model.evaluate(x, y, batch_size=256)
 
+
 def covariance(x, y):
     return K.mean(x * y) - K.mean(x) * K.mean(y)
+
 
 def corr(y_true, y_pred):
     cov = covariance(y_true, y_pred)
@@ -204,11 +215,14 @@ def corr(y_true, y_pred):
     var2 = covariance(y_pred, y_pred)
     return cov / (K.sqrt(var1 * var2) + K.epsilon())
 
+
 def xent(y_true, y_pred):
     return binary_crossentropy(y_true, y_pred)
 
+
 def mse(y_true, y_pred):
     return mean_squared_error(y_true, y_pred)
+
 
 class Sampling(layers.Layer):
     """Uses (z_mean, z_log_var) to sample z, the vector encoding a vector."""
@@ -219,6 +233,7 @@ class Sampling(layers.Layer):
         dim = tf.shape(z_mean)[1]
         epsilon = K.random_normal(shape=(batch, dim))
         return z_mean + tf.exp(0.5 * z_log_var) * epsilon
+
 
 class VAE(keras.Model):
     def __init__(self, encoder, decoder, **kwargs):
@@ -269,6 +284,7 @@ class VAE(keras.Model):
     def test_step(self, data):
         return self.custom_step(data, train=False)
 
+
 def train_autoencoder(x, y, params={}):
     model_type = params.get('model', 'cvae')  # vae or cvae (conditional VAE)
     latent_dim = params.get('latent_dim', 10)
@@ -293,7 +309,7 @@ def train_autoencoder(x, y, params={}):
         z = Sampling()([z_mean, z_log_var])
         encoded = [z_mean, z_log_var, z]
         # if model_type == 'cvae':
-            # z_cond = keras.layers.concatenate([z, c_input])
+        #     z_cond = keras.layers.concatenate([z, c_input])
 
     # Decoder Part
     latent_input = keras.Input(shape=(latent_dim,))
@@ -334,12 +350,14 @@ def train_autoencoder(x, y, params={}):
 
     return model
 
+
 def xy_from_df(df, shuffle=False):
     if shuffle:
         df = df.sample(frac=1, random_state=0)
     x = df.iloc[:, 2:].values
     y = pd.get_dummies(df.type).values
     return x, y
+
 
 def main():
     args = parse_args()
@@ -363,11 +381,12 @@ def main():
     print('\nTrain conditional autoencoder:')
     model = train_autoencoder(x_train, y_train, params)
 
-    if args.model != 'cvae': return
+    if args.model != 'cvae':
+        return
 
     print(f'\nGenerate {args.n_samples} RNAseq samples:')
     start = time.time()
-    labels = np.random.randint(0, args.top_k_types-1, size=args.n_samples)
+    labels = np.random.randint(0, args.top_k_types - 1, size=args.n_samples)
     c_sample = keras.utils.to_categorical(labels, args.top_k_types)
     z_sample = np.random.normal(size=(args.n_samples, args.latent_dim))
     samples = model.decoder.predict([z_sample, c_sample], batch_size=args.batch_size)
@@ -390,7 +409,8 @@ def main():
     change = (acc2 - acc) / acc * 100
     print(f'Test accuracy change: {change:+.2f}% ({acc:.4f} -> {acc2:.4f})')
 
-    if not args.plot: return
+    if not args.plot:
+        return
 
     print('\nPlot test accuracy using models trained with and without synthetic data:')
     print('training time: before vs after')
@@ -401,8 +421,8 @@ def main():
         r1 = c1.evaluate(x_test, y_test, batch_size=args.batch_size, verbose=0)
         r2 = c2.evaluate(x_test, y_test, batch_size=args.batch_size, verbose=0)
         print(f'# epochs = {epochs}: {r1[1]:.4f} vs {r2[1]:.4f}')
-        rows.append({'Epochs':epochs, 'trained w/o synthetic data':r1[1],
-                     'trained w/ synthetic data':r2[1]})
+        rows.append({'Epochs': epochs, 'trained w/o synthetic data': r1[1],
+                     'trained w/ synthetic data': r2[1]})
     df = pd.DataFrame(rows).set_index('Epochs')
     import matplotlib
     matplotlib.use('Agg')

@@ -27,7 +27,6 @@ def sample_model(model, device, batch, size, temperature, condition=None):
 def load_model(model, checkpoint, device):
     ckpt = torch.load(os.path.join('checkpoint', checkpoint))
 
-    
     if 'args' in ckpt:
         args = ckpt['args']
 
@@ -61,7 +60,7 @@ def load_model(model, checkpoint, device):
             n_cond_res_block=args.n_cond_res_block,
             cond_res_channel=args.n_res_channel,
         )
-        
+
     if 'model' in ckpt:
         ckpt = ckpt['model']
 

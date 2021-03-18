@@ -112,7 +112,7 @@ class CausalConv2d(nn.Module):
         out = self.pad(input)
 
         if self.causal > 0:
-            self.conv.conv.weight_v.data[:, :, -1, self.causal :].zero_()
+            self.conv.conv.weight_v.data[:, :, -1, self.causal:].zero_()
 
         out = self.conv(out)
 
