@@ -53,7 +53,7 @@ def set_seed(seed):
     os.environ['PYTHONHASHSEED'] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
-    tf.random.set_seed(seed)
+    tf.random.set_random_seed(seed)
 
 
 def get_file(url):
@@ -363,7 +363,7 @@ def main():
     args = parse_args()
     set_seed(args.seed)
     params = vars(args)
-    print(f'{args=}')
+    print(f'{args}')
 
     df = load_top_cell_types(args.top_k_types)
     df_train = df.sample(frac=0.5, random_state=args.seed)
