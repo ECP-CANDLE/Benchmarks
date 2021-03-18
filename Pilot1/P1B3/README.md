@@ -115,7 +115,7 @@ This benchmark can be run with additional or alternative molecular and drug feat
 
 #### Use multiple cell line and drug feature sets
 ```
-python p1b3_baseline_keras2.py --cell_features all --drug_features all --conv 10 10 1 5 5 1 -epochs 200
+python p1b3_baseline_keras2.py --cell_features all --drug_features all --conv 10 10 1 5 5 1 --epochs 200
 ```
 This will train a convolution network for 200 epochs, using three sets of cell line features (gene expression, microRNA, proteome) and two sets of drug features (Dragon7 descriptors, encoded latent representation from Aspuru-Guzik's SMILES autoencoder), and will bring the total input feature dimension to 40K.
 ```
