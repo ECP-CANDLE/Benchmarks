@@ -19,7 +19,7 @@ ckpt_save_best : boolean
 ckpt_save_best_metric : string
     Required when ckpt_save_best=True, else unused.
     The metric in logs.model to track for improvement.
-    Default: None
+    Default: "val_loss"
 
 ckpt_skip_epochs : integer
     Number of initial epochs to skip before writing checkpoints
@@ -32,8 +32,9 @@ ckpt_save_interval: integer
 
 ckpt_checksum : boolean
     If True, compute a checksum for the model
-    and store it in the JSON
-    Default: True
+    and store it in the JSON.
+    Also, confirm checksum at restart time.
+    Default: False
 
 ckpt_keep_mode : string
     "linear" or "exponential" (NYI)
@@ -202,7 +203,7 @@ class CandleCheckpointCallback(Callback):
         self.save_weights_only = param(gParameters, "ckpt_save_weights_only",
                                        True, ParamType.BOOLEAN)
         self.checksum_enabled = param(gParameters, "ckpt_checksum",
-                                      True, ParamType.BOOLEAN)
+                                      False, ParamType.BOOLEAN)
         self.keep_mode = param(gParameters, "ckpt_keep_mode",
                                "linear", ParamType.STRING,
                                allowed=[None, "all", "linear"])
@@ -470,7 +471,7 @@ def restart(gParameters, model, verbose=True):
                   verbose=verbose,
                   fmt_line="%(asctime)s CANDLE restart(): %(message)s")
 
-    param_ckpt_mode = param(gParameters, "restart_mode", "auto",
+    param_ckpt_mode = param(gParameters, "ckpt_restart_mode", "auto",
                             allowed=["off", "auto", "required"])
     if param_ckpt_mode == "off":
         return None
@@ -513,7 +514,7 @@ def restart_json(gParameters, logger, directory):
     # print(str(J))
     logger.debug("ckpt-info.json contains:")
     logger.debug(json.dumps(J, indent=2))
-    if not disabled(gParameters, "ckpt_checksum"):
+    if param(gParameters, "ckpt_checksum", False, ParamType.BOOLEAN):
         checksum = checksum_file(logger, directory + "/model.h5")
         if checksum != J["checksum"]:
             raise Exception("checksum mismatch! directory: " %
@@ -674,10 +675,10 @@ def ckpt_parser(parser):
     parser.add_argument("--ckpt_restart_mode", type=str,
                         default='auto',
                         choices=['off', 'auto', 'required'],
-                        help="Mode to restart from a saved checkpoint file, " + 
+                        help="Mode to restart from a saved checkpoint file, " +
                         "choices are 'off', 'auto', 'required'")
     parser.add_argument("--ckpt_checksum", type=str2bool,
-                        default='true',
+                        default='false',
                         help="Checksum the restart file after read+write")
     parser.add_argument("--ckpt_skip_epochs", type=int,
                         default=0,
@@ -685,12 +686,12 @@ def ckpt_parser(parser):
     parser.add_argument("--ckpt_directory", type=str,
                         default='./save',
                         help="Base directory in which to save checkpoints")
-    # saving 
+    # saving
     parser.add_argument("--ckpt_save_best", type=str2bool,
                         default='true',
                         help="Toggle saving best model")
     parser.add_argument("--ckpt_save_best_metric", type=str,
-                        default=None,
+                        default="val_loss",
                         help="Metric for determining when to save best model")
     parser.add_argument("--ckpt_save_weights_only", type=str2bool,
                         default='false',
