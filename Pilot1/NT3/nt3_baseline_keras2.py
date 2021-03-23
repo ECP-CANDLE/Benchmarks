@@ -168,13 +168,6 @@ def run(gParameters):
         gParameters['ckpt_best_metric_last'] = best_metric_last
         print('initial_epoch: %i' % initial_epoch)
 
-    # gParameters['ckpt_best_metric_last'] = 1  # 's'  # best_metric_last
-    gParameters['ckpt_skip_epochs']    = 3
-    gParameters['ckpt_save_best'] = True
-    gParameters['ckpt_save_best_metric'] = 'loss'
-    gParameters['ckpt_save_interval'] = 3
-    gParameters['ckpt_keep_limit'] = 6
-
     ckpt = candle.CandleCheckpointCallback(gParameters,
                                            verbose=True)
 
