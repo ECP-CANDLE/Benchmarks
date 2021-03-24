@@ -6,13 +6,13 @@ import gzip
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import keras as ke
-from keras.layers import Input, Dense, Dropout, Activation
-from keras.optimizers import SGD, Adam, RMSprop
-from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.utils import np_utils
-from keras import backend as K
-from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, LearningRateScheduler
+from tensorflow import keras as ke
+from tensorflow.keras.layers import Input, Dense, Dropout, Activation
+from tensorflow.keras.optimizers import SGD, Adam, RMSprop
+from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, LearningRateScheduler
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
@@ -60,11 +60,11 @@ def load_data(nb_classes, PL, gParameters):
     df_y_train = df_train[:, 0].astype('int')
     df_y_test = df_test[:, 0].astype('int')
 
-    Y_train = np_utils.to_categorical(df_y_train, nb_classes)
+    Y_train = to_categorical(df_y_train, nb_classes)
     train_classes = np.argmax(Y_train, axis=1)
     np.savetxt("train_classes.csv", train_classes, delimiter=",", fmt="%d")
 
-    Y_test = np_utils.to_categorical(df_y_test, nb_classes)
+    Y_test = to_categorical(df_y_test, nb_classes)
     test_classes = np.argmax(Y_test, axis=1)
     np.savetxt("test_classes.csv", test_classes, delimiter=",", fmt="%d")
 
@@ -185,8 +185,8 @@ def run(gParameters):
     score = model.evaluate(X_test, Y_test, verbose=0)
 
     # summarize history for accuracy
-    plt.plot(history.history['acc'])
-    plt.plot(history.history['val_acc'])
+    plt.plot(history.history['acc'] if 'acc' in history.history else history.history['accuracy'])
+    plt.plot(history.history['val_acc'] if 'val_acc' in history.history else history.history['val_accuracy'])
     plt.title('Model Accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')

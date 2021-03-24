@@ -2,18 +2,19 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-import keras as ke
-from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.utils import np_utils
-from keras import backend as K
-from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, LearningRateScheduler
+from tensorflow import keras as ke
+from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, LearningRateScheduler
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
 # candle
-sys.path.append('/raid/brettin/Benchmarks/common')
+lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+sys.path.append(lib_path2)
 import candle
 
 
@@ -64,10 +65,10 @@ def load_data(gParameters):
     df_y_train = df_train[:, 0].astype('int')
     df_y_test = df_test[:, 0].astype('int')
 
-    Y_train = np_utils.to_categorical(df_y_train, gParameters['classes'])
+    Y_train = to_categorical(df_y_train, gParameters['classes'])
     train_classes = np.argmax(Y_train, axis=1)
 
-    Y_test = np_utils.to_categorical(df_y_test, gParameters['classes'])
+    Y_test = to_categorical(df_y_test, gParameters['classes'])
     test_classes = np.argmax(Y_test, axis=1)
 
     df_x_train = df_train[:, 1:df_train.shape[1]].astype(np.float32)
