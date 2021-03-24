@@ -1,5 +1,5 @@
-import keras
-from keras import backend as K
+from tensorflow import keras
+from tensorflow.keras import backend as K
 
 abs_definitions = [
     {'name': 'add_class',

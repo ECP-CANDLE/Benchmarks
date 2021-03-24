@@ -14,14 +14,14 @@ import pandas as pd
 
 from itertools import cycle, islice
 
-import keras
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model
-from keras.layers import Input, Dense, Dropout
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from keras.utils import get_custom_objects
-from keras.utils.vis_utils import plot_model
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Dropout
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from tensorflow.keras.utils import get_custom_objects
+from tensorflow.keras.utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
@@ -30,36 +30,12 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 
-import combo
-
 import NCI60
 import combo
 import candle
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-
-def set_seed(seed):
-    os.environ['PYTHONHASHSEED'] = '0'
-    np.random.seed(seed)
-
-    random.seed(seed)
-
-    if K.backend() == 'tensorflow':
-        import tensorflow as tf
-        # tf.set_random_seed(seed)
-        tf.compat.v1.random.set_random_seed(seed)  # ALW changed to this on 9/30/20, otherwise this dies if using modern TensorFlow
-        # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
-        # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        # K.set_session(sess)
-
-        # Uncommit when running on an optimized tensorflow where NUM_INTER_THREADS and
-        # NUM_INTRA_THREADS env vars are set.
-        # session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']),
-        # intra_op_parallelism_threads=int(os.environ['NUM_INTRA_THREADS']))
-        # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        # K.set_session(sess)
 
 
 def verify_path(path):
@@ -649,7 +625,7 @@ def initialize_parameters(default_model='combo_default_model.txt'):
 
 def run(params):
     args = candle.ArgumentStruct(**params)
-    set_seed(args.rng_seed)
+    candle.set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
     verify_path(args.save_path)
     prefix = args.save_path + ext
@@ -773,8 +749,8 @@ def run(params):
                 fold += 1
             log_evaluation(scores)
             df_val.is_copy = False
-            df_val['GROWTH_PRED'] = y_val_pred
-            df_val['GROWTH_ERROR'] = y_val_pred - y_val
+            df_val.loc[:, 'GROWTH_PRED'] = y_val_pred
+            df_val.loc[:, 'GROWTH_ERROR'] = y_val_pred - y_val
             df_pred_list.append(df_val)
 
         if args.cp:

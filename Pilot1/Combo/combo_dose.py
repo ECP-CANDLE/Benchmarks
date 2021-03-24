@@ -14,14 +14,14 @@ import pandas as pd
 
 from itertools import cycle, islice
 
-import keras
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model
-from keras.layers import Input, Dense, Dropout
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from keras.utils import get_custom_objects
-from keras.utils.vis_utils import plot_model
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Dropout
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from tensorflow.keras.utils import get_custom_objects
+from tensorflow.keras.utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
@@ -38,27 +38,6 @@ import NCI60
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-
-def set_seed(seed):
-    os.environ['PYTHONHASHSEED'] = '0'
-    np.random.seed(seed)
-
-    random.seed(seed)
-
-    if K.backend() == 'tensorflow':
-        import tensorflow as tf
-        tf.set_random_seed(seed)
-        # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
-        # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        # K.set_session(sess)
-
-        # Uncommit when running on an optimized tensorflow where NUM_INTER_THREADS and
-        # NUM_INTRA_THREADS env vars are set.
-        # session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']),
-        # intra_op_parallelism_threads=int(os.environ['NUM_INTRA_THREADS']))
-        # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        # K.set_session(sess)
 
 
 def verify_path(path):
@@ -671,15 +650,15 @@ def initialize_parameters():
 
 def run(params):
     args = candle.ArgumentStruct(**params)
-    set_seed(args.rng_seed)
+    candle.set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
-    prefix = args.save + ext
+    prefix = args.save_path + ext
     logfile = args.logfile if args.logfile else prefix + '.log'
     set_up_logger(logfile, args.verbose)
     logger.info('Params: {}'.format(params))
 
     loader = ComboDataLoader(seed=args.rng_seed,
-                             val_split=args.validation_split,
+                             val_split=0.1,  # args.validation_split,
                              cell_features=args.cell_features,
                              drug_features=args.drug_features,
                              response_url=args.response_url,

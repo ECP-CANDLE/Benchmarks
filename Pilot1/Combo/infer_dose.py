@@ -7,10 +7,10 @@ import os
 
 import numpy as np
 import pandas as pd
-import keras
-from keras import backend as K
-from keras.models import Model
-from keras.utils import get_custom_objects
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.utils import get_custom_objects
 from tqdm import tqdm
 
 import NCI60
