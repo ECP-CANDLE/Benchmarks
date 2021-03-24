@@ -13,6 +13,7 @@ from tensorflow.keras.models import Model
 
 from scipy.stats.stats import pearsonr
 
+from helper_utils import set_up_logger
 from default_utils import set_seed as set_seed_defaultUtils
 
 import warnings
@@ -20,8 +21,9 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from sklearn.metrics import r2_score
 
+import json
 import os
-
+import time
 
 def set_parallelism_threads():
     """ Set the number of parallel threads according to the number available on the hardware
@@ -256,12 +258,3 @@ class LoggingCallback(Callback):
     def on_epoch_end(self, epoch, logs={}):
         msg = "[Epoch: %i] %s" % (epoch, ", ".join("%s: %f" % (k, v) for k, v in sorted(logs.items())))
         self.print_fcn(msg)
-
-
-class MultiGPUCheckpoint(ModelCheckpoint):
-
-    def set_model(self, model):
-        if isinstance(model.layers[-2], Model):
-            self.model = model.layers[-2]
-        else:
-            self.model = model

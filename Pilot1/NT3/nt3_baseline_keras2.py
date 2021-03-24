@@ -99,6 +99,11 @@ def run(gParameters):
     train_file = candle.get_file(file_train, url + file_train, cache_subdir='Pilot1')
     test_file = candle.get_file(file_test, url + file_test, cache_subdir='Pilot1')
 
+    model = Sequential()
+
+    initial_epoch = 0
+    best_metric_last = None
+
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
     print('X_train shape:', X_train.shape)
@@ -116,8 +121,6 @@ def run(gParameters):
 
     print('X_train shape:', X_train.shape)
     print('X_test shape:', X_test.shape)
-
-    model = Sequential()
 
     layer_list = list(range(0, len(gParameters['conv']), 3))
     for _, i in enumerate(layer_list):
@@ -154,6 +157,19 @@ def run(gParameters):
                 model.add(Dropout(gParameters['dropout']))
     model.add(Dense(gParameters['classes']))
     model.add(Activation(gParameters['out_activation']))
+
+    gParameters['ckpt_checksum'] = False
+    gParameters['ckpt_restart_mode'] = "auto"
+
+    J = candle.restart(gParameters, model)
+    if J is not None:
+        initial_epoch  = J['epoch']
+        best_metric_last = J['best_metric_last']
+        gParameters['ckpt_best_metric_last'] = best_metric_last
+        print('initial_epoch: %i' % initial_epoch)
+
+    ckpt = candle.CandleCheckpointCallback(gParameters,
+                                           verbose=True)
 
 # Reference case
 # model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
@@ -200,12 +216,15 @@ def run(gParameters):
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
+
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],
                         epochs=gParameters['epochs'],
+                        initial_epoch=initial_epoch,
                         verbose=1,
                         validation_data=(X_test, Y_test),
-                        callbacks=[csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor])
+                        callbacks=[csv_logger, reduce_lr, candleRemoteMonitor, timeoutMonitor,
+                                   ckpt])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
