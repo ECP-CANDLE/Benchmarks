@@ -227,15 +227,8 @@ def run(gParameters):
         print(gParameters['dense'])
 
     if 'conv' in gParameters:
-        # conv_list = p1_common.parse_conv_list(gParameters['conv'])
-        # cval = gParameters['conv']
-        # try:
-        #     is_str = isinstance(cval, basestring)
-        # except NameError:
-        #     is_str = isinstance(cval, str)
-        # if is_str:
-        #     res = str2lst(cval)
-        #     gParameters['conv'] = res
+        flat = gParameters['conv']
+        gParameters['conv'] = [flat[i:i+3] for i in range(0, len(flat), 3)]
         print('Conv input', gParameters['conv'])
     # print('Params:', gParameters)
     # Construct extension to save model

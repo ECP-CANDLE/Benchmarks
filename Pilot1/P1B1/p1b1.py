@@ -22,7 +22,6 @@ candle.set_parallelism_threads()
 
 additional_definitions = [
     {'name': 'latent_dim',
-     'action': 'store',
      'type': int,
      'help': 'latent dimensions'},
     {'name': 'model',
