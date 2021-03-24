@@ -22,7 +22,7 @@ sys.path.append(lib_path)
 work_path = os.path.dirname(os.path.realpath(__file__))
 
 from helper_utils import eval_string_as_list_of_lists, str2bool
-from ckpt_keras_utils import ckpt_parser
+from ckpt_keras_utils import ckpt_parser, ckpt_defs
 
 # Seed for random generation -- default value
 DEFAULT_SEED = 7102
@@ -259,6 +259,8 @@ def finalize_parameters(bmk):
     # print ('Params:', fileParameters)
     # Check keywords from file against CANDLE common and module definitions
     bmk_dict = bmk.additional_definitions
+    #bmk_dict = ckpt_defs(bmk_dict)
+    print(bmk_dict)
     check_file_parameters_exists(args, bmk_dict, fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = args_overwrite_config(args, fileParameters)
@@ -491,7 +493,8 @@ def get_common_parser(parser):
     parser.add_argument("--clr_gamma", type=float, default=argparse.SUPPRESS,
                         help="Gamma parameter for learning cycle LR.")
 
-    parser = ckpt_parser(parser)
+    # build these from definitions
+    #parser = ckpt_parser(parser)
 
     return parser
 
@@ -622,7 +625,7 @@ class Benchmark:
         self.framework = framework
 
         self.required = set([])
-        self.additional_definitions = []
+        self.additional_definitions = ckpt_defs([])
         self.set_locals()
 
     def parse_from_common(self):

@@ -25,5 +25,5 @@ feature_threshold = 0.01
 noise_gaussian = False
 std_dev = 0.5
 timeout = 3600
-ckpt_restart_mode = 'auto'
-ckpt_checksum = False
+ckpt_restart_mode = 'off'
+ckpt_checksum = True
