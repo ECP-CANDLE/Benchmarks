@@ -29,11 +29,11 @@ def get_file_from_modac(fname, origin):
     total_size_in_bytes = get_dataObject_modac_filesize(origin)
 
     auth = authenticate_modac()
-    data = {}
+    data = json.dumps({})
     headers = {'Content-Type': 'application/json'}
     auth = (modac_user, modac_pass)
 
-    post_url = origin.replace("/v2/", "/") + '/download'
+    post_url = origin + '/download'
     print("Downloading: " + post_url + " ...")
     response = requests.post(post_url, data = data, headers = headers, auth = auth, stream = True)
     if response.status_code != 200:
@@ -107,7 +107,7 @@ def get_dataObject_modac_md5sum(data_object_path):
             The md5sum of the file 
     """
     self_dic = get_dataObject_dme_meta(data_object_path)
-    if "source_file_size" in self_dic.keys():
+    if "checksum" in self_dic.keys():
         return self_dic["checksum"]
     else:
         return None
@@ -127,14 +127,14 @@ def get_dataObject_modac_meta(data_object_path):
     """
     #data_object_path = encode_path(data_object_path)
     auth = authenticate_modac()
-    
+
     get_response = requests.get(data_object_path, auth = auth)
     if get_response.status_code != 200:
-        print("Error downloading from modac.cancer.gov")
+        print("Error downloading from modac.cancer.gov", data_object_path)
         raise Exception("Response code: {0}, Response message: {1}".format(get_response.status_code, get_response.text))
 
     metadata_dic = json.loads(get_response.text)
-    self_metadata = metadata_dic['dataObjects'][0]['metadataEntries']['selfMetadataEntries']
+    self_metadata = metadata_dic['metadataEntries']['selfMetadataEntries']['systemMetadataEntries']
     self_dic = {}
     for pair in self_metadata:
         self_dic[pair['attribute']] = pair['value'] 
