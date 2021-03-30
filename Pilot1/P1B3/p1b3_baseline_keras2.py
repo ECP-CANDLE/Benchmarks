@@ -228,7 +228,7 @@ def run(gParameters):
 
     if 'conv' in gParameters:
         flat = gParameters['conv']
-        gParameters['conv'] = [flat[i:i+3] for i in range(0, len(flat), 3)]
+        gParameters['conv'] = [flat[i:i + 3] for i in range(0, len(flat), 3)]
         print('Conv input', gParameters['conv'])
     # print('Params:', gParameters)
     # Construct extension to save model
