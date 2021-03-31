@@ -11,10 +11,10 @@ import pandas as pd
 
 from itertools import cycle
 
-from keras import backend as K
+from tensorflow.keras import backend as K
 
-import keras
-from keras.utils import get_custom_objects
+from tensorflow import keras
+from tensorflow.keras.utils import get_custom_objects
 
 import uno as benchmark
 import candle
