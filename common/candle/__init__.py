@@ -2,6 +2,8 @@ from __future__ import absolute_import
 
 # __version__ = '0.0.0'
 
+from benchmark_def import Benchmark
+
 # import from data_utils
 from data_utils import load_csv_data
 from data_utils import load_Xy_one_hot_data2
@@ -14,18 +16,18 @@ from data_utils import lookup
 # import from file_utils
 from file_utils import get_file
 
-# import from default_utils
-from default_utils import ArgumentStruct
-from default_utils import Benchmark
-from default_utils import finalize_parameters
-from default_utils import keras_default_config
-from default_utils import check_flag_conflicts
+# import from parsing_utils
+from parsing_utils import ArgumentStruct
+from parsing_utils import finalize_parameters
+from parsing_utils import check_flag_conflicts
+from parsing_utils import parse_from_dictlist
 
 # import from helper_utils
 from helper_utils import fetch_file
 from helper_utils import set_up_logger
 from helper_utils import verify_path
 from helper_utils import str2bool
+from helper_utils import keras_default_config
 
 # import from generic_utils
 from generic_utils import Progbar
