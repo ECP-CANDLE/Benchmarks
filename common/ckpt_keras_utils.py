@@ -233,10 +233,10 @@ class CandleCheckpointCallback(Callback):
         epoch += 1
 
         dir_root = PosixPath(self.ckpt_directory).resolve()
-        dir_work = dir_root/"ckpts/work"
-        dir_best = dir_root/"ckpts/best"  # a soft link
-        dir_last = dir_root/"ckpts/last"  # a soft link
-        dir_epochs = dir_root/"ckpts/epochs"
+        dir_work = dir_root / "ckpts/work"
+        dir_best = dir_root / "ckpts/best"  # a soft link
+        dir_last = dir_root / "ckpts/last"  # a soft link
+        dir_epochs = dir_root / "ckpts/epochs"
         dir_this = dir_epochs / ("%03i" % epoch)
 
         if not self.save_check(logs, epoch):
