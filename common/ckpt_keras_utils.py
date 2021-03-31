@@ -118,8 +118,8 @@ import time
 from pathlib import PosixPath
 
 from helper_utils import set_up_logger, str2bool
-from keras.models import Model
-from keras.callbacks import Callback, ModelCheckpoint
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint
 
 
 class MultiGPUCheckpoint(ModelCheckpoint):
