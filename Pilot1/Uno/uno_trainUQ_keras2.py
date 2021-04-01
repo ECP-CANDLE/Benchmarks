@@ -10,12 +10,12 @@ import argparse
 import numpy as np
 import pandas as pd
 
-import keras
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model
-from keras.layers import Input, Dense, Dropout
-from keras.callbacks import ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Dropout
+from tensorflow.keras.callbacks import ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from scipy.stats.stats import pearsonr
 
 import uno as benchmark

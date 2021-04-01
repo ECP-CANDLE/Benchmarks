@@ -12,11 +12,11 @@ import pandas as pd
 
 from joblib import dump
 
-import keras
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 
 import uno as benchmark
 import candle
