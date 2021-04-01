@@ -758,8 +758,8 @@ def ckpt_defs(defs):
         # keeping
         {'name': 'ckpt_keep_mode',
             'choices': ['linear', 'exponential'],
-            'help': 'Checkpoint saving mode. ' +
-            "choices are 'linear' or 'exponential' "},
+            'help': 'Checkpoint saving mode. '
+            + "choices are 'linear' or 'exponential' "},
         {'name': 'ckpt_keep_limit',
             'type': int,
             'default': 1000000,
