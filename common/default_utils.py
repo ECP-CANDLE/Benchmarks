@@ -259,8 +259,8 @@ def finalize_parameters(bmk):
     # print ('Params:', fileParameters)
     # Check keywords from file against CANDLE common and module definitions
     bmk_dict = bmk.additional_definitions
-    #bmk_dict = ckpt_defs(bmk_dict)
-    print(bmk_dict)
+    # bmk_dict = ckpt_defs(bmk_dict)
+    # print(bmk_dict)
     check_file_parameters_exists(args, bmk_dict, fileParameters)
     # Consolidate parameter set. Command-line parameters overwrite file configuration
     gParameters = args_overwrite_config(args, fileParameters)
@@ -494,7 +494,7 @@ def get_common_parser(parser):
                         help="Gamma parameter for learning cycle LR.")
 
     # build these from definitions
-    #parser = ckpt_parser(parser)
+    # parser = ckpt_parser(parser)
 
     return parser
 
