@@ -8,9 +8,10 @@ except ImportError:
 import os
 import numpy as np
 import inspect
+import random
 
 import parsing_utils
-
+from helper_utils import eval_string_as_list_of_lists
 
 
 def set_seed(seed):
@@ -25,7 +26,6 @@ def set_seed(seed):
     np.random.seed(seed)
 
     random.seed(seed)
-
 
 
 class Benchmark:
@@ -85,8 +85,6 @@ class Benchmark:
 
         # Set default configuration file
         self.conffile = os.path.join(self.file_path, self.default_model)
-
-    
 
     def format_benchmark_config_arguments(self, dictfileparam):
         """ Functionality to format the particular parameters of
@@ -167,4 +165,3 @@ class Benchmark:
         if (len(diff_set) > 0):
             raise Exception(
                 'ERROR ! Required parameters are not specified.  These required parameters have not been initialized: ' + str(sorted(diff_set)) + '... Exiting')
-
