@@ -1,4 +1,3 @@
-
 """
 CKPT KERAS UTILS
 
@@ -233,13 +232,14 @@ class CandleCheckpointCallback(Callback):
         epoch += 1
 
         dir_root   = PosixPath(self.ckpt_directory).resolve()
-        dir_work   = dir_root/"ckpts/work"
-        dir_best   = dir_root/"ckpts/best"  # a soft link
-        dir_last   = dir_root/"ckpts/last"  # a soft link
-        dir_epochs = dir_root/"ckpts/epochs"
+        dir_work   = dir_root / "ckpts/work"
+        dir_best   = dir_root / "ckpts/best"  # a soft link
+        dir_last   = dir_root / "ckpts/last"  # a soft link
+        dir_epochs = dir_root / "ckpts/epochs"
         dir_this   = dir_epochs / ("%03i" % epoch)
 
-        if not self.save_check(logs, epoch): return
+        if not self.save_check(logs, epoch):
+            return
         if os.path.exists(dir_this):
             self.debug("remove:  '%s'" % self.relpath(dir_this))
             shutil.rmtree(dir_this)
@@ -284,9 +284,9 @@ class CandleCheckpointCallback(Callback):
         if not self.save_best:
             return False
         if self.save_best_metric not in logs.keys():
-            raise Exception(("CandleCheckpointCallback: " +
-                             "save_best_metric='%s' " +
-                             "not in list of model metrics: %s") %
+            raise Exception(("CandleCheckpointCallback: "
+                             + "save_best_metric='%s' "
+                             + "not in list of model metrics: %s") %
                             (self.save_best_metric, str(logs.keys())))
 
         # Known metrics and direction of progress
@@ -297,9 +297,9 @@ class CandleCheckpointCallback(Callback):
                          "lr":           "-"}
 
         if self.save_best_metric not in known_metrics.keys():
-            raise Exception(("CandleCheckpointCallback: " +
-                             "save_best_metric='%s' " +
-                             "not in list of known_metrics: %s") %
+            raise Exception(("CandleCheckpointCallback: "
+                             + "save_best_metric='%s' "
+                             + "not in list of known_metrics: %s") %
                             (self.save_best_metric,
                              str(known_metrics.keys())))
 
@@ -344,7 +344,7 @@ class CandleCheckpointCallback(Callback):
         stop = time.time()
         duration = stop - start
         stats = os.stat(model_file)
-        MB = stats.st_size / (1024*1024)
+        MB = stats.st_size / (1024 * 1024)
         rate = MB / duration
         self.debug("model wrote: %0.3f MB in %0.3f seconds (%0.2f MB/s)." %
                    (MB, duration, rate))
@@ -480,8 +480,8 @@ def restart(gParameters, model, verbose=True):
     model_file = dir_last + "/model.h5"
     if not os.path.exists(model_file):
         if param_ckpt_mode == "required":
-            raise Exception("ckpt_mode=='required' but no checkpoint" +
-                            "could be found!")
+            raise Exception("ckpt_mode=='required' but no checkpoint"
+                            + "could be found!")
         # We must be under AUTO - proceed without restart
         assert param_ckpt_mode == "auto"
         return None
@@ -491,7 +491,7 @@ def restart(gParameters, model, verbose=True):
                 result["epoch"], result["timestamp"])
     start = time.time()
     stats = os.stat(model_file)
-    MB = stats.st_size / (1024*1024)
+    MB = stats.st_size / (1024 * 1024)
     model.load_weights(model_file)
     stop = time.time()
     duration = stop - start
@@ -524,6 +524,8 @@ def restart_json(gParameters, logger, directory):
 
 
 from enum import Enum, unique, auto
+
+
 @unique
 class ParamType(Enum):
     """ Possible gParameters types """
@@ -590,7 +592,7 @@ def param_type_check_bool(key, value):
         return value
     try:
         v = str2bool(value)
-    except:
+    except TypeError:
         raise TypeError("parameter: '%s' is '%s' but must be a %s" %
                         key, str(value), str(ParamType.BOOLEAN))
     return v
@@ -602,18 +604,18 @@ def param_type_check_int(key, value, type_):
     else:
         try:
             result = int(value)
-        except:
+        except TypeError:
             raise TypeError("parameter: '%s' is '%s' but must be a %s" %
                             (key, str(value), str(type_)))
     if type_ == ParamType.INTEGER_NN:
         if result < 0:
-            raise TypeError(("parameter: '%s' is '%s' " +
-                             "but must be non-negative") %
+            raise TypeError(("parameter: '%s' is '%s' "
+                             + "but must be non-negative") %
                             (key, str(value)))
     if type_ == ParamType.INTEGER_GZ:
         if result <= 0:
-            raise TypeError(("parameter: '%s' is '%s' " +
-                             "but must be greater-than-zero") %
+            raise TypeError(("parameter: '%s' is '%s' "
+                             + "but must be greater-than-zero") %
                             (key, str(value)))
     return result
 
@@ -624,13 +626,13 @@ def param_type_check_float(key, value, type_):
     else:
         try:
             result = float(value)
-        except:
+        except TypeError:
             raise TypeError("parameter: '%s' is '%s' but must be a %s" %
                             (key, str(value), str(type_)))
     if type_ == ParamType.FLOAT_NN:
         if result < 0:
-            raise TypeError(("parameter: '%s' is '%s' " +
-                             "but must be non-negative") %
+            raise TypeError(("parameter: '%s' is '%s' "
+                             + "but must be non-negative") %
                             (key, str(value)))
     return result
 
@@ -663,10 +665,11 @@ def param_allowed(key, value, allowed):
     Check that the value is in the list of allowed values
     If allowed is None, there is no check, simply success
     """
-    if allowed is None: return
+    if allowed is None:
+        return
     if value not in allowed:
-        raise ValueError(("hyperparameter '%s'='%s' is not in the " +
-                          "list of allowed values: %s") %
+        raise ValueError(("hyperparameter '%s'='%s' is not in the "
+                         + "list of allowed values: %s") %
                          (key, value, str(allowed)))
 
 
@@ -675,8 +678,8 @@ def ckpt_parser(parser):
     parser.add_argument("--ckpt_restart_mode", type=str,
                         default='auto',
                         choices=['off', 'auto', 'required'],
-                        help="Mode to restart from a saved checkpoint file, " +
-                        "choices are 'off', 'auto', 'required'")
+                        help="Mode to restart from a saved checkpoint file, "
+                             + "choices are 'off', 'auto', 'required'")
     parser.add_argument("--ckpt_checksum", type=str2bool,
                         default='false',
                         help="Checksum the restart file after read+write")
@@ -702,8 +705,8 @@ def ckpt_parser(parser):
     # keeping
     parser.add_argument("--ckpt_keep_mode",
                         choices=['linear', 'exponential'],
-                        help="Checkpoint saving mode. " +
-                             "choices are 'linear' or 'exponential' ")
+                        help="Checkpoint saving mode. "
+                             + "choices are 'linear' or 'exponential' ")
     parser.add_argument("--ckpt_keep_limit", type=int,
                         default=1000000,
                         help="Limit checkpoints to keep")
