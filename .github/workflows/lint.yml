@@ -17,4 +17,4 @@ jobs:
         pip install pycodestyle
     - name: Check pycodestyle
       run: |
-        pycodestyle --ignore E402,E501,E712,W503 .
+        pycodestyle .
