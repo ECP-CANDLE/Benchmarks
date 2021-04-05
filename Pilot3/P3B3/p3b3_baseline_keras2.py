@@ -1,13 +1,13 @@
 from __future__ import print_function
 
 import numpy as np
-from keras import backend as K
+from tensorflow.keras import backend as K
 
 '''
-from keras.layers import Input, Dense, Dropout, Activation
-from keras.optimizers import SGD, Adam, RMSprop
-from keras.models import Model
-from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
+from tensorflow.keras.layers import Input, Dense, Dropout, Activation
+from tensorflow.keras.optimizers import SGD, Adam, RMSprop
+from tensorflow.keras.models import Model
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 
 from sklearn.metrics import f1_score
 '''
