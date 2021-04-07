@@ -111,14 +111,21 @@ def authenticate_modac(generate_token=False):
     return (credentials_dic[user_attr], credentials_dic[token_attr])
     
 def query_yes_no(question, default="yes"):
-    """Ask a yes/no question via raw_input() and return their answer.
+    """
+    Ask a yes/no question via raw_input() and return their answer.
+    
+        Parameters
+        ----------
+        question: string 
+            string that is presented to the user.
+        default: boolean
+            The presumed boolean answer if the user just hits <Enter>.
+        
+        Returns
+        ----------
+        boolean  
+            True for "yes" or False for "no".
 
-    "question" is a string that is presented to the user.
-    "default" is the presumed answer if the user just hits <Enter>.
-        It must be "yes" (the default), "no" or None (meaning
-        an answer is required of the user).
-
-    The "answer" return value is True for "yes" or False for "no".
     """
     valid = {"yes": True, "y": True, "ye": True,
              "no": False, "n": False}
