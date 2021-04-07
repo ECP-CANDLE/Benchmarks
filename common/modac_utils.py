@@ -4,14 +4,6 @@ import requests
 from tqdm import tqdm
 import os
 
-<<<<<<< HEAD
-=======
-
-modac_user = None
-modac_pass = None
-
-
->>>>>>> f356751c76b0d5a7b223f901f0a49fb3985de2e6
 def get_file_from_modac(fname, origin):
     """ Downloads a file from the "Model and Data Clearning House" (MoDAC)
     repository. Users should already have a MoDAC account to download the data.
@@ -39,11 +31,7 @@ def get_file_from_modac(fname, origin):
 
     post_url = origin + '/download'
     print("Downloading: " + post_url + " ...")
-<<<<<<< HEAD
     response = requests.post(post_url, data = data, headers = headers, stream = True)
-=======
-    response = requests.post(post_url, data=data, headers=headers, auth=auth, stream=True)
->>>>>>> f356751c76b0d5a7b223f901f0a49fb3985de2e6
     if response.status_code != 200:
         print("Error downloading from modac.cancer.gov")
         raise Exception("Response code: {0}, Response message: {1}".format(response.status_code, response.text))
@@ -73,20 +61,9 @@ def authenticate_modac(generate_token=False):
         
         Returns
         ----------
-<<<<<<< HEAD
-        tuple(string,string) 
-            tuple with the (modac_user, modac_token) 
-    """
-=======
         tuple(string,string)
             tuple with the modac credentials
     """
-
-    global modac_user
-    global modac_pass
-    if modac_user is None:
-        modac_user = input("MoDaC Username: ")
->>>>>>> f356751c76b0d5a7b223f901f0a49fb3985de2e6
 
     from os.path import expanduser
     home = expanduser("~")
@@ -107,7 +84,6 @@ def authenticate_modac(generate_token=False):
         import getpass
         modac_pass = getpass.getpass("MoDaC Password: ")
 
-<<<<<<< HEAD
         #Generate token
         auth = (modac_user, modac_pass)
         auth_url = 'https://modac.cancer.gov/api/authenticate'
@@ -134,11 +110,6 @@ def authenticate_modac(generate_token=False):
                  
     return (credentials_dic[user_attr], credentials_dic[token_attr])
     
-=======
-    return (modac_user, modac_pass)
-
->>>>>>> f356751c76b0d5a7b223f901f0a49fb3985de2e6
-
 def query_yes_no(question, default="yes"):
     """Ask a yes/no question via raw_input() and return their answer.
 
@@ -224,18 +195,11 @@ def get_dataObject_modac_meta(data_object_path):
         dictionary
             Dictonary of all metadata for the file in MoDAC
     """
-<<<<<<< HEAD
     #data_object_path = encode_path(data_object_path)
     modac_user, modac_token  = authenticate_modac()
     headers = {} 
     headers["Authorization"] = "Bearer {0}".format(modac_token)
     get_response = requests.get(data_object_path, headers = headers)
-=======
-    # data_object_path = encode_path(data_object_path)
-    auth = authenticate_modac()
-
-    get_response = requests.get(data_object_path, auth=auth)
->>>>>>> f356751c76b0d5a7b223f901f0a49fb3985de2e6
     if get_response.status_code != 200:
         print("Error downloading from modac.cancer.gov", data_object_path)
         raise Exception("Response code: {0}, Response message: {1}".format(get_response.status_code, get_response.text))
