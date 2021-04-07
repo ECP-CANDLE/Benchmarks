@@ -25,6 +25,7 @@ import json
 import os
 import time
 
+
 def set_parallelism_threads():
     """ Set the number of parallel threads according to the number available on the hardware
     """

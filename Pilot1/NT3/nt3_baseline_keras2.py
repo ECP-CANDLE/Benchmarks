@@ -163,7 +163,7 @@ def run(gParameters):
 
     J = candle.restart(gParameters, model)
     if J is not None:
-        initial_epoch  = J['epoch']
+        initial_epoch = J['epoch']
         best_metric_last = J['best_metric_last']
         gParameters['ckpt_best_metric_last'] = best_metric_last
         print('initial_epoch: %i' % initial_epoch)

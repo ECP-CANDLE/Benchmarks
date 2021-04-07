@@ -1,7 +1,7 @@
-import keras
-from keras.models import Sequential
-from keras.layers import Dense, Activation
-from keras.layers import LSTM
+import tensorflow.keras as keras
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Activation
+from tensorflow.keras.layers import LSTM
 import numpy as np
 import os
 

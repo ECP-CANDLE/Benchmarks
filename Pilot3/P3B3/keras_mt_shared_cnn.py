@@ -4,12 +4,12 @@ Written by Mohammed Alawad
 Date: 10_20_2017
 """
 # np.random.seed(1337)
-from keras.models import Model
-from keras.layers import Dense, Dropout, Input, Embedding
-from keras.layers import GlobalMaxPooling1D, Convolution1D
-# from keras.layers.convolutional import Conv1D
-from keras.layers.merge import Concatenate
-from keras.regularizers import l2
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Dropout, Input, Embedding
+from tensorflow.keras.layers import GlobalMaxPooling1D, Convolution1D
+# from tensorflow.keras.layers.convolutional import Conv1D
+from tensorflow.keras.layers import Concatenate
+from tensorflow.keras.regularizers import l2
 
 
 def init_export_network(task_names,

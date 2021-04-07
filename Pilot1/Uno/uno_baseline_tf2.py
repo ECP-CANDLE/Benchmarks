@@ -9,7 +9,6 @@ import random
 import numpy as np
 import pandas as pd
 
-import keras as krs  # need for candle package load
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.python.keras import backend as K
