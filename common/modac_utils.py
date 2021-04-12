@@ -58,7 +58,7 @@ def register_file_to_modac(file_path, metadata, destination_path):
         metadata: dictionary 
             dictionary of attribute/value pairs of metadata to associate with
             the file in MoDaC
-        desitation_path : string
+        destination : string
             The path on MoDaC in form of collection/filename  
 
         Returns
