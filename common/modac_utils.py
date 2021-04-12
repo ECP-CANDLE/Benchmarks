@@ -64,7 +64,7 @@ def register_file_to_modac(file_path, metadata, destination_path):
         Returns
         ----------
         integer 
-            The returned code from the POST request 
+            The returned code from the PUT request 
     """
     print('Registering the file {0} at MoDaC location:{1}'.format(file_path, destination_path))
     register_url = "https://modac.cancer.gov/api/v2/dataObject/" + destination_path 
