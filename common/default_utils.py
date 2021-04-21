@@ -666,7 +666,7 @@ class Benchmark:
                 elif (d['action'] == 'store_true') or (d['action'] == 'store_false'):
                     raise Exception('The usage of store_true or store_false cannot be undone in the command line. Use type=str2bool instead.')
                 else:
-                    self.parser.add_argument('--' + d['name'], action=d['action'], default=d['default'], help=d['help'])
+                    self.parser.add_argument('--' + d['name'], action=d['action'], default=d['default'], help=d['help'], type=d['type'])
             else:  # Non actions
                 if 'nargs' in d:  # variable parameters
                     if 'choices' in d:  # choices with variable parameters
