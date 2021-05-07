@@ -68,7 +68,7 @@ def func_reconstruct_closure(values):
     src = '\n'.join(src)
     try:
         exec(src, globals())
-    except Error:
+    except SyntaxError:
         raise SyntaxError(src)
     return func(values).__closure__
 

@@ -11,7 +11,7 @@ from six.moves.urllib.error import URLError, HTTPError
 
 import requests
 from generic_utils import Progbar
-from  modac_utils import get_file_from_modac
+from modac_utils import get_file_from_modac
 
 
 # Under Python 2, 'urlretrieve' relies on FancyURLopener from legacy
@@ -38,6 +38,7 @@ if sys.version_info[0] == 2:
                 fd.write(chunk)
 else:
     from six.moves.urllib.request import urlretrieve
+
 
 def get_file(fname, origin, untar=False,
              # md5_hash=None, datadir='../Data/common'):
@@ -118,14 +119,14 @@ def get_file(fname, origin, untar=False,
             print('Downloading data from', origin)
             global progbar
             progbar = None
-    
+
             def dl_progress(count, block_size, total_size):
                 global progbar
                 if progbar is None:
                     progbar = Progbar(total_size)
                 else:
                     progbar.update(count * block_size)
-    
+
             error_msg = 'URL fetch failure on {}: {} -- {}'
             try:
                 try:

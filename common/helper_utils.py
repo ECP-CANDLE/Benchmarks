@@ -200,7 +200,6 @@ def str2bool(v):
         raise argparse.ArgumentTypeError('Boolean value expected.')
 
 
-
 def keras_default_config():
     """Defines parameters that intervine in different functions using the keras defaults.
         This helps to keep consistency in parameters between frameworks.

@@ -117,7 +117,10 @@ class Benchmark:
                         configOut[d['name']] = eval_string_as_list_of_lists(str_read, ':', ',', dtype)
                 elif d['default'] != argparse.SUPPRESS:
                     # default value on benchmark definition cannot overwrite config file
-                    self.parser.add_argument('--' + d['name'], type=d['type'], default=configOut[d['name']], help=d['help'])
+                    self.parser.add_argument('--' + d['name'],
+                                             type=d['type'],
+                                             default=configOut[d['name']],
+                                             help=d['help'])
 
         return configOut
 
