@@ -5,7 +5,7 @@ import os
 import numpy as np
 from pprint import pprint
 import warnings
-    
+
 import helper_utils as hutils
 from file_utils import directory_from_parameters
 
@@ -46,7 +46,7 @@ basic_conf = [
         'type': int,
         'default': argparse.SUPPRESS,
         'help': 'set IDs of GPUs to use.'},
-     {'name': 'profiling',
+    {'name': 'profiling',
         'type': hutils.str2bool,
         'default': False,
         'help': 'Turn profiling on or off.'},
@@ -306,7 +306,7 @@ registered_conf = [basic_conf, input_output_conf, logging_conf, data_preprocess_
 
 def extract_keywords(lst_dict, kw):
     """Extract the value associated to a specific keyword in a list of dictionaries. Returns the list of values extracted from the keywords.
-    
+
        Parameters
        ----------
        lst_dict : python list of dictionaries
@@ -316,6 +316,7 @@ def extract_keywords(lst_dict, kw):
     """
     lst = [di[kw] for di in lst_dict]
     return lst
+
 
 # Extract list of parameters in registered configuration
 PARAMETERS_CANDLE = [item for lst in registered_conf for item in extract_keywords(lst, 'name')]
@@ -332,7 +333,7 @@ def check_flag_conflicts(params):
         describes parameter pairs that should be exclusive.
         Raises an exception if pairs of parameters in CONFLICT_LIST are
         specified simulataneously.
-    
+
        Parameters
        ----------
        params : python dictionary
@@ -355,7 +356,6 @@ def check_flag_conflicts(params):
                 + str(sorted(flag_list)) + '... Exiting')
 
 
-
 class ArgumentStruct:
     """Class that converts a python dictionary into an object with
        named entries given by the dictionary keys.
@@ -366,7 +366,6 @@ class ArgumentStruct:
     """
     def __init__(self, **entries):
         self.__dict__.update(entries)
-
 
 
 class ListOfListsAction(argparse.Action):
@@ -440,7 +439,6 @@ class ListOfListsAction(argparse.Action):
         setattr(namespace, self.dest, decoded_list)
 
 
-
 def check_file_parameters_exists(params_parser, params_benchmark, params_file):
     """Functionality to verify that the parameters defined in the configuraion file are recognizable by the command line parser (i.e. no uknown keywords are used in the configuration file).
 
@@ -478,7 +476,6 @@ def check_file_parameters_exists(params_parser, params_benchmark, params_file):
     if (len(diff_set) > 0):
         message = 'These keywords used in the configuration file are not defined in CANDLE: ' + str(sorted(diff_set))
         warnings.warn(message, RuntimeWarning)
-
 
 
 def finalize_parameters(bmk):
@@ -550,13 +547,14 @@ def args_overwrite_config(args, config):
     args_dict = vars(args)
 
     for key in args_dict.keys():
+        # try casting here
         params[key] = args_dict[key]
 
     if 'data_type' not in params:
         params['data_type'] = DEFAULT_DATATYPE
     else:
         if params['data_type'] in set(['f16', 'f32', 'f64']):
-            params['data_type'] = get_choice(params['datatype'])
+            params['data_type'] = get_choice(params['data_type'])
 
     if 'output_dir' not in params:
         params['output_dir'] = directory_from_parameters(params)
@@ -570,7 +568,6 @@ def args_overwrite_config(args, config):
         params['timeout'] = DEFAULT_TIMEOUT
 
     return params
-
 
 
 def get_choice(name):
@@ -590,7 +587,6 @@ def get_choice(name):
     return mapped
 
 
-
 def parse_from_dictlist(dictlist, parser):
     """Functionality to parse options.
         Parameters
@@ -604,10 +600,14 @@ def parse_from_dictlist(dictlist, parser):
     for d in dictlist:
         if 'type' not in d:
             d['type'] = None
+        print(d['name'], 'type is ', d['type'])
+
         if 'default' not in d:
             d['default'] = argparse.SUPPRESS
+
         if 'help' not in d:
             d['help'] = ''
+
         if 'action' in d:  # Actions
             if d['action'] == 'list-of-lists':  # Non standard. Specific functionallity has been added
                 d['action'] = ListOfListsAction
@@ -615,7 +615,7 @@ def parse_from_dictlist(dictlist, parser):
             elif (d['action'] == 'store_true') or (d['action'] == 'store_false'):
                 raise Exception('The usage of store_true or store_false cannot be undone in the command line. Use type=str2bool instead.')
             else:
-                parser.add_argument('--' + d['name'], action=d['action'], default=d['default'], help=d['help'])
+                parser.add_argument('--' + d['name'], action=d['action'], default=d['default'], help=d['help'], type=d['type'])
         else:  # Non actions
             if 'nargs' in d:  # variable parameters
                 if 'choices' in d:  # choices with variable parameters
@@ -625,11 +625,10 @@ def parse_from_dictlist(dictlist, parser):
             elif 'choices' in d:  # Select from choice (fixed number of parameters)
                 parser.add_argument('--' + d['name'], choices=d['choices'], default=d['default'], help=d['help'])
             else:  # Non an action, one parameter, no choices
+                print('Adding ', d['name'] , ' to parser')
                 parser.add_argument('--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
 
-
     return parser
-
 
 
 def parse_common(parser):
