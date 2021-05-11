@@ -1,17 +1,10 @@
 from __future__ import absolute_import
 
 import collections
-import gzip
 import logging
 import os
 import sys
-import multiprocessing
 import threading
-import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 import numpy as np
 import pandas as pd
@@ -119,99 +112,6 @@ required = [
     'cell_noise_sigma'
 ]
 
-# def common_parser(parser):
-#
-#    parser.add_argument("--config_file", dest='config_file', type=str,
-#                        default=os.path.join(file_path, 'p1b3_default_model.txt'),
-#                        help="specify model configuration file")
-#
-#    # Parse has been split between arguments that are common with the default neon parser
-#    # and all the other options
-#    parser = candle.get_default_neon_parse(parser)
-#    parser = p1_common.get_p1_common_parser(parser)
-#
-#    # Arguments that are applicable just to p1b3
-#    parser = p1b3_parser(parser)
-#
-#    return parser
-
-
-# def p1b3_parser(parser):
-#
-#    # Feature selection
-#    parser.add_argument("--cell_features", nargs='+',
-#                        default=argparse.SUPPRESS,
-#                        choices=['expression', 'mirna', 'proteome', 'all', 'categorical'],
-#                        help="use one or more cell line feature sets: 'expression', 'mirna', 'proteome', 'all'; or use 'categorical' for one-hot encoding of cell lines")
-#    parser.add_argument("--drug_features", nargs='+',
-#                        default=argparse.SUPPRESS,
-#                        choices=['descriptors', 'latent', 'all', 'noise'],
-#                        help="use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or random features; 'descriptors','latent', 'all', 'noise'")
-#    parser.add_argument("--cell_noise_sigma", type=float,
-#                        help="standard deviation of guassian noise to add to cell line features during training")
-#    # Output selection
-#    parser.add_argument("--min_logconc", type=float,
-#                        default=argparse.SUPPRESS,
-#                        help="min log concentration of dose response data to use: -3.0 to -7.0")
-#    parser.add_argument("--max_logconc",  type=float,
-#                        default=argparse.SUPPRESS,
-#                        help="max log concentration of dose response data to use: -3.0 to -7.0")
-#    parser.add_argument("--subsample",
-#                        default=argparse.SUPPRESS,
-#                        choices=['naive_balancing', 'none'],
-#                        help="dose response subsample strategy; 'none' or 'naive_balancing'")
-#    parser.add_argument("--category_cutoffs", nargs='+', type=float,
-#                        default=argparse.SUPPRESS,
-#                        help="list of growth cutoffs (between -1 and +1) seperating non-response and response categories")
-#    # Sample data selection
-#    parser.add_argument("--test_cell_split", type=float,
-#                        default=argparse.SUPPRESS,
-#                        help="cell lines to use in test; if None use predefined unseen cell lines instead of sampling cell lines used in training")
-#    # Test random model
-#    parser.add_argument("--scramble", action="store_true",
-#                        default=False,
-#                        help="randomly shuffle dose response data")
-#    parser.add_argument("--workers", type=int,
-#                        default=WORKERS,
-#                        help="number of data generator workers")
-#
-#    return parser
-
-# def read_config_file(file):
-#    config = configparser.ConfigParser()
-#    config.read(file)
-#    section = config.sections()
-#    fileParams = {}
-#
-#    # default config values that we assume exists
-#    fileParams['activation']=eval(config.get(section[0],'activation'))
-#    fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
-#    fileParams['batch_normalization']=eval(config.get(section[0],'batch_normalization'))
-#    fileParams['category_cutoffs']=eval(config.get(section[0],'category_cutoffs'))
-#    fileParams['cell_features']=eval(config.get(section[0],'cell_features'))
-#    fileParams['dropout']=eval(config.get(section[0],'dropout'))
-#    fileParams['drug_features']=eval(config.get(section[0],'drug_features'))
-#    fileParams['epochs']=eval(config.get(section[0],'epochs'))
-#    fileParams['feature_subsample']=eval(config.get(section[0],'feature_subsample'))
-#    fileParams['initialization']=eval(config.get(section[0],'initialization'))
-#    fileParams['learning_rate']=eval(config.get(section[0], 'learning_rate'))
-#    fileParams['loss']=eval(config.get(section[0],'loss'))
-#    fileParams['min_logconc']=eval(config.get(section[0],'min_logconc'))
-#    fileParams['max_logconc']=eval(config.get(section[0],'max_logconc'))
-#    fileParams['optimizer']=eval(config.get(section[0],'optimizer'))
-# #    fileParams['penalty']=eval(config.get(section[0],'penalty'))
-#    fileParams['rng_seed']=eval(config.get(section[0],'rng_seed'))
-#    fileParams['scaling']=eval(config.get(section[0],'scaling'))
-#    fileParams['subsample']=eval(config.get(section[0],'subsample'))
-#    fileParams['test_cell_split']=eval(config.get(section[0],'test_cell_split'))
-#    fileParams['val_split']=eval(config.get(section[0],'val_split'))
-#    fileParams['cell_noise_sigma']=eval(config.get(section[0],'cell_noise_sigma'))
-#
-#    # parse the remaining values
-#    for k,v in config.items(section[0]):
-#        if not k in fileParams:
-#            fileParams[k] = eval(v)
-#
 
 def check_params(fileParams):
     # Allow for either dense or convolutional layer specification

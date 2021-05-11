@@ -7,10 +7,6 @@ import logging
 import pandas as pd
 import numpy as np
 
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from scipy.stats.stats import pearsonr
-
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)

@@ -4,7 +4,6 @@ from __future__ import division, print_function
 
 import logging
 import os
-import random
 
 import numpy as np
 import pandas as pd
@@ -13,21 +12,16 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.python.keras import backend as K
 from tensorflow.keras import optimizers
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, Dropout
-from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from scipy.stats.stats import pearsonr
+from tensorflow.keras.callbacks import ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 
-import uno as benchmark
 import candle
 
 import uno_data
 from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
 
 from uno_baseline_keras2 import extension_from_parameters, evaluate_prediction, log_evaluation
-from uno_baseline_keras2 import build_feature_model, build_model, initialize_parameters
-from uno_baseline_keras2 import LoggingCallback, PermanentDropout, MultiGPUCheckpoint, SimpleWeightSaver
+from uno_baseline_keras2 import build_model, initialize_parameters
+from uno_baseline_keras2 import LoggingCallback, MultiGPUCheckpoint
 
 tf.compat.v1.disable_eager_execution()
 

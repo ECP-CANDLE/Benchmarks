@@ -3,19 +3,15 @@ from __future__ import print_function
 import pandas as pd
 import numpy as np
 import os
-import sys
-import gzip
 
 from tensorflow.keras import backend as K
 
-from tensorflow.keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
-from tensorflow.keras.optimizers import SGD, Adam, RMSprop
-from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
+from tensorflow.keras.layers import Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten, LocallyConnected1D
+from tensorflow.keras.models import Sequential, model_from_json, model_from_yaml
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
+from tensorflow.keras.callbacks import CSVLogger, ReduceLROnPlateau
 
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+from sklearn.preprocessing import MaxAbsScaler
 
 import nt3 as bmk
 import candle
@@ -223,7 +219,7 @@ def run(gParameters):
 
     # set up a bunch of callbacks to do work during model training..
     model_name = gParameters['model_name']
-    path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
+    # path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
     # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)

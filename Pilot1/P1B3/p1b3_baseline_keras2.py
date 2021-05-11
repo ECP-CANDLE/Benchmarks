@@ -4,11 +4,7 @@
 
 from __future__ import division, print_function
 
-import argparse
-import csv
 import logging
-import sys
-
 import numpy as np
 
 from tensorflow.keras import backend as K
@@ -269,8 +265,6 @@ def run(gParameters):
     # Initialize weights and learning rule
     initializer_weights = candle.build_initializer(gParameters['initialization'], kerasDefaults, seed)
     initializer_bias = candle.build_initializer('constant', kerasDefaults, 0.)
-
-    activation = gParameters['activation']
 
     # Define model architecture
     gen_shape = None

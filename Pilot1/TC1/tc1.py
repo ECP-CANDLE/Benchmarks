@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import os
 import sys
-import gzip
 import logging
 
 file_path = os.path.dirname(os.path.realpath(__file__))

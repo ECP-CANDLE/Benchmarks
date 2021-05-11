@@ -1,31 +1,23 @@
 from __future__ import print_function
 
-import itertools
-import pandas as pd
 import numpy as np
-import os
-import sys
-import gzip
-import argparse
 import sklearn
+import h5py
 
 import tensorflow as tf
 
 import tensorflow.keras as ke
 from tensorflow.keras import backend as K
 
-from tensorflow.keras.layers import Input, Dense, Dropout, Activation, BatchNormalization
-from tensorflow.keras.optimizers import SGD, Adam, RMSprop, Adadelta
-from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
-from tensorflow.keras.utils import to_categorical, multi_gpu_model
+from tensorflow.keras.layers import Input, Dense, Dropout, BatchNormalization
+from tensorflow.keras.models import Model, model_from_json, model_from_yaml
+from tensorflow.keras.utils import to_categorical
 
 from tensorflow.keras.callbacks import Callback, ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, roc_auc_score, confusion_matrix, balanced_accuracy_score, classification_report
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-from sklearn.metrics import recall_score, auc, roc_curve, f1_score, precision_recall_curve
+from sklearn.metrics import r2_score, mean_squared_error, roc_auc_score, binary_crossentropy, pearsonr
+from sklearn.metrics import auc, roc_curve, f1_score, precision_recall_curve, accuracy_score
 
 import attn
 import candle
@@ -190,7 +182,7 @@ def run(params):
     attn.logger.info('Params: {}'.format(params))
 
     # Get default parameters for initialization and optimizer functions
-    keras_defaults = candle.keras_default_config()
+    # keras_defaults = candle.keras_default_config()
 
     ##
     X_train, _Y_train, X_val, _Y_val, X_test, _Y_test = attn.load_data(params, seed)
@@ -209,7 +201,7 @@ def run(params):
     Y_val_total = Y_val_neg + Y_val_pos
 
     total = Y_train_total + Y_test_total + Y_val_total
-    neg = Y_train_neg + Y_test_neg + Y_val_neg
+    # neg = Y_train_neg + Y_test_neg + Y_val_neg
     pos = Y_train_pos + Y_test_pos + Y_val_pos
 
     print('Examples:\n    Total: {}\n    Positive: {} ({:.2f}% of total)\n'.format(
@@ -234,10 +226,6 @@ def run(params):
     PS = X_train.shape[1]
     model = build_attention_model(params, PS)
 
-    # parallel_model = multi_gpu_model(model, gpus=4)
-    # parallel_model.compile(loss='mean_squared_error',
-    #                        optimizer=SGD(lr=0.0001, momentum=0.9),
-    #                        metrics=['mae',r2])
     kerasDefaults = candle.keras_default_config()
     if params['momentum']:
         kerasDefaults['momentum_sgd'] = params['momentum']
@@ -246,10 +234,6 @@ def run(params):
 
     model.compile(loss=params['loss'],
                   optimizer=optimizer,
-                  #           SGD(lr=0.00001, momentum=0.9),
-                  # optimizer=Adam(lr=0.00001),
-                  # optimizer=RMSprop(lr=0.0001),
-                  # optimizer=Adadelta(),
                   metrics=['acc', tf_auc])
 
     # set up a bunch of callbacks to do work during model training..

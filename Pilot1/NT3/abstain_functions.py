@@ -1,4 +1,3 @@
-from tensorflow import keras
 from tensorflow.keras import backend as K
 
 abs_definitions = [
@@ -67,7 +66,7 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
     # print('Add_index', add_index)
 
     feature_test = X_test
-    label_test = keras.utils.to_categorical(truths_test)
+    # label_test = keras.utils.to_categorical(truths_test)
 
     # loss = model.evaluate(feature_test, [label_test[0], label_test[1],label_test[2], label_test[3]])
     loss = model.evaluate(feature_test, labels_val)
