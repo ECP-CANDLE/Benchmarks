@@ -1,0 +1,16 @@
+[Global_Params]
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/rnagen/'
+cell_types = 'combined_cancer_types'
+model = 'cvae'
+encoder_layers = [100, 100]
+decoder_layers = [100, 100]
+encoder_activation = 'relu'
+decoder_activation = 'relu'
+optimizer = 'adam'
+latent_dim = 10
+epochs = 20
+batch_size = 128
+top_k_types = 10
+n_samples = 10000
+plot = False
+rng_seed = 2021
