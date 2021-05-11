@@ -372,8 +372,8 @@ def compute_statistics_homoscedastic_summary(df_data,
         ----------
         Ytrue : numpy array
             Array with true (observed) values
-        Ypred : numpy array
-            Array with predicted values.
+        Ypred_mean : numpy array
+            Array with predicted values (mean from summary).
         yerror : numpy array
             Array with errors computed (observed - predicted).
         sigma : numpy array
@@ -391,9 +391,9 @@ def compute_statistics_homoscedastic_summary(df_data,
 
     Ytrue = df_data.iloc[:, col_true].values
     pred_name = df_data.columns[col_true]
-    Ypred = df_data.iloc[:, col_pred].values
+    Ypred_mean = df_data.iloc[:, col_pred].values
     Ypred_std = df_data.iloc[:, col_std_pred].values
-    yerror = Ytrue - Ypred
+    yerror = Ytrue - Ypred_mean
     sigma = Ypred_std  # std
     MSE = mean_squared_error(Ytrue, Ypred_mean)
     print('MSE: ', MSE)
@@ -407,7 +407,7 @@ def compute_statistics_homoscedastic_summary(df_data,
     pearson_cc, pval = pearsonr(Ytrue, Ypred_mean)
     print('Pearson CC: %f, p-value: %e' % (pearson_cc, pval))
 
-    return Ytrue, Ypred, yerror, sigma, Ypred_std, pred_name
+    return Ytrue, Ypred_mean, yerror, sigma, Ypred_std, pred_name
 
 
 def compute_statistics_homoscedastic(df_data,
@@ -438,8 +438,8 @@ def compute_statistics_homoscedastic(df_data,
         ----------
         Ytrue : numpy array
             Array with true (observed) values
-        Ypred : numpy array
-            Array with predicted values.
+        Ypred_mean : numpy array
+            Array with predicted values (mean of predictions).
         yerror : numpy array
             Array with errors computed (observed - predicted).
         sigma : numpy array
@@ -513,8 +513,8 @@ def compute_statistics_heteroscedastic(df_data,
         ----------
         Ytrue : numpy array
             Array with true (observed) values
-        Ypred : numpy array
-            Array with predicted values.
+        Ypred_mean : numpy array
+            Array with predicted values (mean of predictions).
         yerror : numpy array
             Array with errors computed (observed - predicted).
         sigma : numpy array
