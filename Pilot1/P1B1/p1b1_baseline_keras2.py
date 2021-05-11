@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import numpy as np
+import h5py
 
 import tensorflow.keras as keras
 from tensorflow.keras import backend as K
@@ -20,7 +21,6 @@ with warnings.catch_warnings():
 
 import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.pyplot as plt
 
 import p1b1
 import candle
@@ -159,7 +159,7 @@ def run(params):
 
     # clf = build_type_classifier(x_train, y_train, x_val, y_val)
 
-    n_classes = len(y_labels)
+    # n_classes = len(y_labels)
     cond_train = y_train
     cond_val = y_val
     cond_test = y_test
@@ -229,8 +229,8 @@ def run(params):
             return z_mean_ + K.exp(z_log_var_ / 2) * epsilon
 
         z = Lambda(sampling, output_shape=(latent_dim,))([z_mean, z_log_var])
-        if params['model'] == 'cvae':
-            z_cond = keras.layers.concatenate([z, cond_input])
+        # if params['model'] == 'cvae':
+        #    z_cond = keras.layers.concatenate([z, cond_input])
 
     # Decoder Part
     decoder_input = Input(shape=(latent_dim,))
@@ -341,7 +341,7 @@ def run(params):
 
     outputs = x_train
     val_outputs = x_val
-    test_outputs = x_test
+    # test_outputs = x_test
 
     history = model.fit(inputs, outputs,
                         verbose=2,

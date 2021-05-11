@@ -1,15 +1,10 @@
 from __future__ import print_function
 
-import argparse
-
 import numpy as np
 
 from tensorflow.keras import backend as K
-from tensorflow.keras import optimizers
-from tensorflow.keras.models import Model, Sequential
-from tensorflow.keras.layers import Activation, Dense, Dropout, Input
-from tensorflow.keras.initializers import RandomUniform
-from tensorflow.keras.callbacks import Callback, ModelCheckpoint
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Dense, Dropout, Input
 from tensorflow.keras.regularizers import l2
 
 import p1b2

@@ -61,7 +61,7 @@ def run(params):
                 partition_by=args.partition_by
                 )
 
-    target = args.agg_dose or 'Growth'
+    # target = args.agg_dose or 'Growth'
     val_split = args.val_split
     train_split = 1 - val_split
 

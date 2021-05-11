@@ -2,29 +2,18 @@ from __future__ import print_function
 
 import pandas as pd
 import numpy as np
-import os
-import sys
-import gzip
-import argparse
 import sklearn
+import h5py
 
 import tensorflow as tf
 
-import keras as ke
-from keras import backend as K
-
-from keras.layers import Input, Dense, Dropout, Activation, BatchNormalization
-from keras.optimizers import SGD, Adam, RMSprop, Adadelta
-from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.utils import np_utils, multi_gpu_model
-
-from keras.callbacks import Callback, ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import model_from_json, model_from_yaml
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, roc_auc_score, confusion_matrix, balanced_accuracy_score, classification_report
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-from sklearn.metrics import recall_score, auc, roc_curve, f1_score, precision_recall_curve
+from sklearn.metrics import r2_score, roc_auc_score
+from sklearn.metrics import auc, roc_curve, f1_score, precision_recall_curve, accuracy_score, pearsonr
 
 import attn
 import candle
@@ -206,7 +195,7 @@ def run(params):
     attn.logger.info('Params: {}'.format(params))
 
     # Get default parameters for initialization and optimizer functions
-    keras_defaults = candle.keras_default_config()
+    # keras_defaults = candle.keras_default_config()
 
     #
     X_train, _Y_train, X_val, _Y_val, X_test, _Y_test = attn.load_data(params, seed)
@@ -225,7 +214,7 @@ def run(params):
     Y_val_total = Y_val_neg + Y_val_pos
 
     total = Y_train_total + Y_test_total + Y_val_total
-    neg = Y_train_neg + Y_test_neg + Y_val_neg
+    # neg = Y_train_neg + Y_test_neg + Y_val_neg
     pos = Y_train_pos + Y_test_pos + Y_val_pos
 
     print('Examples:\n    Total: {}\n    Positive: {} ({:.2f}% of total)\n'.format(

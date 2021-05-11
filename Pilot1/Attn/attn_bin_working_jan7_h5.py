@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-import gzip
 import argparse
 import sklearn
 
@@ -17,18 +16,15 @@ import tensorflow as tf
 import tensorflow.keras as ke
 from tensorflow.keras import backend as K
 
-from tensorflow.keras.layers import Input, Dense, Dropout, Activation, BatchNormalization
-from tensorflow.keras.optimizers import SGD, Adam, RMSprop, Adadelta
-from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
-from tensorflow.keras.utils import to_categorical, multi_gpu_model
+from tensorflow.keras.layers import Input, Dense, Dropout, BatchNormalization
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.models import Model, model_from_json, model_from_yaml
+from tensorflow.keras.utils import to_categorical
 
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, roc_auc_score, confusion_matrix, balanced_accuracy_score, classification_report
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-from sklearn.metrics import recall_score, auc, roc_curve, f1_score, precision_recall_curve
+from sklearn.metrics import roc_auc_score, auc, roc_curve, f1_score, precision_recall_curve
 
 
 file_path = os.path.dirname(os.path.realpath(__file__))

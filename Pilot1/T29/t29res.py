@@ -2,19 +2,16 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-import gzip
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from tensorflow import keras as ke
-from tensorflow.keras.layers import Input, Dense, Dropout, Activation
-from tensorflow.keras.optimizers import SGD, Adam, RMSprop
-from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
+from tensorflow.keras.layers import Input, Dense, Dropout
+from tensorflow.keras.models import Model, model_from_json, model_from_yaml
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, LearningRateScheduler
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+from sklearn.preprocessing import MaxAbsScaler
 
 
 file_path = os.path.dirname(os.path.realpath(__file__))

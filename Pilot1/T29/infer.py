@@ -3,12 +3,9 @@ import numpy as np
 import os
 import sys
 from tensorflow import keras as ke
-from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
+from tensorflow.keras.models import model_from_json
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras import backend as K
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, LearningRateScheduler
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+from sklearn.preprocessing import MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -66,10 +63,10 @@ def load_data(gParameters):
     df_y_test = df_test[:, 0].astype('int')
 
     Y_train = to_categorical(df_y_train, gParameters['classes'])
-    train_classes = np.argmax(Y_train, axis=1)
+    # train_classes = np.argmax(Y_train, axis=1)
 
     Y_test = to_categorical(df_y_test, gParameters['classes'])
-    test_classes = np.argmax(Y_test, axis=1)
+    # test_classes = np.argmax(Y_test, axis=1)
 
     df_x_train = df_train[:, 1:df_train.shape[1]].astype(np.float32)
     df_x_test = df_test[:, 1:df_train.shape[1]].astype(np.float32)

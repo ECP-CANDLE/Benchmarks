@@ -1,7 +1,6 @@
 from __future__ import print_function
 from __future__ import division
 
-import operator
 import os
 import pickle
 import re
@@ -12,10 +11,10 @@ from sklearn import metrics
 from sklearn.model_selection import GroupKFold, StratifiedKFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.linear_model import *
-from sklearn.ensemble import *
-from sklearn.neighbors import *
-from sklearn.svm import *
+from sklearn.linear_model import LinearRegression, ElasticNetCV, LassoCV, Ridge, LogisticRegression
+from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, RandomForestClassifier, AdaBoostClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 
 from xgboost import XGBRegressor
 from xgboost import XGBClassifier

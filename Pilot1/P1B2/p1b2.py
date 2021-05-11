@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-import pandas as pd
 import numpy as np
 
 from sklearn.metrics import accuracy_score
@@ -8,12 +7,6 @@ from sklearn.metrics import accuracy_score
 import os
 import sys
 import logging
-import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
-
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))

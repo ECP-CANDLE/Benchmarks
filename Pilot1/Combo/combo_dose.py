@@ -6,7 +6,6 @@ import argparse
 import collections
 import logging
 import os
-import random
 import threading
 
 import numpy as np
@@ -21,14 +20,12 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Dropout
 from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from tensorflow.keras.utils import get_custom_objects
-from tensorflow.keras.utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
+from sklearn.model_selection import StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
 
 import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.pyplot as plt
 
 import combo
 import candle
@@ -782,7 +779,7 @@ def run(params):
             # test reloadded model prediction
             new_model = keras.models.load_model(prefix + '.model.h5')
             new_model.load_weights(prefix + cv_ext + '.weights.h5')
-            new_pred = new_model.predict(x_val_list, batch_size=args.batch_size).flatten()
+            # new_pred = new_model.predict(x_val_list, batch_size=args.batch_size).flatten()
             # print('y_val:', y_val[:10])
             # print('old_pred:', y_val_pred[:10])
             # print('new_pred:', new_pred[:10])
