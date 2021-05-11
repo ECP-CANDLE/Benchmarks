@@ -2,10 +2,7 @@ from pathlib import Path
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-
 import numpy as np
-
-from scipy import interpolate
 
 
 def plot_history(out, history, metric='loss', val=True, title=None, width=8, height=6):
@@ -111,7 +108,7 @@ def plot_density_observed_vs_predicted(Ytest, Ypred, pred_name=None, figprefix=N
 
     xbins = 51
 
-    fig = plt.figure(figsize=(24, 18))  # (30, 16)
+    plt.figure(figsize=(24, 18))  # (30, 16)
     ax = plt.gca()
     plt.rc('xtick', labelsize=16)    # fontsize of the tick labels
     ax.plot([Ytest.min(), Ytest.max()], [Ytest.min(), Ytest.max()], 'r--', lw=4.)
@@ -153,7 +150,7 @@ def plot_2d_density_sigma_vs_error(sigma, yerror, method=None, figprefix=None):
     xbins = 51
     ybins = 31
 
-    fig = plt.figure(figsize=(24, 18))  # (30, 16)
+    plt.figure(figsize=(24, 18))  # (30, 16)
     ax = plt.gca()
     plt.rc('xtick', labelsize=16)  # fontsize of the tick labels
     plt.hist2d(sigma, yerror, bins=[xbins, ybins], norm=LogNorm())
@@ -200,7 +197,7 @@ def plot_histogram_error_per_sigma(sigma, yerror, method=None, figprefix=None):
     H, xedges, yedges, img = plt.hist2d(sigma, yerror,  # normed=True,
                                         bins=[xbins, ybins])
 
-    fig = plt.figure(figsize=(18, 24))
+    plt.figure(figsize=(18, 24))
     legend = []
     for ii in range(4):  # (H.shape[0]):
         if ii != 1:
@@ -243,7 +240,7 @@ def plot_decile_predictions(Ypred, Ypred_Lp, Ypred_Hp, decile_list, pred_name=No
     """
 
     index_ = np.argsort(Ypred)
-    fig = plt.figure(figsize=(24, 18))
+    plt.figure(figsize=(24, 18))
     plt.scatter(range(index_.shape[0]), Ypred[index_])
     plt.scatter(range(index_.shape[0]), Ypred_Lp[index_])
     plt.scatter(range(index_.shape[0]), Ypred_Hp[index_])

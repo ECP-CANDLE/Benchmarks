@@ -6,14 +6,12 @@ from tensorflow.keras import optimizers
 from tensorflow.keras import initializers
 
 from tensorflow.keras.layers import Dropout
-from tensorflow.keras.callbacks import Callback, ModelCheckpoint
+from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.utils import get_custom_objects
 from tensorflow.keras.metrics import binary_crossentropy, mean_squared_error, mean_absolute_error
-from tensorflow.keras.models import Model
 
 from scipy.stats.stats import pearsonr
 
-from helper_utils import set_up_logger
 from default_utils import set_seed as set_seed_defaultUtils
 
 import warnings
@@ -21,9 +19,7 @@ with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from sklearn.metrics import r2_score
 
-import json
 import os
-import time
 
 
 def set_parallelism_threads():

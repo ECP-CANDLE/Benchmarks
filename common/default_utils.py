@@ -22,7 +22,7 @@ sys.path.append(lib_path)
 work_path = os.path.dirname(os.path.realpath(__file__))
 
 from helper_utils import eval_string_as_list_of_lists, str2bool
-from ckpt_keras_utils import ckpt_parser, ckpt_defs
+from ckpt_keras_utils import ckpt_defs
 
 # Seed for random generation -- default value
 DEFAULT_SEED = 7102

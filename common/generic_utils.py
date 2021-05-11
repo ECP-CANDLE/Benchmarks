@@ -3,11 +3,9 @@ from __future__ import print_function
 import numpy as np
 import time
 import sys
-import os
 import six
 import marshal
 import types as python_types
-import logging
 
 
 def get_from_module(identifier, module_params, module_name,
