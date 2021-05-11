@@ -1,5 +1,5 @@
-import argparse
-import os, sys
+import os
+import sys
 
 import torch
 from torchvision.utils import save_image
@@ -49,6 +49,7 @@ required = [
     'batch_size',
 ]
 
+
 class SampleBk(candle.Benchmark):
 
     def set_locals(self):
@@ -68,7 +69,7 @@ def initialize_parameters(default_model='sample_default_model.txt'):
 
     # Build benchmark object
     sample = SampleBk(file_path, default_model, 'pytorch',
-                           prog='sample_baseline', desc='Histology Sample - Examples')
+                      prog='sample_baseline', desc='Histology Sample - Examples')
 
     print("Created sample benchmark")
 
@@ -77,7 +78,6 @@ def initialize_parameters(default_model='sample_default_model.txt'):
     print("Parameters initialized")
 
     return gParameters
-
 
 
 @torch.no_grad()
@@ -101,7 +101,6 @@ def load_model(model, checkpoint, device):
         ckpt = torch.load(os.path.join('checkpoint', checkpoint), map_location=torch.device('cpu'))
     else:
         ckpt = torch.load(os.path.join('checkpoint', checkpoint))
-
 
     if 'args' in ckpt:
         args = ckpt['args']
@@ -158,7 +157,7 @@ def run(params):
             ndevices = torch.cuda.device_count()
             if ndevices > 1:
                 for i in range(ndevices):
-                    device_i = torch.device('cuda:'+str(i))
+                    device_i = torch.device('cuda:' + str(i))
                     device_ids.append(device_i)
                 device = device_ids[0]
             elif ndevices == 1:
@@ -181,7 +180,6 @@ def run(params):
     decoded_sample = decoded_sample.clamp(-1, 1)
 
     save_image(decoded_sample, args.filename, normalize=True, range=(-1, 1))
-
 
 
 def main():
