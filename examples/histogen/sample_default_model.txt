@@ -1,0 +1,10 @@
+[Global_Params]
+vqvae = 'histology.pt'
+top = 'top.pt'
+bottom = 'bottom.pt'
+filename = 'sample32.jpg'
+batch_size = 8
+
+[Monitor_Params]
+timeout=3600
+
