@@ -154,7 +154,6 @@ def run(params):
     args = candle.ArgumentStruct(**params)
 
     # Configure GPUs
-    #try:
     if args.use_gpus:
         device_ids = []
         ndevices = torch.cuda.device_count()
@@ -165,9 +164,6 @@ def run(params):
             device = device_ids[0]
         elif ndevices == 1:
             device = torch.device('cuda:0')
-        #else:
-        #    device = torch.device('cpu')
-    #except AttributeError:
     else:
         device = torch.device('cpu')
 
