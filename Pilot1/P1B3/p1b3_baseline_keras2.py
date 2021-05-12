@@ -4,11 +4,7 @@
 
 from __future__ import division, print_function
 
-import argparse
-import csv
 import logging
-import sys
-
 import numpy as np
 
 from tensorflow.keras import backend as K
@@ -228,7 +224,7 @@ def run(gParameters):
 
     if 'conv' in gParameters:
         flat = gParameters['conv']
-        gParameters['conv'] = [flat[i:i+3] for i in range(0, len(flat), 3)]
+        gParameters['conv'] = [flat[i:i + 3] for i in range(0, len(flat), 3)]
         print('Conv input', gParameters['conv'])
     # print('Params:', gParameters)
     # Construct extension to save model
@@ -269,8 +265,6 @@ def run(gParameters):
     # Initialize weights and learning rule
     initializer_weights = candle.build_initializer(gParameters['initialization'], kerasDefaults, seed)
     initializer_bias = candle.build_initializer('constant', kerasDefaults, 0.)
-
-    activation = gParameters['activation']
 
     # Define model architecture
     gen_shape = None

@@ -1,17 +1,14 @@
 from __future__ import print_function
 
-import pandas as pd
 import numpy as np
 import os
 import sys
-import gzip
-import argparse
 
 from tensorflow.keras import backend as K
 
-from tensorflow.keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
+from tensorflow.keras.layers import Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
 from tensorflow.keras.layers import LocallyConnected1D
-from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
+from tensorflow.keras.models import Sequential, model_from_json, model_from_yaml
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 
 file_path = os.path.dirname(os.path.realpath(__file__))

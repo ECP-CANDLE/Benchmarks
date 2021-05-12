@@ -5,12 +5,12 @@ from __future__ import division, print_function
 import logging
 import os
 
-from keras import backend as K
+from tensorflow.keras import backend as K
 
 import uno as benchmark
 import candle
 
-from uno_UQ_keras2 import extension_from_parameters
+from uno_trainUQ_keras2 import extension_from_parameters
 from uno_data import CombinedDataLoader
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ def run(params):
                 partition_by=args.partition_by
                 )
 
-    target = args.agg_dose or 'Growth'
+    # target = args.agg_dose or 'Growth'
     val_split = args.val_split
     train_split = 1 - val_split
 

@@ -9,7 +9,6 @@ import numpy as np
 import pandas as pd
 from tensorflow import keras
 from tensorflow.keras import backend as K
-from tensorflow.keras.models import Model
 from tensorflow.keras.utils import get_custom_objects
 from tqdm import tqdm
 
@@ -120,7 +119,7 @@ def cross_join3(df1, df2, df3, **kwargs):
     return cross_join(cross_join(df1, df2), df3, **kwargs)
 
 
-def prepare_data(sample_set='NCI60', drug_set='ALMANAC', use_landmark_genes=False):
+def prepare_data(sample_set='NCI60', drug_set='ALMANAC', use_landmark_genes=False, preprocess_rnaseq=None):
     df_expr = NCI60.load_sample_rnaseq(use_landmark_genes=use_landmark_genes, preprocess_rnaseq=preprocess_rnaseq, sample_set=sample_set)
     # df_old = NCI60.load_cell_expression_rnaseq(use_landmark_genes=True)
     # df_desc = NCI60.load_drug_descriptors_new()

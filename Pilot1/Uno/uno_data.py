@@ -1057,7 +1057,7 @@ class DataFeeder(keras.utils.Sequence):
         if self.shuffle:
             np.random.shuffle(self.index_map)
         if self.on_memory:
-            print(f'on_memory_loader activated')
+            print('on_memory_loader activated')
             self.dataframe = {}
             current_partition_keys = list(map(lambda x: x[1:], filter(lambda x: self.partition in x, self.store.keys())))
             for key in current_partition_keys:

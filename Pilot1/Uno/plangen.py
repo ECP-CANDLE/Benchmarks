@@ -694,7 +694,7 @@ def plan_prep(db_path, plan_path, run_type=RunType.RUN_ALL):
             nbr_subplans
         )
 
-        status = execute_sql_stmt(conn, stmt, cursor=csr)
+        # status = execute_sql_stmt(conn, stmt, cursor=csr)
         rowid = csr.lastrowid
 
     # cleanup resources and return uniquifier or error indicator
@@ -1153,12 +1153,11 @@ def build_plan_tree(args, feature_set_content, parent_plan_id='', depth=0, data_
     # flat_partitions = []                           # preserve, used for file-based approach
     # files = []                                     # preserve, used for file-based approach
     # sequence = 0                                   # preserve, used for file-based approach
-    xxx = False
 
     for i in range(len(args.fs_names)):
-        group = feature_set_content[i]
+        # group = feature_set_content[i]
         count = args.fs_parts[i]
-        feature_set_name = args.fs_names[i]
+        # feature_set_name = args.fs_names[i]
         partitions = args.generator.partition(feature_set_content[i], count=count)
         all_parts.append(partitions)
 
@@ -1484,7 +1483,7 @@ def test1(plan_path, db_path):
 # ???????????????????????????????????????????????????????????
 
         # test retrieval api
-        row = get_subplan_runhist(db_path, plan_id=plan_id, subplan_id=select_one)
+        # row = get_subplan_runhist(db_path, plan_id=plan_id, subplan_id=select_one)
         # print(row)
 
         # post subplan termination

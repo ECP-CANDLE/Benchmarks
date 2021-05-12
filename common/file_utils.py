@@ -9,7 +9,6 @@ import hashlib
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.error import URLError, HTTPError
 
-import requests
 from generic_utils import Progbar
 from modac_utils import get_file_from_modac
 
@@ -137,6 +136,7 @@ def get_file(fname, origin, untar=False,
                 except HTTPError as e:
                     raise Exception(error_msg.format(origin, e.code, e.msg))
             except (Exception, KeyboardInterrupt) as e:
+                print(f"Error {e}")
                 if os.path.exists(fpath):
                     os.remove(fpath)
                 raise
@@ -150,6 +150,7 @@ def get_file(fname, origin, untar=False,
             try:
                 tfile.extractall(path=datadir)
             except (Exception, KeyboardInterrupt) as e:
+                print(f"Error {e}")
                 if os.path.exists(untar_fpath):
                     if os.path.isfile(untar_fpath):
                         os.remove(untar_fpath)

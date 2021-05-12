@@ -62,4 +62,5 @@ class BenchmarkNT3(candle.Benchmark):
         if required is not None:
             self.required = set(required)
         if additional_definitions is not None:
-            self.additional_definitions = additional_definitions
+            self.additional_definitions = self.additional_definitions + additional_definitions
+            print(self.additional_definitions)

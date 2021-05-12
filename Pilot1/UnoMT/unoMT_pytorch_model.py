@@ -16,7 +16,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from numpy.core.multiarray import ndarray
 from torch.optim.lr_scheduler import LambdaLR
 
 from networks.functions.cl_clf_func import train_cl_clf, valid_cl_clf
@@ -31,12 +30,10 @@ from utils.data_processing.label_encoding import get_label_dict
 from utils.datasets.drug_qed_dataset import DrugQEDDataset
 from utils.datasets.drug_resp_dataset import DrugRespDataset
 from utils.datasets.cl_class_dataset import CLClassDataset
-from utils.data_processing.dataframe_scaling import SCALING_METHODS
 from networks.initialization.encoder_init import get_gene_encoder, \
     get_drug_encoder
 from utils.datasets.drug_target_dataset import DrugTargetDataset
 from utils.miscellaneous.optimizer import get_optimizer
-from utils.miscellaneous.random_seeding import seed_random_state
 
 
 # Number of workers for dataloader. Too many workers might lead to process
@@ -298,12 +295,12 @@ class UnoMTModel(object):
 
         # Multi-GPU settings
         if args.multi_gpu:
-            resp_net = nn.DataParallel(self.resp_net)
-            category_clf_net = nn.DataParallel(self.category_clf_net)
-            site_clf_net = nn.DataParallel(self.site_clf_net)
-            type_clf_net = nn.DataParallel(self.type_clf_net)
-            drug_target_net = nn.DataParallel(self.drug_target_net)
-            drug_qed_net = nn.DataParallel(self.drug_qed_net)
+            self.resp_net = nn.DataParallel(self.resp_net)
+            self.category_clf_net = nn.DataParallel(self.category_clf_net)
+            self.site_clf_net = nn.DataParallel(self.site_clf_net)
+            self.type_clf_net = nn.DataParallel(self.type_clf_net)
+            self.drug_target_net = nn.DataParallel(self.drug_target_net)
+            self.drug_qed_net = nn.DataParallel(self.drug_qed_net)
 
     def config_optimization(self):
 
@@ -472,7 +469,7 @@ class UnoMTModel(object):
 
     def validation(self, epoch):
 
-        args = self.args
+        # args = self.args
         device = self.device
 
         # Validating cell line classifier

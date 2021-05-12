@@ -3,20 +3,16 @@ from __future__ import print_function
 import pandas as pd
 import numpy as np
 import os
-import sys
-import gzip
 
 from tensorflow.keras import backend as K
 
-from tensorflow.keras.layers import Input, Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten
-from tensorflow.keras.optimizers import SGD, Adam, RMSprop
-from tensorflow.keras.models import Sequential, Model, model_from_json, model_from_yaml
+from tensorflow.keras.layers import Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten, LocallyConnected1D
+from tensorflow.keras.models import Sequential, model_from_json, model_from_yaml
 from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
+from tensorflow.keras.callbacks import CSVLogger, ReduceLROnPlateau
 
-from sklearn.metrics import accuracy_score
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-from abstain_functions import print_abs_stats, write_abs_stats, abs_definitions, adjust_alpha
+from sklearn.preprocessing import MaxAbsScaler
+from abstain_functions import abs_definitions
 
 import nt3 as bmk
 import candle
@@ -266,7 +262,7 @@ def run(gParameters):
 
     # set up a bunch of callbacks to do work during model training..
     model_name = gParameters['model_name']
-    path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
+    # path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
     # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='abs_crossentropy',
@@ -276,9 +272,9 @@ def run(gParameters):
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
 
-    n_iters = 1
+    # n_iters = 1
 
-    val_labels = {"activation_5": Y_test}
+    # val_labels = {"activation_5": Y_test}
     # for epoch in range(gParameters['epochs']):
     #    print('Iteration = ', epoch)
     history = model.fit(X_train, Y_train,

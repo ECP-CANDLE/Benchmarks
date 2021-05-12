@@ -1,7 +1,6 @@
 import sys
 import pandas as pd
 import numpy as np
-import numpy.linalg as la
 from scipy import stats
 from collections import Counter
 

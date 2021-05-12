@@ -231,12 +231,12 @@ class CandleCheckpointCallback(Callback):
 
         epoch += 1
 
-        dir_root   = PosixPath(self.ckpt_directory).resolve()
-        dir_work   = dir_root / "ckpts/work"
-        dir_best   = dir_root / "ckpts/best"  # a soft link
-        dir_last   = dir_root / "ckpts/last"  # a soft link
+        dir_root = PosixPath(self.ckpt_directory).resolve()
+        dir_work = dir_root / "ckpts/work"
+        dir_best = dir_root / "ckpts/best"  # a soft link
+        dir_last = dir_root / "ckpts/last"  # a soft link
         dir_epochs = dir_root / "ckpts/epochs"
-        dir_this   = dir_epochs / ("%03i" % epoch)
+        dir_this = dir_epochs / ("%03i" % epoch)
 
         if not self.save_check(logs, epoch):
             return
@@ -244,7 +244,7 @@ class CandleCheckpointCallback(Callback):
             self.debug("remove:  '%s'" % self.relpath(dir_this))
             shutil.rmtree(dir_this)
         os.makedirs(dir_epochs, exist_ok=True)
-        os.makedirs(dir_work,   exist_ok=True)
+        os.makedirs(dir_work, exist_ok=True)
         self.write_model(dir_work, epoch)
         self.debug("rename:  '%s' -> '%s'" %
                    (self.relpath(dir_work), self.relpath(dir_this)))
@@ -290,11 +290,11 @@ class CandleCheckpointCallback(Callback):
                             (self.save_best_metric, str(logs.keys())))
 
         # Known metrics and direction of progress
-        known_metrics = {"loss":         "-",
-                         "accuracy":     "+",
-                         "val_loss":     "-",
+        known_metrics = {"loss": "-",
+                         "accuracy": "+",
+                         "val_loss": "-",
                          "val_accuracy": "+",
-                         "lr":           "-"}
+                         "lr": "-"}
 
         if self.save_best_metric not in known_metrics.keys():
             raise Exception(("CandleCheckpointCallback: "
@@ -304,12 +304,12 @@ class CandleCheckpointCallback(Callback):
                              str(known_metrics.keys())))
 
         # Logging:
-        if   logs[self.save_best_metric] < self.best_metric_last:
-            symbol =                    "<"
+        if logs[self.save_best_metric] < self.best_metric_last:
+            symbol = "<"
         elif logs[self.save_best_metric] > self.best_metric_last:
-            symbol =                    ">"
+            symbol = ">"
         else:
-            symbol =                    "="
+            symbol = "="
         self.debug("metrics: %s: current=%f %s last=%f" %
                    (self.save_best_metric,
                     logs[self.save_best_metric],
@@ -317,7 +317,7 @@ class CandleCheckpointCallback(Callback):
 
         # Check for improvement:
         improved = False  # did the metric improve this epoch?
-        if   known_metrics[self.save_best_metric] == "-":
+        if known_metrics[self.save_best_metric] == "-":
             if logs[self.save_best_metric] < self.best_metric_last:
                 improved = True
         elif known_metrics[self.save_best_metric] == "+":
@@ -393,11 +393,14 @@ class CandleCheckpointCallback(Callback):
         kept = 0
         # Consider most recent epochs first:
         for epoch in reversed(self.epochs):
+            self.debug('checking %s' % epoch)
             if not self.keep(epoch, epoch_now, kept):
                 deleted += 1
                 self.delete(epoch)
+                self.debug('deleted')
             else:
                 kept += 1
+                self.debug('kept %s' % kept)
         return (kept, deleted)
 
     def keep(self, epoch, epoch_now, kept):
@@ -407,11 +410,14 @@ class CandleCheckpointCallback(Callback):
         """
         if epoch == epoch_now:
             # We just wrote this!
+            self.debug('latest')
             return True
         if self.epoch_best == epoch:
             # This is the best epoch
+            self.debug('best')
             return True
         if kept < self.keep_limit:
+            self.debug('< limit %s' % self.keep_limit)
             return True
         # No reason to keep this: delete it:
         return False
@@ -529,15 +535,15 @@ from enum import Enum, unique, auto
 @unique
 class ParamType(Enum):
     """ Possible gParameters types """
-    STRING     = auto()
-    BOOLEAN    = auto()
-    INTEGER    = auto()
+    STRING = auto()
+    BOOLEAN = auto()
+    INTEGER = auto()
     # integer: non-negative
     INTEGER_NN = auto()
     # integer: greater-than-zero
     INTEGER_GZ = auto()
-    FLOAT      = auto()
-    FLOAT_NN   = auto()
+    FLOAT = auto()
+    FLOAT_NN = auto()
 
 
 def enabled(gParameters, key):
@@ -576,11 +582,11 @@ def param_type_check(key, value, type_):
         return str(value)
     if type_ is ParamType.BOOLEAN:
         return param_type_check_bool(key, value)
-    if type_ is ParamType.INTEGER    or \
+    if type_ is ParamType.INTEGER or \
        type_ is ParamType.INTEGER_NN or \
        type_ is ParamType.INTEGER_GZ:
         return param_type_check_int(key, value, type_)
-    if type_ is ParamType.FLOAT    or \
+    if type_ is ParamType.FLOAT or \
        type_ is ParamType.FLOAT_NN:
         return param_type_check_float(key, value, type_)
     raise ValueError("param_type_check(): unknown type: '%s'" %
@@ -669,7 +675,7 @@ def param_allowed(key, value, allowed):
         return
     if value not in allowed:
         raise ValueError(("hyperparameter '%s'='%s' is not in the "
-                         + "list of allowed values: %s") %
+                          + "list of allowed values: %s") %
                          (key, value, str(allowed)))
 
 
@@ -681,7 +687,7 @@ def ckpt_parser(parser):
                         help="Mode to restart from a saved checkpoint file, "
                              + "choices are 'off', 'auto', 'required'")
     parser.add_argument("--ckpt_checksum", type=str2bool,
-                        default='false',
+                        default=False,
                         help="Checksum the restart file after read+write")
     parser.add_argument("--ckpt_skip_epochs", type=int,
                         default=0,
@@ -691,13 +697,13 @@ def ckpt_parser(parser):
                         help="Base directory in which to save checkpoints")
     # saving
     parser.add_argument("--ckpt_save_best", type=str2bool,
-                        default='true',
+                        default=True,
                         help="Toggle saving best model")
     parser.add_argument("--ckpt_save_best_metric", type=str,
                         default="val_loss",
                         help="Metric for determining when to save best model")
     parser.add_argument("--ckpt_save_weights_only", type=str2bool,
-                        default='false',
+                        default=False,
                         help="Toggle saving only weights (not optimizer) (NYI)")
     parser.add_argument("--ckpt_save_interval", type=int,
                         default=1,
@@ -712,3 +718,53 @@ def ckpt_parser(parser):
                         help="Limit checkpoints to keep")
 
     return parser
+
+
+def ckpt_defs(defs):
+    # defs is an existing list
+    # global
+    new_defs = [
+        {'name': 'ckpt_restart_mode',
+            'type': str,
+            'default': 'auto',
+            'choices': ['off', 'auto', 'required'],
+            'help': 'Mode to restart from a saved checkpoint file'},
+        {'name': 'ckpt_checksum', 'type': str2bool,
+            'default': False,
+            'help': 'Checksum the restart file after read+write'},
+        {'name': 'ckpt_skip_epochs', 'type': int,
+            'default': 0,
+            'help': 'Number of epochs to skip before saving epochs'},
+        {'name': 'ckpt_directory', 'type': str,
+            'default': './save',
+            'help': 'Base directory in which to save checkpoints'},
+        # saving
+        {'name': 'ckpt_save_best',
+            'type': str2bool,
+            'default': True,
+            'help': 'Toggle saving best model'},
+        {'name': 'ckpt_save_best_metric',
+            'type': str,
+            'default': 'val_loss',
+            'help': 'Metric for determining when to save best model'},
+        {'name': 'ckpt_save_weights_only', 'type': str2bool,
+            'default': False,
+            'help': 'Toggle saving only weights (not optimizer) (NYI)'},
+        {'name': 'ckpt_save_interval',
+            'type': int,
+            'default': 1,
+            'help': 'Interval to save checkpoints'},
+        # keeping
+        {'name': 'ckpt_keep_mode',
+            'choices': ['linear', 'exponential'],
+            'help': 'Checkpoint saving mode. '
+            + "choices are 'linear' or 'exponential' "},
+        {'name': 'ckpt_keep_limit',
+            'type': int,
+            'default': 1000000,
+            'help': 'Limit checkpoints to keep'}
+    ]
+
+    defs = defs + new_defs
+
+    return defs

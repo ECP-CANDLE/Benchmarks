@@ -4,12 +4,10 @@ from __future__ import division, print_function
 
 import logging
 import os
-import random
 
 import numpy as np
 import pandas as pd
 
-#import tensorflow.keras as keras
 from tensorflow import keras
 from tensorflow.keras import backend as K
 from tensorflow.keras import optimizers

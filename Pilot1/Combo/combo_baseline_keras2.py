@@ -2,11 +2,9 @@
 
 from __future__ import division, print_function
 
-import argparse
 import collections
 import logging
 import os
-import random
 import threading
 
 import numpy as np
@@ -21,14 +19,12 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense, Dropout
 from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 from tensorflow.keras.utils import get_custom_objects
-from tensorflow.keras.utils import plot_model
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
+from sklearn.model_selection import StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
 
 import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.pyplot as plt
 
 import NCI60
 import combo

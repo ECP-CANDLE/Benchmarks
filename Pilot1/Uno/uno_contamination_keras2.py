@@ -4,7 +4,6 @@ from __future__ import division, print_function
 
 import logging
 import os
-import random
 import argparse
 
 import numpy as np
@@ -12,14 +11,14 @@ import pandas as pd
 
 from joblib import dump
 
-import keras
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras.callbacks import ReduceLROnPlateau, LearningRateScheduler, TensorBoard
 
 import uno as benchmark
 import candle
+import uno_data
 
 from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder, read_IDs_file
 

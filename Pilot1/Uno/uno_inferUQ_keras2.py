@@ -11,19 +11,18 @@ import pandas as pd
 
 from itertools import cycle
 
-from keras import backend as K
+from tensorflow.keras import backend as K
 
-import keras
-from keras.utils import get_custom_objects
+from tensorflow import keras
 
 import uno as benchmark
 import candle
 
-from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder, read_IDs_file
+from uno_data import CombinedDataLoader, CombinedDataGenerator, read_IDs_file
 
-from unoUQ_data import FromFileDataGenerator, find_columns_with_str
+from unoUQ_data import FromFileDataGenerator
 
-from uno_baseline_keras2 import build_feature_model, build_model, evaluate_prediction
+from uno_baseline_keras2 import evaluate_prediction
 
 from uno_trainUQ_keras2 import extension_from_parameters, log_evaluation
 

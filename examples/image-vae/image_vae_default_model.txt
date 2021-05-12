@@ -1,0 +1,10 @@
+[Global_Params]
+workers = 16
+batch_size = 256
+grad_clip = 2.0
+data_dir = 'moses/data'
+model_path = 'models'
+output_dir = 'output'
+rng_seed = 42
+log_interval = 25
+learning_rate = 5.0e-4
