@@ -508,7 +508,10 @@ def finalize_parameters(bmk):
     except AttributeError:  # The 'config_file' option was not set by command-line
         conffile = bmk.conffile  # use default file
     else:  # a 'config_file' has been set --> use this file
-        conffile = os.path.join(bmk.file_path, conffile_txt)
+        if os.path.isabs(conffile_txt):
+            conffile = conffile_txt
+        else:
+            conffile = os.path.join(bmk.file_path, conffile_txt)
 
     # print("Configuration file: ", conffile)
     fileParameters = bmk.read_config_file(conffile)  # aux.config_file)#args.config_file)
