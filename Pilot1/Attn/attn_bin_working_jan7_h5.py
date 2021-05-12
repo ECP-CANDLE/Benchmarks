@@ -59,6 +59,7 @@ data_path = args['in']
 # PS     = 6212   # 60483
 DR = 0.2      # Dropout rate
 
+tf.compat.v1.disable_eager_execution()
 
 def r2(y_true, y_pred):
     SS_res = K.sum(K.square(y_true - y_pred))
@@ -67,8 +68,8 @@ def r2(y_true, y_pred):
 
 
 def tf_auc(y_true, y_pred):
-    auc = tf.metrics.auc(y_true, y_pred)[1]
-    K.get_session().run(tf.local_variables_initializer())
+    auc = tf.compat.v1.metrics.auc(y_true, y_pred)[1]
+    tf.compat.v1.keras.backend.get_session().run(tf.compat.v1.local_variables_initializer())
     return auc
 
 
