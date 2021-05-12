@@ -7,10 +7,6 @@ from keras.layers.core import Flatten, Dense, Dropout
 from keras.layers.convolutional import Convolution2D, Conv2DTranspose
 from keras.layers.normalization import BatchNormalization
 from keras.regularizers import l2
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 import os
 import sys
