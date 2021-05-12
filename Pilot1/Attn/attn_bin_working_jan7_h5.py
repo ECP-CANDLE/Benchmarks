@@ -61,6 +61,7 @@ DR = 0.2      # Dropout rate
 
 tf.compat.v1.disable_eager_execution()
 
+
 def r2(y_true, y_pred):
     SS_res = K.sum(K.square(y_true - y_pred))
     SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
