@@ -292,7 +292,9 @@ def run(gParams):
             save_image(sample.view(64, 3, 256, 256),
                        output_dir + 'sample_' + str(epoch) + '.png')
 
+    return loss
+
 
 if __name__ == '__main__':
     gParams = initialize_parameters()
-    run(gParams)
+    loss = run(gParams)

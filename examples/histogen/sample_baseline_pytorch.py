@@ -38,7 +38,10 @@ additional_definitions = [
         'type': str,
         'default': '',
         'help': ''},
-
+    {'name': 'use_gpus',
+        'type': candle.str2bool,
+        'default': False,
+        'help': ''},
 ]
 
 required = [
@@ -151,20 +154,21 @@ def run(params):
     args = candle.ArgumentStruct(**params)
 
     # Configure GPUs
-    try:
-        if args.gpus:
-            device_ids = []
-            ndevices = torch.cuda.device_count()
-            if ndevices > 1:
-                for i in range(ndevices):
-                    device_i = torch.device('cuda:' + str(i))
-                    device_ids.append(device_i)
-                device = device_ids[0]
-            elif ndevices == 1:
-                device = torch.device('cuda:0')
-            else:
-                device = torch.device('cpu')
-    except AttributeError:
+    #try:
+    if args.use_gpus:
+        device_ids = []
+        ndevices = torch.cuda.device_count()
+        if ndevices > 1:
+            for i in range(ndevices):
+                device_i = torch.device('cuda:' + str(i))
+                device_ids.append(device_i)
+            device = device_ids[0]
+        elif ndevices == 1:
+            device = torch.device('cuda:0')
+        #else:
+        #    device = torch.device('cpu')
+    #except AttributeError:
+    else:
         device = torch.device('cpu')
 
     model_vqvae = load_model('vqvae', args.vqvae, device)
