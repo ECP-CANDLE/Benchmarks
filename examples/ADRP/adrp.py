@@ -8,14 +8,8 @@ import pandas as pd
 import numpy as np
 import csv
 
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from scipy.stats.stats import pearsonr
-
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
-
+from sklearn.preprocessing import StandardScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 # lib_path = os.path.abspath(os.path.join(file_path, '..'))

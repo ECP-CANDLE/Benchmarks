@@ -4,28 +4,27 @@ import numpy as np
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import h5py
 
 import tensorflow as tf
 
-from keras import backend as K
-from keras.layers import Input, Dense, Dropout, Activation, BatchNormalization
-from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.callbacks import (
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import Input, Dense, Dropout
+from tensorflow.keras.models import Model, model_from_json, model_from_yaml
+from tensorflow.keras.callbacks import (
     Callback,
     ModelCheckpoint,
     CSVLogger,
     ReduceLROnPlateau,
     EarlyStopping,
-    TensorBoard,
 )
 
-from sklearn.utils.class_weight import compute_class_weight
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     r2_score,
     roc_auc_score,
+    pearsonr,
+    accuracy_score,
 )
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 import adrp
 import candle
@@ -87,7 +86,7 @@ class MetricHistory(Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         y_pred = self.model.predict(self.validation_data[0])
-        y_true = self.validation_data[1]
+        # y_true = self.validation_data[1]
         sample_weight = self.validation_data[2]
         r2 = r2_score(self.validation_data[1], y_pred, sample_weight=sample_weight)
         corr, _ = pearsonr(self.validation_data[1].flatten(), y_pred.flatten())

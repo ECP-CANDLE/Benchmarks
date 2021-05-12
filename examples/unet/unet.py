@@ -4,14 +4,14 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
-from keras.models import *
-from keras.layers import Input, merge, Conv2D, MaxPooling2D, UpSampling2D, Dropout, Cropping2D, Concatenate, ZeroPadding2D
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, UpSampling2D, Dropout, Cropping2D, Concatenate, ZeroPadding2D
 
 import candle
 
 # thread optimization
 import os
-from keras import backend as K
+from tensorflow.keras import backend as K
 if K.backend() == 'tensorflow' and 'NUM_INTRA_THREADS' in os.environ:
     import tensorflow as tf
     sess = tf.Session(config=tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']),

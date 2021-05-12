@@ -1,5 +1,5 @@
-from keras.callbacks import CSVLogger
-from keras import backend as K
+# from tensorflow.keras.callbacks import CSVLogger
+from tensorflow.keras import backend as K
 
 import mnist
 import candle
@@ -16,7 +16,7 @@ def initialize_parameters():
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(mnist_common)
-    csv_logger = CSVLogger('{}/params.log'.format(gParameters))
+    # csv_logger = CSVLogger('{}/params.log'.format(gParameters))
 
     return gParameters
 
@@ -35,19 +35,19 @@ def run(gParameters):
 
     # from __future__ import print_function
 
-    import keras
-    from keras.datasets import mnist
-    from keras.models import Sequential
-    from keras.layers import Dense, Dropout, Flatten
-    from keras.layers import Conv2D, MaxPooling2D
-    from keras import backend as K
+    from tensorflow import keras
+    from tensorflow.keras.datasets import mnist
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Dense, Dropout, Flatten
+    from tensorflow.keras.layers import Conv2D, MaxPooling2D
+    from tensorflow.keras import backend as K
 
     batch_size = gParameters['batch_size']
     num_classes = 10
     epochs = gParameters['epochs']
 
-    activation = gParameters['activation']
-    optimizer = gParameters['optimizer']
+    # activation = gParameters['activation']
+    # optimizer = gParameters['optimizer']
 
     # input image dimensions
     img_rows, img_cols = 28, 28

@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-import gzip
 import argparse
 
 import math
@@ -11,22 +10,18 @@ matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 
-import tensorflow as tf
+import tensorflow.keras as ke
+from tensorflow.keras import backend as K
 
-import keras as ke
-from keras import backend as K
+from tensorflow.keras.layers import Input, Dense, Dropout
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.models import Model, model_from_json, model_from_yaml
 
-from keras.layers import Input, Dense, Dropout, Activation
-from keras.optimizers import SGD, Adam, RMSprop
-from keras.models import Sequential, Model, model_from_json, model_from_yaml
-from keras.utils import np_utils, multi_gpu_model
-
-from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 
 
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
+from sklearn.preprocessing import StandardScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
@@ -144,11 +139,6 @@ outputs = Dense(1, activation='relu')(x)
 model = Model(inputs=inputs, outputs=outputs)
 
 model.summary()
-
-# parallel_model = multi_gpu_model(model, gpus=4)
-# parallel_model.compile(loss='mean_squared_error',
-#         optimizer=SGD(lr=0.0001, momentum=0.9),
-#              metrics=['mae',r2])
 
 model.compile(loss='mean_squared_error',
               optimizer=SGD(lr=0.0001, momentum=0.9),
