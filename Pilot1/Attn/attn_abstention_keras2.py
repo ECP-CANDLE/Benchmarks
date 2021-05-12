@@ -13,7 +13,7 @@ from tensorflow.keras.callbacks import Callback, ModelCheckpoint, CSVLogger, Red
 
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import r2_score, roc_auc_score
-from sklearn.metrics import auc, roc_curve, f1_score, precision_recall_curve, accuracy_score, pearsonr
+from sklearn.metrics import auc, roc_curve, f1_score, precision_recall_curve, accuracy_score
 
 import attn
 import candle
@@ -23,6 +23,7 @@ import attn_viz_utils as attnviz
 from attn_baseline_keras2 import build_attention_model
 
 np.set_printoptions(precision=4)
+tf.compat.v1.disable_eager_execution()
 
 additional_definitions = [
     {'name': 'alpha_scale_factor',
@@ -79,8 +80,8 @@ class BenchmarkAttnAbs(candle.Benchmark):
 
 
 def tf_auc(y_true, y_pred):
-    auc = tf.metrics.auc(y_true, y_pred)[1]
-    K.get_session().run(tf.local_variables_initializer())
+    auc = tf.compat.v1.metrics.auc(y_true, y_pred)[1]
+    tf.compat.v1.keras.backend.get_session().run(tf.compat.v1.local_variables_initializer())
     return auc
 
 
@@ -91,20 +92,6 @@ def auroc(y_true, y_pred):
                        stateful=False,
                        name='sklearnAUC')
     return score
-
-
-class MetricHistory(Callback):
-    def on_epoch_begin(self, epoch, logs=None):
-        print("\n")
-
-    def on_epoch_end(self, epoch, logs=None):
-        y_pred = self.model.predict(self.validation_data[0])
-        r2 = r2_score(self.validation_data[1], y_pred)
-        corr, _ = pearsonr(self.validation_data[1].flatten(), y_pred.flatten())
-        print("\nval_r2:", r2)
-        print(y_pred.shape)
-        print("\nval_corr:", corr, "val_r2:", r2)
-        print("\n")
 
 
 def build_type_classifier(x_train, y_train, x_test, y_test):

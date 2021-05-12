@@ -16,7 +16,7 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import Callback, ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.metrics import r2_score, mean_squared_error, roc_auc_score, binary_crossentropy, pearsonr
+from sklearn.metrics import r2_score, mean_squared_error, roc_auc_score
 from sklearn.metrics import auc, roc_curve, f1_score, precision_recall_curve, accuracy_score
 
 import attn
@@ -25,6 +25,7 @@ import candle
 import attn_viz_utils as attnviz
 
 np.set_printoptions(precision=4)
+tf.compat.v1.disable_eager_execution()
 
 
 def r2(y_true, y_pred):
@@ -34,8 +35,8 @@ def r2(y_true, y_pred):
 
 
 def tf_auc(y_true, y_pred):
-    auc = tf.metrics.auc(y_true, y_pred)[1]
-    K.get_session().run(tf.compat.v1.local_variables_initializer())
+    auc = tf.compat.v1.metrics.auc(y_true, y_pred)[1]
+    tf.compat.v1.keras.backend.get_session().run(tf.compat.v1.local_variables_initializer())
     return auc
 
 
@@ -59,26 +60,8 @@ def corr(y_true, y_pred):
     return cov / (K.sqrt(var1 * var2) + K.epsilon())
 
 
-def xent(y_true, y_pred):
-    return binary_crossentropy(y_true, y_pred)
-
-
 def mse(y_true, y_pred):
     return mean_squared_error(y_true, y_pred)
-
-
-class MetricHistory(Callback):
-    def on_epoch_begin(self, epoch, logs=None):
-        print("\n")
-
-    def on_epoch_end(self, epoch, logs=None):
-        y_pred = self.model.predict(self.validation_data[0])
-        r2 = r2_score(self.validation_data[1], y_pred)
-        corr, _ = pearsonr(self.validation_data[1].flatten(), y_pred.flatten())
-        print("\nval_r2:", r2)
-        print(y_pred.shape)
-        print("\nval_corr:", corr, "val_r2:", r2)
-        print("\n")
 
 
 class LoggingCallback(Callback):
