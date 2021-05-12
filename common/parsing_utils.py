@@ -625,7 +625,7 @@ def parse_from_dictlist(dictlist, parser):
             elif 'choices' in d:  # Select from choice (fixed number of parameters)
                 parser.add_argument('--' + d['name'], choices=d['choices'], default=d['default'], help=d['help'])
             else:  # Non an action, one parameter, no choices
-                print('Adding ', d['name'] , ' to parser')
+                print('Adding ', d['name'], ' to parser')
                 parser.add_argument('--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
 
     return parser

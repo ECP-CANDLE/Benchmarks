@@ -22,7 +22,7 @@ sys.path.append(lib_path)
 work_path = os.path.dirname(os.path.realpath(__file__))
 
 from helper_utils import eval_string_as_list_of_lists, str2bool
-#from ckpt_keras_utils import ckpt_parser, ckpt_defs
+# from ckpt_keras_utils import ckpt_parser, ckpt_defs
 
 # Starting modifications
 
@@ -627,7 +627,7 @@ class Benchmark:
         self.framework = framework
 
         self.required = set([])
-        #self.additional_definitions = ckpt_defs([])
+        # self.additional_definitions = ckpt_defs([])
         self.set_locals()
 
     def parse_from_common(self):
