@@ -1,4 +1,3 @@
-
 """
 CKPT KERAS UTILS
 
@@ -599,7 +598,7 @@ def param_type_check_bool(key, value):
         return value
     try:
         v = str2bool(value)
-    except Exception:
+    except TypeError:
         raise TypeError("parameter: '%s' is '%s' but must be a %s" %
                         key, str(value), str(ParamType.BOOLEAN))
     return v
@@ -611,7 +610,7 @@ def param_type_check_int(key, value, type_):
     else:
         try:
             result = int(value)
-        except Exception:
+        except TypeError:
             raise TypeError("parameter: '%s' is '%s' but must be a %s" %
                             (key, str(value), str(type_)))
     if type_ == ParamType.INTEGER_NN:
@@ -633,7 +632,7 @@ def param_type_check_float(key, value, type_):
     else:
         try:
             result = float(value)
-        except Exception:
+        except TypeError:
             raise TypeError("parameter: '%s' is '%s' but must be a %s" %
                             (key, str(value), str(type_)))
     if type_ == ParamType.FLOAT_NN:
