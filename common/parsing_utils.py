@@ -20,11 +20,13 @@ basic_conf = [
         'default': argparse.SUPPRESS,
         'help': 'specify model configuration file'},
     {'name': 'data_type',
+        'abv' : 'd',
         'type': str,
         'default': argparse.SUPPRESS,
         'choices': ['f16', 'f32', 'f64'],
         'help': 'default floating point.'},
     {'name': 'rng_seed',
+        'abv' : 'r',
         'type': int,
         'default': argparse.SUPPRESS,
         'help': 'random number generator seed.'},
@@ -47,6 +49,7 @@ basic_conf = [
         'default': argparse.SUPPRESS,
         'help': 'set IDs of GPUs to use.'},
     {'name': 'profiling',
+        'abv' : 'p',
         'type': hutils.str2bool,
         'default': False,
         'help': 'Turn profiling on or off.'},
@@ -54,6 +57,7 @@ basic_conf = [
 
 input_output_conf = [
     {'name': 'save_path',
+        'abv' : 's',
         'type': str,
         'default': argparse.SUPPRESS,
         'help': 'file path to save model snapshots.'},
@@ -95,10 +99,12 @@ input_output_conf = [
 
 logging_conf = [
     {'name': 'verbose',
+        'abv' : 'v',
         'type': hutils.str2bool,
         'default': False,
         'help': 'increase output verbosity.'},
     {'name': 'logfile',
+        'abv' : 'l',
         'type': str,
         'default': None,
         'help': 'log file'},
@@ -135,6 +141,7 @@ model_conf = [
         'default': argparse.SUPPRESS,
         'help': 'use locally connected layers instead of convolution layers.'},
     {'name': 'activation',
+        'abv' : 'a',
         'type': str,
         'default': argparse.SUPPRESS,
         'help': 'keras activation function to use in inner layers: relu, tanh, sigmoid...'},
@@ -181,13 +188,16 @@ model_conf = [
 training_conf = [
     {'name': 'epochs',
         'type': int,
+        'abv' : 'e',
         'default': argparse.SUPPRESS,
         'help': 'number of training epochs.'},
     {'name': 'batch_size',
         'type': int,
+        'abv' : 'z',
         'default': argparse.SUPPRESS,
         'help': 'batch size.'},
     {'name': 'learning_rate',
+        'abv' : 'lr',
         'type': float,
         'default': argparse.SUPPRESS,
         'help': 'overrides the learning rate for training.'},
@@ -610,26 +620,48 @@ def parse_from_dictlist(dictlist, parser):
 
         if 'help' not in d:
             d['help'] = ''
+            
+        if 'abv' not in d:
+            d['abv'] = None
 
         if 'action' in d:  # Actions
             if d['action'] == 'list-of-lists':  # Non standard. Specific functionallity has been added
                 d['action'] = ListOfListsAction
-                parser.add_argument('--' + d['name'], dest=d['name'], action=d['action'], type=d['type'], default=d['default'], help=d['help'])
+                if d['abv'] is None:
+                    parser.add_argument('--' + d['name'], dest=d['name'], action=d['action'], type=d['type'], default=d['default'], help=d['help'])
+                else:
+                    parser.add_argument('-' + d['abv'], '--' + d['name'], dest=d['name'], action=d['action'], type=d['type'], default=d['default'], help=d['help'])
             elif (d['action'] == 'store_true') or (d['action'] == 'store_false'):
                 raise Exception('The usage of store_true or store_false cannot be undone in the command line. Use type=str2bool instead.')
             else:
-                parser.add_argument('--' + d['name'], action=d['action'], default=d['default'], help=d['help'], type=d['type'])
+                if d['abv'] is None:
+                    parser.add_argument('--' + d['name'], action=d['action'], default=d['default'], help=d['help'], type=d['type'])
+                else:
+                    parser.add_argument('-' + d['abv'], '--' + d['name'], action=d['action'], default=d['default'], help=d['help'], type=d['type'])
         else:  # Non actions
             if 'nargs' in d:  # variable parameters
                 if 'choices' in d:  # choices with variable parameters
-                    parser.add_argument('--' + d['name'], nargs=d['nargs'], choices=d['choices'], default=d['default'], help=d['help'])
+                    if d['abv'] is None:
+                        parser.add_argument('--' + d['name'], nargs=d['nargs'], choices=d['choices'], default=d['default'], help=d['help'])
+                    else:
+                        parser.add_argument('-' + d['abv'], '--' + d['name'], nargs=d['nargs'], choices=d['choices'], default=d['default'], help=d['help'])
                 else:  # Variable parameters (free, no limited choices)
-                    parser.add_argument('--' + d['name'], nargs=d['nargs'], type=d['type'], default=d['default'], help=d['help'])
+                    if d['abv'] is None:
+                        parser.add_argument('--' + d['name'], nargs=d['nargs'], type=d['type'], default=d['default'], help=d['help'])
+                    else:
+                        parser.add_argument('-' + d['abv'], '--' + d['name'], nargs=d['nargs'], type=d['type'], default=d['default'], help=d['help'])
             elif 'choices' in d:  # Select from choice (fixed number of parameters)
-                parser.add_argument('--' + d['name'], choices=d['choices'], default=d['default'], help=d['help'])
+                if d['abv'] is None:
+                    parser.add_argument('--' + d['name'], choices=d['choices'], default=d['default'], help=d['help'])
+                else:
+                    parser.add_argument('-' + d['abv'], '--' + d['name'], choices=d['choices'], default=d['default'], help=d['help'])
             else:  # Non an action, one parameter, no choices
                 # print('Adding ', d['name'], ' to parser')
-                parser.add_argument('--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
+                if d['abv'] is None:
+                    parser.add_argument('--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
+                else:
+                    parser.add_argument('-' + d['abv'], '--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
+                
 
     return parser
 
