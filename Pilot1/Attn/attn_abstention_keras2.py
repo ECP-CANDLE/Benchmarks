@@ -9,10 +9,10 @@ import tensorflow as tf
 
 from tensorflow.keras import backend as K
 from tensorflow.keras.models import model_from_json, model_from_yaml
-from tensorflow.keras.callbacks import Callback, ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 
 from sklearn.utils.class_weight import compute_class_weight
-from sklearn.metrics import r2_score, roc_auc_score
+from sklearn.metrics import roc_auc_score
 from sklearn.metrics import auc, roc_curve, f1_score, precision_recall_curve, accuracy_score
 
 import attn
