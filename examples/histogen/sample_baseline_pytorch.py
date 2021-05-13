@@ -164,6 +164,8 @@ def run(params):
             device = device_ids[0]
         elif ndevices == 1:
             device = torch.device('cuda:0')
+        else:
+            device = torch.device('cpu')
     else:
         device = torch.device('cpu')
 
