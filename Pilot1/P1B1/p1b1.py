@@ -169,6 +169,7 @@ def load_data(params, seed):
                                 validation_split=params['val_split'],
                                 return_dataframe=False,
                                 return_header=True,
+                                nrows=params['train_samples'] if 'train_samples' in params and params['train_samples'] > 0 else None,
                                 seed=seed)
 
 
