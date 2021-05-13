@@ -1,0 +1,8 @@
+[Global_Params]
+epochs = 560
+learning_rate = 3e-4
+batch_size = 128
+use_gpus = True
+ckpt_directory = './'
+
+

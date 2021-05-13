@@ -1,0 +1,7 @@
+[Global_Params]
+size = 256
+batch_size = 128
+use_gpus = True
+ckpt_directory = './'
+
+
