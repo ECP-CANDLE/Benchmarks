@@ -229,7 +229,7 @@ def run(params):
             y_test_pred = model.predict(x_test_list, batch_size=args.batch_size)
         else:
             test_gen.reset()
-            y_test_pred = model.predict_generator(test_gen.flow(single=args.single), test_gen.steps)
+            y_test_pred = model.predict(test_gen.flow(single=args.single), steps=test_gen.steps)
             y_test_pred = y_test_pred[:test_gen.size]
 
         if args.loss == 'het':
