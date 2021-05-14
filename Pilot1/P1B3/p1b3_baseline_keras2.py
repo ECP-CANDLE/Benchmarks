@@ -21,6 +21,8 @@ import matplotlib.pyplot as plt
 
 import p1b3 as benchmark
 import candle
+import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 
 
 def initialize_parameters(default_model='p1b3_default_model.txt'):
@@ -137,12 +139,14 @@ class MyProgbarLogger(ProgbarLogger):
     def __init__(self, samples):
         super(MyProgbarLogger, self).__init__(count_mode='samples')
         self.samples = samples
+        self.params = {}
 
     def on_train_begin(self, logs=None):
         super(MyProgbarLogger, self).on_train_begin(logs)
         self.verbose = 1
         self.extra_log_values = []
         self.params['samples'] = self.samples
+        self.params['metrics'] = []
 
     def on_batch_begin(self, batch, logs=None):
         if self.seen < self.target:
@@ -342,13 +346,13 @@ def run(gParameters):
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
 
     # history = model.fit(train_gen, steps_per_epoch=train_steps, # this should be the deprecation fix
-    history = model.fit_generator(train_gen, train_steps,
-                                  epochs=gParameters['epochs'],
-                                  validation_data=val_gen,
-                                  validation_steps=val_steps,
-                                  verbose=0,
-                                  callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
-                                  )
+    history = model.fit(train_gen, steps_per_epoch=train_steps,
+                        epochs=gParameters['epochs'],
+                        validation_data=val_gen,
+                        validation_steps=val_steps,
+                        verbose=0,
+                        callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
+                        )
     # callbacks=[checkpointer, loss_history, candleRemoteMonitor], # this just caused the job to hang on Biowulf
 
     benchmark.logger.removeHandler(fh)
