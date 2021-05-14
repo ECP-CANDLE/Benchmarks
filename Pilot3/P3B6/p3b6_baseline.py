@@ -9,9 +9,11 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-from sklearn.metrics import f1_score
+from transformers import (
+    BertForSequenceClassification, BertConfig
+)
 
-from bert import HiBERT
+from sklearn.metrics import f1_score
 from random_data import MimicDatasetSynthetic
 
 
@@ -35,11 +37,8 @@ def parse_args():
                         help='Number of clases')
     parser.add_argument('--weight_decay', type=float, default=0.0,
                         help='weight decay')
-    parser.add_argument('--device', type=str, default='cuda',
+    parser.add_argument('--device', type=str, default='cpu',
                         help='path to the model weights')
-    parser.add_argument('--pretrained_weights_path', type=str,
-                        help='path to the model weights')
-
     return parser.parse_args()
 
 
@@ -105,29 +104,21 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
         input_ids = batch["tokens"].to(args.device)
         segment_ids = batch["seg_ids"].to(args.device)
         input_mask = batch["masks"].to(args.device)
+        labels = batch["label"].to(args.device)
 
-        logits = model(input_ids, input_mask, segment_ids)  # n_segs)
-        label_ids = batch["label"].to(args.device)
+        output = model(
+            input_ids, 
+            labels=labels
+        )
 
-        loss = criterion(
-            logits.view(-1, args.num_classes), label_ids)
-
-        loss.backward()
+        output.loss.backward()
         optimizer.step()
 
-        train_loss += loss.mean()
-
-        # track training loss
-        if (idx + 1) % 100 == 0:
-            train_loss = torch.tensor(train_loss)
-            print(f"epoch: {epoch}, batch: {idx}, loss: {train_loss}")
+        print(f"epoch: {epoch}, batch: {idx}, train loss: {output.loss}")
 
 
 def validate(dataloader, model, args, epoch):
     model.eval()
-
-    preds = []
-    labels = []
 
     with torch.no_grad():
         for idx, batch in enumerate(dataloader):
@@ -135,44 +126,37 @@ def validate(dataloader, model, args, epoch):
             input_ids = batch["tokens"].to(args.device)
             segment_ids = batch["seg_ids"].to(args.device)
             input_mask = batch["masks"].to(args.device)
+            labels = batch["label"].to(args.device)
 
-            logits = model(input_ids, input_mask, segment_ids)  # , n_segs)
-            logits = torch.nn.Sigmoid()(logits)
+            output = model(
+                input_ids, 
+                labels=labels
+            )
 
-            logits = logits.view(-1, args.num_classes).cpu().data.numpy()
-            preds.append(np.rint(logits))
-            labels.append(batch["label"].data.numpy())
-
-    preds = np.concatenate(preds, 0)
-    labels = np.concatenate(labels, 0)
-
-    preds = torch.tensor(preds)
-
-    labels = torch.tensor(labels)
-
-    valid_f1 = f1_score(labels.flatten(), preds.flatten())
-
-    print(f"epoch: {epoch}, validation F1: {valid_f1}")
+            print(f"epoch: {epoch}, batch: {idx}, valid loss: {output.loss}")
 
 
 def run(args):
     # args = candle.ArgumentStruct(**params)
-    # args.cuda = torch.cuda.is_available()
-    # args.device = torch.device(f"cuda" if args.cuda else "cpu")
+    args.cuda = torch.cuda.is_available()
+    args.device = torch.device(f"cuda" if args.cuda else "cpu")
 
     train_loader, valid_loader, test_loader = create_data_loaders(args)
 
-    model = model = HiBERT(args.pretrained_weights_path, args.num_classes)
+    config = BertConfig(
+        num_attention_heads=2,
+        hidden_size=128,
+        num_hidden_layers=1,
+        num_labels = args.num_classes
+    )
+
+    model = BertForSequenceClassification(config)
     model.to(args.device)
 
-    params = [
-        {
-            "params": [p for n, p in model.named_parameters()],
-            "weight_decay": args.weight_decay,
-        }
-    ]
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=args.learning_rate, eps=args.eps
+    )
 
-    optimizer = torch.optim.Adam(params, lr=args.learning_rate, eps=args.eps)
     criterion = nn.BCEWithLogitsLoss()
 
     for epoch in range(args.num_epochs):

@@ -137,6 +137,8 @@ def run(gParameters):
     emb_l2 = gParameters['emb_l2']
     w_l2 = gParameters['w_l2']
 
+    print("Downloaded........")
+
     train_x = np.load(fpath + '/train_X.npy')
     train_y = np.load(fpath + '/train_Y.npy')
     test_x = np.load(fpath + '/test_X.npy')

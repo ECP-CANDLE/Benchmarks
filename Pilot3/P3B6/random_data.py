@@ -6,7 +6,7 @@ class MimicDatasetSynthetic(Dataset):
 
     def __init__(self,
                  doc_length=512,
-                 num_vocab=10_000,
+                 num_vocab=1_000,
                  num_docs=100,
                  num_classes=10
                  ):
