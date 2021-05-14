@@ -8,6 +8,7 @@ import os
 import numpy as np
 import pandas as pd
 
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
 from tensorflow.keras import optimizers
@@ -26,6 +27,7 @@ from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+tf.compat.v1.disable_eager_execution()
 
 
 def extension_from_parameters(args):
@@ -420,24 +422,23 @@ def run(params):
         else:
             logger.info('Data points per epoch: train = %d, val = %d, test = %d', train_gen.size, val_gen.size, test_gen.size)
             logger.info('Steps per epoch: train = %d, val = %d, test = %d', train_gen.steps, val_gen.steps, test_gen.steps)
-            history = model.fit_generator(train_gen, train_gen.steps,
-                                          epochs=args.epochs,
-                                          callbacks=callbacks,
-                                          validation_data=val_gen,
-                                          validation_steps=val_gen.steps)
+            history = model.fit(train_gen,
+                                epochs=args.epochs,
+                                callbacks=callbacks,
+                                validation_data=val_gen)
 
         # prediction on holdout(test) when exists or use validation set
         if test_gen.size > 0:
             df_val = test_gen.get_response(copy=True)
             y_val = df_val[target].values
-            y_val_pred = model.predict_generator(test_gen, test_gen.steps + 1)
+            y_val_pred = model.predict(test_gen, steps=test_gen.steps + 1)
             y_val_pred = y_val_pred[:test_gen.size]
         else:
             if args.no_gen:
                 y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
             else:
                 val_gen.reset()
-                y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
+                y_val_pred = model.predict(val_gen, steps=val_gen.steps + 1)
                 y_val_pred = y_val_pred[:val_gen.size]
 
         y_val_pred = y_val_pred.flatten()
@@ -450,7 +451,7 @@ def run(params):
         df_val[target + 'Error'] = y_val_pred - y_val
         df_pred_list.append(df_val)
 
-        candle.plot_metrics(history, title=None, skip_ep=0, outdir=args.output_dir, add_lr=True)
+        candle.plot_metrics(history, title=None, skip_ep=0, outdir=os.path.dirname(args.save_path), add_lr=True)
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
