@@ -23,6 +23,9 @@ additional_definitions = [
     {'name': 'unrolled',
         'action': 'store',
         'type': candle.str2bool},
+    {'name': 'use_synthetic_data',
+        'action': 'store',
+        'type': candle.str2bool},
 ]
 
 required = [
