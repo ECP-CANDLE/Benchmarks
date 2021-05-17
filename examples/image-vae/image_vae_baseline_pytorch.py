@@ -60,7 +60,7 @@ class BenchmarkImageVAE(candle.Benchmark):
 def initialize_parameters(default_model='image_vae_default_model.txt'):
 
     # Build benchmark object
-    image_vaeBmk = BenchmarkImageVAE(file_path, default_model, 'keras',
+    image_vaeBmk = BenchmarkImageVAE(file_path, default_model, 'pytorch',
                                      prog='image_vae_baseline',
                                      desc='PyTorch ImageNet Training')
 
@@ -89,6 +89,13 @@ def clip_gradient(optimizer, grad_clip=1.0):
 
 def run(gParams):
     args = candle.ArgumentStruct(**gParams)
+
+    data_url = gParams['data_url']+'/'
+    train_data = gParams['train_data']
+    test_data = gParams['test_data']
+
+    train_file = candle.fetch_file(data_url+train_data, subdir='Examples/image_vae')
+    test_file = candle.fetch_file(data_url+test_data, subdir='Examples/image_vae')
 
     starting_epoch = 1
     total_epochs = None

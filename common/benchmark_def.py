@@ -145,6 +145,9 @@ class Benchmark:
 
         fileParams = self.format_benchmark_config_arguments(fileParams)
 
+        print(fileParams)
+
+
         return fileParams
 
     def set_locals(self):

@@ -9,7 +9,7 @@ from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 from torchvision import transforms
 
-from invert import *
+from invert import Invert
 
 
 class MoleLoader(torch.utils.data.Dataset):
@@ -30,7 +30,7 @@ class MoleLoader(torch.utils.data.Dataset):
         if kekulize:
             try:
                 Chem.Kekulize(mc)
-            except Except:
+            except Exception:
                 mc = Chem.Mol(mol.ToBinary())
         if not mc.GetNumConformers():
             rdDepictor.Compute2DCoords(mc)

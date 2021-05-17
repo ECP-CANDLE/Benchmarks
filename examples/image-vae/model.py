@@ -1,4 +1,8 @@
 import math
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch.autograd import Variable
 
 from ResNet import ResNet, BasicBlock, Bottleneck
 
@@ -881,12 +885,6 @@ class ComboVAE(nn.Module):
         y_1, y_2 = self.decode(z)
         return y_1, y_2, mu, logvar
 
-
-import torch
-import torch.nn as nn
-from torch.autograd import Variable
-
-
 # class SELU(nn.Module):
 #
 #     def __init__(self, alpha=1.6732632423543772848170429916717,
@@ -958,6 +956,7 @@ from torch.autograd import Variable
 #         out, h = self.gru(out)
 #         return self.decoded_mean(out
 #       )
+
 
 class SELU(nn.Module):
 

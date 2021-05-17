@@ -56,8 +56,7 @@ def abstention_loss(alpha, mask):
         abs_pred = K.clip(abs_pred, K.epsilon(), 1. - K.epsilon())
 
         return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
-        #return K.mean((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred), axis=-1)
-        #return K.mean((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        # return K.mean((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred), axis = -1)
 
     loss.__name__ = 'abs_crossentropy'
     return loss
@@ -94,8 +93,8 @@ def sparse_abstention_loss(alpha, mask):
         # add some small value to prevent NaN when prediction is abstained
         abs_pred = K.clip(abs_pred, K.epsilon(), 1. - K.epsilon())
 
-        # return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
-        return K.mean((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        return ((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred))
+        # return K.mean((1. - abs_pred) * base_cost - alpha * K.log(1. - abs_pred), axis = -1)
 
     loss.__name__ = 'sparse_abs_crossentropy'
     return loss
