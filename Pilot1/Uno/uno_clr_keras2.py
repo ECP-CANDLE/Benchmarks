@@ -8,6 +8,7 @@ import os
 import numpy as np
 import pandas as pd
 
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
 from tensorflow.keras import optimizers
@@ -26,6 +27,7 @@ from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+tf.compat.v1.disable_eager_execution()
 
 
 def extension_from_parameters(args):
@@ -72,7 +74,7 @@ def evaluate_prediction(y_true, y_pred):
     return {'mse': mse, 'mae': mae, 'r2': r2, 'corr': corr}
 
 
-def log_evaluation(metric_outputs, description='Comparing y_true and y_pred:'):
+def log_evaluation(metric_outputs, logger, description='Comparing y_true and y_pred:'):
     logger.info(description)
     for metric, value in metric_outputs.items():
         logger.info('  {}: {:.4f}'.format(metric, value))
@@ -110,13 +112,14 @@ class MultiGPUCheckpoint(ModelCheckpoint):
 
 
 def build_feature_model(input_shape, name='', dense_layers=[1000, 1000],
+                        kernel_initializer='glorot_normal',
                         activation='relu', residual=False,
                         dropout_rate=0, permanent_dropout=True):
     x_input = Input(shape=input_shape)
     h = x_input
     for i, layer in enumerate(dense_layers):
         x = h
-        h = Dense(layer, activation=activation)(h)
+        h = Dense(layer, activation=activation, kernel_initializer=kernel_initializer)(h)
         if dropout_rate > 0:
             if permanent_dropout:
                 h = PermanentDropout(dropout_rate)(h)
@@ -149,6 +152,10 @@ class SimpleWeightSaver(Callback):
 def build_model(loader, args, permanent_dropout=True, silent=False):
     input_models = {}
     dropout_rate = args.dropout
+
+    initializer = 'glorot_normal' if hasattr(args, 'initialization') is False else args.initialization
+    kernel_initializer = candle.build_initializer(initializer, candle.keras_default_config(), args.rng_seed)
+
     for fea_type, shape in loader.feature_shapes.items():
         base_type = fea_type.split('.')[0]
         if base_type in ['cell', 'drug']:
@@ -161,6 +168,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
 
             box = build_feature_model(input_shape=shape, name=fea_type,
                                       dense_layers=dense_feature_layers,
+                                      kernel_initializer=kernel_initializer,
                                       dropout_rate=dropout_rate, permanent_dropout=permanent_dropout)
             if not silent:
                 logger.debug('Feature encoding submodel for %s:', fea_type)
@@ -185,7 +193,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
     h = merged
     for i, layer in enumerate(args.dense):
         x = h
-        h = Dense(layer, activation=args.activation)(h)
+        h = Dense(layer, activation=args.activation, kernel_initializer=kernel_initializer)(h)
         if dropout_rate > 0:
             if permanent_dropout:
                 h = PermanentDropout(dropout_rate)(h)
@@ -196,7 +204,7 @@ def build_model(loader, args, permanent_dropout=True, silent=False):
                 h = keras.layers.add([h, x])
             except ValueError:
                 pass
-    output = Dense(1)(h)
+    output = Dense(1, kernel_initializer=kernel_initializer)(h)
 
     return Model(inputs, output)
 
@@ -348,7 +356,7 @@ def run(params):
             template_model.load_weights(args.initial_weights)
 
         if len(args.gpus) > 1:
-            from keras.utils import multi_gpu_model
+            from tensorflow.keras.utils import multi_gpu_model
             gpu_count = len(args.gpus)
             logger.info("Multi GPU with {} gpus".format(gpu_count))
             model = multi_gpu_model(template_model, cpu_merge=False, gpus=gpu_count)
@@ -410,7 +418,7 @@ def run(params):
         df_val = val_gen.get_response(copy=True)
         y_val = df_val[target].values
         y_shuf = np.random.permutation(y_val)
-        log_evaluation(evaluate_prediction(y_val, y_shuf),
+        log_evaluation(evaluate_prediction(y_val, y_shuf), logger,
                        description='Between random pairs in y_val:')
 
         if args.no_gen:
@@ -424,37 +432,36 @@ def run(params):
         else:
             logger.info('Data points per epoch: train = %d, val = %d, test = %d', train_gen.size, val_gen.size, test_gen.size)
             logger.info('Steps per epoch: train = %d, val = %d, test = %d', train_gen.steps, val_gen.steps, test_gen.steps)
-            history = model.fit_generator(train_gen, train_gen.steps,
-                                          epochs=args.epochs,
-                                          callbacks=callbacks,
-                                          validation_data=val_gen,
-                                          validation_steps=val_gen.steps)
+            history = model.fit(train_gen,
+                                epochs=args.epochs,
+                                callbacks=callbacks,
+                                validation_data=val_gen)
 
         # prediction on holdout(test) when exists or use validation set
         if test_gen.size > 0:
             df_val = test_gen.get_response(copy=True)
             y_val = df_val[target].values
-            y_val_pred = model.predict_generator(test_gen, test_gen.steps + 1)
+            y_val_pred = model.predict(test_gen, steps=test_gen.steps + 1)
             y_val_pred = y_val_pred[:test_gen.size]
         else:
             if args.no_gen:
                 y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
             else:
                 val_gen.reset()
-                y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
+                y_val_pred = model.predict(val_gen, steps=val_gen.steps + 1)
                 y_val_pred = y_val_pred[:val_gen.size]
 
         y_val_pred = y_val_pred.flatten()
 
         scores = evaluate_prediction(y_val, y_val_pred)
-        log_evaluation(scores)
+        log_evaluation(scores, logger)
 
         # df_val = df_val.assign(PredictedGrowth=y_val_pred, GrowthError=y_val_pred - y_val)
         df_val['Predicted' + target] = y_val_pred
         df_val[target + 'Error'] = y_val_pred - y_val
         df_pred_list.append(df_val)
 
-        candle.plot_metrics(history, title=None, skip_ep=0, outdir=args.output_dir, add_lr=True)
+        candle.plot_metrics(history, title=None, skip_ep=0, outdir=os.path.dirname(args.save_path), add_lr=True)
 
     pred_fname = prefix + '.predicted.tsv'
     df_pred = pd.concat(df_pred_list)
@@ -472,7 +479,7 @@ def run(params):
 
     if args.cv > 1:
         scores = evaluate_prediction(df_pred[target], df_pred['Predicted' + target])
-        log_evaluation(scores, description='Combining cross validation folds:')
+        log_evaluation(scores, logger, description='Combining cross validation folds:')
 
     for test_source in loader.test_sep_sources:
         test_gen = CombinedDataGenerator(loader, partition='test', batch_size=args.batch_size, source=test_source)
@@ -489,7 +496,7 @@ def run(params):
             y_test_pred = y_test_pred[:test_gen.size]
         y_test_pred = y_test_pred.flatten()
         scores = evaluate_prediction(y_test, y_test_pred)
-        log_evaluation(scores, description='Testing on data from {} ({})'.format(test_source, n_test))
+        log_evaluation(scores, logger, description='Testing on data from {} ({})'.format(test_source, n_test))
 
     if K.backend() == 'tensorflow':
         K.clear_session()

@@ -9,6 +9,7 @@ import argparse
 import numpy as np
 import pandas as pd
 
+import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import backend as K
 from tensorflow.keras import optimizers
@@ -24,6 +25,7 @@ from uno_baseline_keras2 import build_model, evaluate_prediction
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+tf.compat.v1.disable_eager_execution()
 
 
 additional_definitions = [
@@ -146,10 +148,10 @@ def run(params):
 
     if (len(args.gpus) > 0):
         import tensorflow as tf
-        config = tf.ConfigProto()
+        config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         config.gpu_options.visible_device_list = ",".join(map(str, args.gpus))
-        K.set_session(tf.Session(config=config))
+        tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
 
     loader = CombinedDataLoader(seed=args.rng_seed)
     loader.load(cache=args.cache,
@@ -298,7 +300,7 @@ def run(params):
             template_model.load_weights(args.initial_weights)
 
         if len(args.gpus) > 1:
-            from keras.utils import multi_gpu_model
+            from tensorflow.keras.utils import multi_gpu_model
             gpu_count = len(args.gpus)
             logger.info("Multi GPU with {} gpus".format(gpu_count))
             model = multi_gpu_model(template_model, cpu_merge=False, gpus=gpu_count)
@@ -379,17 +381,16 @@ def run(params):
         else:
             logger.info('Data points per epoch: train = %d, val = %d, test = %d', train_gen.size, val_gen.size, test_gen.size)
             logger.info('Steps per epoch: train = %d, val = %d, test = %d', train_gen.steps, val_gen.steps, test_gen.steps)
-            history = model.fit_generator(train_gen, train_gen.steps,
-                                          epochs=args.epochs,
-                                          callbacks=callbacks,
-                                          validation_data=val_gen,
-                                          validation_steps=val_gen.steps)
+            history = model.fit(train_gen,
+                                epochs=args.epochs,
+                                callbacks=callbacks,
+                                validation_data=val_gen)
 
         # prediction on holdout(test) when exists or use validation set
         if test_gen.size > 0:
             df_val = test_gen.get_response(copy=True)
             y_val = df_val[target].values
-            y_val_pred = model.predict_generator(test_gen, test_gen.steps + 1)
+            y_val_pred = model.predict(test_gen, steps=test_gen.steps + 1)
             y_val_pred = y_val_pred[:test_gen.size]
             if args.loss == 'het':
                 y_val_pred_ = y_val_pred[:, 0]
@@ -402,7 +403,7 @@ def run(params):
                 y_val_pred = model.predict(x_val_list, batch_size=args.batch_size)
             else:
                 val_gen.reset()
-                y_val_pred = model.predict_generator(val_gen, val_gen.steps + 1)
+                y_val_pred = model.predict(val_gen, steps=val_gen.steps + 1)
                 y_val_pred = y_val_pred[:val_gen.size]
 
             if args.loss == 'het':
