@@ -6,6 +6,12 @@ P3B6 BERT
 
 Finetuning BERT on synthetic data that imitates the Mimic dataset.
 
+.. code-block:: console
+
+    python p3b6_baseline.py
+
+
+#### Running on Summit:
 
 For a single node run without Horovod:
 
