@@ -1,7 +1,7 @@
 import torch
 import argparse
-# import candle
-# import p3b6 as bmk
+import p3b6 as bmk
+import candle
 
 import numpy as np
 
@@ -17,35 +17,10 @@ from sklearn.metrics import f1_score
 from random_data import MimicDatasetSynthetic
 
 
-def parse_args():
-    parser = argparse.ArgumentParser(description='Bert Mimic Synth')
-    parser.add_argument('--batch_size', type=int, default=10,
-                        help='batch size')
-    parser.add_argument('--num_epochs', type=int, default=10,
-                        help='Adam learning rate')
-    parser.add_argument('--learning_rate', type=float, default=1e-3,
-                        help='Adam learning rate')
-    parser.add_argument('--eps', type=float, default=1e-7,
-                        help='Adam epsilon')
-    parser.add_argument('--num_train_samples', type=int, default=100,
-                        help='Number of training samples')
-    parser.add_argument('--num_valid_samples', type=int, default=100,
-                        help='Number of valid samples')
-    parser.add_argument('--num_test_samples', type=int, default=100,
-                        help='Number of test samples')
-    parser.add_argument('--num_classes', type=int, default=10,
-                        help='Number of clases')
-    parser.add_argument('--weight_decay', type=float, default=0.0,
-                        help='weight decay')
-    parser.add_argument('--device', type=str, default='cpu',
-                        help='path to the model weights')
-    return parser.parse_args()
-
-
 def initialize_parameters():
     """ Initialize the parameters for the P3B5 benchmark """
 
-    p3b5_bench = bmk.BenchmarkP3B5(
+    p3b6_bench = bmk.BenchmarkP3B6(
         bmk.file_path,
         "default_model.txt",
         "pytorch",
@@ -53,7 +28,7 @@ def initialize_parameters():
         desc="BERT bench",
     )
 
-    gParameters = candle.finalize_parameters(p3b6)
+    gParameters = candle.finalize_parameters(p3b6_bench)
     return gParameters
 
 
@@ -137,7 +112,7 @@ def validate(dataloader, model, args, epoch):
 
 
 def run(args):
-    # args = candle.ArgumentStruct(**params)
+    args = candle.ArgumentStruct(**args)
     args.cuda = torch.cuda.is_available()
     args.device = torch.device(f"cuda" if args.cuda else "cpu")
 
@@ -165,9 +140,7 @@ def run(args):
 
 
 def main():
-    # params = initialize_parameters()
-    # Temporarily use argparse
-    params = parse_args()
+    params = initialize_parameters()
     run(params)
 
 
