@@ -620,7 +620,7 @@ def parse_from_dictlist(dictlist, parser):
 
         if 'help' not in d:
             d['help'] = ''
-            
+
         if 'abv' not in d:
             d['abv'] = None
 
@@ -661,7 +661,6 @@ def parse_from_dictlist(dictlist, parser):
                     parser.add_argument('--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
                 else:
                     parser.add_argument('-' + d['abv'], '--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
-                
 
     return parser
 
