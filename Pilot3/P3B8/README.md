@@ -2,6 +2,14 @@
 
 Quantizing BERT on synthetic data that imitates the Mimic dataset.
 
+Run locally:
+
+```
+python py3b8_baseline.py
+```
+
+Run on Summit:
+
 ```
 bsub run.lsf
 ```

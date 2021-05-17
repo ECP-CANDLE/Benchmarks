@@ -1,9 +1,9 @@
 import os
 import time
 import torch
-import argparse
-# import candle
-# import p3b8 as bmk
+
+import p3b8 as bmk
+import candle
 
 import numpy as np
 
@@ -13,38 +13,12 @@ from torch.utils.data.distributed import DistributedSampler
 
 from sklearn.metrics import f1_score
 
-from bert import HiBERT
-from mimic import MimicDatasetSynthetic
+from transformers import (
+    BertForSequenceClassification, BertConfig
+)
 
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Bert Mimic Synth')
-    parser.add_argument('--batch_size', type=int, default=10,
-                        help='batch size')
-    parser.add_argument('--num_epochs', type=int, default=10,
-                        help='Adam learning rate')
-    parser.add_argument('--learning_rate', type=float, default=1e-3,
-                        help='Adam learning rate')
-    parser.add_argument('--eps', type=float, default=1e-7,
-                        help='Adam epsilon')
-    parser.add_argument('--num_train_samples', type=int, default=100,
-                        help='Number of training samples')
-    parser.add_argument('--num_valid_samples', type=int, default=100,
-                        help='Number of valid samples')
-    parser.add_argument('--num_test_samples', type=int, default=100,
-                        help='Number of test samples')
-    parser.add_argument('--num_classes', type=int, default=10,
-                        help='Number of clases')
-    parser.add_argument('--weight_decay', type=float, default=0.0,
-                        help='weight decay')
-    parser.add_argument('--device', type=str, default='cuda',
-                        help='path to the model weights')
-    parser.add_argument('--pretrained_weights_path', type=str,
-                        help='path to the model weights')
-    parser.add_argument('--verbose', action='store_true',
-                        help='verbose mode prints the quantized model')
-
-    return parser.parse_args()
+#from bert import HiBERT
+from random_data import MimicDatasetSynthetic
 
 
 def initialize_parameters():
@@ -110,21 +84,17 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
         segment_ids = batch["seg_ids"].to(args.device)
         input_mask = batch["masks"].to(args.device)
 
-        logits = model(input_ids, input_mask, segment_ids)  # n_segs)
-        label_ids = batch["label"].to(args.device)
+        labels = batch["label"].to(args.device)
 
-        loss = criterion(
-            logits.view(-1, args.num_classes), label_ids)
+        output = model(
+            input_ids, 
+            labels=labels
+        )
 
-        loss.backward()
+        output.loss.backward()
         optimizer.step()
 
-        train_loss += loss.mean()
-
-        # track training loss
-        if (idx + 1) % 100 == 0:
-            train_loss = torch.tensor(train_loss)
-            print(f"epoch: {epoch}, batch: {idx}, loss: {train_loss}")
+        print(f"epoch: {epoch}, batch: {idx}, train loss: {output.loss}")
 
 
 def validate(dataloader, model, args, device, epoch):
@@ -139,23 +109,14 @@ def validate(dataloader, model, args, device, epoch):
             input_ids = batch["tokens"].to(device)
             segment_ids = batch["seg_ids"].to(device)
             input_mask = batch["masks"].to(device)
+            labels = batch["label"].to(args.device)
 
-            logits = model(input_ids, input_mask, segment_ids)
-            logits = torch.nn.Sigmoid()(logits)
+            output = model(
+                input_ids, 
+                labels=labels
+            )
 
-            logits = logits.view(-1, args.num_classes).cpu().data.numpy()
-            preds.append(np.rint(logits))
-            labels.append(batch["label"].data.numpy())
-
-    preds = np.concatenate(preds, 0)
-    labels = np.concatenate(labels, 0)
-
-    preds = torch.tensor(preds)
-    labels = torch.tensor(labels)
-
-    valid_f1 = f1_score(labels.flatten(), preds.flatten())
-
-    print(f"epoch: {epoch}, validation F1: {valid_f1}")
+            print(f"epoch: {epoch}, batch: {idx}, valid loss: {output.loss}")
 
 
 def time_evaluation(dataloader, model, args, device):
@@ -172,23 +133,26 @@ def print_size_of_model(model):
 
 
 def run(args):
-    # args = candle.ArgumentStruct(**params)
-    # args.cuda = torch.cuda.is_available()
-    # args.device = torch.device(f"cuda" if args.cuda else "cpu")
+    args = candle.ArgumentStruct(**args)
+    args.cuda = torch.cuda.is_available()
+    args.device = torch.device(f"cuda" if args.cuda else "cpu")
 
     train_loader, valid_loader, test_loader = create_data_loaders(args)
 
-    model = model = HiBERT(
-        args.pretrained_weights_path, args.num_classes
+    config = BertConfig(
+        num_attention_heads=2,
+        hidden_size=128,
+        num_hidden_layers=1,
+        num_labels = args.num_classes
     )
+
+    model = BertForSequenceClassification(config)
     model.to(args.device)
 
-    params = [
-        {
-            "params": [p for n, p in model.named_parameters()],
-            "weight_decay": args.weight_decay,
-        }
-    ]
+    params = [{
+        "params": [p for n, p in model.named_parameters()],
+        "weight_decay": args.weight_decay,
+    }]
 
     optimizer = torch.optim.Adam(params, lr=args.learning_rate, eps=args.eps)
     criterion = nn.BCEWithLogitsLoss()
@@ -214,9 +178,7 @@ def run(args):
 
 
 def main():
-    # params = initialize_parameters()
-    # Temporarily use argparse
-    params = parse_args()
+    params = initialize_parameters()
     run(params)
 
 
