@@ -17,7 +17,6 @@ from transformers import (
     BertForSequenceClassification, BertConfig
 )
 
-#from bert import HiBERT
 from random_data import MimicDatasetSynthetic
 
 
@@ -81,9 +80,6 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
         optimizer.zero_grad()
 
         input_ids = batch["tokens"].to(args.device)
-        segment_ids = batch["seg_ids"].to(args.device)
-        input_mask = batch["masks"].to(args.device)
-
         labels = batch["label"].to(args.device)
 
         output = model(
@@ -100,15 +96,10 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
 def validate(dataloader, model, args, device, epoch):
     model.eval()
 
-    preds = []
-    labels = []
-
     with torch.no_grad():
         for idx, batch in enumerate(dataloader):
 
             input_ids = batch["tokens"].to(device)
-            segment_ids = batch["seg_ids"].to(device)
-            input_mask = batch["masks"].to(device)
             labels = batch["label"].to(args.device)
 
             output = model(
