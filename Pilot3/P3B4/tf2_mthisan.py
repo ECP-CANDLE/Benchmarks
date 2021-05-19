@@ -296,7 +296,7 @@ class mthisan(object):
         for start in range(0, len(data), batch_size):
 
             # get batch index
-            if start+batch_size < len(data):
+            if start + batch_size < len(data):
                 stop = start + batch_size
             else:
                 stop = len(data)
@@ -376,7 +376,7 @@ if __name__ == "__main__":
 
     # create data
     vocab = np.random.rand(vocab_size, embedding_size)
-    X = np.zeros((train_samples+test_samples, max_lines, max_words))
+    X = np.zeros((train_samples + test_samples, max_lines, max_words))
     for i, doc in enumerate(X):
         lIndex = np.random.randint(
             int(max_lines * max_words * 0.5), max_lines * max_words)

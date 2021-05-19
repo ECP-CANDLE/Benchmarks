@@ -134,7 +134,7 @@ def run(args):
         num_attention_heads=2,
         hidden_size=128,
         num_hidden_layers=1,
-        num_labels = args.num_classes
+        num_labels=args.num_classes
     )
 
     model = BertForSequenceClassification(config)
