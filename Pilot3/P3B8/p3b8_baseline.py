@@ -83,7 +83,7 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
         labels = batch["label"].to(args.device)
 
         output = model(
-            input_ids, 
+            input_ids,
             labels=labels
         )
 
@@ -103,7 +103,7 @@ def validate(dataloader, model, args, device, epoch):
             labels = batch["label"].to(args.device)
 
             output = model(
-                input_ids, 
+                input_ids,
                 labels=labels
             )
 
@@ -131,9 +131,9 @@ def run(args):
     train_loader, valid_loader, test_loader = create_data_loaders(args)
 
     config = BertConfig(
-        num_attention_heads=2,
-        hidden_size=128,
-        num_hidden_layers=1,
+        num_attention_heads =2,
+        hidden_size = 128,
+        num_hidden_layers = 1,
         num_labels = args.num_classes
     )
 

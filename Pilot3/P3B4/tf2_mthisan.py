@@ -38,22 +38,22 @@ class mthisan(object):
             self.word_K = layers.Dense(self.attention_size)
             self.word_V = layers.Dense(self.attention_size)
             self.word_target = tf.Variable(tf.random.uniform(shape=[1, self.attention_heads, 1,
-                                                                    int(self.attention_size/self.attention_heads)]))
+                                                                    int(self.attention_size / self.attention_heads)]))
             self.word_self_att = scaled_attention(
-                use_scale=1/np.sqrt(attention_size), dropout=0.1)
+                use_scale=1 / np.sqrt(attention_size), dropout=0.1)
             self.word_targ_att = scaled_attention(
-                use_scale=1/np.sqrt(attention_size), dropout=0.1)
+                use_scale=1 / np.sqrt(attention_size), dropout=0.1)
 
             self.line_drop = layers.Dropout(0.1)
             self.line_Q = layers.Dense(self.attention_size)
             self.line_K = layers.Dense(self.attention_size)
             self.line_V = layers.Dense(self.attention_size)
             self.line_target = tf.Variable(tf.random.uniform(shape=[1, self.attention_heads, 1,
-                                                                    int(self.attention_size/self.attention_heads)]))
+                                                                    int(self.attention_size / self.attention_heads)]))
             self.line_self_att = scaled_attention(
-                use_scale=1/np.sqrt(attention_size), dropout=0.1)
+                use_scale=1 / np.sqrt(attention_size), dropout=0.1)
             self.line_targ_att = scaled_attention(
-                use_scale=1/np.sqrt(attention_size), dropout=0.1)
+                use_scale=1 / np.sqrt(attention_size), dropout=0.1)
 
             self.doc_drop = layers.Dropout(0.1)
 
@@ -151,7 +151,7 @@ class mthisan(object):
 
         def _split_heads(self, x, batch_size):
             x = tf.reshape(x, (batch_size, -1, self.attention_heads,
-                           int(self.attention_size/self.attention_heads)))
+                           int(self.attention_size / self.attention_heads)))
             return tf.transpose(x, perm=[0, 2, 1, 3])
 
     def __init__(self, embedding_matrix, num_classes, max_sents=201, max_words=15,
@@ -178,7 +178,7 @@ class mthisan(object):
             loss = 0
             for i in range(self.num_tasks):
                 loss += self.loss_object(labels[i],
-                                         predictions[i])/self.num_tasks
+                                         predictions[i]) / self.num_tasks
         gradients = tape.gradient(loss, self.model.trainable_variables)
         self.optimizer.apply_gradients(
             zip(gradients, self.model.trainable_variables))
@@ -189,7 +189,7 @@ class mthisan(object):
         predictions = self.model(text, training=False)
         loss = 0
         for i in range(self.num_tasks):
-            loss += self.loss_object(labels[i], predictions[i])/self.num_tasks
+            loss += self.loss_object(labels[i], predictions[i]) / self.num_tasks
         return predictions, loss
 
     @tf.function
@@ -238,7 +238,7 @@ class mthisan(object):
 
                 # get batch index
                 if start+batch_size < len(data):
-                    stop = start+batch_size
+                    stop = start + batch_size
                 else:
                     stop = len(data)
 
@@ -255,20 +255,20 @@ class mthisan(object):
                 sys.stdout.flush()
 
             # checkpoint after every epoch
-            print("\ntraining time: %.2f" % (time.time()-start_time))
+            print("\ntraining time: %.2f" % (time.time() - start_time))
 
             for i in range(self.num_tasks):
                 micro = f1_score(y_trues[i], y_preds[i], average='micro')
                 macro = f1_score(y_trues[i], y_preds[i], average='macro')
                 print("epoch %i task %i training micro/macro: %.4f, %.4f"
-                      % (ep+1, i, micro, macro))
+                      % (ep + 1, i, micro, macro))
 
             scores, loss = self.score(validation_data[0], validation_data[1],
                                       batch_size=batch_size)
 
             for i in range(self.num_tasks):
                 print("epoch %i task %i validation micro/macro: %.4f, %.4f"
-                      % (ep+1, i, scores[i][0], scores[i][1]))
+                      % (ep + 1, i, scores[i][0], scores[i][1]))
             history.history.setdefault('val_loss', []).append(loss)
 
             # save if performance better than previous best
@@ -323,7 +323,7 @@ class mthisan(object):
 
             # get batch index
             if start+batch_size < len(data):
-                stop = start+batch_size
+                stop = start + batch_size
             else:
                 stop = len(data)
 
@@ -379,8 +379,8 @@ if __name__ == "__main__":
     X = np.zeros((train_samples+test_samples, max_lines, max_words))
     for i, doc in enumerate(X):
         l = np.random.randint(
-            int(max_lines*max_words*0.5), max_lines*max_words)
-        row = np.zeros(max_lines*max_words)
+            int(max_lines * max_words * 0.5), max_lines * max_words)
+        row = np.zeros(max_lines * max_words)
         row[:l] = np.random.randint(1, vocab_size, l)
         X[i] = np.reshape(row, (max_lines, max_words))
 
@@ -399,10 +399,9 @@ if __name__ == "__main__":
         os.makedirs('savedmodels')
 
     # train model
-    model = mthisan(vocab, num_classes, int(np.ceil(max_words/15)+1), 15,
+    model = mthisan(vocab, num_classes, int(np.ceil(max_words / 15) + 1), 15,
                     attention_heads, attention_size)
     model.train(X_train, y_trains, batch_size, epochs,
                 validation_data=(X_test, y_tests),
                 savebest=True, filepath='savedmodels/model.ckpt')
 #     model.load('savedmodels/model.ckpt')
-
