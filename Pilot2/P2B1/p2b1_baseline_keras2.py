@@ -1,11 +1,6 @@
 import numpy as np
-import scipy as sp
-import pickle
 import sys
 import os
-import json
-import argparse
-import h5py
 import logging
 try:
     reload  # Python 2.7
@@ -110,14 +105,10 @@ def run(GP):
     # reload(KEU)
     # reload(p2ck)
     # reload(p2ck.optimizers)
-    maps = hf.autoencoder_preprocess()
+    # maps = hf.autoencoder_preprocess()
 
-    from keras.optimizers import SGD, RMSprop, Adam
-    from keras.datasets import mnist
-    from keras.callbacks import LearningRateScheduler, ModelCheckpoint
+    # from keras.callbacks import LearningRateScheduler
     from keras import callbacks
-    from keras.layers.advanced_activations import ELU
-    from keras.preprocessing.image import ImageDataGenerator
 
 #    GP=hf.ReadConfig(opts.config_file)
     batch_size = GP['batch_size']
@@ -132,7 +123,7 @@ def run(GP):
     # (data_files, fields) = helper.get_local_files('3k_run16', '/p/lscratchf/brainusr/datasets/cancer/pilot2/')
 
     # Define datagenerator
-    datagen = hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])
+    # datagen = hf.ImageNoiseDataGenerator(corruption_level=GP['noise_factor'])
 
     # get data dimension ##
     num_samples = 0
@@ -197,8 +188,8 @@ def run(GP):
 # ## Define Model, Solver and Compile ##########
     print('\nDefine the model and compile')
     opt = candle.build_optimizer(GP['optimizer'], learning_rate, kerasDefaults)
-    model_type = 'mlp'
-    memo = '%s_%s' % (GP['base_memo'], model_type)
+    # model_type = 'mlp'
+    # memo = '%s_%s' % (GP['base_memo'], model_type)
 
 # ####### Define Molecular Model, Solver and Compile #########
     molecular_nonlinearity = GP['molecular_nonlinearity']
@@ -251,7 +242,7 @@ def run(GP):
         lrate = initial_lrate * np.power(drop, np.floor((1 + epoch) / epochs_drop))
         return lrate
 
-    lr_scheduler = LearningRateScheduler(step_decay)
+    # lr_scheduler = LearningRateScheduler(step_decay)
     history = callbacks.History()
     # callbacks=[history,lr_scheduler]
 
@@ -259,7 +250,7 @@ def run(GP):
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=GP)
     timeoutMonitor = candle.TerminateOnTimeOut(TIMEOUT)
     callbacks = [history, history_logger, candleRemoteMonitor, timeoutMonitor]
-    loss = 0.
+    # loss = 0.
 
 # ### Save the Model to disk
     if GP['save_path'] is not None:
