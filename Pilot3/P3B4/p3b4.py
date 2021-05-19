@@ -38,7 +38,8 @@ required = [
     'optimizer', 'wv_len',
     'min_lines', 'max_lines',
     'min_words', 'max_words',
-    'attention_size', 'embed_train'
+    'attention_size', 'embed_train',
+    'attention_heads'
 ]
 
 

@@ -266,7 +266,7 @@ def run(params):
     # set up a bunch of callbacks to do work during model training..
     checkpointer = ModelCheckpoint(filepath=params['save_path'] + root_fname + '.autosave.model.h5', verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/{}.training.log'.format(params['save_path'], root_fname))
-    reduce_lr = ReduceLROnPlateau(monitor='val_tf_auc', factor=0.20, patience=40, 
+    reduce_lr = ReduceLROnPlateau(monitor='val_tf_auc', factor=0.20, patience=40,
                                   verbose=1, mode='auto', min_delta=0.0001, cooldown=3, min_lr=0.000000001)
     early_stop = EarlyStopping(monitor='val_tf_auc', patience=200, verbose=1, mode='auto')
     candle_monitor = candle.CandleRemoteMonitor(params=params)
