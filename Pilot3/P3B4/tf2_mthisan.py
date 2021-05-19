@@ -116,7 +116,7 @@ class mthisan(object):
             line_embeds = tf.scatter_nd(tf.where(skip_lines),
                                         tf.reshape(
                                             word_targ_out, (count_lines, self.attention_size)),
-                                        (batch_size*max_lines, self.attention_size))
+                                        (batch_size * max_lines, self.attention_size))
             line_embeds = tf.reshape(
                 line_embeds, (batch_size, max_lines, self.attention_size))
             line_embeds = self.line_drop(line_embeds, training=self.training)
@@ -145,8 +145,8 @@ class mthisan(object):
             doc_embeds = self.doc_drop(doc_embeds, training=self.training)
 
             logits = []
-            for l in self.classify_layers:
-                logits.append(l(doc_embeds))
+            for lIndex in self.classify_layers:
+                logits.append(lIndex(doc_embeds))
             return logits
 
         def _split_heads(self, x, batch_size):
@@ -237,21 +237,21 @@ class mthisan(object):
             for start in range(0, len(data), batch_size):
 
                 # get batch index
-                if start+batch_size < len(data):
+                if start + batch_size < len(data):
                     stop = start + batch_size
                 else:
                     stop = len(data)
 
                 # train step
                 predictions, loss = self._train_step(data[start:stop],
-                                                     np.array([l[start:stop] for l in labels]))
+                                                     np.array([lIndex[start:stop] for lIndex in labels]))
 
                 # track correct predictions
-                for i, (p, l) in enumerate(zip(predictions, [l[start:stop] for l in labels])):
+                for i, (p, lIndex) in enumerate(zip(predictions, [lIndex[start:stop] for lIndex in labels])):
                     y_preds[i].extend(np.argmax(p, 1))
-                    y_trues[i].extend(l)
+                    y_trues[i].extend(lIndex)
                 sys.stdout.write("epoch %i, sample %i of %i, loss: %f        \r"
-                                 % (ep+1, stop, len(data), loss))
+                                 % (ep + 1, stop, len(data), loss))
                 sys.stdout.flush()
 
             # checkpoint after every epoch
@@ -297,7 +297,7 @@ class mthisan(object):
 
             # get batch index
             if start+batch_size < len(data):
-                stop = start+batch_size
+                stop = start + batch_size
             else:
                 stop = len(data)
 
@@ -322,13 +322,13 @@ class mthisan(object):
         for start in range(0, len(data), batch_size):
 
             # get batch index
-            if start+batch_size < len(data):
+            if start + batch_size < len(data):
                 stop = start + batch_size
             else:
                 stop = len(data)
 
             predictions, loss = self._score_step(data[start:stop],
-                                                 [l[start:stop] for l in labels])
+                                                 [lIndex[start:stop] for lIndex in labels])
             for i, p in enumerate(predictions):
                 y_preds[i].extend(np.argmax(p, 1))
             losses.append(loss)
@@ -378,10 +378,10 @@ if __name__ == "__main__":
     vocab = np.random.rand(vocab_size, embedding_size)
     X = np.zeros((train_samples+test_samples, max_lines, max_words))
     for i, doc in enumerate(X):
-        l = np.random.randint(
+        lIndex = np.random.randint(
             int(max_lines * max_words * 0.5), max_lines * max_words)
         row = np.zeros(max_lines * max_words)
-        row[:l] = np.random.randint(1, vocab_size, l)
+        row[:lIndex] = np.random.randint(1, vocab_size, lIndex)
         X[i] = np.reshape(row, (max_lines, max_words))
 
     # test train split
