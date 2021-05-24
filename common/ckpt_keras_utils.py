@@ -153,7 +153,7 @@ class CandleCheckpointCallback(Callback):
                 May be None to disable or "DEFAULT" to use the default.
             verbose : boolean
                 If True, more verbose logging
-                Passed to default_utils.set_up_logger(verbose) for this logger
+                Passed to helper_utils.set_up_logger(verbose) for this logger
         """
         self.logger = logger
         if self.logger == "DEFAULT":
