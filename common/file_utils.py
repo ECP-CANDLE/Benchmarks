@@ -94,7 +94,6 @@ def get_file(fname, origin, unpack=False,
     else:
         unpack_fpath = None
 
-
     fpath = os.path.join(datadir, fname)
 
     download = False
@@ -151,10 +150,8 @@ def get_file(fname, origin, unpack=False,
     if unpack:
         if not os.path.exists(unpack_fpath):
             print('Unpacking file...')
-            #tfile = tarfile.open(fpath, 'r:gz')
             try:
                 shutil.unpack_archive(fpath, datadir)
-                #tfile.extractall(path=datadir)
             except (Exception, KeyboardInterrupt) as e:
                 print(f"Error {e}")
                 if os.path.exists(unpack_fpath):
@@ -163,7 +160,6 @@ def get_file(fname, origin, unpack=False,
                     else:
                         shutil.rmtree(unpack_fpath)
                 raise
-            #tfile.close()
         return unpack_fpath
         print()
 
