@@ -3,12 +3,14 @@ from __future__ import print_function
 import numpy as np
 # import os, sys, gzip
 # import time
-import tensorflow.keras as keras
+import tensorflow as tf
 
 from tf_mthcan import hcan
 
 import p3b4 as bmk
 import candle
+
+tf.compat.v1.disable_eager_execution()
 
 
 def initialize_parameters(default_model='p3b4_default_model.txt'):
@@ -138,7 +140,8 @@ def main():
 
     gParameters = initialize_parameters()
     avg_loss = run(gParameters)
-    print("Return: ", avg_loss.history['val_loss'][-1])
+    print("Return: ", avg_loss.history)
+    #print("Return: ", avg_loss.history['val_loss'][-1])
 
 
 if __name__ == '__main__':
