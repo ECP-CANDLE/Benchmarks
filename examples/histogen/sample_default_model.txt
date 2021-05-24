@@ -1,4 +1,5 @@
 [Global_Params]
+data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/'
 vqvae = 'histology.pt'
 top = 'top.pt'
 bottom = 'bottom.pt'

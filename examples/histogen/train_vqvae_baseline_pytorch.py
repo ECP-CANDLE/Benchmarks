@@ -55,7 +55,7 @@ required = [
     'epochs',
     'learning_rate',
     'sched_mode',
-    'data_dir',
+    #'data_dir',
     'size',
 ]
 
@@ -208,8 +208,18 @@ def config_and_train(args):
             torch.save(model.state_dict(), f"{args.ckpt_directory}/checkpoint/vqvae_{str(i + 1).zfill(3)}.pt")
 
 
+def fetch_data(params):
+    data_url = params['data_url']
+    if params['data_dir'] is None:
+        params['data_dir'] = candle.fetch_file(data_url+params['train_data'], subdir = 'Examples/histogen')
+    else:
+        tempfile = candle.fetch_file(data_url+params['train_data'], subdir = 'Examples/histogen')
+        params['data_dir'] = os.path.join(os.path.dirname(tempfile), params['data_dir'])
+
+
 def run(params):
 
+    fetch_data(params)
     args = candle.ArgumentStruct(**params)
 
     dist.launch(config_and_train, args.n_gpu_per_machine, 1, 0, args.dist_url, args=(args,))
