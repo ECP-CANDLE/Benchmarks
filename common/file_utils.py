@@ -39,7 +39,7 @@ else:
     from six.moves.urllib.request import urlretrieve
 
 
-def get_file(fname, origin, untar=False,
+def get_file(fname, origin, unpack=False,
              # md5_hash=None, datadir='../Data/common'):
              # md5_hash=None, cache_subdir='common', datadir='../Data/common'):
              md5_hash=None, cache_subdir='common', datadir=None):  # datadir argument was never actually used so changing it to None
@@ -53,7 +53,7 @@ def get_file(fname, origin, untar=False,
             name of the file
         origin : string
             original URL of the file
-        untar : boolean
+        unpack : boolean
             whether the file should be decompressed
         md5_hash : string
             MD5 hash of the file for verification
@@ -75,25 +75,30 @@ def get_file(fname, origin, untar=False,
     if not os.path.exists(datadir):
         os.makedirs(datadir)
 
-    # if untar:
+    # if unpack:
     #    fnamesplit = fname.split('.tar.gz')
-    #    untar_fpath = os.path.join(datadir, fnamesplit[0])
+    #    unpack_fpath = os.path.join(datadir, fnamesplit[0])
 
     if fname.endswith('.tar.gz'):
         fnamesplit = fname.split('.tar.gz')
-        untar_fpath = os.path.join(datadir, fnamesplit[0])
-        untar = True
+        unpack_fpath = os.path.join(datadir, fnamesplit[0])
+        unpack = True
     elif fname.endswith('.tgz'):
         fnamesplit = fname.split('.tgz')
-        untar_fpath = os.path.join(datadir, fnamesplit[0])
-        untar = True
+        unpack_fpath = os.path.join(datadir, fnamesplit[0])
+        unpack = True
+    elif fname.endswith('.zip'):
+        fnamesplit = fname.split('.zip')
+        unpack_fpath = os.path.join(datadir, fnamesplit[0])
+        unpack = True
     else:
-        untar_fpath = None
+        unpack_fpath = None
+
 
     fpath = os.path.join(datadir, fname)
 
     download = False
-    if os.path.exists(fpath) or (untar_fpath is not None and os.path.exists(untar_fpath)):
+    if os.path.exists(fpath) or (unpack_fpath is not None and os.path.exists(unpack_fpath)):
         # file found; verify integrity if a hash was provided
         if md5_hash is not None:
             if not validate_file(fpath, md5_hash):
@@ -143,22 +148,23 @@ def get_file(fname, origin, untar=False,
             progbar = None
             print()
 
-    if untar:
-        if not os.path.exists(untar_fpath):
-            print('Untarring file...')
-            tfile = tarfile.open(fpath, 'r:gz')
+    if unpack:
+        if not os.path.exists(unpack_fpath):
+            print('Unpacking file...')
+            #tfile = tarfile.open(fpath, 'r:gz')
             try:
-                tfile.extractall(path=datadir)
+                shutil.unpack_archive(fpath, datadir)
+                #tfile.extractall(path=datadir)
             except (Exception, KeyboardInterrupt) as e:
                 print(f"Error {e}")
-                if os.path.exists(untar_fpath):
-                    if os.path.isfile(untar_fpath):
-                        os.remove(untar_fpath)
+                if os.path.exists(unpack_fpath):
+                    if os.path.isfile(unpack_fpath):
+                        os.remove(unpack_fpath)
                     else:
-                        shutil.rmtree(untar_fpath)
+                        shutil.rmtree(unpack_fpath)
                 raise
-            tfile.close()
-        return untar_fpath
+            #tfile.close()
+        return unpack_fpath
         print()
 
     return fpath
