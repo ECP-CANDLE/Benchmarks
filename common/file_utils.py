@@ -95,6 +95,8 @@ def get_file(fname, origin, unpack=False,
         unpack_fpath = None
 
     fpath = os.path.join(datadir, fname)
+    if not os.path.exists(os.path.dirname(fpath)):
+        os.makedirs(os.path.dirname(fpath))
 
     download = False
     if os.path.exists(fpath) or (unpack_fpath is not None and os.path.exists(unpack_fpath)):

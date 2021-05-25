@@ -108,7 +108,6 @@ class Benchmark:
 
         configOut = dictfileparam.copy()
         kwall = self.additional_definitions + self.registered_conf
-        #print('Kwall', kwall)
 
         for d in kwall:  # self.additional_definitions:
             if d['name'] in configOut.keys():
