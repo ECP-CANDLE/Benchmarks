@@ -22,11 +22,11 @@ from tensorflow.keras.callbacks import (
 from sklearn.metrics import (
     r2_score,
     roc_auc_score,
-#    pearsonr,
     accuracy_score,
 )
 from scipy.stats import pearsonr
 
+import sys
 import adrp
 import candle
 
@@ -221,7 +221,7 @@ def run_inference(params):
         sys.exit("Model format should be one of json, yaml or h5")
 
     # compile separately to get custom functions as needed
-    loaded_model.compile(optimizer = params['optimizer'], loss = params['loss'], metrics = ['mae', r2])
+    loaded_model.compile(optimizer=params['optimizer'], loss=params['loss'], metrics=['mae', r2])
 
     # use same data as training
     seed = params['rng_seed']
@@ -516,7 +516,7 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     print("Loaded json model from disk")
 
     # evaluate json loaded model on test data
-    loaded_model.compile(optimizer = params['optimizer'], loss = params['loss'], metrics = ['mae', r2])
+    loaded_model_json.compile(optimizer=params['optimizer'], loss=params['loss'], metrics=['mae', r2])
     score_json = loaded_model_json.evaluate(X_test, Y_test, verbose=0)
 
     print("json Validation loss:", score_json[0])
@@ -529,7 +529,7 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     print("Loaded yaml model from disk")
 
     # evaluate loaded model on test data
-    loaded_model.compile(optimizer = params['optimizer'], loss = params['loss'], metrics = ['mae', r2])
+    loaded_model_yaml.compile(optimizer=params['optimizer'], loss=params['loss'], metrics=['mae', r2])
     score_yaml = loaded_model_yaml.evaluate(X_test, Y_test, verbose=0)
 
     print("yaml Validation loss:", score_yaml[0])
