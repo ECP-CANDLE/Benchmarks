@@ -112,7 +112,24 @@ additional_definitions = [
         "default": "ADRP_6W02_A_1_H",
         "help": "base name of pocket",
     },
-
+    {
+        "name": "saved_model",
+        "type": str,
+        "default": None,
+        "help": "Saved model to test",
+    },
+    {
+        "name": "model_url",
+        "type": str,
+        "default": None,
+        "help": "Url for saved models to test",
+    },
+    {
+        "name": "infer",
+        "type": candle.str2bool,
+        "default": False,
+        "help": "Flag to toggle inference mode",
+    },
 ]
 
 required = [
@@ -204,6 +221,17 @@ def load_headers(desc_headers, train_headers, header_url):
         th_list = [x.strip() for x in th_list]
 
     return dh_dict, th_list
+
+
+def get_model(params):
+    url = params['model_url']
+    file_model = ('DIR.ml.' + params['base_name']
+        + '.Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet/'
+        + 'reg_go.autosave.model.h5')
+    model_file = candle.get_file(
+        file_model, url + file_model, cache_subdir="Pilot1"
+    )
+    return model_file
 
 
 def load_data(params, seed):
