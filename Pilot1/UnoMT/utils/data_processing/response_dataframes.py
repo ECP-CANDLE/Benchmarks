@@ -210,7 +210,7 @@ def get_combo_stats_df(data_root: str,
                 warnings.filterwarnings('error')
                 try:
                     corr = stats.pearsonr(x=conc_tuple, y=grth_tuple)[0]
-                except Warning:
+                except (Warning, ValueError):
                     corr = 0.0
             # corr = 0. if np.isnan(corr) else corr
 
