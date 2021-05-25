@@ -140,8 +140,8 @@ def main():
 
     gParameters = initialize_parameters()
     avg_loss = run(gParameters)
-    print("Return: ", avg_loss.history)
-    #print("Return: ", avg_loss.history['val_loss'][-1])
+    # print("Return: ", avg_loss.history)
+    print("Return: ", avg_loss.history['val_loss'][-1])
 
 
 if __name__ == '__main__':
