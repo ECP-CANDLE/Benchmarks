@@ -33,7 +33,6 @@ additional_definitions = [
      'help': 'grad-clip, defautt 2.0'},
     {'name': 'log_interval', 'default': 25, 'type': int,
      'help': 'logging interval, default 25'},
-    {'name': 'data_dir', 'default': 'moses/data', 'help': 'folder with train and test smiles files'},
     {'name': 'model_path', 'help': 'model save path', 'default': 'models/'},
     {'name': 'output_dir', 'help': 'output files path', 'default': 'output/'},
     {'name': 'checkpoint', 'default': None, 'type': str}
@@ -117,9 +116,9 @@ def run(gParams):
     kwargs = {'num_workers': args.workers, 'pin_memory': True} if cuda else {'num_workers': args.workers}
 
     print("\nloading data...")
-    smiles_lookup_train = pd.read_csv(f"{args.data_dir}/train.csv")
+    smiles_lookup_train = pd.read_csv(train_file)
     print(smiles_lookup_train.head())
-    smiles_lookup_test = pd.read_csv(f"{args.data_dir}/test.csv")
+    smiles_lookup_test = pd.read_csv(test_file)
     print(smiles_lookup_test.head())
     print("Done.\n")
 
