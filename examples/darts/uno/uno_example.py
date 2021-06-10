@@ -4,7 +4,6 @@ import torch
 import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
-import logging
 
 import example_setup as bmk
 import darts
@@ -34,7 +33,7 @@ def run(params):
     args = candle.ArgumentStruct(**params)
 
     args.cuda = torch.cuda.is_available()
-    device = torch.device(f"cuda" if args.cuda else f"cpu")
+    device = torch.device("cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
     train_data = darts.Uno('./data', 'train', download=True)

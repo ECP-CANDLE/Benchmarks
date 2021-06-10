@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch import optim
-from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 import logging
@@ -39,7 +38,7 @@ def run(params):
     args = candle.ArgumentStruct(**params)
 
     args.cuda = torch.cuda.is_available()
-    device = torch.device(f"cuda" if args.cuda else "cpu")
+    device = torch.device("cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
     trainloader = torch.utils.data.DataLoader(
