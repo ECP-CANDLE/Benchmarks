@@ -9,7 +9,7 @@ import torch.utils.data
 
 from model.model import CharRNN
 from model.vocab import START_CHAR, END_CHAR
-from train import getconfig, get_vocab_from_file
+from train import get_vocab_from_file
 
 
 def count_valid_samples(smiles, rdkit=True):
@@ -79,7 +79,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
 
 
 def main(args, device):
-    config = getconfig(args)
+    # config = getconfig(args)
     print("loading data.")
     vocab, c2i, i2c, _, _ = get_vocab_from_file(args.i + "/vocab.txt")
 

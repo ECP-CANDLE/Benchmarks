@@ -90,7 +90,7 @@ def main(args):
     _, c2i, _, _, _ = get_vocab_from_file(args.o + '/vocab.txt')
 
     # seconnd step is to make data:
-    count_ = count
+    # count_ = count
     count = 0
 
     with open(args.i, 'r') as f:
