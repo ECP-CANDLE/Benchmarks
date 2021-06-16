@@ -1,7 +1,7 @@
 import numpy as np
 import glob
-from keras.losses import mean_squared_error as mse
-from keras.losses import mean_absolute_error as mae
+from tensorflow.keras.losses import mean_squared_error as mse
+from tensorflow.keras.losses import mean_absolute_error as mae
 
 
 def combined_loss(y_true, y_pred):

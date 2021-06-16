@@ -17,7 +17,7 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
-from keras import backend as K
+from tensorflow.keras import backend as K
 
 import p2b1
 import candle
@@ -108,7 +108,7 @@ def run(GP):
     # maps = hf.autoencoder_preprocess()
 
     # from keras.callbacks import LearningRateScheduler
-    from keras import callbacks
+    from tensorflow.keras import callbacks
 
 #    GP=hf.ReadConfig(opts.config_file)
     batch_size = GP['batch_size']
