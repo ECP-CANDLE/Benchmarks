@@ -178,12 +178,12 @@ def run(params):
 
     data_url = args.data_url
 
-    if args.model == 'autosave.model.pt':
-        file = 'mosesrun/autosave.model.pt'
-    elif args.model == 'ft_goodperforming_model.pt':
+    if args.model == 'ft_goodperforming_model.pt':
         file = 'pilot1/ft_goodperforming_model.pt'
     elif args.model == 'ft_poorperforming_model.pt':
         file = 'pilot1/ft_poorperforming_model.pt'
+    else: # Corresponding to args.model == 'autosave.model.pt':
+        file = 'mosesrun/autosave.model.pt'
 
     print('Recovering trained model')
     trained = candle.fetch_file(data_url + file, subdir='examples/rnngen')
