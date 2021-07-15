@@ -1,4 +1,5 @@
 [Global_Params]
+lmdb_filename = 'lmdb_001'
 epochs = 420
 batch_size = 32
 learning_rate = 3e-4
