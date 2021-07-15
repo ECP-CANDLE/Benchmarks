@@ -8,5 +8,4 @@ batch_size = 8
 use_gpus = True
 
 [Monitor_Params]
-timeout=3600
-
+timeout = 3600

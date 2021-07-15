@@ -10,7 +10,7 @@ import torch.utils.data
 
 from model.model import CharRNN
 from model.vocab import START_CHAR, END_CHAR
-from train import get_vocab_from_file
+from model.vocab import get_vocab_from_file
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -70,6 +70,7 @@ required = [
     'output',
     'input',
     'nsamples',
+    'model',
 ]
 
 
@@ -175,6 +176,18 @@ def run(params):
     print("Note: This script is very picky. Please check device output to see where this is running. ")
     args = candle.ArgumentStruct(**params)
 
+    data_url = args.data_url
+
+    if args.model == 'ft_goodperforming_model.pt':
+        file = 'pilot1/ft_goodperforming_model.pt'
+    elif args.model == 'ft_poorperforming_model.pt':
+        file = 'pilot1/ft_poorperforming_model.pt'
+    else: # Corresponding to args.model == 'autosave.model.pt':
+        file = 'mosesrun/autosave.model.pt'
+
+    print('Recovering trained model')
+    trained = candle.fetch_file(data_url + file, subdir='examples/rnngen')
+
     # Configure GPU
     if args.use_gpus and torch.cuda.is_available():
         device = 'cuda'
@@ -188,10 +201,12 @@ def run(params):
     model = CharRNN(len(vocab), len(vocab), max_len=args.maxlen).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)
 
-    pt = torch.load(args.logdir + "/" + args.model, map_location=device)
+    print("Loading trained model.")
+    pt = torch.load(trained, map_location=device)
     model.load_state_dict(pt['state_dict'])
     optimizer.load_state_dict(pt['optim_state_dict'])
 
+    print("Applying to loaded data")
     total_sampled = 0
     total_valid = 0
     total_unqiue = 0
