@@ -43,7 +43,7 @@ additional_definitions = [
         'type': str,
         'default': SUPPRESS,
         'help': 'dataset path'},
-    {'name': 'size',
+    {'name': 'image_size',
         'type': int,
         'default': 256,
         'help': 'Image size to use'},
@@ -55,7 +55,7 @@ required = [
     'epochs',
     'learning_rate',
     'sched_mode',
-    'size',
+    'image_size',
 ]
 
 
@@ -168,8 +168,8 @@ def config_and_train(args):
 
     transform = transforms.Compose(
         [
-            transforms.Resize(args.size),
-            transforms.CenterCrop(args.size),
+            transforms.Resize(args.image_size),
+            transforms.CenterCrop(args.image_size),
             transforms.ToTensor(),
             transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
         ]
@@ -212,7 +212,7 @@ def fetch_data(params):
     if params['data_dir'] is None:
         params['data_dir'] = candle.fetch_file(data_url + params['train_data'], subdir='Examples/histogen')
     else:
-        tempfile = candle.fetch_file(data_url + params['train_data'], cache_subdir='Examples/histogen')
+        tempfile = candle.fetch_file(data_url + params['train_data'], subdir='Examples/histogen')
         params['data_dir'] = os.path.join(os.path.dirname(tempfile), params['data_dir'])
 
 
