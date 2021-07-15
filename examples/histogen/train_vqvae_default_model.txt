@@ -8,5 +8,3 @@ batch_size = 128
 n_gpu_per_machine = 1
 ckpt_directory = './'
 image_size = 256
-
-
