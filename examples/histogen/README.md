@@ -2,10 +2,10 @@
 
 ## Usage
 
-The CANDLE-ized versions of the codes can simply be run without any command line arguments, with the default settings being read from the corresponding 'default_mode'l file.
-When needed, the CANDLE versions also use the 'fetch_file' methods, which store the data in the top-level 'Data/Examples' directory.
-Any keywords in the 'default_model' file can be overwritten with the appropriate command line argument.
-The orginal codes and workflow below are preserved for comparison. 
+The CANDLE-ized versions of the codes can simply be run without any command line arguments, with the default settings being read from the corresponding `default_mode`l file.
+When needed, the CANDLE versions also use the `fetch_file` methods, which store the data in the top-level `Data/Examples` directory.
+Any keywords in the `default_model` file can be overwritten with the appropriate command line argument.
+The orginal codes and workflow below are preserved for comparison.
 
 # CANDLE workflow
 
