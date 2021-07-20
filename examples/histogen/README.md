@@ -2,6 +2,26 @@
 
 ## Usage
 
+The CANDLE-ized versions of the codes can simply be run without any command line arguments, with the default settings being read from the corresponding 'default_mode'l file.
+When needed, the CANDLE versions also use the 'fetch_file' methods, which store the data in the top-level 'Data/Examples' directory.
+Any keywords in the 'default_model' file can be overwritten with the appropriate command line argument.
+The orginal codes and workflow below are preserved for comparison. 
+
+# CANDLE workflow
+
+Sample images
+```
+python sample_baseline_pytorch.py
+```
+Training pipeline
+```
+python train_vqvae_baseline_pytorch.py -e 1
+pythong extract_baseline_pytorch.py
+python train_pixelsnail_baseline_pytorch.py
+```
+
+# Original workflow
+
 Sample histology images from a trained histology image model.
 
 1. Download trained models into `checkpoint` folder.
