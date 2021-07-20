@@ -9,7 +9,7 @@ The orginal codes and workflow below are preserved for comparison.
 
 # CANDLE workflow
 
-Sample images
+Sample images (the trained models will be downloaded automatically).
 ```
 python sample_baseline_pytorch.py
 ```
