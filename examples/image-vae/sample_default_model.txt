@@ -1,0 +1,9 @@
+[Global_Params]
+data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/image_vae'
+test_model = 'model.pt'
+num_samples = 64
+batch_size = 64
+model_path = 'models'
+checkpoint = 'epoch_6.pt'
+output_dir = 'samples'
+image = True
