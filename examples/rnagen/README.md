@@ -1,3 +1,18 @@
+## Usage
+
+The CANDLE-ized versions of the codes can simply be run without any command line arguments, with the default settings being read from the corresponding `default_model` file.
+When needed, the CANDLE versions also use the `fetch_file` methods, which store the data in the top-level `Data/Examples` directory.
+Any keywords in the `default_model` file can be overwritten with the appropriate command line argument.
+The orginal codes and workflow below are preserved for comparison.
+New package dependencies are now included in the top-level install instructions.
+
+# CANDLE workflow
+
+```
+python rnagen_baseline_keras2.py
+python rnagen_baseline_keras2.py --plot
+```
+
 # Improving cancer type classifier with synthetic data
 
 We demonstrate the value of generator models in boosting the performance of predictive models.
