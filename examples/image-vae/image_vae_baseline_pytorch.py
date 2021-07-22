@@ -97,7 +97,7 @@ def run(gParams):
     test_file = candle.fetch_file(data_url + test_data, subdir='Examples/image_vae')
 
     starting_epoch = 1
-    total_epochs = None
+    total_epochs = gParams['epochs']
 
     rng_seed = 42
     torch.manual_seed(rng_seed)
@@ -263,7 +263,7 @@ def run(gParams):
     if total_epochs is None:
         trn_rng = itertools.count(start=starting_epoch)
     else:
-        trn_rng = range(starting_epoch, total_epochs)
+        trn_rng = range(starting_epoch, total_epochs + 1)
 
     for epoch in trn_rng:
         for param_group in optimizer.param_groups:
