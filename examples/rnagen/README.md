@@ -10,7 +10,7 @@ New package dependencies are now included in the top-level install instructions.
 
 ```
 python rnagen_baseline_keras2.py
-python rnagen_baseline_keras2.py --plot
+python rnagen_baseline_keras2.py --plot True
 ```
 
 # Improving cancer type classifier with synthetic data
