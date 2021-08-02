@@ -1,11 +1,9 @@
 import json
 import os
-import warnings
 from datetime import datetime
 
 import numpy as np
-import requests
-from keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback
 
 
 def compute_trainable_params(model):
@@ -23,7 +21,7 @@ def compute_trainable_params(model):
         from keras import backend as K
     else:
         import tensorflow.keras.backend as K
-   
+
     trainable_count = int(
         np.sum([K.count_params(w) for w in model.trainable_weights])
     )
@@ -68,7 +66,7 @@ class CandleRemoteMonitor(Callback):
                 'parameters': run_params,
                 'start_time': str(self.run_timestamp),
                 'status': 'Started'
-               }
+                }
         # print("on_train_begin", send)
         self.log_messages.append(send)
 
@@ -90,7 +88,7 @@ class CandleRemoteMonitor(Callback):
                 'training_loss': {'set': loss},
                 'validation_loss': {'set': val_loss},
                 'run_progress': {'add': [epoch_line]}
-               }
+                }
         # print("on_epoch_end", send)
         self.log_messages.append(send)
 
@@ -105,7 +103,7 @@ class CandleRemoteMonitor(Callback):
                 'end_time': {'set': str(run_end)},
                 'status': {'set': 'Finished'},
                 'date_modified': {'set': 'NOW'}
-               }
+                }
         # print("on_train_end", send)
         self.log_messages.append(send)
 
@@ -116,7 +114,7 @@ class CandleRemoteMonitor(Callback):
         """Save log_messages to file
         """
         # path = os.getenv('TURBINE_OUTPUT') if 'TURBINE_OUTPUT' in os.environ else '.'
-        path = self.global_params['save'] if 'save' in self.global_params else '.'
+        path = self.global_params['output_dir'] if 'output_dir' in self.global_params else '.'
         if not os.path.exists(path):
             os.makedirs(path)
 
@@ -124,11 +122,12 @@ class CandleRemoteMonitor(Callback):
         with open(path + filename, "a") as file_run_json:
             file_run_json.write(json.dumps(self.log_messages, indent=4, separators=(',', ': ')))
 
+
 class TerminateOnTimeOut(Callback):
     """ This class implements timeout on model training. When the script reaches timeout,
        this class sets model.stop_training = True
     """
-    def __init__(self, timeout_in_sec = 10):
+    def __init__(self, timeout_in_sec=10):
         """Initialize TerminateOnTimeOut class.
 
             Parameters
@@ -141,24 +140,19 @@ class TerminateOnTimeOut(Callback):
         self.run_timestamp = None
         self.timeout_in_sec = timeout_in_sec
 
-
     def on_train_begin(self, logs={}):
         """ Start clock to calculate timeout
         """
         self.run_timestamp = datetime.now()
-
 
     def on_epoch_end(self, epoch, logs={}):
         """ On every epoch end, check whether it exceeded timeout and terminate training if necessary
         """
         run_end = datetime.now()
         run_duration = run_end - self.run_timestamp
-        run_in_sec = run_duration.total_seconds() #/ (60 * 60)
+        run_in_sec = run_duration.total_seconds()
         print('Current time ....%2.3f' % run_in_sec)
         if self.timeout_in_sec != -1:
             if run_in_sec >= self.timeout_in_sec:
                 print('Timeout==>Runtime: %2.3fs, Maxtime: %2.3fs' % (run_in_sec, self.timeout_in_sec))
                 self.model.stop_training = True
-
-
-

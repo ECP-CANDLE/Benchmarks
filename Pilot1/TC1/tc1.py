@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import os
 import sys
-import gzip
 import logging
 
 file_path = os.path.dirname(os.path.realpath(__file__))
@@ -14,13 +13,13 @@ import candle
 logger = logging.getLogger(__name__)
 
 additional_definitions = [
-   {'name':'pool',
-       'nargs':'+',
-       'type': int,
-       'help':'network structure of shared layer'},
-    {'name':'classes',
-        'type':int,
-        'default':36}
+    {'name': 'pool',
+     'nargs': '+',
+     'type': int,
+     'help': 'network structure of shared layer'},
+    {'name': 'classes',
+     'type': int,
+     'default': 36}
 ]
 
 required = [
@@ -64,12 +63,11 @@ def load_data(params):
 
     train_path = candle.fetch_file(params['data_url'] + params['train_data'], 'Pilot1')
     test_path = candle.fetch_file(params['data_url'] + params['test_data'], 'Pilot1')
-    
+
     if params['feature_subsample'] > 0:
         usecols = list(range(params['feature_subsample']))
     else:
         usecols = None
 
-
     return candle.load_Xy_data_noheader(train_path, test_path, params['classes'], usecols,
-                                        scaling='maxabs',dtype=params['data_type'])
+                                        scaling='maxabs', dtype=params['data_type'])

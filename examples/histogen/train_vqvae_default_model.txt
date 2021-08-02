@@ -1,0 +1,10 @@
+[Global_Params]
+data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/'
+train_data = 'svs_pngs.zip'
+data_dir = 'svs_pngs'
+epochs = 560
+learning_rate = 3e-4
+batch_size = 128
+n_gpu_per_machine = 1
+ckpt_directory = './'
+image_size = 256

@@ -4,18 +4,14 @@
 
 from __future__ import division, print_function
 
-import argparse
-import csv
 import logging
-import sys
-
 import numpy as np
 
-from keras import backend as K
-from keras import metrics
-from keras.models import Sequential
-from keras.layers import Activation, BatchNormalization, Dense, Dropout, LocallyConnected1D, Conv1D, MaxPooling1D, Flatten, Conv2D, LocallyConnected2D
-from keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
+from tensorflow.keras import backend as K
+from tensorflow.keras import metrics
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Dropout, LocallyConnected1D, Conv1D, MaxPooling1D, Flatten, Conv2D, LocallyConnected2D
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
 
 # For non-interactive plotting
 import matplotlib as mpl
@@ -25,20 +21,22 @@ import matplotlib.pyplot as plt
 
 import p1b3 as benchmark
 import candle
+import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 
-#np.set_printoptions(threshold=np.nan)
 
-def initialize_parameters(default_model = 'p1b3_default_model.txt'):
+def initialize_parameters(default_model='p1b3_default_model.txt'):
 
     # Build benchmark object
     p1b3Bmk = benchmark.BenchmarkP1B3(benchmark.file_path, default_model, 'keras',
-    prog='p1b3_baseline', desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
-    
+                                      prog='p1b3_baseline',
+                                      desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
+
     # Initialize parameters
     gParameters = candle.finalize_parameters(p1b3Bmk)
-    #benchmark.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
+
 
 def str2lst(string_val):
     result = [int(x) for x in string_val.split(' ')]
@@ -92,11 +90,10 @@ def plot_error(y_true, y_pred, batch, file_ext, file_pre='output_dir', subsample
         y_shuf = np.random.permutation(y_true)
         plt.hist(y_shuf - y_true, bins, alpha=0.5, label='Random')
 
-    #plt.hist(diffs, bins, alpha=0.35-batch/100., label='Epoch {}'.format(batch+1))
-    plt.hist(diffs, bins, alpha=0.3, label='Epoch {}'.format(batch+1))
+    plt.hist(diffs, bins, alpha=0.3, label='Epoch {}'.format(batch + 1))
     plt.title("Histogram of errors in percentage growth")
     plt.legend(loc='upper right')
-    plt.savefig(file_pre+'.histogram'+file_ext+'.b'+str(batch)+'.png')
+    plt.savefig(file_pre + '.histogram' + file_ext + '.b' + str(batch) + '.png')
     plt.close()
 
     # Plot measured vs. predicted values
@@ -107,7 +104,7 @@ def plot_error(y_true, y_pred, batch, file_ext, file_pre='output_dir', subsample
             [y_true.min(), y_true.max()], 'k--', lw=4)
     ax.set_xlabel('Measured')
     ax.set_ylabel('Predicted')
-    plt.savefig(file_pre+'.diff'+file_ext+'.b'+str(batch)+'.png')
+    plt.savefig(file_pre + '.diff' + file_ext + '.b' + str(batch) + '.png')
     plt.close()
 
 
@@ -142,12 +139,14 @@ class MyProgbarLogger(ProgbarLogger):
     def __init__(self, samples):
         super(MyProgbarLogger, self).__init__(count_mode='samples')
         self.samples = samples
+        self.params = {}
 
     def on_train_begin(self, logs=None):
         super(MyProgbarLogger, self).on_train_begin(logs)
         self.verbose = 1
         self.extra_log_values = []
         self.params['samples'] = self.samples
+        self.params['metrics'] = []
 
     def on_batch_begin(self, batch, logs=None):
         if self.seen < self.target:
@@ -172,8 +171,9 @@ class MyProgbarLogger(ProgbarLogger):
             self.progbar.update(self.seen, self.log_values)
         benchmark.logger.debug(epoch_log)
 
+
 def add_conv_layer(model, layer_params, input_dim=None, locally_connected=False):
-    if len(layer_params) == 3: # 1D convolution
+    if len(layer_params) == 3:  # 1D convolution
         filters = layer_params[0]
         filter_len = layer_params[1]
         stride = layer_params[2]
@@ -187,7 +187,7 @@ def add_conv_layer(model, layer_params, input_dim=None, locally_connected=False)
                 model.add(Conv1D(filters, filter_len, strides=stride, input_shape=(input_dim, 1)))
             else:
                 model.add(Conv1D(filters, filter_len, strides=stride))
-    elif len(layer_params) == 5: # 2D convolution
+    elif len(layer_params) == 5:  # 2D convolution
         filters = layer_params[0]
         filter_len = (layer_params[1], layer_params[2])
         stride = (layer_params[3], layer_params[4])
@@ -203,6 +203,7 @@ def add_conv_layer(model, layer_params, input_dim=None, locally_connected=False)
                 model.add(Conv2D(filters, filter_len, strides=stride))
     return model
 
+
 def run(gParameters):
     """
     Runs the model using the specified set of parameters
@@ -216,30 +217,23 @@ def run(gParameters):
         dval = gParameters['dense']
         if type(dval) != list:
             res = list(dval)
-        #try:
-            #is_str = isinstance(dval, basestring)
-        #except NameError:
-            #is_str = isinstance(dval, str)
-        #if is_str:
-            #res = str2lst(dval)
+        # try:
+        #     is_str = isinstance(dval, basestring)
+        # except NameError:
+        #     is_str = isinstance(dval, str)
+        # if is_str:
+        #     res = str2lst(dval)
             gParameters['dense'] = res
         print(gParameters['dense'])
 
     if 'conv' in gParameters:
-        #conv_list = p1_common.parse_conv_list(gParameters['conv'])
-        #cval = gParameters['conv']
-        #try:
-            #is_str = isinstance(cval, basestring)
-        #except NameError:
-            #is_str = isinstance(cval, str)
-        #if is_str:
-            #res = str2lst(cval)
-            #gParameters['conv'] = res
+        flat = gParameters['conv']
+        gParameters['conv'] = [flat[i:i + 3] for i in range(0, len(flat), 3)]
         print('Conv input', gParameters['conv'])
     # print('Params:', gParameters)
     # Construct extension to save model
     ext = benchmark.extension_from_parameters(gParameters, '.keras')
-    logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['output_dir']+ext+'.log'
+    logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['output_dir'] + ext + '.log'
 
     fh = logging.FileHandler(logfile)
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
@@ -260,54 +254,52 @@ def run(gParameters):
 
     # Build dataset loader object
     loader = benchmark.DataLoader(seed=seed, dtype=gParameters['data_type'],
-                             val_split=gParameters['val_split'],
-                             test_cell_split=gParameters['test_cell_split'],
-                             cell_features=gParameters['cell_features'],
-                             drug_features=gParameters['drug_features'],
-                             feature_subsample=gParameters['feature_subsample'],
-                             scaling=gParameters['scaling'],
-                             scramble=gParameters['scramble'],
-                             min_logconc=gParameters['min_logconc'],
-                             max_logconc=gParameters['max_logconc'],
-                             subsample=gParameters['subsample'],
-                             category_cutoffs=gParameters['category_cutoffs'])
+                                  val_split=gParameters['val_split'],
+                                  test_cell_split=gParameters['test_cell_split'],
+                                  cell_features=gParameters['cell_features'],
+                                  drug_features=gParameters['drug_features'],
+                                  feature_subsample=gParameters['feature_subsample'],
+                                  scaling=gParameters['scaling'],
+                                  scramble=gParameters['scramble'],
+                                  min_logconc=gParameters['min_logconc'],
+                                  max_logconc=gParameters['max_logconc'],
+                                  subsample=gParameters['subsample'],
+                                  category_cutoffs=gParameters['category_cutoffs'])
 
     # Initialize weights and learning rule
     initializer_weights = candle.build_initializer(gParameters['initialization'], kerasDefaults, seed)
     initializer_bias = candle.build_initializer('constant', kerasDefaults, 0.)
-
-    activation = gParameters['activation']
 
     # Define model architecture
     gen_shape = None
     out_dim = 1
 
     model = Sequential()
-    if 'dense' in gParameters: # Build dense layers
+    if 'dense' in gParameters:  # Build dense layers
         for layer in gParameters['dense']:
             if layer:
                 model.add(Dense(layer, input_dim=loader.input_dim,
-                            kernel_initializer=initializer_weights,
-                            bias_initializer=initializer_bias))
+                                kernel_initializer=initializer_weights,
+                                bias_initializer=initializer_bias))
                 if gParameters['batch_normalization']:
                     model.add(BatchNormalization())
                 model.add(Activation(gParameters['activation']))
                 if gParameters['dropout']:
                     model.add(Dropout(gParameters['dropout']))
-    else: # Build convolutional layers
+    else:  # Build convolutional layers
         gen_shape = 'add_1d'
         layer_list = list(range(0, len(gParameters['conv'])))
-        lc_flag=False
+        lc_flag = False
         if 'locally_connected' in gParameters:
             lc_flag = True
-        
-        for l, i in enumerate(layer_list):
+
+        for _, i in enumerate(layer_list):
             if i == 0:
-                add_conv_layer(model, gParameters['conv'][i], input_dim=loader.input_dim,locally_connected=lc_flag)
+                add_conv_layer(model, gParameters['conv'][i], input_dim=loader.input_dim, locally_connected=lc_flag)
             else:
-                add_conv_layer(model, gParameters['conv'][i],locally_connected=lc_flag)
+                add_conv_layer(model, gParameters['conv'][i], locally_connected=lc_flag)
             if gParameters['batch_normalization']:
-                    model.add(BatchNormalization())
+                model.add(BatchNormalization())
             model.add(Activation(gParameters['activation']))
             if gParameters['pool']:
                 model.add(MaxPooling1D(pool_size=gParameters['pool']))
@@ -317,8 +309,8 @@ def run(gParameters):
 
     # Define optimizer
     optimizer = candle.build_optimizer(gParameters['optimizer'],
-                                                gParameters['learning_rate'],
-                                                kerasDefaults)
+                                       gParameters['learning_rate'],
+                                       kerasDefaults)
 
     # Compile and display model
     model.compile(loss=gParameters['loss'], optimizer=optimizer)
@@ -330,9 +322,9 @@ def run(gParameters):
     val_gen2 = benchmark.DataGenerator(loader, partition='val', batch_size=gParameters['batch_size'], shape=gen_shape, name='val_gen2').flow()
     test_gen = benchmark.DataGenerator(loader, partition='test', batch_size=gParameters['batch_size'], shape=gen_shape, name='test_gen').flow()
 
-    train_steps = int(loader.n_train/gParameters['batch_size'])
-    val_steps = int(loader.n_val/gParameters['batch_size'])
-    test_steps = int(loader.n_test/gParameters['batch_size'])
+    train_steps = int(loader.n_train / gParameters['batch_size'])
+    val_steps = int(loader.n_val / gParameters['batch_size'])
+    test_steps = int(loader.n_test / gParameters['batch_size'])
 
     if 'train_steps' in gParameters:
         train_steps = gParameters['train_steps']
@@ -341,36 +333,40 @@ def run(gParameters):
     if 'test_steps' in gParameters:
         test_steps = gParameters['test_steps']
 
-    checkpointer = ModelCheckpoint(filepath=gParameters['output_dir']+'.model'+ext+'.h5', save_best_only=True)
+    checkpointer = ModelCheckpoint(filepath=gParameters['output_dir'] + '.model' + ext + '.h5', save_best_only=True)
     progbar = MyProgbarLogger(train_steps * gParameters['batch_size'])
     loss_history = MyLossHistory(progbar=progbar, val_gen=val_gen2, test_gen=test_gen,
-                            val_steps=val_steps, test_steps=test_steps,
-                            metric=gParameters['loss'], category_cutoffs=gParameters['category_cutoffs'],
-                            ext=ext, pre=gParameters['output_dir'])
+                                 val_steps=val_steps, test_steps=test_steps,
+                                 metric=gParameters['loss'], category_cutoffs=gParameters['category_cutoffs'],
+                                 ext=ext, pre=gParameters['output_dir'])
 
     # Seed random generator for training
     np.random.seed(seed)
 
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
 
-    history = model.fit_generator(train_gen, train_steps,
+    # history = model.fit(train_gen, steps_per_epoch=train_steps, # this should be the deprecation fix
+    history = model.fit(train_gen, steps_per_epoch=train_steps,
                         epochs=gParameters['epochs'],
                         validation_data=val_gen,
                         validation_steps=val_steps,
                         verbose=0,
                         callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
                         )
+    # callbacks=[checkpointer, loss_history, candleRemoteMonitor], # this just caused the job to hang on Biowulf
 
     benchmark.logger.removeHandler(fh)
     benchmark.logger.removeHandler(sh)
 
     return history
 
+
 def main():
 
     gParameters = initialize_parameters()
     benchmark.check_params(gParameters)
     run(gParameters)
+
 
 if __name__ == '__main__':
     main()

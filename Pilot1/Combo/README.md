@@ -36,7 +36,7 @@ $ python combo_baseline_keras2.py
 
 #### Example output
 ```
-python combo_baseline_keras2.py --use_landmark_genes --warmup_lr --reduce_lr -z 256
+python combo_baseline_keras2.py --use_landmark_genes True --warmup_lr True --reduce_lr True -z 256
 
 Using TensorFlow backend.
 Params: {'activation': 'relu', 'batch_size': 256, 'dense': [1000, 1000, 1000], 'dense_feature_layers': [1000, 1000, 1000], 'drop': 0, 'epochs': 10, 'learning_rate': None, 'loss': 'mse', 'optimizer': 'adam', 'residual': False, 'rng_seed': 2017, 'save': 'save/combo', 'scaling': 'std', 'feature_subsample': 0, 'validation_split': 0.2, 'timeout': -1, 'cell_features': ['expression'], 'drug_features': ['descriptors'], 'cv': 1, 'max_val_loss': 1.0, 'base_lr': None, 'reduce_lr': True, 'warmup_lr': True, 'batch_normalization': False, 'gen': False, 'use_combo_score': False, 'config_file': '/home/fangfang/work/Benchmarks.combo/Pilot1/Combo/combo_default_model.txt', 'verbose': False, 'logfile': None, 'train_bool': True, 'shuffle': True, 'alpha_dropout': False, 'gpus': [], 'experiment_id': 'EXP.000', 'run_id': 'RUN.000', 'use_landmark_genes': True, 'cp': False, 'tb': False, 'datatype': <class 'numpy.float32'>}

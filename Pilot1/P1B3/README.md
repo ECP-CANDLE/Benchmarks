@@ -115,7 +115,7 @@ This benchmark can be run with additional or alternative molecular and drug feat
 
 #### Use multiple cell line and drug feature sets
 ```
-python p1b3_baseline_keras2.py --cell_features all --drug_features all --conv 10 10 1 5 5 1 -epochs 200
+python p1b3_baseline_keras2.py --cell_features all --drug_features all --conv 10 10 1 5 5 1 --epochs 200
 ```
 This will train a convolution network for 200 epochs, using three sets of cell line features (gene expression, microRNA, proteome) and two sets of drug features (Dragon7 descriptors, encoded latent representation from Aspuru-Guzik's SMILES autoencoder), and will bring the total input feature dimension to 40K.
 ```
@@ -144,8 +144,6 @@ This example adds a locally-connected layer to the MLP and changes the optimizer
 
 
 ### Preliminary performance
-Some of the best validation loss values we have seen are in the 0.04-0.06 range, which roughly corresponds to about 20-25% percent growth error per data point. We are running hyperparameter searches. 
-
 During model training, a log file records the history of various metrics and the model with the best validation loss is saved in HDF5. Here are some examples of error distribution plots that are created whenever the model is improved. 
 
 ![Histogram of errors: Random vs Epoch 1](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/Pilot1/P1B3/images/histo_It0.png)

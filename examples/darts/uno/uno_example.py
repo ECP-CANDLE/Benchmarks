@@ -4,13 +4,12 @@ import torch
 import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
-import logging
 
 import example_setup as bmk
 import darts
 import candle
 
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("darts_uno")
 
 
@@ -34,7 +33,7 @@ def run(params):
     args = candle.ArgumentStruct(**params)
 
     args.cuda = torch.cuda.is_available()
-    device = torch.device(f"cuda" if args.cuda else f"cpu")
+    device = torch.device("cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
     train_data = darts.Uno('./data', 'train', download=True)
@@ -165,7 +164,6 @@ def train(trainloader,
     meter.save(args.save_path)
 
 
-
 def validate(validloader, model, criterion, args, tasks, meter, device):
     model.eval()
     with torch.no_grad():
@@ -195,5 +193,5 @@ def main():
     run(params)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

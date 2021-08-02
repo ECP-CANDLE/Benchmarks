@@ -1,0 +1,11 @@
+[Global_Params]
+data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/'
+vqvae = 'histology.pt'
+top = 'top.pt'
+bottom = 'bottom.pt'
+filename = 'sample32_out.jpg'
+batch_size = 8
+use_gpus = True
+
+[Monitor_Params]
+timeout = 3600

@@ -1,0 +1,14 @@
+[Global_Params]
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/image_vae/moses_data/'
+train_data = 'train.csv'
+test_data = 'test.csv'
+workers = 16
+epochs = None
+batch_size = 256
+grad_clip = 2.0
+model_path = 'models'
+output_dir = 'output'
+rng_seed = 42
+log_interval = 25
+learning_rate = 5.0e-4
+ckpt_directory = 'models'

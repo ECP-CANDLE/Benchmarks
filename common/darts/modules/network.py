@@ -127,12 +127,12 @@ class Network(Model):
 
     def forward(self, x):
         # s0 & s1 means the last cells' output
-        s0 = s1 = self.stem(x) # [b, 3, 32, 32] => [b, 48, 32, 32]
+        s0 = s1 = self.stem(x)  # [b, 3, 32, 32] => [b, 48, 32, 32]
 
         for i, cell in enumerate(self.cells):
-            weights = F.softmax(self.alpha_normal, dim=-1) # [14, 8]
+            weights = F.softmax(self.alpha_normal, dim=-1)  # [14, 8]
             # execute cell() firstly and then assign s0=s1, s1=result
-            s0, out = s1, cell(s0, s1, weights) # [40, 64, 32, 32]
+            s0, out = s1, cell(s0, s1, weights)  # [40, 64, 32, 32]
 
         logits = self.classifier(out.view(out.size(0), -1))
 
@@ -169,21 +169,21 @@ class Network(Model):
             gene = []
             n = 2
             start = 0
-            for i in range(self.num_nodes): # for each node
+            for i in range(self.num_nodes):  # for each node
                 end = start + n
                 W = weights[start:end].copy()
-                edges = sorted(range(i + 2), # i+2 is the number of connection for node i
-                            key=lambda x: -max(W[x][k] # by descending order
-                                               for k in range(len(W[x])) # get strongest ops
-                                               if k != self.primitives.index('none'))
-                               )[:2] # only has two inputs
-                for j in edges: # for every input nodes j of current node i
+                edges = sorted(range(i + 2),  # i+2 is the number of connection for node i
+                               key=lambda x: -max(W[x][k]  # by descending order
+                                                           for k in range(len(W[x]))  # get strongest ops
+                                                           if k != self.primitives.index('none'))
+                               )[:2]  # only has two inputs
+                for j in edges:  # for every input nodes j of current node i
                     k_best = None
-                    for k in range(len(W[j])): # get strongest ops for current input j->i
+                    for k in range(len(W[j])):  # get strongest ops for current input j->i
                         if k != self.primitives.index('none'):
                             if k_best is None or W[j][k] > W[j][k_best]:
                                 k_best = k
-                    gene.append((self.primitives[k_best], j)) # save ops and input node
+                    gene.append((self.primitives[k_best], j))  # save ops and input node
                 start = end
                 n += 1
             return gene
@@ -197,4 +197,3 @@ class Network(Model):
         )
 
         return genotype
-

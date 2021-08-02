@@ -1,0 +1,15 @@
+[Global_Params]
+lmdb_filename = 'lmdb_001'
+epochs = 420
+batch_size = 32
+learning_rate = 3e-4
+hier = 'top'
+channel = 256
+n_res_block = 4
+n_res_channel = 256
+n_out_res_block = 0
+n_cond_res_block = 3
+dropout = 0.1
+amp = 'O0'
+use_gpus = True
+ckpt_directory = './'

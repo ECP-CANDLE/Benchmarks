@@ -20,6 +20,7 @@ def start(params, sys_desc):
     }]
     save("experiment_start.json", msg)
 
+
 def end(experiment_id):
     """Capture exp end """
     exp_end = datetime.now()
@@ -29,6 +30,7 @@ def end(experiment_id):
         'end_time': {'set': str(exp_end)}
     }]
     save("experiment_end.json", msg)
+
 
 def save(filename, msg):
     """Save log message"""

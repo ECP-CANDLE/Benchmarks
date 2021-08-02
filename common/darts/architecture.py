@@ -5,16 +5,16 @@ import darts.functional as F
 
 
 class Hyperparameters:
-    alpha_lr = 3e-4 
-    alpha_wd = 1e-3 
+    alpha_lr = 3e-4
+    alpha_wd = 1e-3
 
 
 class Architecture:
 
     def __init__(self, model, args, hyperparams=Hyperparameters(), device='cpu'):
-        self.momentum = args.momentum # momentum for optimizer of theta
-        self.wd = args.weight_decay # weight decay for optimizer of model's theta
-        self.model = model # main model with respect to theta and alpha
+        self.momentum = args.momentum  # momentum for optimizer of theta
+        self.wd = args.weight_decay  # weight decay for optimizer of model's theta
+        self.model = model  # main model with respect to theta and alpha
         self.device = device
 
         # this is the optimizer to optimize alpha parameter
@@ -45,13 +45,11 @@ class Architecture:
         loss = self.model.loss(data, target)
         # flatten current weights
         theta = F.flatten(self.model.parameters()).detach()
-        # theta: torch.Size([1930618])
-        # print('theta:', theta.shape)
         try:
             # fetch momentum data from theta optimizer
             moment = F.flatten(optimizer.state[v]['momentum_buffer'] for v in self.model.parameters())
             moment.mul_(self.momentum)
-        except:
+        except Exception:
             moment = torch.zeros_like(theta)
 
         # flatten all gradients
@@ -190,7 +188,7 @@ class Architecture:
             # w = (w+R*v) - 2R*v + R*v
             p.data.add_(R, v)
 
-        h= [(x - y).div_(2 * R) for x, y in zip(grads_p, grads_n)]
+        h = [(x - y).div_(2 * R) for x, y in zip(grads_p, grads_n)]
         # h len: 2 h0 torch.Size([14, 8])
         # print('h len:', len(h), 'h0', h[0].shape)
         return h

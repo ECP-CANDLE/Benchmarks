@@ -1,6 +1,5 @@
 from __future__ import print_function
 
-import pandas as pd
 import numpy as np
 
 from sklearn.metrics import accuracy_score
@@ -8,12 +7,6 @@ from sklearn.metrics import accuracy_score
 import os
 import sys
 import logging
-import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
-
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
@@ -23,17 +16,13 @@ sys.path.append(lib_path2)
 
 import candle
 
-#url_p1b2 = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B2/'
-#file_train = 'P1B2.train.csv'
-#file_test = 'P1B2.test.csv'
-
 logger = logging.getLogger(__name__)
 
 additional_definitions = [
-{'name':'reg_l2',
-'type': float,
-'default': 0.,
-'help':'weight of regularization for l2 norm of nn weights'}
+    {'name': 'reg_l2',
+     'type': float,
+     'default': 0.,
+     'help': 'weight of regularization for l2 norm of nn weights'}
 ]
 
 required = [
@@ -57,6 +46,7 @@ required = [
     'shuffle'
 ]
 
+
 class BenchmarkP1B2(candle.Benchmark):
 
     def set_locals(self):
@@ -71,6 +61,7 @@ class BenchmarkP1B2(candle.Benchmark):
         if additional_definitions is not None:
             self.additional_definitions = additional_definitions
 
+
 def extension_from_parameters(params, framework):
     """Construct string for saving model with annotation of parameters"""
     ext = framework
@@ -82,46 +73,48 @@ def extension_from_parameters(params, framework):
         ext += '.F={}'.format(params['feature_subsample'])
     for i, n in enumerate(params['dense']):
         if n:
-            ext += '.D{}={}'.format(i+1, n)
+            ext += '.D{}={}'.format(i + 1, n)
     ext += '.S={}'.format(params['scaling'])
 
     return ext
 
 
 def load_data_one_hot(params, seed):
-   # fetch data
-    file_train = candle.fetch_file(params['data_url'] + params['train_data'],subdir='Pilot1')
-    file_test = candle.fetch_file(params['data_url'] + params['test_data'],subdir='Pilot1')
+    # fetch data
+    file_train = candle.fetch_file(params['data_url'] + params['train_data'], subdir='Pilot1')
+    file_test = candle.fetch_file(params['data_url'] + params['test_data'], subdir='Pilot1')
 
     return candle.load_Xy_one_hot_data2(file_train, file_test, class_col=['cancer_type'],
-                                           drop_cols=['case_id', 'cancer_type'],
-                                           n_cols=params['feature_subsample'],
-                                           shuffle=params['shuffle'],
-                                           scaling=params['scaling'],
-                                           validation_split=params['val_split'],
-                                           dtype=params['data_type'],
-                                           seed=seed)
+                                        drop_cols=['case_id', 'cancer_type'],
+                                        n_cols=params['feature_subsample'],
+                                        shuffle=params['shuffle'],
+                                        scaling=params['scaling'],
+                                        validation_split=params['val_split'],
+                                        dtype=params['data_type'],
+                                        seed=seed)
 
 
 def load_data(params, seed):
-   # fetch data
-    file_train = candle.fetch_file(params['data_url'] + params['train_data'],subdir='Pilot1')
-    file_test = candle.fetch_file(params['data_url'] + params['test_data'],subdir='Pilot1')
+    # fetch data
+    file_train = candle.fetch_file(params['data_url'] + params['train_data'], subdir='Pilot1')
+    file_test = candle.fetch_file(params['data_url'] + params['test_data'], subdir='Pilot1')
 
     return candle.load_Xy_data2(file_train, file_test, class_col=['cancer_type'],
-                                  drop_cols=['case_id', 'cancer_type'],
-                                  n_cols=params['feature_subsample'],
-                                  shuffle=params['shuffle'],
-                                  scaling=params['scaling'],
-                                  validation_split=params['val_split'],
-                                  dtype=params['data_type'],
-                                  seed=seed)
+                                drop_cols=['case_id', 'cancer_type'],
+                                n_cols=params['feature_subsample'],
+                                shuffle=params['shuffle'],
+                                scaling=params['scaling'],
+                                validation_split=params['val_split'],
+                                dtype=params['data_type'],
+                                seed=seed)
 
 
 def evaluate_accuracy_one_hot(y_pred, y_test):
     def map_max_indices(nparray):
-        maxi = lambda a: a.argmax()
-        iter_to_na = lambda i: np.fromiter(i, dtype=np.float)
+        # maxi = lambda a: a.argmax()
+        def maxi(a):
+            return a.argmax()
+        # iter_to_na = lambda i: np.fromiter(i, dtype=np.float)
         return np.array([maxi(a) for a in nparray])
     ya, ypa = tuple(map(map_max_indices, (y_test, y_pred)))
     accuracy = accuracy_score(ya, ypa)

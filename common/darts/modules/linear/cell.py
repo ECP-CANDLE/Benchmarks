@@ -26,8 +26,8 @@ class Cell(Model):
         self.reduction_prev = reduction_prev
 
         # steps inside a cell
-        self.num_nodes = num_nodes # 4
-        self.multiplier = multiplier # 4
+        self.num_nodes = num_nodes  # 4
+        self.multiplier = multiplier  # 4
 
         self.layers = nn.ModuleList()
 
@@ -51,7 +51,7 @@ class Cell(Model):
         offset = 0
         # for each node, receive input from
         # all previous intermediate nodes and s0, s1
-        for i in range(self.num_nodes): # 4
+        for i in range(self.num_nodes):  # 4
             offset += len(states)
 
         # concat along dim=channel

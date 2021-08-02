@@ -1,48 +1,50 @@
-from keras.callbacks import Callback
-from keras import backend as K
+from tensorflow.keras.callbacks import Callback
+from tensorflow.keras import backend as K
 import numpy as np
 
+
 def clr_check_args(args):
-    req_keys = ['clr_mode','clr_base_lr','clr_max_lr','clr_gamma']
+    req_keys = ['clr_mode', 'clr_base_lr', 'clr_max_lr', 'clr_gamma']
     keys_present = True
     for key in req_keys:
-        if  key not in args.keys():
+        if key not in args.keys():
             keys_present = False
     return keys_present
 
+
 def clr_set_args(args):
-    req_keys = ['clr_mode','clr_base_lr','clr_max_lr','clr_gamma']
+    req_keys = ['clr_mode', 'clr_base_lr', 'clr_max_lr', 'clr_gamma']
     exclusive_keys = ['warmup_lr', 'reduce_lr']
     keys_present = True
     for key in req_keys:
-        if  key not in args.keys():
+        if key not in args.keys():
             keys_present = False
     if keys_present and args['clr_mode'] is not None:
         clr_keras_kwargs = {'mode': args['clr_mode'], 'base_lr': args['clr_base_lr'],
-                        'max_lr': args['clr_max_lr'], 'gamma': args['clr_gamma']}
+                            'max_lr': args['clr_max_lr'], 'gamma': args['clr_gamma']}
         for ex_key in exclusive_keys:
             if ex_key in args.keys():
-                if args[ex_key] == True:
+                if args[ex_key] is True:
                     print("Key ", ex_key, " conflicts, setting to False")
                     args[ex_key] = False
     else:
         print("Incomplete CLR specification: will run without")
         clr_keras_kwargs = {'mode': None, 'base_lr': 0.1,
-                        'max_lr': 0.1, 'gamma': 0.1}
+                            'max_lr': 0.1, 'gamma': 0.1}
     return clr_keras_kwargs
+
 
 def clr_callback(mode=None, base_lr=1e-4, max_lr=1e-3, gamma=0.999994):
     """ Creates keras callback for cyclical learning rate. """
-        # keras_contrib = './keras_contrib/callbacks'
-        # sys.path.append(keras_contrib)
 
     if mode == 'trng1':
         clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, mode='triangular')
     elif mode == 'trng2':
         clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, mode='triangular2')
     elif mode == 'exp':
-        clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, mode='exp_range', gamma=gamma) # 0.99994; 0.99999994; 0.999994
+        clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, mode='exp_range', gamma=gamma)  # 0.99994; 0.99999994; 0.999994
     return clr
+
 
 class CyclicLR(Callback):
     """This callback implements a cyclical learning rate policy (CLR).

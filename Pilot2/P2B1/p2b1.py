@@ -12,7 +12,7 @@ from __future__ import print_function
 # from tqdm import *
 
 import numpy as np
-import keras.backend as K
+import tensorflow.keras.backend as K
 import threading
 import os
 import sys
@@ -28,30 +28,30 @@ import random
 import candle
 
 additional_definitions = [
-{'name':'train_bool', 'type':candle.str2bool,'default':True,'help':'Invoke training'},
-{'name':'eval_bool', 'type':candle.str2bool,'default':False,'help':'Use model for inference'},
-{'name':'home_dir','help':'Home Directory','type':str,'default':'.'},
-#{'name':'config_file','help':'Config File','type':str,'default':os.path.join(file_path, 'p2b1_default_model.txt')},
-{'name':'weight_path','help':'Trained Model Pickle File','type':str,'default':None},
-{'name':'base_memo','help':'Memo','type':str,'default':None},
-#{'name':'seed_bool', 'type':candle.str2bool,'default':False,'help':'Random Seed'},
-{'name':'case','help':'[Full, Center, CenterZ]','type':str,'default':'Full'},
-{'name':'fig_bool', 'type':candle.str2bool,'default':False,'help':'Generate Prediction Figure'},
-{'name':'set_sel','help':'[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]','type':str,'default':'3k_Disordered'},
-{'name':'conv_bool', 'type':candle.str2bool, 'default':True, 'help':'Invoke training using 1D Convs for inner AE'},
-{'name':'full_conv_bool', 'type':candle.str2bool, 'default':False, 'help':'Invoke training using fully convolutional NN for inner AE'},
-{'name':'type_bool', 'type':candle.str2bool, 'default':True, 'help':'Include molecule type information in desining AE'},
-{'name':'nbr_type', 'type':str, 'default':'relative', 'help':'Defines the type of neighborhood data to use. [relative, invariant]'},
-{'name':'backend', 'help':'Keras Backend', 'type':str, 'default':'tensorflow'},
-{'name':'cool', 'help':'Boolean: cool learning rate', 'type':candle.str2bool, 'default':False},
-{'name':'data_set', 'help':'Data set for training', 'type':str, 'default':None},
-{'name':'l2_reg', 'help':'Regularization parameter', 'type':float, 'default':None},
-{'name':'molecular_nbrs', 'help':'Data dimension for molecular autoencoder', 'type':int, 'default':None},
-{'name':'molecular_nonlinearity', 'help':'Activation for molecular netowrk', 'type':str, 'default':None},
-{'name':'molecular_num_hidden', 'nargs':'+', 'help':'Layer sizes for molecular network', 'type':int, 'default':None},
-{'name':'noise_factor', 'help':'Noise factor', 'type':float, 'default':None},
-{'name':'num_hidden', 'nargs':'+', 'help':'Dense layer specification', 'type':int, 'default':None},
-{'name':'sampling_density', 'help':'Sampling density', 'type':float, 'default':None}
+    {'name': 'train_bool', 'type': candle.str2bool, 'default': True, 'help': 'Invoke training'},
+    {'name': 'eval_bool', 'type': candle.str2bool, 'default': False, 'help': 'Use model for inference'},
+    {'name': 'home_dir', 'help': 'Home Directory', 'type': str, 'default': '.'},
+    # {'name': 'config_file','help': 'Config File','type':str,'default':os.path.join(file_path, 'p2b1_default_model.txt')},
+    {'name': 'weight_path', 'help': 'Trained Model Pickle File', 'type': str, 'default': None},
+    {'name': 'base_memo', 'help': 'Memo', 'type': str, 'default': None},
+    # {'name': 'seed_bool', 'type':candle.str2bool,'default':False,'help': 'Random Seed'},
+    {'name': 'case', 'help': '[Full, Center, CenterZ]', 'type': str, 'default': 'Full'},
+    {'name': 'fig_bool', 'type': candle.str2bool, 'default': False, 'help': 'Generate Prediction Figure'},
+    {'name': 'set_sel', 'help': '[3k_Disordered, 3k_Ordered, 3k_Ordered_and_gel, 6k_Disordered, 6k_Ordered, 6k_Ordered_and_gel]', 'type': str, 'default': '3k_Disordered'},
+    {'name': 'conv_bool', 'type': candle.str2bool, 'default': True, 'help': 'Invoke training using 1D Convs for inner AE'},
+    {'name': 'full_conv_bool', 'type': candle.str2bool, 'default': False, 'help': 'Invoke training using fully convolutional NN for inner AE'},
+    {'name': 'type_bool', 'type': candle.str2bool, 'default': True, 'help': 'Include molecule type information in desining AE'},
+    {'name': 'nbr_type', 'type': str, 'default': 'relative', 'help': 'Defines the type of neighborhood data to use. [relative, invariant]'},
+    {'name': 'backend', 'help': 'Keras Backend', 'type': str, 'default': 'tensorflow'},
+    {'name': 'cool', 'help': 'Boolean: cool learning rate', 'type': candle.str2bool, 'default': False},
+    {'name': 'data_set', 'help': 'Data set for training', 'type': str, 'default': None},
+    {'name': 'l2_reg', 'help': 'Regularization parameter', 'type': float, 'default': None},
+    {'name': 'molecular_nbrs', 'help': 'Data dimension for molecular autoencoder', 'type': int, 'default': None},
+    {'name': 'molecular_nonlinearity', 'help': 'Activation for molecular netowrk', 'type': str, 'default': None},
+    {'name': 'molecular_num_hidden', 'nargs': '+', 'help': 'Layer sizes for molecular network', 'type': int, 'default': None},
+    {'name': 'noise_factor', 'help': 'Noise factor', 'type': float, 'default': None},
+    {'name': 'num_hidden', 'nargs': '+', 'help': 'Dense layer specification', 'type': int, 'default': None},
+    {'name': 'sampling_density', 'help': 'Sampling density', 'type': float, 'default': None}
 ]
 
 required = [
@@ -76,6 +76,7 @@ required = [
     'save_path'
 ]
 
+
 class BenchmarkP2B1(candle.Benchmark):
 
     def set_locals(self):
@@ -90,25 +91,27 @@ class BenchmarkP2B1(candle.Benchmark):
         if additional_definitions is not None:
             self.additional_definitions = additional_definitions
 
+
 def get_list_of_data_files(GP):
 
     import pilot2_datasets as p2
     reload(p2)
-    print ('Reading Data...')
-    ## Identify the data set selected
-    data_set=p2.data_sets[GP['set_sel']][0]
-    ## Get the MD5 hash for the proper data set
-    data_hash=p2.data_sets[GP['set_sel']][1]
-    print ('Reading Data Files... %s->%s' % (GP['set_sel'], data_set))
-    ## Check if the data files are in the data director, otherwise fetch from FTP
-    data_file = candle.fetch_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/'+data_set+'.tar.gz', untar=True, subdir='Pilot2')
+    print('Reading Data...')
+    # Identify the data set selected
+    data_set = p2.data_sets[GP['set_sel']][0]
+    # Get the MD5 hash for the proper data set
+    # data_hash = p2.data_sets[GP['set_sel']][1]
+    print('Reading Data Files... %s->%s' % (GP['set_sel'], data_set))
+    # Check if the data files are in the data director, otherwise fetch from FTP
+    data_file = candle.fetch_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/' + data_set + '.tar.gz', unpack=True, subdir='Pilot2')
     data_dir = os.path.join(os.path.dirname(data_file), data_set)
-    ## Make a list of all of the data files in the data set
-    data_files=glob.glob('%s/*.npz'%data_dir)
+    # Make a list of all of the data files in the data set
+    data_files = glob.glob('%s/*.npz' % data_dir)
 
     fields = p2.gen_data_set_dict()
 
     return (data_files, fields)
+
 
 # get activations for hidden layers of the model
 def get_activations(model, layer, X_batch):
@@ -117,12 +120,12 @@ def get_activations(model, layer, X_batch):
     return activations
 
 
-############# Define Data Generators ################
+# ############ Define Data Generators ################
 class ImageNoiseDataGenerator(object):
     '''Generate minibatches with
     realtime data augmentation.
     '''
-    def __init__(self,corruption_level=0.5):
+    def __init__(self, corruption_level=0.5):
 
         self.__dict__.update(locals())
         self.p = corruption_level
@@ -190,8 +193,8 @@ class ImageNoiseDataGenerator(object):
         # for python 3.x
         return self.next()
 
-    def insertnoise(self,x,corruption_level=0.5):
-        return np.random.binomial(1,1-corruption_level,x.shape)*x
+    def insertnoise(self, x, corruption_level=0.5):
+        return np.random.binomial(1, 1 - corruption_level, x.shape) * x
 
 
 class autoencoder_preprocess():
@@ -204,20 +207,14 @@ class autoencoder_preprocess():
         # Add noise to input data
         np.random.seed(100)
         ind = np.where(X_train == 0)
-        rn = self.noise*np.random.rand(np.shape(ind)[1])
+        rn = self.noise * np.random.rand(np.shape(ind)[1])
         X_train[ind] = rn
         return X_train
 
     def renormalize(self, X_train, mu, sigma):
-        X_train = (X_train - mu)/sigma
+        X_train = (X_train - mu) / sigma
         X_train = X_train.astype("float32")
         return X_train
-
-## get activations for hidden layers of the model
-def get_activations(model, layer, X_batch):
-    get_activations = K.function([model.layers[0].input, K.learning_phase()], [model.layers[layer].output])
-    activations = get_activations([X_batch,0])
-    return activations
 
 
 class Candle_Molecular_Train():
@@ -236,7 +233,7 @@ class Candle_Molecular_Train():
         self.conv_net = conv_bool or full_conv_bool
         self.full_conv_net = full_conv_bool
         self.type_feature = type_bool
-        self.save_path = save_path+'/'
+        self.save_path = save_path + '/'
         self.sampling_density = sampling_density
 
         self.test_ind = random.sample(range(len(self.files)), 1)
@@ -251,31 +248,31 @@ class Candle_Molecular_Train():
 
         # choose a random sample to train on
         if not test:
-            order = random.sample(list(self.train_ind), int(self.sampling_density*len(self.train_ind)))
+            order = random.sample(list(self.train_ind), int(self.sampling_density * len(self.train_ind)))
         else:
             order = self.test_ind
 
         for f_ind in order:
             if print_out:
-                print (files[f_ind], '\n')
+                print(files[f_ind], '\n')
 
             (X, nbrs, resnums) = helper.get_data_arrays(files[f_ind])
-            
+
             # normalizing the location coordinates and bond lengths and scale type encoding
             # Changed the xyz normalization from 255 to 350
             if self.type_feature:
-                Xnorm = np.concatenate([X[:, :, :, 0:3]/320., X[:, :, :, 3:8], X[:, :, :, 8:]/10.], axis=3)
+                Xnorm = np.concatenate([X[:, :, :, 0:3] / 320., X[:, :, :, 3:8], X[:, :, :, 8:] / 10.], axis=3)
 
             # only consider the location coordinates and bond lengths per molecule
             else:
-                Xnorm = np.concatenate([X[:, :, :, 0:3]/320., X[:, :, :, 8:]/10.], axis=3)
+                Xnorm = np.concatenate([X[:, :, :, 0:3] / 320., X[:, :, :, 8:] / 10.], axis=3)
 
             num_frames = X.shape[0]
 
             xt_all = np.array([])
             yt_all = np.array([])
 
-            num_active_frames = random.sample(range(num_frames), int(self.sampling_density*num_frames))
+            num_active_frames = random.sample(range(num_frames), int(self.sampling_density * num_frames))
 
             print('Datagen on the following frames', num_active_frames)
 
@@ -288,7 +285,7 @@ class Candle_Molecular_Train():
                     elif self.nbr_type == 'invariant':
                         xt = helper.append_nbrs_invariant(xt, nbrs[i], self.molecular_nbrs)
                     else:
-                        print ('Invalid nbr_type')
+                        print('Invalid nbr_type')
                         exit()
 
                     yt = xt.copy()
@@ -303,7 +300,7 @@ class Candle_Molecular_Train():
                     elif self.nbr_type == 'invariant':
                         xt = helper.append_nbrs_invariant(xt, nbrs[i], self.molecular_nbrs)
                     else:
-                        print ('Invalid nbr_type')
+                        print('Invalid nbr_type')
                         exit()
                     yt = xt.copy()
 
@@ -320,21 +317,21 @@ class Candle_Molecular_Train():
 
     def train_ac(self):
 
-        for i in range(1, self.mb_epochs+1):
-            print ("\nTraining epoch: {:d}\n".format(i))
+        for i in range(1, self.mb_epochs + 1):
+            print("\nTraining epoch: {:d}\n".format(i))
 
             frame_loss = []
             frame_mse = []
 
-            current_path = self.save_path+'epoch_'+str(i)
+            current_path = self.save_path + 'epoch_' + str(i)
             if not os.path.exists(current_path):
-                os.makedirs(self.save_path+'/epoch_'+str(i))
+                os.makedirs(self.save_path + '/epoch_' + str(i))
 
             model_weight_file = '%s/%s.hdf5' % (current_path, 'model_weights')
             encoder_weight_file = '%s/%s.hdf5' % (current_path, 'encoder_weights')
 
             for curr_file, xt_all, yt_all in self.datagen(i):
-                #for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
+                # for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
                 for frame in range(len(xt_all)):
                     history = self.molecular_model.fit(xt_all[frame], yt_all[frame], epochs=1,
                                                        batch_size=self.batch_size, callbacks=self.callbacks[:2])
@@ -347,16 +344,16 @@ class Candle_Molecular_Train():
                         self.molecular_encoder.save_weights(encoder_weight_file)
 
             # save Loss and mse
-            print ("Saving loss and mse after current epoch... \n")
-            np.save(current_path+'/loss.npy', frame_loss)
-            np.save(current_path+'/mse.npy', frame_mse)
+            print("Saving loss and mse after current epoch... \n")
+            np.save(current_path + '/loss.npy', frame_loss)
+            np.save(current_path + '/mse.npy', frame_mse)
 
             # Update weights file
-            print ("Saving weights after current epoch... \n")
+            print("Saving weights after current epoch... \n")
             self.molecular_model.save_weights(model_weight_file)
             self.molecular_encoder.save_weights(encoder_weight_file)
 
-            print ("Saving latent space output for current epoch... \n")
+            print("Saving latent space output for current epoch... \n")
             for curr_file, xt_all, yt_all in self.datagen(0, 0, test=1):
                 XP = []
                 for frame in range(len(xt_all)):
@@ -366,8 +363,8 @@ class Candle_Molecular_Train():
                     XP.append(yp)
 
                 XP = np.array(XP)
-                fout = current_path+'/'+curr_file.split('/')[-1].split('.npz')[0]+'_AE'+'_Include%s' % self.type_feature + '_Conv%s' % self.conv_net+'.npy'
-                print (fout)
+                fout = current_path + '/' + curr_file.split('/')[-1].split('.npz')[0] + '_AE' + '_Include%s' % self.type_feature + '_Conv%s' % self.conv_net + '.npy'
+                print(fout)
                 np.save(fout, XP)
 
         return frame_loss, frame_mse

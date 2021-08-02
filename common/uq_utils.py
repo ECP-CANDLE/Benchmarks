@@ -1,16 +1,20 @@
 from __future__ import absolute_import
 
 import numpy as np
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import pearsonr
 from scipy import signal
-from scipy.interpolate import InterpolatedUnivariateSpline
+from scipy import interpolate
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import warnings
+
 
 def generate_index_distribution(numTrain, numTest, numValidation, params):
     """ Generates a vector of indices to partition the data for training.
         NO CHECKING IS DONE: it is assumed that the data could be partitioned
         in the specified blocks and that the block indices describe a coherent
         partition.
-        
+
         Parameters
         ----------
         numTrain : int
@@ -24,7 +28,7 @@ def generate_index_distribution(numTrain, numTest, numValidation, params):
             (uq_train_fr, uq_valid_fr, uq_test_fr for fraction specification,
             uq_train_vec, uq_valid_vec, uq_test_vec for block list specification, and
             uq_train_bks, uq_valid_bks, uq_test_bks for block number specification)
-            
+
         Return
         ----------
         indexTrain : int numpy array
@@ -34,15 +38,15 @@ def generate_index_distribution(numTrain, numTest, numValidation, params):
         indexTest : int numpy array
             Indices for data in testing (if merging)
     """
-    if all (k in params for k in ('uq_train_fr', 'uq_valid_fr', 'uq_test_fr')):
+    if all(k in params for k in ('uq_train_fr', 'uq_valid_fr', 'uq_test_fr')):
         # specification by fraction
         print("Computing UQ cross-validation - Distributing by FRACTION")
         return generate_index_distribution_from_fraction(numTrain, numTest, numValidation, params)
-    elif all (k in params for k in ('uq_train_vec', 'uq_valid_vec', 'uq_test_vec')):
+    elif all(k in params for k in ('uq_train_vec', 'uq_valid_vec', 'uq_test_vec')):
         # specification by block list
         print("Computing UQ cross-validation - Distributing by BLOCK LIST")
         return generate_index_distribution_from_block_list(numTrain, numTest, numValidation, params)
-    elif all (k in params for k in ('uq_train_bks', 'uq_valid_bks', 'uq_test_bks')):
+    elif all(k in params for k in ('uq_train_bks', 'uq_valid_bks', 'uq_test_bks')):
         # specification by block size
         print("Computing UQ cross-validation - Distributing by BLOCK NUMBER")
         return generate_index_distribution_from_blocks(numTrain, numTest, numValidation, params)
@@ -54,7 +58,7 @@ def generate_index_distribution(numTrain, numTest, numValidation, params):
 def generate_index_distribution_from_fraction(numTrain, numTest, numValidation, params):
     """ Generates a vector of indices to partition the data for training.
         It checks that the fractions provided are (0, 1) and add up to 1.
-       
+
         Parameters
         ----------
         numTrain : int
@@ -66,7 +70,7 @@ def generate_index_distribution_from_fraction(numTrain, numTest, numValidation, 
         params : dictionary with parameters
             Contains the keywords that control the behavior of the function
             (uq_train_fr, uq_valid_fr, uq_test_fr)
-            
+
         Return
         ----------
         indexTrain : int numpy array
@@ -83,7 +87,7 @@ def generate_index_distribution_from_fraction(numTrain, numTest, numValidation, 
     fractionTrain = params['uq_train_fr']
     fractionValidation = params['uq_valid_fr']
     fractionTest = params['uq_test_fr']
-    
+
     if (fractionTrain < 0.) or (fractionTrain > 1.):
         raise ValueError('uq_train_fr is not in (0, 1) range. uq_train_fr: ', fractionTrain)
     if (fractionValidation < 0.) or (fractionValidation > 1.):
@@ -92,8 +96,8 @@ def generate_index_distribution_from_fraction(numTrain, numTest, numValidation, 
         raise ValueError('uq_test_fr is not in (0, 1) range. uq_test_fr: ', fractionTest)
 
     fractionSum = fractionTrain + fractionValidation + fractionTest
-    #if (fractionSum > 1.) or (fractionSum < 1.):
-    if abs(fractionSum-1.) > tol:
+    # if (fractionSum > 1.) or (fractionSum < 1.):
+    if abs(fractionSum - 1.) > tol:
         raise ValueError('Specified UQ fractions (uq_train_fr, uq_valid_fr, uq_test_fr) do not add up to 1. No cross-validation partition is computed ! sum:', fractionSum)
 
     # Determine data size and block size
@@ -103,24 +107,24 @@ def generate_index_distribution_from_fraction(numTrain, numTest, numValidation, 
     else:
         # Preserve test partition
         numData = numTrain + numValidation
-    
+
     sizeTraining = int(np.round(numData * fractionTrain))
     sizeValidation = int(np.round(numData * fractionValidation))
 
     # Fill partition indices
-    # Fill train partition    
+    # Fill train partition
     Folds = np.arange(numData)
     np.random.shuffle(Folds)
     indexTrain = Folds[:sizeTraining]
     # Fill validation partition
     indexValidation = None
     if fractionValidation > 0:
-        indexValidation = Folds[sizeTraining:sizeTraining+sizeValidation]
+        indexValidation = Folds[sizeTraining:sizeTraining + sizeValidation]
     # Fill test partition
     indexTest = None
     if fractionTest > 0:
-        indexTest = Folds[sizeTraining+sizeValidation:]
-    
+        indexTest = Folds[sizeTraining + sizeValidation:]
+
     return indexTrain, indexValidation, indexTest
 
 
@@ -129,7 +133,7 @@ def generate_index_distribution_from_blocks(numTrain, numTest, numValidation, pa
         NO CHECKING IS DONE: it is assumed that the data could be partitioned
         in the specified block quantities and that the block quantities describe a
         coherent partition.
-        
+
         Parameters
         ----------
         numTrain : int
@@ -141,7 +145,7 @@ def generate_index_distribution_from_blocks(numTrain, numTest, numValidation, pa
         params : dictionary with parameters
             Contains the keywords that control the behavior of the function
             (uq_train_bks, uq_valid_bks, uq_test_bks)
-            
+
         Return
         ----------
         indexTrain : int numpy array
@@ -165,8 +169,8 @@ def generate_index_distribution_from_blocks(numTrain, numTest, numValidation, pa
     else:
         # Preserve test partition
         numData = numTrain + numValidation
-    
-    blockSize = (numData + numBlocksTotal // 2) // numBlocksTotal # integer division with rounding
+
+    blockSize = (numData + numBlocksTotal // 2) // numBlocksTotal  # integer division with rounding
     remainder = numData - blockSize * numBlocksTotal
     if remainder != 0:
         print("Warning ! Requested partition does not distribute data evenly between blocks. "
@@ -176,21 +180,20 @@ def generate_index_distribution_from_blocks(numTrain, numTest, numValidation, pa
     sizeValidation = numBlocksValidation * blockSize
 
     # Fill partition indices
-    # Fill train partition    
+    # Fill train partition
     Folds = np.arange(numData)
     np.random.shuffle(Folds)
     indexTrain = Folds[:sizeTraining]
     # Fill validation partition
     indexValidation = None
     if numBlocksValidation > 0:
-        indexValidation = Folds[sizeTraining:sizeTraining+sizeValidation]
+        indexValidation = Folds[sizeTraining:sizeTraining + sizeValidation]
     # Fill test partition
     indexTest = None
     if numBlocksTest > 0:
-        indexTest = Folds[sizeTraining+sizeValidation:]
-    
-    return indexTrain, indexValidation, indexTest
+        indexTest = Folds[sizeTraining + sizeValidation:]
 
+    return indexTrain, indexValidation, indexTest
 
 
 def generate_index_distribution_from_block_list(numTrain, numTest, numValidation, params):
@@ -198,7 +201,7 @@ def generate_index_distribution_from_block_list(numTrain, numTest, numValidation
         NO CHECKING IS DONE: it is assumed that the data could be partitioned
         in the specified list of blocks and that the block indices describe a
         coherent partition.
-        
+
         Parameters
         ----------
         numTrain : int
@@ -210,7 +213,7 @@ def generate_index_distribution_from_block_list(numTrain, numTest, numValidation
         params : dictionary with parameters
             Contains the keywords that control the behavior of the function
             (uq_train_vec, uq_valid_vec, uq_test_vec)
-            
+
         Return
         ----------
         indexTrain : int numpy array
@@ -225,7 +228,7 @@ def generate_index_distribution_from_block_list(numTrain, numTest, numValidation
     blocksTrain = params['uq_train_vec']
     blocksValidation = params['uq_valid_vec']
     blocksTest = params['uq_test_vec']
-    
+
     # Determine data size and block size
     numBlocksTrain = len(blocksTrain)
     numBlocksValidation = len(blocksValidation)
@@ -238,8 +241,8 @@ def generate_index_distribution_from_block_list(numTrain, numTest, numValidation
     else:
         # Preserve test partition
         numData = numTrain + numValidation
-    
-    blockSize = (numData + numBlocksTotal // 2) // numBlocksTotal # integer division with rounding
+
+    blockSize = (numData + numBlocksTotal // 2) // numBlocksTotal  # integer division with rounding
     remainder = numData - blockSize * numBlocksTotal
     if remainder != 0:
         print("Warning ! Requested partition does not distribute data evenly between blocks. "
@@ -254,7 +257,7 @@ def generate_index_distribution_from_block_list(numTrain, numTest, numValidation
     # Fill validation partition
     indexValidation = None
     if numBlocksValidation > 0:
-        maxSizeValidation = blockSize * numBlocksValidation  + remainder
+        maxSizeValidation = blockSize * numBlocksValidation + remainder
         indexValidation = fill_array(blocksValidation, maxSizeValidation, numData, numBlocksTotal, blockSize)
     # Fill test partition
     indexTest = None
@@ -265,13 +268,12 @@ def generate_index_distribution_from_block_list(numTrain, numTest, numValidation
     return indexTrain, indexValidation, indexTest
 
 
-
 def compute_limits(numdata, numblocks, blocksize, blockn):
     """ Generates the limit of indices corresponding to a
         specific block. It takes into account the non-exact
         divisibility of numdata into numblocks letting the
         last block to take the extra chunk.
-        
+
         Parameters
         ----------
         numdata : int
@@ -282,7 +284,7 @@ def compute_limits(numdata, numblocks, blocksize, blockn):
             Size of data per block
         blockn : int
             Index of block, from 0 to numblocks-1
-            
+
         Return
         ----------
         start : int
@@ -292,7 +294,7 @@ def compute_limits(numdata, numblocks, blocksize, blockn):
     """
     start = blockn * blocksize
     end = start + blocksize
-    if blockn == (numblocks-1): # last block gets the extra
+    if blockn == (numblocks - 1):  # last block gets the extra
         end = numdata
 
     return start, end
@@ -301,7 +303,7 @@ def compute_limits(numdata, numblocks, blocksize, blockn):
 def fill_array(blocklist, maxsize, numdata, numblocks, blocksize):
     """ Fills a new array of integers with the indices corresponding
         to the specified block structure.
-        
+
         Parameters
         ----------
         blocklist : list
@@ -316,7 +318,7 @@ def fill_array(blocklist, maxsize, numdata, numblocks, blocksize):
             Total number of blocks to distribute into
         blocksize : int
             Size of data per block
-            
+
         Return
         ----------
         indexArray : int numpy array
@@ -330,24 +332,24 @@ def fill_array(blocklist, maxsize, numdata, numblocks, blocksize):
     for i in blocklist:
         start, end = compute_limits(numdata, numblocks, blocksize, i)
         length = end - start
-        indexArray[offset:offset+length] = np.arange(start, end)
+        indexArray[offset:offset + length] = np.arange(start, end)
         offset += length
 
     return indexArray[:offset]
 
 
-###### UTILS for COMPUTATION OF EMPIRICAL CALIBRATION
+# UTILS for COMPUTATION OF EMPIRICAL CALIBRATION
 
-def compute_statistics_homoscedastic(df_data,
-                                     col_true=0,
-                                     col_pred=6,
-                                     col_std_pred=7,
-                                     ):
-    """ Extracts ground truth, mean predition, error and
+def compute_statistics_homoscedastic_summary(df_data,
+                                             col_true=0,
+                                             col_pred=6,
+                                             col_std_pred=7,
+                                             ):
+    """ Extracts ground truth, mean prediction, error and
         standard deviation of prediction from inference
         data frame. The latter includes the statistics
         over all the inference realizations.
-        
+
         Parameters
         ----------
         df_data : pandas data frame
@@ -356,88 +358,22 @@ def compute_statistics_homoscedastic(df_data,
             current CANDLE version. (The inference file usually
             has the name: <model>_pred.tsv).
         col_true : integer
-            Index of the column in the data frame where the true 
+            Index of the column in the data frame where the true
             value is stored (Default: 0, index in current CANDLE format).
         col_pred : integer
-            Index of the column in the data frame where the predicted 
+            Index of the column in the data frame where the predicted
             value is stored (Default: 6, index in current CANDLE format).
         col_std_pred : integer
-            Index of the column in the data frame where the standard 
+            Index of the column in the data frame where the standard
             deviation of the predicted values is stored (Default: 7,
             index in current CANDLE format).
-            
+
         Return
         ----------
         Ytrue : numpy array
             Array with true (observed) values
-        Ypred : numpy array
-            Array with predicted values.
-        yerror : numpy array
-            Array with errors computed (observed - predicted).
-        sigma : numpy array
-            Array with standard deviations learned with deep learning
-            model. For homoscedastic inference this corresponds to the
-            std value computed from prediction (and is equal to the 
-            following returned variable).
-        Ypred_std : numpy array
-            Array with standard deviations computed from regular
-            (homoscedastic) inference.
-        pred_name : string
-            Name of data colum or quantity predicted (as extracted
-            from the data frame using the col_true index).
-    """
-
-    Ytrue = df_data.iloc[:,col_true].values
-    print('Ytrue shape: ', Ytrue.shape)
-    pred_name = df_data.columns[col_true]
-    Ypred = df_data.iloc[:,col_pred].values
-    print('Ypred shape: ', Ypred.shape)
-    Ypred_std = df_data.iloc[:,col_std_pred].values
-    print('Ypred_std shape: ', Ypred_std.shape)
-    yerror = Ytrue - Ypred
-    print('yerror shape: ', yerror.shape)
-    sigma = Ypred_std # std
-    MSE = np.mean((Ytrue - Ypred)**2)
-    print('MSE: ', MSE)
-    MSE_STD = np.std((Ytrue - Ypred)**2)
-    print('MSE_STD: ', MSE_STD)
-    # p-value 'not entirely reliable, reasonable for datasets > 500'
-    spearman_cc, pval = spearmanr(Ytrue, Ypred)
-    print('Spearman CC: %f, p-value: %e' % (spearman_cc, pval))
-
-    return Ytrue, Ypred, yerror, sigma, Ypred_std, pred_name
-
-
-def compute_statistics_homoscedastic_all(df_data,
-                                     col_true=4,
-                                     col_pred_start=6
-                                     ):
-    """ Extracts ground truth, mean predition, error and
-        standard deviation of prediction from inference
-        data frame. The latter includes all the individual
-        inference realizations.
-        
-        Parameters
-        ----------
-        df_data : pandas data frame
-            Data frame generated by current CANDLE inference
-            experiments. Indices are hard coded to agree with
-            current CANDLE version. (The inference file usually
-            has the name: <model>.predicted_INFER.tsv).
-        col_true : integer
-            Index of the column in the data frame where the true
-            value is stored (Default: 4, index in current HOM format).
-        col_pred_start : integer
-            Index of the column in the data frame where the first predicted
-            value is stored. All the predicted values during inference
-            are stored (Default: 6 index, in current HOM format).
-            
-        Return
-        ----------
-        Ytrue : numpy array
-            Array with true (observed) values
-        Ypred : numpy array
-            Array with predicted values.
+        Ypred_mean : numpy array
+            Array with predicted values (mean from summary).
         yerror : numpy array
             Array with errors computed (observed - predicted).
         sigma : numpy array
@@ -453,39 +389,105 @@ def compute_statistics_homoscedastic_all(df_data,
             from the data frame using the col_true index).
     """
 
-    Ytrue = df_data.iloc[:,col_true].values
-    print('Ytrue shape: ', Ytrue.shape)
+    Ytrue = df_data.iloc[:, col_true].values
     pred_name = df_data.columns[col_true]
-    Ypred_mean_ = np.mean(df_data.iloc[:,col_pred_start:], axis=1)
-    Ypred_mean = Ypred_mean_.values
-    print('Ypred_mean shape: ', Ypred_mean.shape)
-    Ypred_std_ = np.std(df_data.iloc[:,col_pred_start:], axis=1)
-    Ypred_std = Ypred_std_.values
-    print('Ypred_std shape: ', Ypred_std.shape)
+    Ypred_mean = df_data.iloc[:, col_pred].values
+    Ypred_std = df_data.iloc[:, col_std_pred].values
     yerror = Ytrue - Ypred_mean
-    print('yerror shape: ', yerror.shape)
-    sigma = Ypred_std # std
-    MSE = np.mean((Ytrue - Ypred_mean)**2)
+    sigma = Ypred_std  # std
+    MSE = mean_squared_error(Ytrue, Ypred_mean)
     print('MSE: ', MSE)
     MSE_STD = np.std((Ytrue - Ypred_mean)**2)
     print('MSE_STD: ', MSE_STD)
+    MAE = mean_absolute_error(Ytrue, Ypred_mean)
+    print('MAE: ', MAE)
+    r2 = r2_score(Ytrue, Ypred_mean)
+    print('R2: ', r2)
     # p-value 'not entirely reliable, reasonable for datasets > 500'
-    spearman_cc, pval = spearmanr(Ytrue, Ypred_mean)
-    print('Spearman CC: %f, p-value: %e' % (spearman_cc, pval))
+    pearson_cc, pval = pearsonr(Ytrue, Ypred_mean)
+    print('Pearson CC: %f, p-value: %e' % (pearson_cc, pval))
+
+    return Ytrue, Ypred_mean, yerror, sigma, Ypred_std, pred_name
+
+
+def compute_statistics_homoscedastic(df_data,
+                                     col_true=4,
+                                     col_pred_start=6
+                                     ):
+    """ Extracts ground truth, mean prediction, error and
+        standard deviation of prediction from inference
+        data frame. The latter includes all the individual
+        inference realizations.
+
+        Parameters
+        ----------
+        df_data : pandas data frame
+            Data frame generated by current CANDLE inference
+            experiments. Indices are hard coded to agree with
+            current CANDLE version. (The inference file usually
+            has the name: <model>.predicted_INFER.tsv).
+        col_true : integer
+            Index of the column in the data frame where the true
+            value is stored (Default: 4, index in current HOM format).
+        col_pred_start : integer
+            Index of the column in the data frame where the first predicted
+            value is stored. All the predicted values during inference
+            are stored (Default: 6 index, in current HOM format).
+
+        Return
+        ----------
+        Ytrue : numpy array
+            Array with true (observed) values
+        Ypred_mean : numpy array
+            Array with predicted values (mean of predictions).
+        yerror : numpy array
+            Array with errors computed (observed - predicted).
+        sigma : numpy array
+            Array with standard deviations learned with deep learning
+            model. For homoscedastic inference this corresponds to the
+            std value computed from prediction (and is equal to the
+            following returned variable).
+        Ypred_std : numpy array
+            Array with standard deviations computed from regular
+            (homoscedastic) inference.
+        pred_name : string
+            Name of data colum or quantity predicted (as extracted
+            from the data frame using the col_true index).
+    """
+
+    Ytrue = df_data.iloc[:, col_true].values
+    pred_name = df_data.columns[col_true]
+    Ypred_mean_ = np.mean(df_data.iloc[:, col_pred_start:], axis=1)
+    Ypred_mean = Ypred_mean_.values
+    Ypred_std_ = np.std(df_data.iloc[:, col_pred_start:], axis=1)
+    Ypred_std = Ypred_std_.values
+    yerror = Ytrue - Ypred_mean
+    sigma = Ypred_std  # std
+    MSE = mean_squared_error(Ytrue, Ypred_mean)
+    print('MSE: ', MSE)
+    MSE_STD = np.std((Ytrue - Ypred_mean)**2)
+    print('MSE_STD: ', MSE_STD)
+    MAE = mean_absolute_error(Ytrue, Ypred_mean)
+    print('MAE: ', MAE)
+    r2 = r2_score(Ytrue, Ypred_mean)
+    print('R2: ', r2)
+    # p-value 'not entirely reliable, reasonable for datasets > 500'
+    pearson_cc, pval = pearsonr(Ytrue, Ypred_mean)
+    print('Pearson CC: %f, p-value: %e' % (pearson_cc, pval))
 
     return Ytrue, Ypred_mean, yerror, sigma, Ypred_std, pred_name
 
 
 def compute_statistics_heteroscedastic(df_data,
-                                     col_true=4,
-                                     col_pred_start=6,
-                                     col_std_pred_start=7,
-                                     ):
-    """ Extracts ground truth, mean predition, error, standard
+                                       col_true=4,
+                                       col_pred_start=6,
+                                       col_std_pred_start=7,
+                                       ):
+    """ Extracts ground truth, mean prediction, error, standard
         deviation of prediction and predicted (learned) standard
         deviation from inference data frame. The latter includes
         all the individual inference realizations.
-        
+
         Parameters
         ----------
         df_data : pandas data frame
@@ -506,20 +508,19 @@ def compute_statistics_heteroscedastic(df_data,
             standard deviation value is stored. All the predicted values
             during inference are stored and are interspaced with predictions
             (Default: 7 index, step 2, in current HET format).
-            
+
         Return
         ----------
         Ytrue : numpy array
             Array with true (observed) values
-        Ypred : numpy array
-            Array with predicted values.
+        Ypred_mean : numpy array
+            Array with predicted values (mean of predictions).
         yerror : numpy array
             Array with errors computed (observed - predicted).
         sigma : numpy array
             Array with standard deviations learned with deep learning
-            model. For homoscedastic inference this corresponds to the
-            std value computed from prediction (and is equal to the
-            following returned variable).
+            model. For heteroscedastic inference this corresponds to the
+            sqrt(exp(s^2)) with s^2 predicted value.
         Ypred_std : numpy array
             Array with standard deviations computed from regular
             (homoscedastic) inference.
@@ -528,46 +529,45 @@ def compute_statistics_heteroscedastic(df_data,
             from the data frame using the col_true index).
     """
 
-    Ytrue = df_data.iloc[:,col_true].values
-    print('Ytrue shape: ', Ytrue.shape)
+    Ytrue = df_data.iloc[:, col_true].values
     pred_name = df_data.columns[col_true]
-    Ypred_mean_ = np.mean(df_data.iloc[:,col_pred_start::2], axis=1)
+    Ypred_mean_ = np.mean(df_data.iloc[:, col_pred_start::2], axis=1)
     Ypred_mean = Ypred_mean_.values
-    print('Ypred shape: ', Ypred_mean.shape)
-    Ypred_std_ = np.std(df_data.iloc[:,col_pred_start::2], axis=1)
+    Ypred_std_ = np.std(df_data.iloc[:, col_pred_start::2], axis=1)
     Ypred_std = Ypred_std_.values
-    print('Ypred_std shape: ', Ypred_std.shape)
     yerror = Ytrue - Ypred_mean
-    print('yerror shape: ', yerror.shape)
-    s_ = df_data.iloc[:,col_std_pred_start::2]
+    s_ = df_data.iloc[:, col_std_pred_start::2]
     s_mean = np.mean(s_, axis=1)
-    var = np.exp(s_mean.values) # variance
-    sigma = np.sqrt(var) # std
-    print('sigma shape: ', sigma.shape)
-    MSE = np.mean((Ytrue - Ypred_mean)**2)
+    var = np.exp(s_mean.values)  # variance
+    sigma = np.sqrt(var)  # std
+    MSE = mean_squared_error(Ytrue, Ypred_mean)
     print('MSE: ', MSE)
     MSE_STD = np.std((Ytrue - Ypred_mean)**2)
     print('MSE_STD: ', MSE_STD)
+    MAE = mean_absolute_error(Ytrue, Ypred_mean)
+    print('MAE: ', MAE)
+    r2 = r2_score(Ytrue, Ypred_mean)
+    print('R2: ', r2)
     # p-value 'not entirely reliable, reasonable for datasets > 500'
-    spearman_cc, pval = spearmanr(Ytrue, Ypred_mean)
-    print('Spearman CC: %f, p-value: %e' % (spearman_cc, pval))
+    pearson_cc, pval = pearsonr(Ytrue, Ypred_mean)
+    print('Pearson CC: %f, p-value: %e' % (pearson_cc, pval))
 
     return Ytrue, Ypred_mean, yerror, sigma, Ypred_std, pred_name
 
 
 def compute_statistics_quantile(df_data,
-                                     sigma_divisor=2.56,
-                                     col_true=4,
-                                     col_pred_start=6
-                                     ):
-    """ Extracts ground truth, 50th percentile mean predition,
+                                sigma_divisor=2.56,
+                                col_true=4,
+                                col_pred_start=6
+                                ):
+    """ Extracts ground truth, 50th percentile mean prediction,
         low percentile and high percentile mean prediction
-        (usually 10th percentile and 90th percentile respectively),
-        error (using 50th percentile), standard deviation of
-        prediction (using 50th percentile) and predicted (learned)
+        (usually 1st decile and 9th decile respectively),
+        error (using 5th decile), standard deviation of
+        prediction (using 5th decile) and predicted (learned)
         standard deviation from interdecile range in inference data frame.
         The latter includes all the individual inference realizations.
-        
+
         Parameters
         ----------
         df_data : pandas data frame
@@ -579,7 +579,7 @@ def compute_statistics_quantile(df_data,
             Divisor to convert from the intercedile range to the corresponding
             standard deviation for a Gaussian distribution.
             (Default: 2.56, consisten with an interdecile range computed from
-            the difference between the 90th and 10th percentiles).
+            the difference between the 9th and 1st deciles).
         col_true : integer
             Index of the column in the data frame where the true
             value is stored (Default: 4, index in current QTL format).
@@ -588,7 +588,7 @@ def compute_statistics_quantile(df_data,
             value is stored. All the predicted values during inference
             are stored and are interspaced with other percentile
             predictions (Default: 6 index, step 3, in current QTL format).
-            
+
         Return
         ----------
         Ytrue : numpy array
@@ -609,37 +609,36 @@ def compute_statistics_quantile(df_data,
             from the data frame using the col_true index).
         Ypred_Lp_mean : numpy array
             Array with predicted values of the lower percentile
-            (usually the 10th percentile).
+            (usually the 1st decile).
         Ypred_Hp_mean : numpy array
             Array with predicted values of the higher percentile
-            (usually the 90th percentile).
+            (usually the 9th decile).
     """
 
-    Ytrue = df_data.iloc[:,col_true].values
-    print('Ytrue shape: ', Ytrue.shape)
+    Ytrue = df_data.iloc[:, col_true].values
     pred_name = df_data.columns[col_true]
-    Ypred_50q_mean = np.mean(df_data.iloc[:,col_pred_start::3], axis=1)
-    Ypred_mean = Ypred_50q_mean.values
-    print('Ypred shape: ', Ypred_mean.shape)
-    Ypred_Lp_mean_ = np.mean(df_data.iloc[:,col_pred_start+1::3], axis=1)
-    Ypred_Hp_mean_ = np.mean(df_data.iloc[:,col_pred_start+2::3], axis=1)
+    Ypred_5d_mean = np.mean(df_data.iloc[:, col_pred_start::3], axis=1)
+    Ypred_mean = Ypred_5d_mean.values
+    Ypred_Lp_mean_ = np.mean(df_data.iloc[:, col_pred_start + 1::3], axis=1)
+    Ypred_Hp_mean_ = np.mean(df_data.iloc[:, col_pred_start + 2::3], axis=1)
     Ypred_Lp_mean = Ypred_Lp_mean_.values
     Ypred_Hp_mean = Ypred_Hp_mean_.values
     interdecile_range = Ypred_Hp_mean - Ypred_Lp_mean
     sigma = interdecile_range / sigma_divisor
-    print('sigma shape: ', sigma.shape)
     yerror = Ytrue - Ypred_mean
-    print('yerror shape: ', yerror.shape)
-    Ypred_std_ = np.std(df_data.iloc[:,col_pred_start::3], axis=1)
+    Ypred_std_ = np.std(df_data.iloc[:, col_pred_start::3], axis=1)
     Ypred_std = Ypred_std_.values
-    print('Ypred_std shape: ', Ypred_std.shape)
-    MSE = np.mean((Ytrue - Ypred_mean)**2)
+    MSE = mean_squared_error(Ytrue, Ypred_mean)
     print('MSE: ', MSE)
     MSE_STD = np.std((Ytrue - Ypred_mean)**2)
     print('MSE_STD: ', MSE_STD)
+    MAE = mean_absolute_error(Ytrue, Ypred_mean)
+    print('MAE: ', MAE)
+    r2 = r2_score(Ytrue, Ypred_mean)
+    print('R2: ', r2)
     # p-value 'not entirely reliable, reasonable for datasets > 500'
-    spearman_cc, pval = spearmanr(Ytrue, Ypred_mean)
-    print('Spearman CC: %f, p-value: %e' % (spearman_cc, pval))
+    pearson_cc, pval = pearsonr(Ytrue, Ypred_mean)
+    print('Pearson CC: %f, p-value: %e' % (pearson_cc, pval))
 
     return Ytrue, Ypred_mean, yerror, sigma, Ypred_std, pred_name, Ypred_Lp_mean, Ypred_Hp_mean
 
@@ -648,7 +647,7 @@ def split_data_for_empirical_calibration(Ytrue, Ypred, sigma, cal_split=0.8):
     """ Extracts a portion of the arrays provided for the computation
         of the calibration and reserves the remainder portion
         for testing.
-        
+
         Parameters
         ----------
         Ytrue : numpy array
@@ -664,13 +663,13 @@ def split_data_for_empirical_calibration(Ytrue, Ypred, sigma, cal_split=0.8):
              It is assumet that it will be a value in (0, 1).
              (Default: use 80% of predictions to generate empirical
              calibration).
-            
+
         Return
         ----------
         index_perm_total : numpy array
             Random permutation of the array indices. The first 'num_cal'
             of the indices correspond to the samples that are used for
-            calibration, while the remainder are the samples reserved 
+            calibration, while the remainder are the samples reserved
             for calibration testing.
         pSigma_cal : numpy array
             Part of the input sigma array to use for calibration.
@@ -710,13 +709,19 @@ def split_data_for_empirical_calibration(Ytrue, Ypred, sigma, cal_split=0.8):
     return index_perm_total, pSigma_cal, pSigma_test, pPred_cal, pPred_test, true_cal, true_test
 
 
-def compute_empirical_calibration(pSigma_cal, pPred_cal, true_cal, bins, coverage_percentile):
+def compute_empirical_calibration_interpolation(pSigma_cal, pPred_cal, true_cal, cv=10):
     """ Use the arrays provided to estimate an empirical mapping
         between standard deviation and absolute value of error,
         both of which have been observed during inference. Since
-        most of the times the raw statistics per bin are very noisy,
-        a smoothing step (based on scipy's savgol filter) is performed.
-        
+        most of the times the prediction statistics are very noisy,
+        two smoothing steps (based on scipy's savgol filter) are performed.
+        Cubic Hermite splines (PchipInterpolator) are constructed for
+        interpolation. This type of splines preserves the monotonicity
+        in the interpolation data and does not overshoot if the data is
+        not smooth. The overall process of constructing a spline
+        to express the mapping from standard deviation to error is
+        composed of smoothing-interpolation-smoothing-interpolation.
+
         Parameters
         ----------
         pSigma_cal : numpy array
@@ -725,366 +730,71 @@ def compute_empirical_calibration(pSigma_cal, pPred_cal, true_cal, bins, coverag
             Part of the predictions array to use for calibration.
         true_cal : numpy array
             Part of the true (observed) values array to use for calibration.
-        bins : int
-            Number of bins to split the range of standard deviations
-            included in pSigma_cal array.
-        coverage_percentile : float
-            Value to use for estimating coverage when evaluating the percentiles 
-            of the observed absolute value of errors.
-            
+        cv : int
+            Number of cross validations folds to run to determine a 'good'
+            fit.
+
         Return
         ----------
-        mean_sigma : numpy array
-            Array with the mean standard deviations computed per bin.
-        min_sigma : numpy array
-            Array with the minimum standard deviations computed per bin.
-        max_sigma : numpy array
-            Array with the maximum standard deviations computed per bin.
-        error_thresholds : numpy array
-            Thresholds of the errors computed to attain a certain
-            error coverage per bin.
-        err_err : numpy array
-            Error bars in errors (one standard deviation for a binomial
-            distribution estimated by bin vs. the other bins) for the 
-            calibration error.
-        error_thresholds_smooth : numpy array
-            Thresholds of the errors computed to attain a certain
-            error coverage per bin after a smoothed operation is applied
-            to the frequently noisy bin-based estimations.
-        sigma_start_index : non-negative integer
-            Index in the mean_sigma array that defines the start of
-            the valid empirical calibration interval (i.e. index to
-            the smallest std for which a meaningful error mapping
-            is obtained).
-        sigma_end_index : non-negative integer
-            Index in the mean_sigma array that defines the end of
-            the valid empirical calibration interval (i.e. index to
-            the largest std for which a meaningful error mappping 
-            is obtained).
-        s_interpolate : scipy.interpolate python object
+        splineobj_best : scipy.interpolate python object
             A python object from scipy.interpolate that computes a
-            univariate spline (InterpolatedUnivariateSpline) constructed
+            cubic Hermite splines (PchipInterpolator) constructed
+            to express the mapping from standard deviation to error after a
+            'drastic' smoothing of the predictions. A 'good' fit is
+            determined by taking the spline for the fold that produces
+            the smaller mean absolute error in testing data (not used
+            for the smoothing / interpolation).
+        splineobj2 : scipy.interpolate python object
+            A python object from scipy.interpolate that computes a
+            cubic Hermite splines (PchipInterpolator) constructed
             to express the mapping from standard deviation to error. This
-            spline is generated during the computational empirical
-            calibration procedure.
+            spline is generated for interpolating the samples generated
+            after the smoothing of the first interpolation spline (i.e.
+            splineobj_best).
     """
 
-    index_sigma_cal = np.argsort(pSigma_cal)
-    pSigma_cal_ordered_ = pSigma_cal[index_sigma_cal]
-    Er_vect_cal_ = np.abs(true_cal - pPred_cal)
-    Er_vect_cal_orderedSigma_ = Er_vect_cal_[index_sigma_cal]
+    xs3 = pSigma_cal  # std
+    z3 = np.abs(true_cal - pPred_cal)  # abs error
 
-    minL_sigma = np.min(pSigma_cal_ordered_)
-    maxL_sigma = np.max(pSigma_cal_ordered_)
-    print('Complete Sigma range --> Min: %f, Max: %f' % (minL_sigma, maxL_sigma))
+    test_split = 1.0 / cv
+    xmin = np.min(pSigma_cal)
+    xmax = np.max(pSigma_cal)
 
-    # Bin statistics for error and sigma
-    mean_sigma, min_sigma, max_sigma, error_thresholds, err_err = bining_for_calibration(pSigma_cal_ordered_,
-                                minL_sigma,
-                                maxL_sigma,
-                                Er_vect_cal_orderedSigma_,
-                                bins,
-                                coverage_percentile)
+    warnings.filterwarnings("ignore")
 
-    # smooth error function
-    #scipy.signal.savgol_filter(x, window_length, polyorder,
-    #deriv=0, delta=1.0, axis=-1, mode='interp', cval=0.0)
-    #error_thresholds_smooth = signal.savgol_filter(error_thresholds, 5, 1)
-    error_thresholds_smooth = signal.savgol_filter(error_thresholds, 5, 1, mode='nearest')
+    print('--------------------------------------------')
+    print('Using CV for selecting calibration smoothing')
+    print('--------------------------------------------')
 
-    # Build Interpolant over smooth plot (this will become the calibration function)
-    s_interpolate = InterpolatedUnivariateSpline(mean_sigma, error_thresholds_smooth)
-    # Determine limits of calibration (i.e. monotonicity range)
-    sigma_start_index, sigma_end_index = computation_of_valid_calibration_interval(error_thresholds, error_thresholds_smooth, err_err)
-    
-    print('Range of valid sigma: %.6f --> %.6f' % (mean_sigma[sigma_start_index], mean_sigma[sigma_end_index]))
+    min_error = np.inf
+    for cv_ in range(cv):
+        # Split data for the different folds
+        X_train, X_test, y_train, y_test = train_test_split(xs3, z3, test_size=test_split, shuffle=True)
 
-    return mean_sigma, min_sigma, max_sigma, error_thresholds, err_err, error_thresholds_smooth, sigma_start_index, sigma_end_index, s_interpolate
+        # Order x to apply smoothing and interpolation
+        xindsort = np.argsort(X_train)
+        # Smooth abs error
+        # z3smooth = signal.savgol_filter(y_train[xindsort], 31, 1, mode='nearest')
+        z3smooth = signal.savgol_filter(y_train[xindsort], 21, 1, mode='nearest')
+        # Compute Piecewise Cubic Hermite Interpolating Polynomial
+        splineobj = interpolate.PchipInterpolator(X_train[xindsort], z3smooth, extrapolate=True)
+        # Compute prediction from interpolator
+        ytest = splineobj(X_test)
+        # compute MAE of true ABS error vs predicted ABS error
+        mae = mean_absolute_error(y_test, ytest)
+        print('MAE: ', mae)
 
+        if mae < min_error:  # store spline interpolator for best fold
+            min_error = mae
+            splineobj_best = splineobj
 
+    # Smooth again
+    xp23 = np.linspace(xmin, xmax, 200)
+    # Predict using best interpolator from folds
+    yp23 = splineobj_best(xp23)
+    # Smooth the ABS error predicted
+    yp23smooth = signal.savgol_filter(yp23, 15, 1, mode='nearest')
+    # Compute spline over second level of smoothing
+    splineobj2 = interpolate.PchipInterpolator(xp23, yp23smooth, extrapolate=True)
 
-def bining_for_calibration(pSigma_cal_ordered_, minL_sigma,
-                            maxL_sigma, Er_vect_cal_orderedSigma_,
-                            bins, coverage_percentile):
-    """ Bin the values of the standard deviations observed during
-        inference and estimate a specified coverage percentile
-        in the absolute error (observed during inference as well).
-        Bins that have less than 50 samples are merged until they 
-        surpass this threshold.
-        
-        Parameters
-        ----------
-        pSigma_cal_ordered_ : numpy array
-            Array of standard deviations ordered in ascending way.
-        minL_sigma : float
-            Minimum value of standard deviations included in 
-            pSigma_cal_ordered_ array.
-        maxL_sigma : numpy array
-            Maximum value of standard deviations included in
-            pSigma_cal_ordered_ array.
-        Er_vect_cal_orderedSigma_ : numpy array
-            Array ob absolute value of errors corresponding with
-            the array of ordered standard deviations.
-        bins : int
-            Number of bins to split the range of standard deviations
-            included in pSigma_cal_ordered_ array.
-        coverage_percentile : float
-            Value to use for estimating coverage when evaluating the percentiles 
-            of the observed absolute value of errors.
-            
-        Return
-        ----------
-        mean_sigma : numpy array
-            Array with the mean standard deviations computed per bin.
-        min_sigma : numpy array
-            Array with the minimum standard deviations computed per bin.
-        max_sigma : numpy array
-            Array with the maximum standard deviations computed per bin.
-        error_thresholds : numpy array
-            Thresholds of the errors computed to attain a certain
-            error coverage per bin.
-        err_err : numpy array
-            Error bars in errors (one standard deviation for a binomial
-            distribution estimated by bin vs. the other bins) for the 
-            calibration error.
-    """
-
-    #thresholds = np.logspace(np.log10(minL_sigma), np.log10(maxL_sigma), num=bins)
-    thresholds = np.linspace(minL_sigma, maxL_sigma, num=bins)
-    classes = np.digitize(pSigma_cal_ordered_, thresholds)
-    Nbin = np.zeros(bins+1)
-    for i in range(bins+1):
-        indices = (classes == i)
-        Nbin[i] = indices.sum()
-
-    # Repair bins
-    new_thresholds_l = []
-    new_nbins_l = []
-    sumN = 0
-    for i in range(Nbin.shape[0]):
-        sumN += Nbin[i]
-        if sumN > 50:
-            if i > (thresholds.shape[0] - 1):
-                new_thresholds_l.append(thresholds[-1])
-            else:
-                new_thresholds_l.append(thresholds[i])
-            new_nbins_l.append(sumN)
-            sumN = 0
-    new_thresholds = np.array(new_thresholds_l)
-    new_nbins = np.array(new_nbins_l)
-    new_thresholds[-1] = thresholds[-1]
-    new_nbins[-1] += sumN
-
-    #
-    classes = np.digitize(pSigma_cal_ordered_, new_thresholds[:-1])
-    error_thresholds = -1. * np.ones(new_nbins.shape[0])
-    mean_sigma = -1. * np.ones(new_nbins.shape[0])
-    min_sigma = -1. * np.ones(new_nbins.shape[0])
-    max_sigma = -1. * np.ones(new_nbins.shape[0])
-    err_err = -1. * np.ones(new_nbins.shape[0])
-    Ncal = pSigma_cal_ordered_.shape[0]
-    for i in range(error_thresholds.shape[0]):
-        indices = (classes == i)
-        n_aux = indices.sum()
-        assert n_aux == new_nbins[i]
-        print('Points in bin %d: %d' % (i, n_aux))
-        mean_sigma[i] = np.mean(pSigma_cal_ordered_[indices])
-        min_sigma[i] = np.min(pSigma_cal_ordered_[indices])
-        max_sigma[i] = np.max(pSigma_cal_ordered_[indices])
-        error_thresholds[i] = np.percentile(Er_vect_cal_orderedSigma_[indices], coverage_percentile)
-        err_err[i] = np.sqrt(new_nbins[i] * (Ncal - new_nbins[i])) / Ncal * error_thresholds[i]
-
-    return mean_sigma, min_sigma, max_sigma, error_thresholds, err_err
-
-
-def computation_of_valid_calibration_interval(error_thresholds, error_thresholds_smooth, err_err):
-    """ Function that estimates the empirical range in which a 
-        monotonic relation is observed between standard deviation 
-        and coverage of absolute value of error. Since the 
-        statistics computed per bin are relatively noisy, the 
-        application of a greedy criterion (e.g. guarantee a
-        monotonically increasing relationship) does not yield 
-        good results. Therefore, a softer version is constructed
-        based on the satisfaction of certain criteria depending
-        on: the values of the error coverage computed per bin,
-        a smoothed version of them and the assocatiate error
-        estimated (based on one standard deviation for a binomial
-        distribution estimated by bin vs. the other bins).
-        A minimal validation requiring the end idex to be
-        largest than the starting index is performed before
-        the function return.
-        
-        Current criteria:
-        - the smoothed errors are inside the error bars AND
-          they are almost increasing (a small tolerance is
-          allowed, so a small wobbliness in the smoother
-          values is permitted).
-        OR
-        - both the raw values for the bins (with a small tolerance)
-          are increasing, AND the smoothed value is greater than the
-          raw value.
-        OR
-        - the current smoothed value is greater than the previous AND 
-          the smoothed values for the next been are inside the error
-          bars.
-        
-        Parameters
-        ----------
-        error_thresholds : numpy array
-            Thresholds of the errors computed to attain a certain
-            error coverage per bin.
-        error_thresholds_smooth : numpy array
-            Thresholds of the errors computed to attain a certain
-            error coverage per bin after a smoothed operation is applied
-            to the frequently noisy bin-based estimations.
-        err_err : numpy array
-            Error bars in errors (one standard deviation for a binomial
-            distribution estimated by bin vs. the other bins) for the 
-            calibration error.
-            
-        Return
-        ----------
-        sigma_start_index : non-negative integer
-            Index estimated in the mean_sigma array corresponing to
-            the value that defines the start of the valid empirical 
-            calibration interval (i.e. index to the smallest std for 
-            which a meaningful error mapping is obtained, according
-            to the criteria explained before).
-        sigma_end_index : non-negative integer
-            Index estimated in the mean_sigma array corresponing to
-            the value that defines the end of the valid empirical
-            calibration interval (i.e. index to the largest std for
-            which a meaningful error mapping is obtained, according
-            to the criteria explained before).
-    """
-
-    # Computation of the calibration interval
-    limitH = error_thresholds + err_err
-    limitL = error_thresholds - err_err
-
-    # search for starting point
-    for i in range(err_err.shape[0]):
-        if ((error_thresholds_smooth[i] >= limitL[i]) and
-         (error_thresholds_smooth[i] <= limitH[i])): # Ask if the current is in the interval
-            sigma_start_index = i
-            break
-    sigma_end_index = sigma_start_index - 1
-
-    restart = max(1, sigma_start_index)
-    for i in range(restart, err_err.shape[0]-1):
-        if (((error_thresholds_smooth[i] >= limitL[i]) and
-            (error_thresholds_smooth[i] <= limitH[i]) and
-            ((error_thresholds_smooth[i] * 1.005 > error_thresholds_smooth[i-1]) or
-            ((error_thresholds[i] * 1.01 > error_thresholds[i-1]) and
-            (error_thresholds_smooth[i] > error_thresholds[i])))) # Ask if the current is in the interval with slightly increasing trend
-            or # Ask if the current is greater than the previous and the next is in the interval
-            ((error_thresholds_smooth[i] > error_thresholds_smooth[i-1]) and
-            ((error_thresholds_smooth[i+1] >= limitL[i+1]) and
-            (error_thresholds_smooth[i+1] <= limitH[i+1])))):
-
-            sigma_end_index = i
-        else: # Finalize search for monotonic range
-            if (sigma_end_index - sigma_start_index) > 4:
-                break
-            else: # Reset indices
-                sigma_start_index = i + 1
-                sigma_end_index = i
-
-    print('Range of valid sigma indices (inclusive): %d --> %d' % (sigma_start_index, sigma_end_index))
-
-    assert (sigma_end_index > sigma_start_index)
-
-    return sigma_start_index, sigma_end_index
-
-
-def applying_calibration(pSigma_test, pPred_test, true_test, s_interpolate, minL_sigma_auto, maxL_sigma_auto):
-    """ Use the empirical mapping between standard deviation and
-        absolute value of error estimated during calibration (i.e.
-        apply the univariate spline computed) to estimate the error
-        for the part of the standard deviation array that was reserved
-        for testing the empirical calibration. The resulting error array
-        (yp_test) should overestimate the true observed error (eabs_red).
-        All the computations are restricted to the valid calibration
-        interval: [minL_sigma_auto, maxL_sigma_auto].
-        
-        Parameters
-        ----------
-        pSigma_test : numpy array
-            Part of the standard deviations array to use for calibration testing.
-        pPred_test : numpy array
-            Part of the predictions array to use for calibration testing.
-        true_test : numpy array
-            Part of the true (observed) values array to use for calibration testing.
-        s_interpolate : scipy.interpolate python object
-            A python object from scipy.interpolate that computes a
-            univariate spline (InterpolatedUnivariateSpline) expressing
-            the mapping from standard deviation to error. This
-            spline is generated during the computational empirical
-            calibration procedure.
-        minL_sigma_auto : float
-            Starting value of the valid empirical calibration interval
-            (i.e. smallest std for which a meaningful error mapping
-            is obtained).
-        maxL_sigma_auto : float
-            Ending value of the valid empirical calibration interval
-            (i.e. largest std for which a meaningful error mappping
-            is obtained).
-
-        Return
-        ----------
-        index_sigma_range_test : numpy array
-            Indices of the pSigma_test array that are included in the
-            valid calibration interval, given by:
-            [minL_sigma_auto, maxL_sigma_auto].
-        xp_test : numpy array
-            Array with the mean standard deviations in the calibration
-            testing array.
-        yp_test : numpy array
-            Mapping of the given standard deviation to error computed
-            from the interpolation spline constructed by empirical
-            calibration.
-        eabs_red : numpy array
-            Array with the observed abolute errors in the part of the testing
-            array for which the observed standard deviations are in the
-            valid interval of calibration.
-    """
-
-    # Filter to appropriate range
-    index_sigma_range_test = (pSigma_test >= minL_sigma_auto) & (pSigma_test < maxL_sigma_auto)
-    xp_test = pSigma_test[index_sigma_range_test]
-    yp_test = s_interpolate(xp_test)
-    Er_vect_ = true_test  - pPred_test
-    eabs_ = np.abs(Er_vect_)
-    eabs_red = eabs_[index_sigma_range_test]
-
-    return index_sigma_range_test, xp_test, yp_test, eabs_red
-
-
-def overprediction_check(yp_test, eabs_red):
-    """ Compute the percentage of overestimated absoulte error
-        predictions for the arrays reserved for calibration testing
-        and whose corresponding standard deviations are included
-        in the valid calibration interval.
-        
-        Parameters
-        ----------
-        yp_test : numpy array
-            Mapping of the standard deviation to error computed
-            from the interpolation spline constructed by empirical
-            calibration.
-        eabs_red : numpy array
-            Array with the observed abolute errors in the part of the testing
-            array for which the observed standard deviations are in the
-            valid interval of calibration.
-    """
-
-    over_pred_error_index =  (yp_test >= eabs_red)
-    percentage_over_predicted = (over_pred_error_index.sum() / yp_test.shape[0])
-    print("percentage over predicted: ", percentage_over_predicted)
-
-
-
-
-
-
-
+    return splineobj_best, splineobj2

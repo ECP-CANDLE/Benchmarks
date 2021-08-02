@@ -38,6 +38,7 @@ cp=True
 save_path='save/uno'
 
 single=True
+on_memory_loader=True
 
 [Monitor_Params]
 timeout=-1

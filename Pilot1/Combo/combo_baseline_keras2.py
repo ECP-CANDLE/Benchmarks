@@ -2,11 +2,9 @@
 
 from __future__ import division, print_function
 
-import argparse
 import collections
 import logging
 import os
-import random
 import threading
 
 import numpy as np
@@ -14,23 +12,19 @@ import pandas as pd
 
 from itertools import cycle, islice
 
-import keras
-from keras import backend as K
-from keras import optimizers
-from keras.models import Model
-from keras.layers import Input, Dense, Dropout
-from keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
-from keras.utils import get_custom_objects
-from keras.utils.vis_utils import plot_model
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, Dropout
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlateau, LearningRateScheduler, TensorBoard
+from tensorflow.keras.utils import get_custom_objects
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
-from sklearn.model_selection import KFold, StratifiedKFold, GroupKFold
+from sklearn.model_selection import StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
 
 import matplotlib as mpl
 mpl.use('Agg')
-import matplotlib.pyplot as plt
-
-import combo
 
 import NCI60
 import combo
@@ -38,26 +32,6 @@ import candle
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-def set_seed(seed):
-    os.environ['PYTHONHASHSEED'] = '0'
-    np.random.seed(seed)
-
-    random.seed(seed)
-
-    if K.backend() == 'tensorflow':
-        import tensorflow as tf
-        tf.set_random_seed(seed)
-        # session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
-        # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        # K.set_session(sess)
-
-        # Uncommit when running on an optimized tensorflow where NUM_INTER_THREADS and
-        # NUM_INTRA_THREADS env vars are set.
-        # session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']),
-        #	intra_op_parallelism_threads=int(os.environ['NUM_INTRA_THREADS']))
-        # sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
-        # K.set_session(sess)
 
 
 def verify_path(path):
@@ -112,11 +86,11 @@ def extension_from_parameters(args):
         ext += '.mg'
     for i, n in enumerate(args.dense):
         if n > 0:
-            ext += '.D{}={}'.format(i+1, n)
+            ext += '.D{}={}'.format(i + 1, n)
     if args.dense_feature_layers != args.dense:
         for i, n in enumerate(args.dense):
             if n > 0:
-                ext += '.FD{}={}'.format(i+1, n)
+                ext += '.FD{}={}'.format(i + 1, n)
 
     return ext
 
@@ -227,8 +201,8 @@ class ComboDataLoader(object):
                 df_drug_cat.index = df_drug_ids['NSC']
                 self.df_drug_cat = df_drug_cat.reset_index()
             elif fea == 'noise':
-                ids1 = df[['NSC1']].drop_duplicates().rename(columns={'NSC1':'NSC'})
-                ids2 = df[['NSC2']].drop_duplicates().rename(columns={'NSC2':'NSC'})
+                ids1 = df[['NSC1']].drop_duplicates().rename(columns={'NSC1': 'NSC'})
+                ids2 = df[['NSC2']].drop_duplicates().rename(columns={'NSC2': 'NSC'})
                 df_drug_ids = pd.concat([ids1, ids2]).drop_duplicates()
                 noise = np.random.normal(size=(df_drug_ids.shape[0], 500))
                 df_rand = pd.DataFrame(noise, index=df_drug_ids['NSC'],
@@ -237,8 +211,8 @@ class ComboDataLoader(object):
 
         logger.info('Filtered down to {} rows with matching information.'.format(df.shape[0]))
 
-        ids1 = df[['NSC1']].drop_duplicates().rename(columns={'NSC1':'NSC'})
-        ids2 = df[['NSC2']].drop_duplicates().rename(columns={'NSC2':'NSC'})
+        ids1 = df[['NSC1']].drop_duplicates().rename(columns={'NSC1': 'NSC'})
+        ids2 = df[['NSC2']].drop_duplicates().rename(columns={'NSC2': 'NSC'})
         df_drug_ids = pd.concat([ids1, ids2]).drop_duplicates().reset_index(drop=True)
 
         n_drugs = df_drug_ids.shape[0]
@@ -502,9 +476,9 @@ def test_loader(loader):
 
 
 def r2(y_true, y_pred):
-    SS_res =  K.sum(K.square(y_true - y_pred))
+    SS_res = K.sum(K.square(y_true - y_pred))
     SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
-    return (1 - SS_res/(SS_tot + K.epsilon()))
+    return (1 - SS_res / (SS_tot + K.epsilon()))
 
 
 def mae(y_true, y_pred):
@@ -523,20 +497,6 @@ def log_evaluation(metric_outputs, description='Comparing y_true and y_pred:'):
     logger.info(description)
     for metric, value in metric_outputs.items():
         logger.info('  {}: {:.4f}'.format(metric, value))
-
-
-#def plot_history(out, history, metric='loss', title=None):
-#    title = title or 'model {}'.format(metric)
-#    val_metric = 'val_{}'.format(metric)
-#    plt.figure(figsize=(8, 6))
-#    plt.plot(history.history[metric], marker='o')
-#    plt.plot(history.history[val_metric], marker='d')
-#    plt.title(title)
-#    plt.ylabel(metric)
-#    plt.xlabel('epoch')
-#    plt.legend(['train_{}'.format(metric), 'val_{}'.format(metric)], loc='upper center')
-#    png = '{}.plot.{}.png'.format(out, metric)
-#    plt.savefig(png, bbox_inches='tight')
 
 
 class LoggingCallback(Callback):
@@ -618,7 +578,7 @@ def build_model(loader, args, verbose=False):
     encoded_inputs = []
     for fea_name, fea_type in loader.input_features.items():
         shape = loader.feature_shapes[fea_type]
-        fea_input = Input(shape, name='input.'+fea_name)
+        fea_input = Input(shape, name='input.' + fea_name)
         inputs.append(fea_input)
         input_model = input_models[fea_type]
         encoded = input_model(fea_input)
@@ -644,31 +604,28 @@ def build_model(loader, args, verbose=False):
 
     return Model(inputs, output)
 
-def initialize_parameters(default_model = 'combo_default_model.txt'):
+
+def initialize_parameters(default_model='combo_default_model.txt'):
 
     # Build benchmark object
-    comboBmk = combo.BenchmarkCombo(combo.file_path, default_model, 'keras',
+    comboBmk = combo.BenchmarkCombo(
+        combo.file_path, default_model, 'keras',
         prog='combo_baseline',
-        desc = 'Build neural network based models to predict tumor response to drug pairs.')
+        desc='Build neural network based models to predict tumor response to drug pairs.')
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(comboBmk)
-    #combo.logger.info('Params: {}'.format(gParameters))
 
     return gParameters
 
-class Struct:
-    def __init__(self, **entries):
-        self.__dict__.update(entries)
-
 
 def run(params):
-    args = Struct(**params)
-    set_seed(args.rng_seed)
+    args = candle.ArgumentStruct(**params)
+    candle.set_seed(args.rng_seed)
     ext = extension_from_parameters(args)
     verify_path(args.save_path)
     prefix = args.save_path + ext
-    logfile = args.logfile if args.logfile else prefix+'.log'
+    logfile = args.logfile if args.logfile else prefix + '.log'
     set_up_logger(logfile, args.verbose)
     logger.info('Params: {}'.format(params))
 
@@ -699,13 +656,13 @@ def run(params):
 
     if args.cp:
         model_json = model.to_json()
-        with open(prefix+'.model.json', 'w') as f:
+        with open(prefix + '.model.json', 'w') as f:
             print(model_json, file=f)
 
     def warmup_scheduler(epoch):
-        lr = args.learning_rate or base_lr * args.batch_size/100
+        lr = args.learning_rate or base_lr * args.batch_size / 100
         if epoch <= 5:
-            K.set_value(model.optimizer.lr, (base_lr * (5-epoch) + lr * epoch) / 5)
+            K.set_value(model.optimizer.lr, (base_lr * (5 - epoch) + lr * epoch) / 5)
         logger.debug('Epoch {}: lr={}'.format(epoch, K.get_value(model.optimizer.lr)))
         return K.get_value(model.optimizer.lr)
 
@@ -717,8 +674,8 @@ def run(params):
     fold = 0
     while fold < cv:
         if args.cv > 1:
-            logger.info('Cross validation fold {}/{}:'.format(fold+1, cv))
-            cv_ext = '.cv{}'.format(fold+1)
+            logger.info('Cross validation fold {}/{}:'.format(fold + 1, cv))
+            cv_ext = '.cv{}'.format(fold + 1)
 
         model = build_model(loader, args)
 
@@ -737,7 +694,7 @@ def run(params):
 
         reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
-        checkpointer = ModelCheckpoint(prefix+cv_ext+'.weights.h5', save_best_only=True, save_weights_only=True)
+        checkpointer = ModelCheckpoint(prefix + cv_ext + '.weights.h5', save_best_only=True, save_weights_only=True)
         tensorboard = TensorBoard(log_dir="tb/tb{}{}".format(ext, cv_ext))
         history_logger = LoggingCallback(logger.debug)
         model_recorder = ModelRecorder()
@@ -776,7 +733,7 @@ def run(params):
                                 validation_data=(x_val_list, y_val))
 
         if args.cp:
-            model.load_weights(prefix+cv_ext+'.weights.h5')
+            model.load_weights(prefix + cv_ext + '.weights.h5')
 
         if not args.gen:
             y_val_pred = model.predict(x_val_list, batch_size=args.batch_size).flatten()
@@ -788,13 +745,13 @@ def run(params):
                 fold += 1
             log_evaluation(scores)
             df_val.is_copy = False
-            df_val['GROWTH_PRED'] = y_val_pred
-            df_val['GROWTH_ERROR'] = y_val_pred - y_val
+            df_val.loc[:, 'GROWTH_PRED'] = y_val_pred
+            df_val.loc[:, 'GROWTH_ERROR'] = y_val_pred - y_val
             df_pred_list.append(df_val)
 
         if args.cp:
             # model.save(prefix+'.model.h5')
-            model_recorder.best_model.save(prefix+'.model.h5')
+            model_recorder.best_model.save(prefix + '.model.h5')
 
             # test reloadded model prediction
             # new_model = keras.models.load_model(prefix+'.model.h5')

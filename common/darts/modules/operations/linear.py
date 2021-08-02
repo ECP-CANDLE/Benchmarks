@@ -10,17 +10,17 @@ from darts.api import Model
 
 
 OPS = {
-    'none'         : lambda c, stride, affice: Zero(),
-    'skip_connect' : lambda c, stride, affine: Identity(),
-    'linear_block' : lambda c, stride, affine: LinearBlock(c, c, affine=affine),
-    'linear_conv'  : lambda c, stride, affine: LinearConv(c, c, 1),
-    'linear_drop'  : lambda c, stride, affine: LinearDrop(c, c, 1),
-    'encoder'      : lambda c, stride, affine: Encoder(c, c, 1),
+    'none': lambda c, stride, affice: Zero(),
+    'skip_connect': lambda c, stride, affine: Identity(),
+    'linear_block': lambda c, stride, affine: LinearBlock(c, c, affine=affine),
+    'linear_conv': lambda c, stride, affine: LinearConv(c, c, 1),
+    'linear_drop': lambda c, stride, affine: LinearDrop(c, c, 1),
+    'encoder': lambda c, stride, affine: Encoder(c, c, 1),
 }
 
 
 class LinearBlock(Model):
-    """ Linear block consisting of two fully connected layers 
+    """ Linear block consisting of two fully connected layers
 
     Example
     -------

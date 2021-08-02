@@ -12,7 +12,7 @@ The associated metadata for the samples can be found [here](http://ftp.mcs.anl.g
 ## Profile runs
 We have run the same configuration across multiple machines and compared the resource utilization. 
 ```
-python uno_baseline_keras2.py --conf nt3_perf_benchmark.txt
+python nt3_baseline_keras2.py --conf nt3_perf_bench_model.txt
 ```
 
 | Machine | Time to complete (HH:mm:ss) | Time per epoch (s) | Perf factor <sup>*</sup> | CPU % | Mem % | Mem GB | GPU % | GPU Mem % | Note |

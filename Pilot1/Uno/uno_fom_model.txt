@@ -32,7 +32,7 @@ preprocess_rnaseq='source_scale'
 no_feature_source=True
 no_response_source=True
 single=True
-gpus = [0]
+gpus=[0]
 
 [Monitor_Params]
 timeout=-1

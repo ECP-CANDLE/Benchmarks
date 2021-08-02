@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
-#__version__ = '0.0.0'
+# __version__ = '0.0.0'
 
-#import from data_utils
+# import from data_utils
 from data_utils import load_csv_data
 from data_utils import load_Xy_one_hot_data2
 from data_utils import load_Xy_data_noheader
@@ -11,10 +11,10 @@ from data_utils import discretize_dataframe
 from data_utils import discretize_array
 from data_utils import lookup
 
-#import from file_utils
+# import from file_utils
 from file_utils import get_file
 
-#import from default_utils
+# import from default_utils
 from default_utils import ArgumentStruct
 from default_utils import Benchmark
 from default_utils import str2bool
@@ -36,21 +36,21 @@ from viz_utils import plot_calibration_and_errors
 from viz_utils import plot_percentile_predictions
 
 # import from uq_utils
+from uq_utils import compute_statistics_homoscedastic_summary
 from uq_utils import compute_statistics_homoscedastic
-from uq_utils import compute_statistics_homoscedastic_all
 from uq_utils import compute_statistics_heteroscedastic
 from uq_utils import compute_statistics_quantile
 from uq_utils import split_data_for_empirical_calibration
 from uq_utils import compute_empirical_calibration
-from uq_utils import bining_for_calibration
-from uq_utils import computation_of_valid_calibration_interval
-from uq_utils import applying_calibration
+from uq_utils import binning_for_calibration
+from uq_utils import compute_valid_calibration_interval
+from uq_utils import apply_calibration
 from uq_utils import overprediction_check
 
 
-#import from keras_utils
-#from keras_utils import dense
-#from keras_utils import add_dense
+# import from keras_utils
+# from keras_utils import dense
+# from keras_utils import add_dense
 from keras_utils import build_initializer
 from keras_utils import build_optimizer
 from keras_utils import set_seed
@@ -67,7 +67,7 @@ from solr_keras import CandleRemoteMonitor
 from solr_keras import compute_trainable_params
 from solr_keras import TerminateOnTimeOut
 
-#import from uq_keras_utils
+# import from uq_keras_utils
 from uq_keras_utils import abstention_variable_initialization
 from uq_keras_utils import abstention_loss
 from uq_keras_utils import abs_acc

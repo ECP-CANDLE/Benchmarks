@@ -1,17 +1,10 @@
 from __future__ import absolute_import
 
 import collections
-import gzip
 import logging
 import os
 import sys
-import multiprocessing
 import threading
-import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 import numpy as np
 import pandas as pd
@@ -25,7 +18,7 @@ except ImportError:
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..' ))
+lib_path = os.path.abspath(os.path.join(file_path, '..'))
 sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
@@ -37,7 +30,6 @@ logger = logging.getLogger(__name__)
 # Number of data generator workers
 WORKERS = 1
 
-#np.set_printoptions(threshold=np.nan)
 
 class BenchmarkP1B3(candle.Benchmark):
 
@@ -53,52 +45,47 @@ class BenchmarkP1B3(candle.Benchmark):
         if additional_definitions is not None:
             self.additional_definitions = additional_definitions
 
+
 additional_definitions = [
-# Feature selection
-    {'name':'cell_features', 
-        'nargs':'+',
-        #'default':'argparse.SUPPRESS',
-        'choices':['expression', 'mirna', 'proteome', 'all', 'categorical'],
-        'help':'use one or more cell line feature sets: "expression", "mirna", "proteome", "all"; or use "categorical" for one-hot encoding of cell lines'},
-    {'name':'drug_features', 
-        'nargs':'+',
-        #'default':'argparse.SUPPRESS',
-        'choices':['descriptors', 'latent', 'all', 'noise'],
-        'help':"use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or random features; 'descriptors','latent', 'all', 'noise'"},
-    {'name':'cell_noise_sigma', 'type':float,
-        'help':"standard deviation of guassian noise to add to cell line features during training"},
-# Output selection
-    {'name':'min_logconc', 
-        'type':float,
-        #'default':'argparse.SUPPRESS',
-        'help':"min log concentration of dose response data to use: -3.0 to -7.0"},
-    {'name':'max_logconc',  
-        'type':float,
-        #'default':'argparse.SUPPRESS',
-        'help':"max log concentration of dose response data to use: -3.0 to -7.0"},
-    {'name':'subsample',
-        #'default':'argparse.SUPPRESS',
-        'choices':['naive_balancing', 'none'],
-        'help':"dose response subsample strategy; 'none' or 'naive_balancing'"},
-    {'name':'category_cutoffs', 
-        'nargs':'+', 
-        'type':float,
-        #'default':'argparse.SUPPRESS',
-        'help':"list of growth cutoffs (between -1 and +1) seperating non-response and response categories"},
-# Sample data selection
-    {'name':'test_cell_split', 
-        'type':float,
-        #'default':'argparse.SUPPRESS',
-        'help':"cell lines to use in test; if None use predefined unseen cell lines instead of sampling cell lines used in training"},
-# Test random model
-    {'name':'scramble', 
-        'type': candle.str2bool, 
-        'default': False, 
-        'help':'randomly shuffle dose response data'},
-    {'name':'workers', 
-        'type':int,
-        'default':WORKERS,
-        'help':'number of data generator workers'}
+    # Feature selection
+    {'name': 'cell_features',
+     'nargs': '+',
+     'choices': ['expression', 'mirna', 'proteome', 'all', 'categorical'],
+     'help':'use one or more cell line feature sets: "expression", "mirna", "proteome", "all"; or use "categorical" for one-hot encoding of cell lines'},
+    {'name': 'drug_features',
+     'nargs': '+',
+     'choices': ['descriptors', 'latent', 'all', 'noise'],
+     'help': "use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or random features; 'descriptors','latent', 'all', 'noise'"},
+    {'name': 'cell_noise_sigma',
+     'type': float,
+     'help': "standard deviation of guassian noise to add to cell line features during training"},
+    # Output selection
+    {'name': 'min_logconc',
+     'type': float,
+     'help': "min log concentration of dose response data to use: -3.0 to -7.0"},
+    {'name': 'max_logconc',
+     'type': float,
+     'help': "max log concentration of dose response data to use: -3.0 to -7.0"},
+    {'name': 'subsample',
+     'choices': ['naive_balancing', 'none'],
+     'help':"dose response subsample strategy; 'none' or 'naive_balancing'"},
+    {'name': 'category_cutoffs',
+     'nargs': '+',
+     'type': float,
+     'help': "list of growth cutoffs (between -1 and +1) seperating non-response and response categories"},
+    # Sample data selection
+    {'name': 'test_cell_split',
+     'type': float,
+     'help': "cell lines to use in test; if None use predefined unseen cell lines instead of sampling cell lines used in training"},
+    # Test random model
+    {'name': 'scramble',
+     'type': candle.str2bool,
+     'default': False,
+     'help': 'randomly shuffle dose response data'},
+    {'name': 'workers',
+     'type': int,
+     'default': WORKERS,
+     'help': 'number of data generator workers'}
 ]
 
 required = [
@@ -117,108 +104,14 @@ required = [
     'min_logconc',
     'max_logconc',
     'optimizer',
-#    'penalty',
     'rng_seed',
     'scaling',
     'subsample',
     'test_cell_split',
     'val_split',
     'cell_noise_sigma'
-    ]
+]
 
-#def common_parser(parser):
-#
-#    parser.add_argument("--config_file", dest='config_file', type=str,
-#                        default=os.path.join(file_path, 'p1b3_default_model.txt'),
-#                        help="specify model configuration file")
-#
-#    # Parse has been split between arguments that are common with the default neon parser
-#    # and all the other options
-#    parser = candle.get_default_neon_parse(parser)
-#    parser = p1_common.get_p1_common_parser(parser)
-#
-#    # Arguments that are applicable just to p1b3
-#    parser = p1b3_parser(parser)
-#
-#    return parser
-
-
-#def p1b3_parser(parser):
-#
-#    # Feature selection
-#    parser.add_argument("--cell_features", nargs='+',
-#                        default=argparse.SUPPRESS,
-#                        choices=['expression', 'mirna', 'proteome', 'all', 'categorical'],
-#                        help="use one or more cell line feature sets: 'expression', 'mirna', 'proteome', 'all'; or use 'categorical' for one-hot encoding of cell lines")
-#    parser.add_argument("--drug_features", nargs='+',
-#                        default=argparse.SUPPRESS,
-#                        choices=['descriptors', 'latent', 'all', 'noise'],
-#                        help="use dragon7 descriptors, latent representations from Aspuru-Guzik's SMILES autoencoder, or both, or random features; 'descriptors','latent', 'all', 'noise'")
-#    parser.add_argument("--cell_noise_sigma", type=float,
-#                        help="standard deviation of guassian noise to add to cell line features during training")
-#    # Output selection
-#    parser.add_argument("--min_logconc", type=float,
-#                        default=argparse.SUPPRESS,
-#                        help="min log concentration of dose response data to use: -3.0 to -7.0")
-#    parser.add_argument("--max_logconc",  type=float,
-#                        default=argparse.SUPPRESS,
-#                        help="max log concentration of dose response data to use: -3.0 to -7.0")
-#    parser.add_argument("--subsample",
-#                        default=argparse.SUPPRESS,
-#                        choices=['naive_balancing', 'none'],
-#                        help="dose response subsample strategy; 'none' or 'naive_balancing'")
-#    parser.add_argument("--category_cutoffs", nargs='+', type=float,
-#                        default=argparse.SUPPRESS,
-#                        help="list of growth cutoffs (between -1 and +1) seperating non-response and response categories")
-#    # Sample data selection
-#    parser.add_argument("--test_cell_split", type=float,
-#                        default=argparse.SUPPRESS,
-#                        help="cell lines to use in test; if None use predefined unseen cell lines instead of sampling cell lines used in training")
-#    # Test random model
-#    parser.add_argument("--scramble", action="store_true",
-#                        default=False,
-#                        help="randomly shuffle dose response data")
-#    parser.add_argument("--workers", type=int,
-#                        default=WORKERS,
-#                        help="number of data generator workers")
-#
-#    return parser
-
-#def read_config_file(file):
-#    config = configparser.ConfigParser()
-#    config.read(file)
-#    section = config.sections()
-#    fileParams = {}
-#
-#    # default config values that we assume exists
-#    fileParams['activation']=eval(config.get(section[0],'activation'))
-#    fileParams['batch_size']=eval(config.get(section[0],'batch_size'))
-#    fileParams['batch_normalization']=eval(config.get(section[0],'batch_normalization'))
-#    fileParams['category_cutoffs']=eval(config.get(section[0],'category_cutoffs'))
-#    fileParams['cell_features']=eval(config.get(section[0],'cell_features'))
-#    fileParams['dropout']=eval(config.get(section[0],'dropout'))
-#    fileParams['drug_features']=eval(config.get(section[0],'drug_features'))
-#    fileParams['epochs']=eval(config.get(section[0],'epochs'))
-#    fileParams['feature_subsample']=eval(config.get(section[0],'feature_subsample'))
-#    fileParams['initialization']=eval(config.get(section[0],'initialization'))
-#    fileParams['learning_rate']=eval(config.get(section[0], 'learning_rate'))
-#    fileParams['loss']=eval(config.get(section[0],'loss'))
-#    fileParams['min_logconc']=eval(config.get(section[0],'min_logconc'))
-#    fileParams['max_logconc']=eval(config.get(section[0],'max_logconc'))
-#    fileParams['optimizer']=eval(config.get(section[0],'optimizer'))
-##    fileParams['penalty']=eval(config.get(section[0],'penalty'))
-#    fileParams['rng_seed']=eval(config.get(section[0],'rng_seed'))
-#    fileParams['scaling']=eval(config.get(section[0],'scaling'))
-#    fileParams['subsample']=eval(config.get(section[0],'subsample'))
-#    fileParams['test_cell_split']=eval(config.get(section[0],'test_cell_split'))
-#    fileParams['val_split']=eval(config.get(section[0],'val_split'))
-#    fileParams['cell_noise_sigma']=eval(config.get(section[0],'cell_noise_sigma'))
-#
-#    # parse the remaining values
-#    for k,v in config.items(section[0]):
-#        if not k in fileParams:
-#            fileParams[k] = eval(v)
-#
 
 def check_params(fileParams):
     # Allow for either dense or convolutional layer specification
@@ -226,9 +119,9 @@ def check_params(fileParams):
     try:
         fileParams['dense']
     except KeyError:
-        try: 
-            fileParams['conv'] 
-        except KeyError: 
+        try:
+            fileParams['conv']
+        except KeyError:
             print("Error! No dense or conv layers specified. Wrong file !! ... exiting ")
             raise
         else:
@@ -253,19 +146,19 @@ def extension_from_parameters(params, framework):
     if 'conv' in params:
         name = 'LC' if 'locally_connected' in params else 'C'
         layer_list = list(range(0, len(params['conv'])))
-        for l, i in enumerate(layer_list):
+        for layer, i in enumerate(layer_list):
             filters = params['conv'][i][0]
             filter_len = params['conv'][i][1]
             stride = params['conv'][i][2]
             if filters <= 0 or filter_len <= 0 or stride <= 0:
                 break
-            ext += '.{}{}={},{},{}'.format(name, l+1, filters, filter_len, stride)
+            ext += '.{}{}={},{},{}'.format(name, layer + 1, filters, filter_len, stride)
         if 'pool' in params and params['conv'][0] and params['conv'][1]:
             ext += '.P={}'.format(params['pool'])
     if 'dense' in params:
         for i, n in enumerate(params['dense']):
             if n:
-                ext += '.D{}={}'.format(i+1, n)
+                ext += '.D{}={}'.format(i + 1, n)
     if params['batch_normalization']:
         ext += '.BN'
     ext += '.S={}'.format(params['scaling'])
@@ -321,7 +214,6 @@ def impute_and_scale(df, scaling='std'):
 
     df = df.dropna(axis=1, how='all')
 
-    #imputer = Imputer(strategy='mean', axis=0)
     imputer = Imputer(strategy='mean')
     mat = imputer.fit_transform(df)
 
@@ -360,7 +252,7 @@ def load_cellline_expressions(path, dtype, ncols=None, scaling='std'):
     """
 
     df = pd.read_csv(path, sep='\t', engine='c',
-                     na_values=['na','-',''])
+                     na_values=['na', '-', ''])
 
     df1 = df['CellLine']
     df1 = df1.map(lambda x: x.replace('.', ':'))
@@ -398,8 +290,7 @@ def load_cellline_mirna(path, dtype, ncols=None, scaling='std'):
 
     """
 
-    df = pd.read_csv(path, sep='\t', engine='c',
-                     na_values=['na','-',''])
+    df = pd.read_csv(path, sep='\t', engine='c', na_values=['na', '-', ''])
 
     df1 = df['CellLine']
     df1 = df1.map(lambda x: x.replace('.', ':'))
@@ -483,11 +374,11 @@ def load_drug_descriptors(path, dtype, ncols=None, scaling='std'):
     """
 
     df = pd.read_csv(path, sep='\t', engine='c',
-                     na_values=['na','-',''],
+                     na_values=['na', '-', ''],
                      dtype=dtype,
-                     converters ={'NAME' : str})
+                     converters={'NAME': str})
 
-    df1 = pd.DataFrame(df.loc[:,'NAME'])
+    df1 = pd.DataFrame(df.loc[:, 'NAME'])
     df1.rename(columns={'NAME': 'NSC'}, inplace=True)
 
     df2 = df.drop('NAME', 1)
@@ -497,7 +388,7 @@ def load_drug_descriptors(path, dtype, ncols=None, scaling='std'):
     total = df2.shape[1]
     if ncols and ncols < total:
         usecols = np.random.choice(total, size=ncols, replace=False)
-        df2 = df2.iloc[:,usecols]
+        df2 = df2.iloc[:, usecols]
 
     df2 = impute_and_scale(df2, scaling)
     df2 = df2.astype(dtype)
@@ -525,7 +416,7 @@ def load_drug_autoencoded(path, dtype, ncols=None, scaling='std'):
 
     """
 
-    df = pd.read_csv(path, engine='c', converters ={'NSC' : str}, dtype=dtype)
+    df = pd.read_csv(path, engine='c', converters={'NSC': str}, dtype=dtype)
 
     df1 = pd.DataFrame(df.loc[:, 'NSC'])
     df2 = df.drop('NSC', 1)
@@ -564,8 +455,8 @@ def load_dose_response(path, seed, dtype, min_logconc=-5., max_logconc=-5., subs
     """
 
     df = pd.read_csv(path, sep=',', engine='c',
-                     na_values=['na','-',''],
-                     dtype={'NSC':object, 'CELLNAME':str, 'LOG_CONCENTRATION':dtype, 'GROWTH':dtype})
+                     na_values=['na', '-', ''],
+                     dtype={'NSC': object, 'CELLNAME': str, 'LOG_CONCENTRATION': dtype, 'GROWTH': dtype})
 
     df = df[(df['LOG_CONCENTRATION'] >= min_logconc) & (df['LOG_CONCENTRATION'] <= max_logconc)]
 
@@ -582,22 +473,24 @@ def load_dose_response(path, seed, dtype, min_logconc=-5., max_logconc=-5., subs
 
     return df
 
+
 def stage_data():
     server = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/'
 
-    cell_expr_path = candle.fetch_file(server+'P1B3_cellline_expressions.tsv', 'Pilot1', untar=False)
-    cell_mrna_path = candle.fetch_file(server+'P1B3_cellline_mirna.tsv', 'Pilot1', untar=False)
-    cell_prot_path = candle.fetch_file(server+'P1B3_cellline_proteome.tsv', 'Pilot1', untar=False)
-    cell_kino_path = candle.fetch_file(server+'P1B3_cellline_kinome.tsv', 'Pilot1', untar=False)
-    drug_desc_path = candle.fetch_file(server+'P1B3_drug_descriptors.tsv', 'Pilot1', untar=False)
-    drug_auen_path = candle.fetch_file(server+'P1B3_drug_latent.csv', 'Pilot1', untar=False)
-    dose_resp_path = candle.fetch_file(server+'P1B3_dose_response.csv', 'Pilot1', untar=False)
-    test_cell_path = candle.fetch_file(server+'P1B3_test_celllines.txt', 'Pilot1', untar=False)
-    test_drug_path = candle.fetch_file(server+'P1B3_test_drugs.txt', 'Pilot1', untar=False)
+    cell_expr_path = candle.fetch_file(server + 'P1B3_cellline_expressions.tsv', 'Pilot1', unpack=False)
+    cell_mrna_path = candle.fetch_file(server + 'P1B3_cellline_mirna.tsv', 'Pilot1', unpack=False)
+    cell_prot_path = candle.fetch_file(server + 'P1B3_cellline_proteome.tsv', 'Pilot1', unpack=False)
+    cell_kino_path = candle.fetch_file(server + 'P1B3_cellline_kinome.tsv', 'Pilot1', unpack=False)
+    drug_desc_path = candle.fetch_file(server + 'P1B3_drug_descriptors.tsv', 'Pilot1', unpack=False)
+    drug_auen_path = candle.fetch_file(server + 'P1B3_drug_latent.csv', 'Pilot1', unpack=False)
+    dose_resp_path = candle.fetch_file(server + 'P1B3_dose_response.csv', 'Pilot1', unpack=False)
+    test_cell_path = candle.fetch_file(server + 'P1B3_test_celllines.txt', 'Pilot1', unpack=False)
+    test_drug_path = candle.fetch_file(server + 'P1B3_test_drugs.txt', 'Pilot1', unpack=False)
 
     return(cell_expr_path, cell_mrna_path, cell_prot_path, cell_kino_path,
            drug_desc_path, drug_auen_path, dose_resp_path, test_cell_path,
            test_drug_path)
+
 
 class DataLoader(object):
     """Load merged drug response, drug descriptors and cell line essay data
@@ -643,7 +536,7 @@ class DataLoader(object):
             growth thresholds seperating non-response and response categories
         """
 
-        cell_expr_path, cell_mrna_path, cell_prot_path, cell_kino_path,drug_desc_path, drug_auen_path, dose_resp_path, test_cell_path, test_drug_path = stage_data()
+        cell_expr_path, cell_mrna_path, cell_prot_path, cell_kino_path, drug_desc_path, drug_auen_path, dose_resp_path, test_cell_path, test_drug_path = stage_data()
         # Seed random generator for loading data
         np.random.seed(seed)
 
@@ -708,7 +601,7 @@ class DataLoader(object):
         # df[['GROWTH', 'LOG_CONCENTRATION']].to_csv('filtered.response.csv')
 
         df_test_cell = pd.read_csv(test_cell_path)
-        df_test_drug = pd.read_csv(test_drug_path, dtype={'NSC':object})
+        df_test_drug = pd.read_csv(test_drug_path, dtype={'NSC': object})
 
         df_train_val = df[(~df['NSC'].isin(df_test_drug['NSC'])) & (~df['CELLNAME'].isin(df_test_cell['CELLNAME']))]
         logger.debug('Combined train and validation set has {} rows'.format(df_train_val.shape[0]))
@@ -746,10 +639,10 @@ class DataLoader(object):
             logger.info('Category cutoffs: {}'.format(category_cutoffs))
             logger.info('Dose response bin counts:')
             for i, count in enumerate(bc):
-                lower = min_g if i == 0 else category_cutoffs[i-1]
-                upper = max_g if i == len(bc)-1 else category_cutoffs[i]
+                lower = min_g if i == 0 else category_cutoffs[i - 1]
+                upper = max_g if i == len(bc) - 1 else category_cutoffs[i]
                 logger.info('  Class {}: {:7d} ({:.4f}) - between {:+.2f} and {:+.2f}'.
-                            format(i, count, count/len(growth), lower, upper))
+                            format(i, count, count / len(growth), lower, upper))
             logger.info('  Total: {:9d}'.format(len(growth)))
 
         self.total = df_train_val.shape[0]
@@ -848,7 +741,7 @@ class DataGenerator(object):
             if self.cell_noise_sigma:
                 c1 = cell_column_beg - 3
                 c2 = cell_column_end - 3
-                x[:, c1:c2] += np.random.randn(df.shape[0], c2-c1) * self.cell_noise_sigma
+                x[:, c1:c2] += np.random.randn(df.shape[0], c2 - c1) * self.cell_noise_sigma
 
             y = np.array(df.iloc[:, 0])
             y = y / 100.
@@ -863,7 +756,7 @@ class DataGenerator(object):
                 index = 0
                 for v in self.data.input_shapes.values():
                     length = np.prod(v)
-                    subset = x[:, index:index+length]
+                    subset = x[:, index:(index + length)]
                     if self.shape == '1d':
                         reshape = (x.shape[0], length)
                     elif self.shape == 'add_1d':

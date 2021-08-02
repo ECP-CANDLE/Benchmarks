@@ -7,15 +7,15 @@ def plot(genotype, filename):
     """ Plot the graph of a given genotype """
     g = Digraph(
         format='pdf',
-        edge_attr = dict(fontsize='20', fontname="times"),
-        node_attr = dict(
-            style='filled', 
-            shape='rect', 
-            align='center', 
-            fontsize='20', 
-            height='0.5', 
+        edge_attr=dict(fontsize='20', fontname="times"),
+        node_attr=dict(
+            style='filled',
+            shape='rect',
+            align='center',
+            fontsize='20',
+            height='0.5',
             width='0.5',
-            penwidth='2', 
+            penwidth='2',
             fontname="times"
         ),
         engine='dot'
@@ -67,4 +67,3 @@ if __name__ == '__main__':
 
     plot(genotype.normal, "normal")
     plot(genotype.reduce, "reduction")
-

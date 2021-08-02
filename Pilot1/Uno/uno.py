@@ -4,10 +4,6 @@ import os
 import sys
 import logging
 import argparse
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -18,6 +14,7 @@ sys.path.append(lib_path2)
 import candle
 
 logger = logging.getLogger(__name__)
+candle.set_parallelism_threads()
 
 
 class BenchmarkUno(candle.Benchmark):
@@ -202,6 +199,10 @@ additional_definitions = [
         'type': str,
         'default': None,
         'help': 'exported file name'},
+    {'name': 'on_memory_loader',
+        'type': candle.str2bool,
+        'default': False,
+        'help': 'load dataset on host memory and read from memory'},
     {'name': 'growth_bins',
         'type': int,
         'default': 0,

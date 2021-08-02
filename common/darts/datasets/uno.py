@@ -37,7 +37,7 @@ class Uno(InMemoryDataset):
     test_data_file = 'test_data.pt'
     test_label_file = 'test_labels.pt'
 
-    def __init__(self, root, partition, transform=None, 
+    def __init__(self, root, partition, transform=None,
                  target_transform=None, download=False):
         self.root = os.path.expanduser(root)
         self.transform = transform
@@ -47,8 +47,8 @@ class Uno(InMemoryDataset):
             self.download()
 
         if not self._check_exists():
-            raise RuntimeError('Dataset not found.' +
-                               ' You can use download=True to download it')
+            raise RuntimeError('Dataset not found.'
+                               + ' You can use download=True to download it')
 
         self.partition = partition
         if self.partition == 'train':
@@ -137,9 +137,9 @@ class Uno(InMemoryDataset):
 
     def _check_exists(self):
         return os.path.exists(os.path.join(self.processed_folder, self.training_data_file)) and \
-               os.path.exists(os.path.join(self.processed_folder, self.training_label_file)) and \
-               os.path.exists(os.path.join(self.processed_folder, self.test_data_file)) and \
-               os.path.exists(os.path.join(self.processed_folder, self.test_label_file))
+            os.path.exists(os.path.join(self.processed_folder, self.training_label_file)) and \
+            os.path.exists(os.path.join(self.processed_folder, self.test_data_file)) and \
+            os.path.exists(os.path.join(self.processed_folder, self.test_label_file))
 
     @staticmethod
     def extract_array(path, remove_finished=False):
@@ -162,7 +162,7 @@ class Uno(InMemoryDataset):
             filename = url.rpartition('/')[2]
             file_path = os.path.join(self.raw_folder, filename)
             download_url(url, root=self.raw_folder, filename=filename, md5=None)
-            #self.extract_array(path=file_path, remove_finished=False)
+            # self.extract_array(path=file_path, remove_finished=False)
 
         # process and save as numpy files
         print('Processing...')

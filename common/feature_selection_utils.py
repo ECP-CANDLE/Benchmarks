@@ -5,6 +5,7 @@ import numpy.linalg as la
 from astropy.stats import median_absolute_deviation
 import matplotlib.pyplot as plt
 
+
 def select_features_by_missing_values(data, threshold=0.1):
     '''
     This function returns the indices of the features whose missing rates are smaller than the threshold.
@@ -32,6 +33,7 @@ def select_features_by_missing_values(data, threshold=0.1):
     indices = np.sort(indices)
 
     return indices
+
 
 def select_features_by_variation(data, variation_measure='var', threshold=None, portion=None, draw_histogram=False,
                                  bins=100, log=False):
@@ -101,6 +103,7 @@ def select_features_by_variation(data, variation_measure='var', threshold=None, 
 
     return indices
 
+
 def select_decorrelated_features(data, method='pearson', threshold=None, random_seed=None):
     '''
     This function selects features whose mutual absolute correlation coefficients are smaller than a threshold.
@@ -152,11 +155,11 @@ def select_decorrelated_features(data, method='pearson', threshold=None, random_
 
     rm = np.full(num_f, False)
     index = 0
-    while index < num_f-1:
+    while index < num_f - 1:
         if rm[index]:
             index += 1
             continue
-        idi = np.array(range(index+1, num_f))
+        idi = np.array(range(index + 1, num_f))
         idi = idi[np.where(rm[idi] == False)[0]]
         if len(idi) > 0:
             if threshold is None:

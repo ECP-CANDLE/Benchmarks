@@ -1,6 +1,5 @@
 import os
 import sys
-import argparse
 import candle
 import p3b5 as bmk
 
@@ -21,7 +20,8 @@ sys.path.append(lib_path2)
 import darts
 
 
-def train(trainloader, validloader, model, architecture, criterion, optimizer, lr, args, tasks, device, meter):
+def train(trainloader, validloader, model, architecture,
+          criterion, optimizer, lr, args, tasks, device, meter):
 
     valid_iter = iter(trainloader)
 
@@ -100,5 +100,5 @@ def infer(validloader, model, criterion, args, tasks, device, meter):
     return meter.loss_meter.avg
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

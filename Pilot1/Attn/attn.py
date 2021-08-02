@@ -7,13 +7,7 @@ import logging
 import pandas as pd
 import numpy as np
 
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from scipy.stats.stats import pearsonr
-
 file_path = os.path.dirname(os.path.realpath(__file__))
-#lib_path = os.path.abspath(os.path.join(file_path, '..'))
-#sys.path.append(lib_path)
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
@@ -22,45 +16,41 @@ import candle
 logger = logging.getLogger(__name__)
 candle.set_parallelism_threads()
 
-additional_definitions = [ 
-{'name':'latent_dim', 
-    'action':'store',
-    'type': int, 
-    'help':'latent dimensions'},
-{'name':'residual', 
-    'type': candle.str2bool,
-    'default': False,
-    'help':'add skip connections to the layers'},
-{'name':'reduce_lr', 
-    'type': candle.str2bool,
-    'default': False,
-    'help':'reduce learning rate on plateau'},
-{'name':'warmup_lr', 
-    'type': candle.str2bool,
-    'default': False,
-    'help':'gradually increase learning rate on start'},
-{'name':'base_lr', 
-    'type': float,
-    'help':'base learning rate'},
-{'name':'epsilon_std', 
-    'type': float,
-    'help':'epsilon std for sampling latent noise'},
-{'name':'use_cp', 
-    'type': candle.str2bool,
-    'default': False, 
-    'help':'checkpoint models with best val_loss'},
-#{'name':'shuffle', 
-    #'type': candle.str2bool,
-    #'default': False, 
-    #'help':'shuffle data'},
-{'name':'use_tb', 
-    'type': candle.str2bool,
-    'default': False, 
-    'help':'use tensorboard'},
-{'name':'tsne', 
-    'type': candle.str2bool,
-    'default': False, 
-    'help':'generate tsne plot of the latent representation'}
+additional_definitions = [
+    {'name': 'latent_dim',
+     'action': 'store',
+     'type': int,
+     'help': 'latent dimensions'},
+    {'name': 'residual',
+     'type': candle.str2bool,
+     'default': False,
+     'help': 'add skip connections to the layers'},
+    {'name': 'reduce_lr',
+     'type': candle.str2bool,
+     'default': False,
+     'help': 'reduce learning rate on plateau'},
+    {'name': 'warmup_lr',
+     'type': candle.str2bool,
+     'default': False,
+     'help': 'gradually increase learning rate on start'},
+    {'name': 'base_lr',
+     'type': float,
+     'help': 'base learning rate'},
+    {'name': 'epsilon_std',
+     'type': float,
+     'help': 'epsilon std for sampling latent noise'},
+    {'name': 'use_cp',
+     'type': candle.str2bool,
+     'default': False,
+     'help': 'checkpoint models with best val_loss'},
+    {'name': 'use_tb',
+     'type': candle.str2bool,
+     'default': False,
+     'help': 'use tensorboard'},
+    {'name': 'tsne',
+     'type': candle.str2bool,
+     'default': False,
+     'help': 'generate tsne plot of the latent representation'}
 ]
 
 required = [
@@ -80,7 +70,8 @@ required = [
     'batch_normalization',
     'epsilon_std',
     'timeout'
-    ]
+]
+
 
 class BenchmarkAttn(candle.Benchmark):
 
@@ -102,7 +93,7 @@ def extension_from_parameters(params, framework=''):
     ext = framework
     for i, n in enumerate(params['dense']):
         if n:
-            ext += '.D{}={}'.format(i+1, n)
+            ext += '.D{}={}'.format(i + 1, n)
     ext += '.A={}'.format(params['activation'][0])
     ext += '.B={}'.format(params['batch_size'])
     ext += '.E={}'.format(params['epochs'])
@@ -124,15 +115,17 @@ def extension_from_parameters(params, framework=''):
         ext += '.Res'
 
     return ext
+
+
 def load_data(params, seed):
 
     # start change #
     if params['train_data'].endswith('h5') or params['train_data'].endswith('hdf5'):
-        print ('processing h5 in file {}'.format(params['train_data']))
+        print('processing h5 in file {}'.format(params['train_data']))
 
         url = params['data_url']
         file_train = params['train_data']
-        train_file = candle.get_file(file_train, url+file_train, cache_subdir='Pilot1')
+        train_file = candle.get_file(file_train, url + file_train, cache_subdir='Pilot1')
 
         df_x_train_0 = pd.read_hdf(train_file, 'x_train_0').astype(np.float32)
         df_x_train_1 = pd.read_hdf(train_file, 'x_train_1').astype(np.float32)
@@ -152,7 +145,7 @@ def load_data(params, seed):
         Y_train = pd.read_hdf(train_file, 'y_train')
         Y_test = pd.read_hdf(train_file, 'y_test')
         Y_val = pd.read_hdf(train_file, 'y_val')
-        
+
         # assumes AUC is in the third column at index 2
         # df_y = df['AUC'].astype('int')
         # df_x = df.iloc[:,3:].astype(np.float32)
@@ -161,18 +154,17 @@ def load_data(params, seed):
         # scaler = StandardScaler()
         # df_x = scaler.fit_transform(df_x)
     else:
-        print ('expecting in file file suffix h5')
+        print('expecting in file file suffix h5')
         sys.exit()
-    
-    
+
     print('x_train shape:', X_train.shape)
     print('x_test shape:', X_test.shape)
-    
+
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
 
     # start change #
     if train_file.endswith('h5') or train_file.endswith('hdf5'):
-        print ('processing h5 in file {}'.format(train_file))
+        print('processing h5 in file {}'.format(train_file))
 
         df_x_train_0 = pd.read_hdf(train_file, 'x_train_0').astype(np.float32)
         df_x_train_1 = pd.read_hdf(train_file, 'x_train_1').astype(np.float32)
@@ -192,7 +184,7 @@ def load_data(params, seed):
         Y_train = pd.read_hdf(train_file, 'y_train')
         Y_test = pd.read_hdf(train_file, 'y_test')
         Y_val = pd.read_hdf(train_file, 'y_val')
-        
+
         # assumes AUC is in the third column at index 2
         # df_y = df['AUC'].astype('int')
         # df_x = df.iloc[:,3:].astype(np.float32)
@@ -200,15 +192,11 @@ def load_data(params, seed):
         # assumes dataframe has already been scaled
         # scaler = StandardScaler()
         # df_x = scaler.fit_transform(df_x)
-
     else:
-        print ('expecting in file file suffix h5')
+        print('expecting in file file suffix h5')
         sys.exit()
-    
-    
+
     print('x_train shape:', X_train.shape)
     print('x_test shape:', X_test.shape)
-    
+
     return X_train, Y_train, X_val, Y_val, X_test, Y_test
-
-

@@ -1,9 +1,9 @@
 import sys
 import pandas as pd
 import numpy as np
-import numpy.linalg as la
 from scipy import stats
 from collections import Counter
+
 
 def quantile_normalization(data):
     '''
@@ -53,6 +53,7 @@ def quantile_normalization(data):
         norm_data = pd.DataFrame(norm_data, columns=colnames, index=rownames)
 
     return norm_data
+
 
 def generate_cross_validation_partition(group_label, n_folds=5, n_repeats=1, portions=None, random_seed=None):
     '''
@@ -129,5 +130,3 @@ def generate_cross_validation_partition(group_label, n_folds=5, n_repeats=1, por
             partition.append(temp)
 
     return partition
-
-

@@ -4,7 +4,7 @@ import argparse
 
 import pandas as pd
 import numpy as np
-import keras
+from tensorflow import keras
 
 from uno_data import DataFeeder
 from uno_baseline_keras2 import evaluate_prediction
@@ -61,7 +61,7 @@ def main():
         dataset = ['train', 'val'] if args.partition == 'all' else [args.partition]
         for partition in dataset:
             test_gen = DataFeeder(filename=args.data, partition=partition, batch_size=1024, single=args.single, agg_dose=args.agg_dose)
-            y_test_pred = model.predict_generator(test_gen, test_gen.steps + 1)
+            y_test_pred = model.predict(test_gen, steps=test_gen.steps + 1)
             y_test_pred = y_test_pred[:test_gen.size]
             y_test_pred = y_test_pred.flatten()
 
@@ -87,9 +87,12 @@ def main():
 
     # save to tsv
     headers = ['Sample', 'Drug1']
-    if not args.single: headers.append('Drug2')
-    if not args.agg_dose: headers.append('Dose1')
-    if not args.single and not args.agg_dose: headers.append('Dose2')
+    if not args.single:
+        headers.append('Drug2')
+    if not args.agg_dose:
+        headers.append('Dose1')
+    if not args.single and not args.agg_dose:
+        headers.append('Dose2')
     headers.append(target)
 
     df_pred.sort_values(headers, inplace=True)

@@ -1,10 +1,10 @@
-""" 
+"""
     File Name:          UnoPytorch/response_dataframes.py
     Author:             Xiaotian Duan (xduan7)
     Email:              xduan7@uchicago.edu
     Date:               9/4/18
     Python Version:     3.6.6
-    File Description:   
+    File Description:
         This file takes care of all the dataframes related drug response.
 """
 
@@ -210,7 +210,7 @@ def get_combo_stats_df(data_root: str,
                 warnings.filterwarnings('error')
                 try:
                     corr = stats.pearsonr(x=conc_tuple, y=grth_tuple)[0]
-                except Warning:
+                except (Warning, ValueError):
                     corr = 0.0
             # corr = 0. if np.isnan(corr) else corr
 

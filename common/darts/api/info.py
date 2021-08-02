@@ -21,9 +21,9 @@ class TrainingHistory:
 
 class TrainingInfo(abc.MutableMapping):
     """ Information that needs to persist through training """
-    
-    def __init__(self, start_epoch_index=0, run_name: typing.Optional[str]=None, metrics=None, callbacks=None):
-        self.data_dict = {} # optional information
+
+    def __init__(self, start_epoch_index=0, run_name: typing.Optional[str] = None, metrics=None, callbacks=None):
+        self.data_dict = {}  # optional information
 
         self.run_name = run_name
         self.history = TrainingHistory()

@@ -1,0 +1,19 @@
+[Global_Params]
+data_url = 'https://modac.cancer.gov/api/v2/dataObject/NCI_DOE_Archive/JDACS4C/JDACS4C_Pilot_1/tumor_classifier_model_tc1/'
+train_data = 'type_18_300_train.csv'
+test_data = 'type_18_300_test.csv'
+model_name = 'tc1'
+conv=[128, 20, 1, 128, 10, 1]
+dense=[200,20]
+activation='relu'
+out_activation='softmax'
+loss='categorical_crossentropy'
+optimizer='sgd'
+metrics='accuracy'
+epochs=400
+batch_size=20
+dropout=0.1
+classes=36
+feature_subsample=0
+pool=[1, 10]
+output_dir='.'

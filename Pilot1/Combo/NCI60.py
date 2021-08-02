@@ -30,7 +30,7 @@ def get_file(url):
     return candle.fetch_file(url, 'Pilot1')
 
 
-def impute_and_scale(df, scaling='std'):
+def impute_and_scale(df, scaling='std', keepcols=None):
     """Impute missing values with mean and scale data included in pandas dataframe.
 
     Parameters
@@ -41,7 +41,12 @@ def impute_and_scale(df, scaling='std'):
         type of scaling to apply
     """
 
-    df = df.dropna(axis=1, how='all')
+    if keepcols is None:
+        df = df.dropna(axis=1, how='all')
+    else:
+        df = df[keepcols].copy()
+        all_na_cols = df.columns[df.isna().all()]
+        df[all_na_cols] = 0
 
     imputer = Imputer(strategy='mean')
     mat = imputer.fit_transform(df)
@@ -85,7 +90,7 @@ def load_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, fractio
     if df is None:
         df = pd.read_csv(path, sep=',', engine='c',
                          na_values=['na', '-', ''],
-                         dtype={'NSC':object, 'CELLNAME':str, 'LOG_CONCENTRATION':np.float32, 'GROWTH':np.float32})
+                         dtype={'NSC': object, 'CELLNAME': str, 'LOG_CONCENTRATION': np.float32, 'GROWTH': np.float32})
         global_cache[path] = df
 
     df = df[(df['LOG_CONCENTRATION'] >= min_logconc) & (df['LOG_CONCENTRATION'] <= max_logconc)]
@@ -125,10 +130,10 @@ def load_combo_response(response_url=None, fraction=False, use_combo_score=False
     if df is None:
         df = pd.read_csv(path,
                          usecols=['CELLNAME', 'NSC1', 'CONC1', 'NSC2', 'CONC2', 'PERCENTGROWTH', 'VALID', 'SCORE', 'SCREENER', 'STUDY'],
-                         na_values=['na','-',''],
-                         dtype={'NSC1':object, 'NSC2':object, 'CONC1':object, 'CONC2':object, 'PERCENTGROWTH':str, 'SCORE':str},
+                         na_values=['na', '-', ''],
+                         dtype={'NSC1': object, 'NSC2': object, 'CONC1': object, 'CONC2': object, 'PERCENTGROWTH': str, 'SCORE': str},
                          engine='c', error_bad_lines=False, warn_bad_lines=True)
-                         # nrows=10000)
+
         global_cache[path] = df
 
     df = df[df['VALID'] == 'Y']
@@ -165,7 +170,7 @@ def load_combo_response(response_url=None, fraction=False, use_combo_score=False
     df_max = df_max.add_suffix('_MAX').reset_index()  # add SCORE_MAX by flattening the hierarchical index
 
     df_avg = df.copy()
-    df_avg['PERCENTGROWTH'] = df_avg['PERCENTGROWTH'].apply(lambda x: 100 if x > 100 else 50+x/2 if x < 0 else 50+x/2)
+    df_avg['PERCENTGROWTH'] = df_avg['PERCENTGROWTH'].apply(lambda x: 100 if x > 100 else 50 + x / 2 if x < 0 else 50 + x / 2)
     df_avg = df.groupby(['CELLNAME', 'NSC1', 'NSC2']).mean()
     df_avg = df_avg.add_suffix('_AVG').reset_index()
 
@@ -199,11 +204,10 @@ def load_combo_dose_response(response_url=None, fraction=False, use_combo_score=
     if df is None:
         df = pd.read_csv(path,
                          usecols=['CELLNAME', 'NSC1', 'CONC1', 'NSC2', 'CONC2', 'PERCENTGROWTH', 'VALID', 'SCORE', 'SCREENER', 'STUDY'],
-                         na_values=['na','-',''],
-                         dtype={'NSC1':object, 'NSC2':object, 'CONC1':object, 'CONC2':object, 'PERCENTGROWTH':str, 'SCORE':str},
+                         na_values=['na', '-', ''],
+                         dtype={'NSC1': object, 'NSC2': object, 'CONC1': object, 'CONC2': object, 'PERCENTGROWTH': str, 'SCORE': str},
                          engine='c', error_bad_lines=False, warn_bad_lines=True,
                          )
-                         # nrows=1000000)
         global_cache[path] = df
 
     df = df[df['VALID'] == 'Y']
@@ -231,7 +235,7 @@ def load_combo_dose_response(response_url=None, fraction=False, use_combo_score=
     df_mean = df_mean.reset_index()
     df_mean['CONC1'] = -np.log10(df_mean['CONC1'].astype(np.float32))
     df_mean['CONC2'] = -np.log10(df_mean['CONC2'].astype(np.float32))
-    df = df_mean.rename(columns={'PERCENTGROWTH': 'GROWTH', 'CONC1':'pCONC1', 'CONC2':'pCONC2'})
+    df = df_mean.rename(columns={'PERCENTGROWTH': 'GROWTH', 'CONC1': 'pCONC1', 'CONC2': 'pCONC2'})
 
     # df_mean_min = df.groupby(['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2']).mean()
     # df_mean_min = df_mean_min.groupby(['CELLNAME', 'NSC1', 'NSC2']).min()
@@ -273,9 +277,8 @@ def load_drug_set_descriptors(drug_set='ALMANAC', ncols=None, scaling='std', add
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path, sep='\t', engine='c',
-                         na_values=['na','-',''],
+                         na_values=['na', '-', ''],
                          )
-                         # dtype=np.float32)
         global_cache[path] = df
 
     # df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
@@ -291,8 +294,12 @@ def load_drug_set_descriptors(drug_set='ALMANAC', ncols=None, scaling='std', add
     if ncols and ncols < total:
         usecols = np.random.choice(total, size=ncols, replace=False)
         df2 = df2.iloc[:, usecols]
+        keepcols = None
+    else:
+        train_ref = load_drug_descriptors(add_prefix=add_prefix)
+        keepcols = train_ref.columns[1:]
 
-    df2 = impute_and_scale(df2, scaling)
+    df2 = impute_and_scale(df2, scaling, keepcols=keepcols)
     df2 = df2.astype(np.float32)
 
     df_dg = pd.concat([df1, df2], axis=1)
@@ -320,9 +327,8 @@ def load_drug_descriptors_new(ncols=None, scaling='std', add_prefix=True):
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path, sep='\t', engine='c',
-                         na_values=['na','-',''],
+                         na_values=['na', '-', ''],
                          )
-                         # dtype=np.float32)
         global_cache[path] = df
 
     # df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
@@ -368,9 +374,8 @@ def load_drug_descriptors(ncols=None, scaling='std', add_prefix=True):
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path, sep='\t', engine='c',
-                         na_values=['na','-',''],
+                         na_values=['na', '-', ''],
                          )
-                         # dtype=np.float32)
         global_cache[path] = df
 
     # df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
@@ -415,11 +420,11 @@ def load_drug_descriptors_old(ncols=None, scaling='std', add_prefix=True):
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path, sep='\t', engine='c',
-                         na_values=['na','-',''],
+                         na_values=['na', '-', ''],
                          dtype=np.float32)
         global_cache[path] = df
 
-    df1 = pd.DataFrame(df.loc[:,'NAME'].astype(int).astype(str))
+    df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
     df1.rename(columns={'NAME': 'NSC'}, inplace=True)
 
     df2 = df.drop('NAME', 1)
@@ -429,7 +434,7 @@ def load_drug_descriptors_old(ncols=None, scaling='std', add_prefix=True):
     total = df2.shape[1]
     if ncols and ncols < total:
         usecols = np.random.choice(total, size=ncols, replace=False)
-        df2 = df2.iloc[:,usecols]
+        df2 = df2.iloc[:, usecols]
 
     df2 = impute_and_scale(df2, scaling)
     df2 = df2.astype(np.float32)
@@ -444,7 +449,7 @@ def load_drug_smiles():
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(path, sep='\t', engine='c', dtype={'nsc_id':object})
+        df = pd.read_csv(path, sep='\t', engine='c', dtype={'nsc_id': object})
         df = df.rename(columns={'nsc_id': 'NSC'})
         global_cache[path] = df
 
@@ -622,7 +627,7 @@ def load_cell_expression_5platform(ncols=None, scaling='std', add_prefix=True, u
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path, sep='\t', engine='c',
-                         na_values=['na','-',''])
+                         na_values=['na', '-', ''])
         global_cache[path] = df
 
     if use_landmark_genes:
@@ -669,7 +674,7 @@ def load_cell_mirna(ncols=None, scaling='std', add_prefix=True):
     df = global_cache.get(path)
     if df is None:
         df = pd.read_csv(path, sep='\t', engine='c',
-                         na_values=['na','-',''])
+                         na_values=['na', '-', ''])
         global_cache[path] = df
 
     df1 = df['CellLine']

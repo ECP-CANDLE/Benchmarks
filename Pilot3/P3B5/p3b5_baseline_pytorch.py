@@ -24,12 +24,12 @@ def initialize_parameters():
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b5_bench)
-    #bmk.logger.info('Params: {}'.format(gParameters))
+    # bmk.logger.info('Params: {}'.format(gParameters))
     return gParameters
 
 
 def fetch_data(gParameters):
-    """ Download and untar data
+    """ Download and unpack data
 
     Args:
         gParameters: parameters from candle
@@ -38,7 +38,7 @@ def fetch_data(gParameters):
         path to where the data is located
     """
     path = gParameters['data_url']
-    fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', untar=True)
+    fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', unpack=True)
     return fpath
 
 
@@ -132,5 +132,5 @@ def main():
     run(params)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

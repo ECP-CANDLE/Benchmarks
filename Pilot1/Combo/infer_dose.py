@@ -7,10 +7,9 @@ import os
 
 import numpy as np
 import pandas as pd
-import keras
-from keras import backend as K
-from keras.models import Model
-from keras.utils import get_custom_objects
+from tensorflow import keras
+from tensorflow.keras import backend as K
+from tensorflow.keras.utils import get_custom_objects
 from tqdm import tqdm
 
 import NCI60
@@ -120,7 +119,7 @@ def cross_join3(df1, df2, df3, **kwargs):
     return cross_join(cross_join(df1, df2), df3, **kwargs)
 
 
-def prepare_data(sample_set='NCI60', drug_set='ALMANAC', use_landmark_genes=False):
+def prepare_data(sample_set='NCI60', drug_set='ALMANAC', use_landmark_genes=False, preprocess_rnaseq=None):
     df_expr = NCI60.load_sample_rnaseq(use_landmark_genes=use_landmark_genes, preprocess_rnaseq=preprocess_rnaseq, sample_set=sample_set)
     # df_old = NCI60.load_cell_expression_rnaseq(use_landmark_genes=True)
     # df_desc = NCI60.load_drug_descriptors_new()
@@ -149,7 +148,7 @@ def main():
         df_drug_ids = df_desc[['Drug']].copy()
 
     df_sum = cross_join3(df_sample_ids, df_drug_ids, df_drug_ids, suffixes=('1', '2'))
-    df_pconc = pd.DataFrame({'pCONC': np.arange(args.min_pconc, args.max_pconc+0.1, args.pconc_step)})
+    df_pconc = pd.DataFrame({'pCONC': np.arange(args.min_pconc, args.max_pconc + 0.1, args.pconc_step)})
     df_sum = cross_join3(df_sum, df_pconc, df_pconc, suffixes=('1', '2'))
 
     n_samples = df_sample_ids.shape[0]
@@ -161,12 +160,12 @@ def main():
 
     n = args.n_pred
     df_sum['N'] = n
-    df_seq = pd.DataFrame({'Seq': range(1, n+1)})
+    df_seq = pd.DataFrame({'Seq': range(1, n + 1)})
     df_all = cross_join(df_sum, df_seq)
 
     total = df_sum.shape[0]
     for i in tqdm(range(0, total, args.step)):
-        j = min(i+args.step, total)
+        j = min(i + args.step, total)
 
         x_all_list = []
         df_x_all = pd.merge(df_all[['Sample']].iloc[i:j], df_expr, on='Sample', how='left')
@@ -185,14 +184,14 @@ def main():
         for k in range(n):
             y_pred = model.predict(x_all_list, batch_size=args.batch_size, verbose=0).flatten()
             preds.append(y_pred)
-            df_all.loc[i*n+k:(j-1)*n+k:n, 'PredGrowth'] = y_pred
-            df_all.loc[i*n+k:(j-1)*n+k:n, 'Seq'] = k + 1
+            df_all.loc[i * n + k:(j - 1) * n + k:n, 'PredGrowth'] = y_pred
+            df_all.loc[i * n + k:(j - 1) * n + k:n, 'Seq'] = k + 1
 
         if n > 0:
-            df_sum.loc[i:j-1, 'PredGrowthMean'] = np.mean(preds, axis=0)
-            df_sum.loc[i:j-1, 'PredGrowthStd'] = np.std(preds, axis=0)
-            df_sum.loc[i:j-1, 'PredGrowthMin'] = np.min(preds, axis=0)
-            df_sum.loc[i:j-1, 'PredGrowthMax'] = np.max(preds, axis=0)
+            df_sum.loc[i:j - 1, 'PredGrowthMean'] = np.mean(preds, axis=0)
+            df_sum.loc[i:j - 1, 'PredGrowthStd'] = np.std(preds, axis=0)
+            df_sum.loc[i:j - 1, 'PredGrowthMin'] = np.min(preds, axis=0)
+            df_sum.loc[i:j - 1, 'PredGrowthMax'] = np.max(preds, axis=0)
 
     # df = df_all.copy()
     # df['PredCustomComboScore'] = df.apply(lambda x: custom_combo_score(x['PredGrowth'],

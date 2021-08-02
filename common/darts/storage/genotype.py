@@ -45,10 +45,10 @@ class GenotypeStorage:
         return genotype
 
     def _replace_range(self, genotype: Genotype) -> Genotype:
-        """ Replace the range values with lists 
+        """ Replace the range values with lists
 
-        Python's `range` is not serializable as json objects. 
-        We convert the genotype's ranges to lists first. 
+        Python's `range` is not serializable as json objects.
+        We convert the genotype's ranges to lists first.
 
         Args:
             genotype: the genotype to be serialized
@@ -89,4 +89,3 @@ class GenotypeStorage:
             list of tuples that constitute that block
         """
         return [tuple(x) for x in block]
-

@@ -1,14 +1,14 @@
 import numpy as np
 import glob
-from keras.losses import mean_squared_error as mse
-from keras.losses import mean_absolute_error as mae
+from tensorflow.keras.losses import mean_squared_error as mse
+from tensorflow.keras.losses import mean_absolute_error as mae
 
 
 def combined_loss(y_true, y_pred):
     '''
     Uses a combination of mean_squared_error and an L1 penalty on the output of AE
     '''
-    return mse(y_true, y_pred) + 0.01*mae(0, y_pred)
+    return mse(y_true, y_pred) + 0.01 * mae(0, y_pred)
 
 
 def periodicVector(x0, x1, dimensions):
@@ -19,7 +19,7 @@ def periodicVector(x0, x1, dimensions):
         delta = x0[:, :, i] - x1[i]
         delta = np.where(delta > 0.5 * dimensions[i], delta - dimensions[i], delta)
         delta = np.where(delta < - (0.5 * dimensions[i]), delta + dimensions[i], delta)
-        x0[:, :, i] = delta*4  # multiplier to rescale the values
+        x0[:, :, i] = delta * 4  # multiplier to rescale the values
     return x0
 
 
@@ -75,7 +75,7 @@ def get_angles(x0, com, orientation, dimensions):
 
     angle = np.where(angle < 0, angle + 2 * np.pi, angle)
 
-    return angle / (2*np.pi)
+    return angle / (2 * np.pi)
 
 
 def get_local_files(data_tag="3k_run16", data_dir_prefix="/p/gscratchr/brainusr/datasets/cancer/pilot2"):
@@ -127,14 +127,14 @@ def append_nbrs_invariant(x, nbrs, num_nbrs):
              [relative_distance, relative_angle, 'CHOL', 'DPPC', 'DIPC', 'Head', 'Tail', 'BL1', 'BL2', 'BL3', 'BL4', 'BL5', 'BL6',
              'BL7', 'BL8', 'BL9', 'BL10', 'BL11', 'BL12']
     '''
-    new_x_shape = np.array((x.shape[0], x.shape[1] * (x.shape[2]-1)))
-    new_x_shape[1] *= num_nbrs+1
+    new_x_shape = np.array((x.shape[0], x.shape[1] * (x.shape[2] - 1)))
+    new_x_shape[1] *= num_nbrs + 1
     x_wNbrs = np.zeros(new_x_shape)
 
     for i in range(len(x)):
 
         # get neighbors
-        nb_indices = nbrs[i, :num_nbrs+1].astype(int)
+        nb_indices = nbrs[i, :num_nbrs + 1].astype(int)
         nb_indices = nb_indices[nb_indices != -1]
         temp_mols = x[nb_indices]
         xy_feats = np.copy(temp_mols[:, :, :2])
@@ -183,12 +183,12 @@ def append_nbrs_relative(x, nbrs, num_nbrs):
 
     '''
     new_x_shape = np.array((x.shape[0], np.prod(x.shape[1:])))
-    new_x_shape[1] *= num_nbrs+1
+    new_x_shape[1] *= num_nbrs + 1
     x_wNbrs = np.zeros(new_x_shape)
 
     for i in range(len(x)):
         # get neighbors
-        nb_indices = nbrs[i, :num_nbrs+1].astype(int)
+        nb_indices = nbrs[i, :num_nbrs + 1].astype(int)
         nb_indices = nb_indices[nb_indices != -1]
         temp_mols = x[nb_indices]
 
@@ -223,13 +223,13 @@ def append_nbrs(x, nbrs, num_nbrs):
     x_wNbrs: concatenated features of all neighbors of shape (num_molecules, (num_nbrs+1)*num_beads*num_feature)
     '''
     new_x_shape = np.array(x.shape)
-    new_x_shape[1] *= num_nbrs+1
+    new_x_shape[1] *= num_nbrs + 1
     x_wNbrs = np.zeros(new_x_shape)
 
     for i in range(len(x)):
-        nb_indices = nbrs[i, :num_nbrs+1].astype(int)
+        nb_indices = nbrs[i, :num_nbrs + 1].astype(int)
         if not i:
-            print ('nbrs indices: ', nb_indices)
+            print('nbrs indices: ', nb_indices)
         nb_indices = nb_indices[nb_indices != -1]
 
         temp_mols = x[nb_indices]

@@ -1,10 +1,10 @@
-""" 
+"""
     File Name:          UnoPytorch/label_encoding.py
     Author:             Xiaotian Duan (xduan7)
     Email:              xduan7@uchicago.edu
     Date:               8/13/18
     Python Version:     3.6.6
-    File Description:   
+    File Description:
         This file includes helper functions that are re
 """
 
@@ -72,7 +72,7 @@ def update_label_dict(data_root: str, dict_name: str, new_labels: iter):
                                          dict_name=dict_name)
 
     # Get all the old labels and check if we have new ones
-    old_labels = [str(l) for l in label_encoding_dict.keys()]
+    old_labels = [str(line) for line in label_encoding_dict.keys()]
 
     if len(set(new_labels) - set(old_labels)) != 0:
 
@@ -145,17 +145,9 @@ def encode_int_to_onehot(labels: iter, num_classes: int = None):
 
     # Convert the labels into one-hot-encoded ones
     encoded_labels = []
-    for l in labels:
+    for label in labels:
         encoded = [0] * num_classes
-        encoded[l] = 1
+        encoded[label] = 1
         encoded_labels.append(encoded)
 
     return encoded_labels
-
-
-
-
-
-
-
-

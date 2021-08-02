@@ -1,0 +1,14 @@
+[Global_Params]
+data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/rnngen/'
+input = 'mosesrun/'
+logdir = 'mosesrun/'
+output = 'samples.txt'
+nsamples = 10000
+batch_size = 128
+temperature = 1.0
+model = 'autosave.model.pt'
+learning_rate = 1e-3
+use_gpus = True
+vr = True
+
+

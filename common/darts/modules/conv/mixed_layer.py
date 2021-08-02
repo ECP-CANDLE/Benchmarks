@@ -31,11 +31,11 @@ class MixedLayer(Model):
         """
         Parameters
         ----------
-        x : torch.tensor 
+        x : torch.tensor
             Data
 
         Weights : torch.tensor
             alpha, [op_num:8], the output = sum of alpha * op(x)
         """
         x = [w * layer(x) for w, layer in zip(weights, self.layers)]
-        return sum(x) 
+        return sum(x)

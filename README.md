@@ -20,3 +20,5 @@ Over time, we will be adding implementations that make use of different tensor f
 Implementations that use alternative tensor frameworks, such as mxnet or neon, will have the name of the framework in the name. Examples can be seen in the P1B3 benchmark contribs/ directory, for example:
         p1b3_mxnet.py
         p1b3_neon.py
+
+Documentation: https://ecp-candle.github.io/Candle/html/readme.html

@@ -14,7 +14,7 @@ class Hyperparameters:
     num_cells = 3
     channel_multiplier = 2
     stem_channel_multiplier = 2
-    num_embeddings = 35095 # vocab size
+    num_embeddings = 35095  # vocab size
     embedding_dim = 1500
 
 
@@ -33,7 +33,7 @@ class ConvNetwork(Model):
 
         # stem_multiplier is for stem network,
         # and multiplier is for general cell
-        c_curr = hyperparams.stem_channel_multiplier * self.c # 3*16
+        c_curr = hyperparams.stem_channel_multiplier * self.c  # 3*16
         # stem network, convert 3 channel to c_curr
         self.stem = nn.Sequential(
             nn.Embedding(
@@ -82,7 +82,7 @@ class ConvNetwork(Model):
 
         # k is the total number of edges inside single cell, 14
         k = sum(1 for i in range(self.num_nodes) for j in range(2 + i))
-        num_ops = len(PRIMITIVES) # 8
+        num_ops = len(PRIMITIVES)  # 8
 
         self.alpha_normal = nn.Parameter(torch.randn(k, num_ops))
         self.alpha_reduce = nn.Parameter(torch.randn(k, num_ops))
@@ -108,7 +108,7 @@ class ConvNetwork(Model):
             New model initialized with current alpha.
         """
         model = ConvNetwork(
-            self.tasks, 
+            self.tasks,
             self.criterion
         ).to(self.device)
 
@@ -134,24 +134,24 @@ class ConvNetwork(Model):
         :param x:
         :return:
         """
-        #print('network in:', x.shape)
+        # print('network in:', x.shape)
         # s0 & s1 means the last cells' output
-        s0 = s1 = self.stem(x) # [b, 3, 32, 32] => [b, 48, 32, 32]
-        #print('network stem:', s0.shape)
-        #print('network stem1:', s1.shape)
+        s0 = s1 = self.stem(x)  # [b, 3, 32, 32] => [b, 48, 32, 32]
+        # print('network stem:', s0.shape)
+        # print('network stem1:', s1.shape)
 
         for i, cell in enumerate(self.cells):
             # weights are shared across all reduction cell or normal cell
             # according to current cell's type, it choose which architecture parameters
             # to use
-            if cell.reduction: # if current cell is reduction cell
+            if cell.reduction:  # if current cell is reduction cell
                 weights = F.softmax(self.alpha_reduce, dim=-1)
             else:
-                weights = F.softmax(self.alpha_normal, dim=-1) # [14, 8]
+                weights = F.softmax(self.alpha_normal, dim=-1)  # [14, 8]
             # execute cell() firstly and then assign s0=s1, s1=result
-            s0, s1 = s1, cell(s0, s1, weights) # [40, 64, 32, 32]
-            #print('cell:',i, s1.shape, cell.reduction, cell.reduction_prev)
-            #print('\n')
+            s0, s1 = s1, cell(s0, s1, weights)  # [40, 64, 32, 32]
+            # print('cell:',i, s1.shape, cell.reduction, cell.reduction_prev)
+            # print('\n')
 
         # s1 is the last cell's output
         out = self.global_pooling(s1)
@@ -203,21 +203,21 @@ class ConvNetwork(Model):
             gene = []
             n = 2
             start = 0
-            for i in range(self.num_nodes): # for each node
+            for i in range(self.num_nodes):  # for each node
                 end = start + n
-                W = weights[start:end].copy() # [2, 8], [3, 8], ...
-                edges = sorted(range(i + 2), # i+2 is the number of connection for node i
-                            key=lambda x: -max(W[x][k] # by descending order
-                                               for k in range(len(W[x])) # get strongest ops
-                                               if k != PRIMITIVES.index('none'))
-                               )[:2] # only has two inputs
-                for j in edges: # for every input nodes j of current node i
+                W = weights[start:end].copy()  # [2, 8], [3, 8], ...
+                edges = sorted(range(i + 2),  # i+2 is the number of connection for node i
+                               key=lambda x: -max(W[x][k]  # by descending order
+                                                           for k in range(len(W[x]))  # get strongest ops
+                                                           if k != PRIMITIVES.index('none'))
+                               )[:2]  # only has two inputs
+                for j in edges:  # for every input nodes j of current node i
                     k_best = None
-                    for k in range(len(W[j])): # get strongest ops for current input j->i
+                    for k in range(len(W[j])):  # get strongest ops for current input j->i
                         if k != PRIMITIVES.index('none'):
                             if k_best is None or W[j][k] > W[j][k_best]:
                                 k_best = k
-                    gene.append((PRIMITIVES[k_best], j)) # save ops and input node
+                    gene.append((PRIMITIVES[k_best], j))  # save ops and input node
                 start = end
                 n += 1
             return gene
@@ -240,9 +240,9 @@ def new(c, num_classes, num_layers, criterion, device, steps=4, multiplier=4, st
     However, its weights are left untouched.
     :return:
     """
-    model = Network(c, num_classes, num_layers, criterion, steps, multiplier, stem_multiplier).to(device)
+    model = ConvNetwork(c, num_classes, num_layers, criterion, steps, multiplier, stem_multiplier).to(device)
 
-    for x, y in zip(model_new.arch_parameters(), self.arch_parameters()):
+    for x, y in zip(model.arch_parameters(), model.arch_parameters()):
         x.data.copy_(y.data)
 
     return model

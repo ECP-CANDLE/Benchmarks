@@ -3,11 +3,11 @@ from __future__ import absolute_import
 import numpy as np
 import pandas as pd
 
-## Adding conditional import for compatibility between
-## sklearn versions
-## The second commented line corresponds to a more recent version
-#from sklearn.preprocessing import Imputer
-#from sklearn.impute import SimpleImputer
+# Adding conditional import for compatibility between
+# sklearn versions
+# The second commented line corresponds to a more recent version
+# from sklearn.preprocessing import Imputer
+# from sklearn.impute import SimpleImputer
 try:
     from sklearn.impute import SimpleImputer as Imputer
 except ImportError:
@@ -20,29 +20,29 @@ from default_utils import DEFAULT_DATATYPE
 
 # TAKEN from tensorflow
 def to_categorical(y, num_classes=None):
-  """Converts a class vector (integers) to binary class matrix.
-  E.g. for use with categorical_crossentropy.
-  Arguments:
-      y: class vector to be converted into a matrix
-          (integers from 0 to num_classes).
-      num_classes: total number of classes.
-  Returns:
-      A binary matrix representation of the input. The classes axis is placed
-      last.
-  """
-  y = np.array(y, dtype='int')
-  input_shape = y.shape
-  if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
-    input_shape = tuple(input_shape[:-1])
-  y = y.ravel()
-  if not num_classes:
-    num_classes = np.max(y) + 1
-  n = y.shape[0]
-  categorical = np.zeros((n, num_classes), dtype=np.float32)
-  categorical[np.arange(n), y] = 1
-  output_shape = input_shape + (num_classes,)
-  categorical = np.reshape(categorical, output_shape)
-  return categorical
+    """Converts a class vector (integers) to binary class matrix.
+    E.g. for use with categorical_crossentropy.
+    Arguments:
+        y: class vector to be converted into a matrix
+            (integers from 0 to num_classes).
+        num_classes: total number of classes.
+    Returns:
+        A binary matrix representation of the input. The classes axis is placed
+        last.
+    """
+    y = np.array(y, dtype='int')
+    input_shape = y.shape
+    if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
+        input_shape = tuple(input_shape[:-1])
+    y = y.ravel()
+    if not num_classes:
+        num_classes = np.max(y) + 1
+    n = y.shape[0]
+    categorical = np.zeros((n, num_classes), dtype=np.float32)
+    categorical[np.arange(n), y] = 1
+    output_shape = input_shape + (num_classes,)
+    categorical = np.reshape(categorical, output_shape)
+    return categorical
 
 
 def convert_to_class(y_one_hot, dtype=int):
@@ -66,14 +66,21 @@ def convert_to_class(y_one_hot, dtype=int):
         Returns a numpy array with an integer class encoding.
     """
 
-    maxi = lambda a: a.argmax()
-    iter_to_na = lambda i: np.fromiter(i, dtype=dtype)
+    # maxi = lambda a: a.argmax()
+    # iter_to_na = lambda i: np.fromiter(i, dtype=dtype)
+    # change lambda to def according to pep8 suggestion
+    def maxi(a):
+        return a.argmax()
+
+    def iter_to_na(i):
+        return np.fromiter(i, dtype=dtype)
+
     return np.array([maxi(a) for a in y_one_hot])
 
 
 def scale_array(mat, scaling=None):
     """ Scale data included in numpy array.
-        
+
         Parameters
         ----------
         mat : numpy array
@@ -92,7 +99,7 @@ def scale_array(mat, scaling=None):
         If no scaling method is specified, it returns the numpy \
         array unmodified.
     """
-    
+
     if scaling is None or scaling.lower() == 'none':
         return mat
 
@@ -106,9 +113,8 @@ def scale_array(mat, scaling=None):
     else:
         # Standard normalization
         scaler = StandardScaler(copy=False)
-    
-    return scaler.fit_transform(mat)
 
+    return scaler.fit_transform(mat)
 
 
 def impute_and_scale_array(mat, scaling=None):
@@ -132,14 +138,14 @@ def impute_and_scale_array(mat, scaling=None):
         column and scaled by the method specified. If no scaling method is specified, \
         it returns the imputed numpy array.
     """
-    
-#    imputer = Imputer(strategy='mean', axis=0, copy=False)
-#    imputer = SimpleImputer(strategy='mean', copy=False)
+
+    # imputer = Imputer(strategy='mean', axis=0, copy=False)
+    # imputer = SimpleImputer(strategy='mean', copy=False)
     # Next line is from conditional import. axis=0 is default
     # in old version so it is not necessary.
     imputer = Imputer(strategy='mean', copy=False)
     imputer.fit_transform(mat)
-    
+
     return scale_array(mat, scaling)
 
 
@@ -181,8 +187,8 @@ def drop_impute_and_scale_dataframe(df, scaling='std', imputing='mean', dropna='
     if imputing is None or imputing.lower() == 'none':
         mat = df.values
     else:
-#        imputer = Imputer(strategy=imputing, axis=0)
-#        imputer = SimpleImputer(strategy=imputing)
+        # imputer = Imputer(strategy=imputing, axis=0)
+        # imputer = SimpleImputer(strategy=imputing)
         # Next line is from conditional import. axis=0 is default
         # in old version so it is not necessary.
         imputer = Imputer(strategy=imputing)
@@ -234,7 +240,7 @@ def discretize_dataframe(df, col, bins=2, cutoffs=None):
         thresholds = [np.percentile(y, x) for x in percentiles]
     classes = np.digitize(y, thresholds)
     df[col] = classes
-    
+
     return df
 
 
@@ -259,7 +265,6 @@ def discretize_array(y, bins=5):
     thresholds = [np.percentile(y, x) for x in percentiles]
     classes = np.digitize(y, thresholds)
     return classes
-
 
 
 def lookup(df, query, ret, keys, match='match'):
@@ -349,7 +354,7 @@ def load_X_data(train_file, test_file,
 
     # compensates for the columns to drop if there is a feature subselection
     usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
-        
+
     df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
 
@@ -378,8 +383,8 @@ def load_X_data(train_file, test_file,
 
 
 def load_X_data2(train_file, test_file,
-                drop_cols=None, n_cols=None, shuffle=False, scaling=None,
-                validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+                 drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                 validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
     """ Load training and testing unlabeleled data from the files specified.
         Further split trainig data into training and validation partitions,
         and construct corresponding training, validation and testing pandas DataFrames.
@@ -473,8 +478,8 @@ def load_X_data2(train_file, test_file,
 
 
 def load_Xy_one_hot_data(train_file, test_file,
-                        class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
-                        dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+                         class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                         dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
     """ Load training and testing data from the files specified, with a column indicated to use as label.
         Construct corresponding training and testing pandas DataFrames,
         separated into data (i.e. features) and labels. Labels to output are one-hot encoded (categorical).
@@ -536,14 +541,14 @@ def load_Xy_one_hot_data(train_file, test_file,
             One-hot encoding (categorical) is used.
     """
 
-    assert class_col != None
-    
+    assert class_col is not None
+
     # compensates for the columns to drop if there is a feature subselection
     usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
 
     df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
-    
+
     if shuffle:
         df_train = df_train.sample(frac=1, random_state=seed)
         df_test = df_test.sample(frac=1, random_state=seed)
@@ -557,7 +562,6 @@ def load_Xy_one_hot_data(train_file, test_file,
         for col in drop_cols:
             df_train.drop(col, axis=1, inplace=True)
             df_test.drop(col, axis=1, inplace=True)
-
 
     # Convert from pandas dataframe to numpy array
     X_train = df_train.values.astype(dtype)
@@ -578,8 +582,8 @@ def load_Xy_one_hot_data(train_file, test_file,
 
 
 def load_Xy_one_hot_data2(train_file, test_file,
-                    class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
-                    validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+                          class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                          validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
     """ Load training and testing data from the files specified, with a column indicated to use as label.
         Further split trainig data into training and validation partitions,
         and construct corresponding training, validation and testing pandas DataFrames,
@@ -652,11 +656,11 @@ def load_Xy_one_hot_data2(train_file, test_file,
             One-hot encoding (categorical) is used.
     """
 
-    assert class_col != None
-    
+    assert class_col is not None
+
     # compensates for the columns to drop if there is a feature subselection
     usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
-    
+
     df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
     df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
 
@@ -667,7 +671,7 @@ def load_Xy_one_hot_data2(train_file, test_file,
     # Get class
     y_train = pd.get_dummies(df_train[class_col]).values
     y_test = pd.get_dummies(df_test[class_col]).values
-    
+
     # Drop specified columns
     if drop_cols is not None:
         for col in drop_cols:
@@ -693,7 +697,6 @@ def load_Xy_one_hot_data2(train_file, test_file,
     y_train = y_train[numVal:sizeTrain, :]
 
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
-
 
 
 def load_Xy_data2(train_file, test_file, class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
@@ -769,16 +772,15 @@ def load_Xy_data2(train_file, test_file, class_col=None, drop_cols=None, n_cols=
             Data labels for testing loaded in a pandas DataFrame.
     """
 
-    assert class_col != None
-    
+    assert class_col is not None
+
     (X_train, y_train_oh), (X_val, y_val_oh), (X_test, y_test_oh) = load_Xy_one_hot_data2(train_file, test_file,
-                                                                                 class_col, drop_cols, n_cols, shuffle, scaling,
-                                                                                 validation_split, dtype, seed)
+                                                                                          class_col, drop_cols, n_cols, shuffle, scaling,
+                                                                                          validation_split, dtype, seed)
 
     y_train = convert_to_class(y_train_oh)
     y_val = convert_to_class(y_val_oh)
     y_test = convert_to_class(y_test_oh)
-    
 
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
@@ -841,8 +843,8 @@ def load_Xy_data_noheader(train_file, test_file, classes, usecols=None, scaling=
 
     seqlen = df_train.shape[1]
 
-    df_y_train = df_train[:,0].astype('int')
-    df_y_test = df_test[:,0].astype('int')
+    df_y_train = df_train[:, 0].astype('int')
+    df_y_test = df_test[:, 0].astype('int')
 
     Y_train = to_categorical(df_y_train, classes)
     Y_test = to_categorical(df_y_test, classes)
@@ -1063,4 +1065,3 @@ def load_csv_data(train_path, test_path=None, sep=',', nrows=None,
         ret = ret + [df_x.columns.tolist(), df_y.columns.tolist()]
 
     return tuple(ret) if len(ret) > 1 else ret
-

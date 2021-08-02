@@ -1,10 +1,10 @@
-""" 
+"""
     File Name:          UnoPytorch/drug_dataframes.py
     Author:             Xiaotian Duan (xduan7)
     Email:              xduan7@uchicago.edu
     Date:               9/4/18
     Python Version:     3.6.6
-    File Description:   
+    File Description:
         This file takes care of all the dataframes related drug features.
 """
 import os
@@ -370,5 +370,3 @@ if __name__ == '__main__':
 
     print('=' * 80 + '\nDrug target families dataframe head:')
     print(get_drug_qed_df(data_root='../../data/', qed_scaling='none').head())
-
-

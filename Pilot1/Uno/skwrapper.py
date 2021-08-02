@@ -1,7 +1,6 @@
 from __future__ import print_function
 from __future__ import division
 
-import operator
 import os
 import pickle
 import re
@@ -12,10 +11,10 @@ from sklearn import metrics
 from sklearn.model_selection import GroupKFold, StratifiedKFold
 from sklearn.naive_bayes import GaussianNB
 from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.linear_model import *
-from sklearn.ensemble import *
-from sklearn.neighbors import *
-from sklearn.svm import *
+from sklearn.linear_model import LinearRegression, ElasticNetCV, LassoCV, Ridge, LogisticRegression
+from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, RandomForestClassifier, AdaBoostClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import SVC
 
 from xgboost import XGBRegressor
 from xgboost import XGBClassifier
@@ -75,7 +74,7 @@ def get_model(model_or_name, threads=-1, classify=False, seed=0):
             model, name = model_and_name
     else:
         model = model_or_name
-        name = re.search("\w+", str(model)).group(0)
+        name = re.search("\\w+", str(model)).group(0)
 
     return model, name
 
@@ -96,7 +95,7 @@ def top_important_features(model, feature_names, n_top=1000):
         else:
             return
     features = [(f, n) for f, n in zip(fi, feature_names)]
-    top = sorted(features, key=lambda f:abs(f[0]), reverse=True)[:n_top]
+    top = sorted(features, key=lambda f: abs(f[0]), reverse=True)[:n_top]
     return top
 
 
@@ -126,14 +125,14 @@ def discretize(y, bins=5, cutoffs=None, min_count=0, verbose=False, return_bins=
         print('Category cutoffs:', ['{:.3g}'.format(t) for t in thresholds])
         print('Bin counts:')
         for i, count in enumerate(bc):
-            lower = min_y if i == 0 else thresholds[i-1]
-            upper = max_y if i == len(bc)-1 else thresholds[i]
+            lower = min_y if i == 0 else thresholds[i - 1]
+            upper = max_y if i == len(bc) - 1 else thresholds[i]
             removed = ''
             if count < min_count:
                 removed = ' .. removed (<{})'.format(min_count)
                 good_bins -= 1
             print('  Class {}: {:7d} ({:.4f}) - between {:+.2f} and {:+.2f}{}'.
-                  format(i, count, count/len(y), lower, upper, removed))
+                  format(i, count, count / len(y), lower, upper, removed))
         # print('  Total: {:9d}'.format(len(y)))
     if return_bins:
         return classes, thresholds, good_bins
@@ -325,7 +324,7 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class
         test_score = model.score(x_test, y_test)
         train_scores.append(train_score)
         test_scores.append(test_score)
-        print("  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(i+1, len(splits), test_score, train_score))
+        print("  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(i + 1, len(splits), test_score, train_score))
         if test_score > best_score:
             best_model = model
             best_score = test_score
@@ -346,9 +345,9 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class
         roc_fname = "{}.{}.ROC".format(prefix, name)
         if roc_auc_score:
             with open(roc_fname, "w") as roc_file:
-                roc_file.write('\t'.join(['Threshold', 'FPR', 'TPR'])+'\n')
+                roc_file.write('\t'.join(['Threshold', 'FPR', 'TPR']) + '\n')
                 for ent in zip(thresholds, fpr, tpr):
-                    roc_file.write('\t'.join("{0:.5f}".format(x) for x in list(ent))+'\n')
+                    roc_file.write('\t'.join("{0:.5f}".format(x) for x in list(ent)) + '\n')
 
     print('Average validation metrics:')
     naive_accuracy = max(counts) / len(tests)
@@ -406,7 +405,7 @@ def regress(model, x, y, splits, features, threads=-1, prefix='', seed=0):
         test_score = model.score(x_test, y_test)
         train_scores.append(train_score)
         test_scores.append(test_score)
-        print("  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(i+1, len(splits), test_score, train_score))
+        print("  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(i + 1, len(splits), test_score, train_score))
         if test_score > best_score:
             best_model = model
             best_score = test_score

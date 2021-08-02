@@ -1,11 +1,13 @@
-from keras.callbacks import CSVLogger
-from keras import backend as K
+# from tensorflow.keras.callbacks import CSVLogger
+from tensorflow.keras import backend as K
 
 import mnist
 import candle
 
+
 def initialize_parameters():
-    mnist_common = mnist.MNIST(mnist.file_path,
+    mnist_common = mnist.MNIST(
+        mnist.file_path,
         'mnist_params.txt',
         'keras',
         prog='mnist_mlp',
@@ -14,9 +16,10 @@ def initialize_parameters():
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(mnist_common)
-    csv_logger = CSVLogger('{}/params.log'.format(gParameters))
+    # csv_logger = CSVLogger('{}/params.log'.format(gParameters))
 
     return gParameters
+
 
 def run(gParameters):
     ##########################################
@@ -31,11 +34,10 @@ def run(gParameters):
 
     # from __future__ import print_function
 
-    import keras
-    from keras.datasets import mnist
-    from keras.models import Sequential
-    from keras.layers import Dense, Dropout
-    from keras.optimizers import RMSprop
+    from tensorflow import keras
+    from tensorflow.keras.datasets import mnist
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Dense, Dropout
 
     batch_size = gParameters['batch_size']
     num_classes = 10
@@ -70,8 +72,8 @@ def run(gParameters):
     model.summary()
 
     model.compile(loss='categorical_crossentropy',
-                optimizer=optimizer,
-                metrics=['accuracy'])
+                  optimizer=optimizer,
+                  metrics=['accuracy'])
 
     history = model.fit(x_train, y_train,
                         batch_size=batch_size,
@@ -86,9 +88,11 @@ def run(gParameters):
     ##########################################
     return history
 
+
 def main():
     gParameters = initialize_parameters()
     run(gParameters)
+
 
 if __name__ == '__main__':
     main()

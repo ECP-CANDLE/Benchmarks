@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torch import optim
-from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 import logging
@@ -15,7 +14,7 @@ from operations import (
 )
 
 
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("darts_advanced")
 
 
@@ -39,7 +38,7 @@ def run(params):
     args = candle.ArgumentStruct(**params)
 
     args.cuda = torch.cuda.is_available()
-    device = torch.device(f"cuda" if args.cuda else "cpu")
+    device = torch.device("cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
     trainloader = torch.utils.data.DataLoader(
@@ -49,7 +48,7 @@ def run(params):
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
-            batch_size=args.batch_size, shuffle=True)
+        batch_size=args.batch_size, shuffle=True)
 
     validloader = torch.utils.data.DataLoader(
         datasets.MNIST(
@@ -58,7 +57,7 @@ def run(params):
                 transforms.ToTensor(),
                 transforms.Normalize((0.1307,), (0.3081,))
             ])),
-            batch_size=args.batch_size, shuffle=True)
+        batch_size=args.batch_size, shuffle=True)
 
     tasks = {
         'digits': 10,
@@ -214,5 +213,5 @@ def main():
     run(params)
 
 
-if __name__=='__main__':
+if __name__ == '__main__':
     main()

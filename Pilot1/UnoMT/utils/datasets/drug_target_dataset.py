@@ -1,10 +1,10 @@
-""" 
+"""
     File Name:          UnoPytorch/drug_target_dataset.py
     Author:             Xiaotian Duan (xduan7)
     Email:              xduan7@uchicago.edu
     Date:               9/4/18
     Python Version:     3.6.6
-    File Description:   
+    File Description:
 
 """
 
@@ -92,8 +92,7 @@ class DrugTargetDataset(data.Dataset):
         # Dataset summary #####################################################
         if summary:
             print('=' * 80)
-            print(('Training' if self.training else 'Validation')
-                  + ' Drug Target Family Classification Dataset Summary:')
+            print(('Training' if self.training else 'Validation') + ' Drug Target Family Classification Dataset Summary:')
             print('\t%i Unique Drugs (feature dim: %4i).'
                   % (self.num_drugs, self.drug_feature_dim))
             print('=' * 80)
@@ -108,7 +107,7 @@ class DrugTargetDataset(data.Dataset):
                                   dtype=self.__output_dtype)
         target = np.int64(drug_target_data[0])
 
-        return  drug_feature, target
+        return drug_feature, target
 
     def __split_drug_resp(self):
 

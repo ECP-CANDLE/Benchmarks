@@ -9,7 +9,7 @@ import sys
 
 import numpy as np
 import pandas as pd
-import keras
+from tensorflow import keras
 
 from itertools import cycle, islice
 
@@ -20,8 +20,6 @@ except ImportError:
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 from sklearn.model_selection import ShuffleSplit, KFold
-
-import file_utils
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
@@ -40,24 +38,20 @@ DATA_URL = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/'
 logger = logging.getLogger(__name__)
 
 
-def set_up_logger(verbose=False):
-    sh = logging.StreamHandler()
-    sh.setFormatter(logging.Formatter(''))
-    sh.setLevel(logging.DEBUG if verbose else logging.INFO)
-
-    logger.setLevel(logging.DEBUG)
-    logger.addHandler(sh)
-
-
-def set_seed(seed=SEED):
-    os.environ['PYTHONHASHSEED'] = '0'
-    np.random.seed(seed)
-    random.seed(seed)
-
-
 def get_file(url):
     fname = os.path.basename(url)
     return file_utils.get_file(fname, origin=url, cache_subdir='Pilot1')
+
+
+def read_IDs_file(fname):
+
+    with open(fname, 'r') as f:
+        read_ids = f.read().splitlines()
+
+    logger.info('Read file: {}'.format(fname))
+    logger.info('Number of elements read: {}'.format(len(read_ids)))
+
+    return read_ids
 
 
 def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):
@@ -504,7 +498,7 @@ def load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=None, usecols=
 def encode_sources(sources):
     df = pd.get_dummies(sources, prefix='source', prefix_sep='.')
     df['Source'] = sources
-    source_l1 = df['Source'].str.extract('^(\S+)\.', expand=False)
+    source_l1 = df['Source'].str.extract(r'^(\S+)\.', expand=False)
     df1 = pd.get_dummies(source_l1, prefix='source.L1', prefix_sep='.')
     df = pd.concat([df1, df], axis=1)
     df = df.set_index('Source').reset_index()
@@ -538,7 +532,9 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         usecols = np.append([0], np.add(sorted(usecols), 2))
         df_cols = df_cols.iloc[:, usecols]
     if feature_subset:
-        with_prefix = lambda x: 'rnaseq.' + x if add_prefix else x
+        # with_prefix = lambda x: 'rnaseq.' + x if add_prefix else x
+        def with_prefix(x):
+            return 'rnaseq.' + x if add_prefix else x
         usecols = [0] + [i for i, c in enumerate(df_cols.columns) if with_prefix(c) in feature_subset]
         df_cols = df_cols.iloc[:, usecols]
 
@@ -693,9 +689,9 @@ class CombinedDataLoader(object):
             if k in params:
                 del params[k]
         dirname = os.path.dirname(cache)
-        if not os.path.exists(dirname):
+        if dirname and not os.path.exists(dirname):
             logger.debug('Creating directory for cache: %s', dirname)
-            os.mkdir(dirname)
+            os.makedirs(dirname)
         param_fname = '{}.params.json'.format(cache)
         with open(param_fname, 'w') as param_file:
             json.dump(params, param_file, sort_keys=True)
@@ -706,7 +702,8 @@ class CombinedDataLoader(object):
 
     def partition_data(self, partition_by=None, cv_folds=1, train_split=0.7, val_split=0.2,
                        cell_types=None, by_cell=None, by_drug=None,
-                       cell_subset_path=None, drug_subset_path=None):
+                       cell_subset_path=None, drug_subset_path=None,
+                       exclude_cells=[], exclude_drugs=[], exclude_indices=[]):
 
         seed = self.seed
         train_sep_sources = self.train_sep_sources
@@ -720,6 +717,18 @@ class CombinedDataLoader(object):
                 partition_by = 'cell'
             else:
                 partition_by = 'drug_pair'
+
+        # Exclude specified cells / drugs / indices
+        if exclude_cells != []:
+            df_response = df_response[~df_response['Sample'].isin(exclude_cells)]
+        if exclude_drugs != []:
+            if np.isin('Drug', df_response.columns.values):
+                df_response = df_response[~df_response['Drug1'].isin(exclude_drugs)]
+            else:
+                df_response = df_response[~df_response['Drug1'].isin(exclude_drugs) & ~df_response['Drug2'].isin(exclude_drugs)]
+        if exclude_indices != []:
+            df_response = df_response.drop(exclude_indices, axis=0)
+            logger.info('Excluding indices specified')
 
         if partition_by != self.partition_by:
             df_response = df_response.assign(Group=assign_partition_groups(df_response, partition_by))
@@ -958,9 +967,9 @@ class CombinedDataLoader(object):
             df_drug_ids = df_drug_ids.merge(df_selected_drugs).drop_duplicates()
         logger.info('  %d selected drugs with feature and response data', df_drug_ids.shape[0])
 
-        df_response = df_response[df_response['Sample'].isin(df_cell_ids['Sample']) &
-                                  df_response['Drug1'].isin(df_drug_ids['Drug']) &
-                                  (df_response['Drug2'].isin(df_drug_ids['Drug']) | df_response['Drug2'].isnull())]
+        df_response = df_response[df_response['Sample'].isin(df_cell_ids['Sample'])
+                                  & df_response['Drug1'].isin(df_drug_ids['Drug'])
+                                  & (df_response['Drug2'].isin(df_drug_ids['Drug']) | df_response['Drug2'].isnull())]
 
         df_response = df_response[df_response['Source'].isin(train_sep_sources + test_sep_sources)]
 
@@ -998,17 +1007,35 @@ class CombinedDataLoader(object):
         if cache:
             self.save_to_cache(cache, params)
 
+    def get_cells_in_val(self):
+        val_cell_ids = list(set(self.df_response.loc[self.val_indexes[0]]['Sample'].values))
+        return val_cell_ids
+
+    def get_drugs_in_val(self):
+        if np.isin('Drug', self.df_response.columns.values):
+            val_drug_ids = list(set(self.df_response.loc[self.val_indexes[0]]['Drug'].values))
+        else:
+            val_drug_ids = list(set(self.df_response.loc[self.val_indexes[0]]['Drug1'].values))
+
+        return val_drug_ids
+
+    def get_index_in_val(self):
+        val_indices = list(set(self.val_indexes[0]))
+
+        return val_indices
+
 
 class DataFeeder(keras.utils.Sequence):
     """Read from pre-joined dataset (HDF5 format) and feed data to the model.
     """
-    def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False, single=False, agg_dose=None):
+    def __init__(self, partition='train', filename=None, batch_size=32, shuffle=False, single=False, agg_dose=None, on_memory=False):
         self.partition = partition
         self.filename = filename
         self.batch_size = batch_size
         self.shuffle = shuffle
         self.single = single
         self.agg_dose = agg_dose
+        self.on_memory = on_memory
         self.target = agg_dose if agg_dose is not None else 'Growth'
 
         self.store = pd.HDFStore(filename, mode='r')
@@ -1016,6 +1043,7 @@ class DataFeeder(keras.utils.Sequence):
         try:
             y = self.store.select('y_{}'.format(self.partition))
             self.index = y.index
+            self.target_loc = y.columns.get_loc(self.target)
         except KeyError:
             self.index = []
 
@@ -1028,6 +1056,13 @@ class DataFeeder(keras.utils.Sequence):
         self.index_map = np.arange(self.steps)
         if self.shuffle:
             np.random.shuffle(self.index_map)
+        if self.on_memory:
+            print('on_memory_loader activated')
+            self.dataframe = {}
+            current_partition_keys = list(map(lambda x: x[1:], filter(lambda x: self.partition in x, self.store.keys())))
+            for key in current_partition_keys:
+                self.dataframe[key] = self.store.get(key)
+            self.store.close()
 
     def __len__(self):
         return self.steps
@@ -1035,8 +1070,12 @@ class DataFeeder(keras.utils.Sequence):
     def __getitem__(self, idx):
         start = self.index_map[idx] * self.batch_size
         stop = (self.index_map[idx] + 1) * self.batch_size
-        x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
-        y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop)[self.target]
+        if self.on_memory:
+            x = [self.dataframe['x_{0}_{1}'.format(self.partition, i)].iloc[start:stop, :] for i in range(self.input_size)]
+            y = self.dataframe['y_{}'.format(self.partition)].iloc[start:stop, self.target_loc]
+        else:
+            x = [self.store.select('x_{0}_{1}'.format(self.partition, i), start=start, stop=stop) for i in range(self.input_size)]
+            y = self.store.select('y_{}'.format(self.partition), start=start, stop=stop)[self.target]
         return x, y
 
     def reset(self):
@@ -1045,6 +1084,25 @@ class DataFeeder(keras.utils.Sequence):
         pass
 
     def get_response(self, copy=False):
+        if self.on_memory:
+            return self._get_response_on_memory(copy=copy)
+        else:
+            return self._get_response_on_disk(copy=copy)
+
+    def _get_response_on_memory(self, copy=False):
+        if self.shuffle:
+            self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
+            df = self.dataframe['y_{}'.format(self.partition)].iloc[self.index, :]
+        else:
+            df = self.dataframe['y_{}'.format(self.partition)]
+
+        if self.agg_dose is None:
+            df['Dose1'] = self.dataframe['x_{}_0'.format(self.partition)].iloc[self.index, :]
+            if not self.single:
+                df['Dose2'] = self.dataframe['x_{}_1'.format(self.partition)].iloc[self.index, :]
+        return df.copy() if copy else df
+
+    def _get_response_on_disk(self, copy=False):
         if self.shuffle:
             self.index = [item for step in range(self.steps) for item in range(self.index_map[step] * self.batch_size, (self.index_map[step] + 1) * self.batch_size)]
             df = self.store.get('y_{}'.format(self.partition)).iloc[self.index, :]
@@ -1058,7 +1116,10 @@ class DataFeeder(keras.utils.Sequence):
         return df.copy() if copy else df
 
     def close(self):
-        self.store.close()
+        if self.on_memory:
+            pass
+        else:
+            self.store.close()
 
 
 class CombinedDataGenerator(keras.utils.Sequence):

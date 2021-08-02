@@ -35,7 +35,7 @@ use_landmark_genes=True
 no_feature_source=True
 no_response_source=True
 cp=True
-save_path='save/uno'
+save_path='save_clr/uno'
 
 single=True
 
