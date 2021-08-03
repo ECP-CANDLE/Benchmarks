@@ -1,0 +1,16 @@
+grep Mean */save/00*.log | perl -lne 'print "$1\t$2\t$3\t$4" if /training size (\d+) at layer (\d+) after (\d+) epochs is ([\.\d]+)/' > matrix.dat
+sort -k2 -k1 -k 3 -n matrix.dat > matrix.dat.sort
+perl make_df.pl matrix.dat.sort
+
+# gnuplot> 
+set datafile separator comma
+set pm3d interpolate 0,0
+set xlabel "Epoch"
+set ylabel "Layer"
+set zlabel "Mean CCA Coeff" offset -2,0 rotate parallel
+# set ztics start at 0, end at 0.6, with 0.1 increments
+set ztics 0,0.1,0.6
+unset key
+set title "Similarity between two identically trained networks with random initialization"
+splot 'matrix.df' matrix rowheaders columnheaders using 1:2:3 with pm3d
+replot
