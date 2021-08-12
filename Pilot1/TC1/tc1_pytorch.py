@@ -53,17 +53,14 @@ class myNeuralNetwork(nn.Module):
             else:
                 # input layer
                 if i == 0:
-                    #print('First conv', 1, out_channels, kernel_size, stride)
                     self.convs.append(nn.Conv1d(1, out_channels=out_channels, kernel_size=kernel_size,
                                     stride=stride))
                 else:
                     in_channels = gParameters['conv'][i-3]
-                    #print('Another conv', in_channels, out_channels, kernel_size, stride)
                     self.convs.append(nn.Conv1d(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size,
                                     stride=stride))
             #print(self.act)
             if gParameters['pool']:
-                #print('Pool', pool_list[i//3])
                 self.pools.append(nn.MaxPool1d(kernel_size=pool_list[i // 3]))
         
         self.flat = nn.Flatten(start_dim=1)
@@ -84,12 +81,9 @@ class myNeuralNetwork(nn.Module):
                 if layer:
                     if i == 0:
                         input_shape = x.size()[1]
-                        #print('Linear', input_shape, layer)
                         self.linears.append(nn.Linear(in_features=input_shape, out_features=layer))
                     else:
-                        #print('Linear', gParameters['dense'][i-1], layer)
                         self.linears.append(nn.Linear(in_features=gParameters['dense'][i-1], out_features=layer))
-                    #print('Act')
             self.linears.append(nn.Linear(in_features=gParameters['dense'][-1], out_features=gParameters['classes']))
         
         for i in range(len(self.linears)-1):
