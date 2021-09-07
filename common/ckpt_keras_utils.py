@@ -172,6 +172,10 @@ class CandleCheckpointCallback(Callback):
     def report_initial(self):
         """ Simply report that we are ready to run """
         self.info("Callback initialized.")
+        if self.save_interval == 0:
+            self.info("Checkpoint save interval == 0 "
+                      + "-> checkpoints are disabled.")
+            return  # Skip the rest of this output
         if self.metadata is not None:
             self.info("metadata='%s'" % self.metadata)
         if self.save_best:
