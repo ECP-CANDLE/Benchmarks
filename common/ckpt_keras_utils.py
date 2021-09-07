@@ -594,8 +594,8 @@ def param_type_check(key, value, type_):
     if type_ is ParamType.FLOAT or \
        type_ is ParamType.FLOAT_NN:
         return param_type_check_float(key, value, type_)
-    raise ValueError("param_type_check(): unknown type: '%s'" %
-                     str(type_))
+    raise TypeError("param_type_check(): unknown type: '%s'" %
+                    str(type_))
 
 
 def param_type_check_bool(key, value):
