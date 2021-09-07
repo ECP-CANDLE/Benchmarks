@@ -507,7 +507,7 @@ def restart(gParameters, model, verbose=True):
     stop = time.time()
     duration = stop - start
     rate = MB / duration
-    logger.info("model read:  %0.3f MB in %0.3f seconds (%0.2f MB/s).",
+    logger.info("restarting: model read:  %0.3f MB in %0.3f seconds (%0.2f MB/s).",
                 MB, duration, rate)
     return result
 
