@@ -295,7 +295,7 @@ ckpt_conf = [
         'type': hutils.str2bool,
         'default': False,
         'help': 'Toggle saving only weights (not optimizer) (NYI).'},
-    {'name': 'ckpt_save_internal',
+    {'name': 'ckpt_save_interval',
         'type': int,
         'default': 1,
         'help': 'Interval to save checkpoints.'},
