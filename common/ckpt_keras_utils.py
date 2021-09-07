@@ -399,14 +399,13 @@ class CandleCheckpointCallback(Callback):
         kept = 0
         # Consider most recent epochs first:
         for epoch in reversed(self.epochs):
-            self.debug('checking %s' % epoch)
+            self.debug('clean(): checking epoch directory: %i' % epoch)
             if not self.keep(epoch, epoch_now, kept):
                 deleted += 1
                 self.delete(epoch)
-                self.debug('deleted')
+                self.debug('clean(): deleted epoch: %i' % epoch)
             else:
                 kept += 1
-                self.debug('kept %s' % kept)
         return (kept, deleted)
 
     def keep(self, epoch, epoch_now, kept):
@@ -416,14 +415,14 @@ class CandleCheckpointCallback(Callback):
         """
         if epoch == epoch_now:
             # We just wrote this!
-            self.debug('latest')
+            self.debug('keep(): epoch is latest: %i' % epoch)
             return True
         if self.epoch_best == epoch:
             # This is the best epoch
-            self.debug('best')
+            self.debug('keep(): epoch is best: %i' % epoch)
             return True
         if kept < self.keep_limit:
-            self.debug('< limit %s' % self.keep_limit)
+            self.debug('keep(): epoch count is < limit %i' % self.keep_limit)
             return True
         # No reason to keep this: delete it:
         return False
