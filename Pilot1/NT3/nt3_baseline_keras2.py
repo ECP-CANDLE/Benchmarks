@@ -86,8 +86,6 @@ def load_data(train_path, test_path, gParameters):
 
 def run(gParameters):
 
-    print('Params:', gParameters)
-
     file_train = gParameters['train_data']
     file_test = gParameters['test_data']
     url = gParameters['data_url']
@@ -154,9 +152,6 @@ def run(gParameters):
     model.add(Dense(gParameters['classes']))
     model.add(Activation(gParameters['out_activation']))
 
-    gParameters['ckpt_checksum'] = False
-    gParameters['ckpt_restart_mode'] = "auto"
-
     J = candle.restart(gParameters, model)
     if J is not None:
         initial_epoch = J['epoch']
@@ -165,7 +160,7 @@ def run(gParameters):
         print('initial_epoch: %i' % initial_epoch)
 
     ckpt = candle.CandleCheckpointCallback(gParameters,
-                                           verbose=True)
+                                           verbose=False)
 
 # Reference case
 # model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))

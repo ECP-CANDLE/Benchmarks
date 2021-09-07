@@ -67,6 +67,10 @@ class Benchmark:
         self.default_model = defmodel
         self.framework = framework
 
+        self.registered_conf = []
+        for lst in parsing_utils.registered_conf:
+            self.registered_conf.extend(lst)
+
         self.required = set([])
         self.additional_definitions = []
         self.set_locals()
@@ -103,8 +107,9 @@ class Benchmark:
         """
 
         configOut = dictfileparam.copy()
+        kwall = self.additional_definitions + self.registered_conf
 
-        for d in self.additional_definitions:
+        for d in kwall:  # self.additional_definitions:
             if d['name'] in configOut.keys():
                 if 'type' in d:
                     dtype = d['type']

@@ -14,7 +14,7 @@ model_urls = {
     'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
 }
 
-from extra_uts import *
+from extra_uts import right_shift, down_shift, concat_elu
 
 from utils import MS_SSIM
 

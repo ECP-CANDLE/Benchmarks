@@ -271,7 +271,7 @@ def coxen_multi_drug_gene_selection(
             try:
                 res = mod.fit()
                 pvalue[i, 0] = res.pvalues[1]
-            except Error:
+            except ValueError:
                 pvalue[i, 0] = 1
 
         gid1 = np.argsort(pvalue[:, 0])[:num_predictive_gene]

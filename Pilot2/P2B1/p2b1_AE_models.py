@@ -1,16 +1,12 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
-from keras.layers import Input
-from keras.models import Sequential, Model
-from keras.layers.core import Flatten, Dense, Dropout
-from keras.layers.convolutional import Convolution2D, Conv2DTranspose
-from keras.layers.normalization import BatchNormalization
-from keras.regularizers import l2
-try:
-    import configparser
-except ImportError:
-    import ConfigParser as configparser
+from tensorflow.keras.layers import Input
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Flatten, Dense, Dropout
+from tensorflow.keras.layers import Convolution2D, Conv2DTranspose
+from tensorflow.keras.layers import BatchNormalization
+from tensorflow.keras.regularizers import l2
 
 import os
 import sys

@@ -67,6 +67,7 @@ def func_reconstruct_closure(values):
     try:
         exec(src, globals())
     except SyntaxError:
+        func = None
         raise SyntaxError(src)
     return func(values).__closure__
 

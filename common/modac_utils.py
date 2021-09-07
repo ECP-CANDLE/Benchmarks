@@ -50,7 +50,8 @@ def get_file_from_modac(fname, origin):
 
 
 def register_file_to_modac(file_path, metadata, destination_path):
-    """ Register a file in the "Model and Data Clearning House" (MoDAC)
+    """ Register a file in the "Model and Data Clearning House" (MoDAC).
+        The file size is limited to 2GBs
 
         Parameters
         ----------

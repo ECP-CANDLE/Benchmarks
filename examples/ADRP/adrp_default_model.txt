@@ -1,6 +1,7 @@
 [Global_Params]
 header_url = 'https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/'
 data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/V5.1-1M-flatten/'
+model_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/models/examples/adrp/V5.1-ml-models-1M-flatten.release/'
 train_data = ''
 base_name = 'ADRP_6W02_A_1_H'
 model_name = 'adrp'
@@ -10,7 +11,7 @@ epochs = 400
 activation = 'elu'
 out_activation = 'relu'
 loss = 'mean_squared_error'
-optimizer = 'adam'
+optimizer = 'sgd'
 dropout = 0.1
 learning_rate = 0.0001
 momentum = 0.9

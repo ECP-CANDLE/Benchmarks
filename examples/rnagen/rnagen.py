@@ -3,7 +3,6 @@ import sys
 import time
 import logging
 import argparse
-import random
 import numpy as np
 import pandas as pd
 from sklearn.impute import SimpleImputer
@@ -195,10 +194,6 @@ def train_type_classifier(x, y, batch_size=256, epochs=2, verbose=1):
     return model
 
 
-def evaluate_model(model, df):
-    return model.evaluate(x, y, batch_size=256)
-
-
 def covariance(x, y):
     return K.mean(x * y) - K.mean(x) * K.mean(y)
 
@@ -387,7 +382,7 @@ def main():
     end = time.time()
     print(f'Done in {end-start:.3f} seconds ({args.n_samples/(end-start):.1f} samples/s).')
 
-    print(f'\nTrain a type classifier with synthetic data:')
+    print('\nTrain a type classifier with synthetic data:')
     x_new = np.concatenate((x_train, samples), axis=0)
     y_new = np.concatenate((y_train, c_sample), axis=0)
     xy = np.concatenate((x_new, y_new), axis=1)
@@ -422,7 +417,7 @@ def main():
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     title = f'Type classifier accuray on holdout data ({args.top_k_types} types)'
-    fig = plt.figure(dpi=300)
+    plt.figure(dpi=300)
     ax = df.plot(title=title, ax=plt.gca(), xticks=[1, 5, 10, 15, 20])
     ax.set_ylim(0.35, 1)
     prefix = f'test-accuracy-comparison-{args.top_k_types}-types'

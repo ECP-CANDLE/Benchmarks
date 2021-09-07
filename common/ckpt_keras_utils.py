@@ -153,7 +153,7 @@ class CandleCheckpointCallback(Callback):
                 May be None to disable or "DEFAULT" to use the default.
             verbose : boolean
                 If True, more verbose logging
-                Passed to default_utils.set_up_logger(verbose) for this logger
+                Passed to helper_utils.set_up_logger(verbose) for this logger
         """
         self.logger = logger
         if self.logger == "DEFAULT":
@@ -709,12 +709,13 @@ def ckpt_parser(parser):
                         help="Toggle saving only weights (not optimizer) (NYI)")
     parser.add_argument("--ckpt_save_interval", type=int,
                         default=1,
-                        help="Interval to save checkpoints")
+                        help="Epoch interval to save checkpoints.  "
+                        + "Set to 0 to disable writing checkpoints")
     # keeping
     parser.add_argument("--ckpt_keep_mode",
                         choices=['linear', 'exponential'],
                         help="Checkpoint saving mode. "
-                             + "choices are 'linear' or 'exponential' ")
+                             + "Choices are 'linear' or 'exponential' ")
     parser.add_argument("--ckpt_keep_limit", type=int,
                         default=1000000,
                         help="Limit checkpoints to keep")

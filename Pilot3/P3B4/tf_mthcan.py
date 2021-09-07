@@ -5,6 +5,8 @@ import time
 from sklearn.metrics import f1_score
 import random
 
+tf.compat.v1.disable_eager_execution()
+
 
 class History(object):
     def __init__(self):
@@ -49,12 +51,15 @@ class hcan(object):
         word_embeds = tf.nn.dropout(word_embeds, self.dropout)   # batch*sents x words x attention_size
 
         # word self attention
-        Q = tf.layers.conv1d(word_embeds, self.attention_size, 1, padding='same',
-                             activation=self.activation, kernel_initializer=tf.contrib.layers.xavier_initializer())
-        K = tf.layers.conv1d(word_embeds, self.attention_size, 1, padding='same',
-                             activation=self.activation, kernel_initializer=tf.contrib.layers.xavier_initializer())
-        V = tf.layers.conv1d(word_embeds, self.attention_size, 1, padding='same',
-                             activation=self.activation, kernel_initializer=tf.contrib.layers.xavier_initializer())
+        Q = tf.compat.v1.layers.conv1d(word_embeds, self.attention_size, 1, padding='same',
+                                       activation=self.activation,
+                                       kernel_initializer=tf.initializers.glorot_uniform())
+        K = tf.compat.v1.layers.conv1d(word_embeds, self.attention_size, 1, padding='same',
+                                       activation=self.activation,
+                                       kernel_initializer=tf.initializers.glorot_uniform())
+        V = tf.compat.v1.layers.conv1d(word_embeds, self.attention_size, 1, padding='same',
+                                       activation=self.activation,
+                                       kernel_initializer=tf.initializers.glorot_uniform())
 
         outputs = tf.matmul(Q, tf.transpose(K, [0, 2, 1]))
         outputs = outputs / (K.get_shape().as_list()[-1]**0.5)
@@ -64,7 +69,7 @@ class hcan(object):
 
         # word target attention
         Q = tf.compat.v1.get_variable('word_Q', (1, 1, self.attention_size),
-                                      tf.float32, tf.orthogonal_initializer())
+                                      tf.float32, tf.initializers.orthogonal())
         Q = tf.tile(Q, [batch_size * max_sents_, 1, 1])
         V = outputs
 
@@ -78,12 +83,15 @@ class hcan(object):
         sent_embeds = tf.nn.dropout(sent_embeds, self.dropout)  # batch x sents x attention_size
 
         # sent self attention
-        Q = tf.layers.conv1d(sent_embeds, self.attention_size, 1, padding='same',
-                             activation=self.activation, kernel_initializer=tf.contrib.layers.xavier_initializer())
-        K = tf.layers.conv1d(sent_embeds, self.attention_size, 1, padding='same',
-                             activation=self.activation, kernel_initializer=tf.contrib.layers.xavier_initializer())
-        V = tf.layers.conv1d(sent_embeds, self.attention_size, 1, padding='same',
-                             activation=self.activation, kernel_initializer=tf.contrib.layers.xavier_initializer())
+        Q = tf.compat.v1.layers.conv1d(sent_embeds, self.attention_size, 1, padding='same',
+                                       activation=self.activation,
+                                       kernel_initializer=tf.initializers.glorot_uniform())
+        K = tf.compat.v1.layers.conv1d(sent_embeds, self.attention_size, 1, padding='same',
+                                       activation=self.activation,
+                                       kernel_initializer=tf.initializers.glorot_uniform())
+        V = tf.compat.v1.layers.conv1d(sent_embeds, self.attention_size, 1, padding='same',
+                                       activation=self.activation,
+                                       kernel_initializer=tf.initializers.glorot_uniform())
 
         outputs = tf.matmul(Q, tf.transpose(K, [0, 2, 1]))
         outputs = outputs / (K.get_shape().as_list()[-1]**0.5)
@@ -93,7 +101,7 @@ class hcan(object):
 
         # sent target attention
         Q = tf.compat.v1.get_variable('sent_Q', (1, 1, self.attention_size),
-                                      tf.float32, tf.orthogonal_initializer())
+                                      tf.float32, tf.initializers.orthogonal())
         Q = tf.tile(Q, [batch_size, 1, 1])
         V = outputs
 
@@ -108,8 +116,8 @@ class hcan(object):
         logits = []
         self.predictions = []
         for i in range(self.num_tasks):
-            logit = tf.layers.dense(doc_embeds, num_classes[i],
-                                    kernel_initializer=tf.contrib.layers.xavier_initializer())
+            logit = tf.compat.v1.layers.dense(doc_embeds, num_classes[i],
+                                              kernel_initializer=tf.initializers.glorot_uniform())
             logits.append(logit)
             self.predictions.append(tf.nn.softmax(logit))
 
@@ -131,7 +139,7 @@ class hcan(object):
         else:
             self.optimizer = tf.compat.v1.train.RMSPropOptimizer(lr)
 
-        tf_version = tf.VERSION
+        tf_version = tf.__version__
         tf_version_split = tf_version.split('.')
         if(int(tf_version_split[0]) == 1 and int(tf_version_split[1]) > 13):
             self.optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(self.optimizer, loss_scale='dynamic')
@@ -142,7 +150,7 @@ class hcan(object):
         config.gpu_options.allow_growth = True
         self.saver = tf.compat.v1.train.Saver()
         self.sess = tf.compat.v1.Session(config=config)
-        self.sess.run(tf.global_variables_initializer())
+        self.sess.run(tf.compat.v1.global_variables_initializer())
 
     def train(self, data, labels, batch_size=100, epochs=50, validation_data=None):
 

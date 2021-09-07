@@ -15,7 +15,7 @@ from file_utils import get_file
 # IO UTILS
 
 
-def fetch_file(link, subdir, untar=False, md5_hash=None):
+def fetch_file(link, subdir, unpack=False, md5_hash=None):
     """ Convert URL to file path and download the file
         if it is not already present in spedified cache.
 
@@ -25,7 +25,7 @@ def fetch_file(link, subdir, untar=False, md5_hash=None):
             URL of the file to download
         subdir : directory path
             Local path to check for cached file.
-        untar : boolean
+        unpack : boolean
             Flag to specify if the file to download should
             be decompressed too.
             (default: False, no decompression)
@@ -40,7 +40,7 @@ def fetch_file(link, subdir, untar=False, md5_hash=None):
     """
 
     fname = os.path.basename(link)
-    return get_file(fname, origin=link, untar=untar, md5_hash=md5_hash, cache_subdir=subdir)
+    return get_file(fname, origin=link, unpack=unpack, md5_hash=md5_hash, cache_subdir=subdir)
 
 
 def verify_path(path):

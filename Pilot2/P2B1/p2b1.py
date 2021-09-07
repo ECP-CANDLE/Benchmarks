@@ -12,7 +12,7 @@ from __future__ import print_function
 # from tqdm import *
 
 import numpy as np
-import keras.backend as K
+import tensorflow.keras.backend as K
 import threading
 import os
 import sys
@@ -100,10 +100,10 @@ def get_list_of_data_files(GP):
     # Identify the data set selected
     data_set = p2.data_sets[GP['set_sel']][0]
     # Get the MD5 hash for the proper data set
-    data_hash = p2.data_sets[GP['set_sel']][1]
+    # data_hash = p2.data_sets[GP['set_sel']][1]
     print('Reading Data Files... %s->%s' % (GP['set_sel'], data_set))
     # Check if the data files are in the data director, otherwise fetch from FTP
-    data_file = candle.fetch_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/' + data_set + '.tar.gz', untar=True, subdir='Pilot2')
+    data_file = candle.fetch_file('http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot2/' + data_set + '.tar.gz', unpack=True, subdir='Pilot2')
     data_dir = os.path.join(os.path.dirname(data_file), data_set)
     # Make a list of all of the data files in the data set
     data_files = glob.glob('%s/*.npz' % data_dir)
@@ -215,13 +215,6 @@ class autoencoder_preprocess():
         X_train = (X_train - mu) / sigma
         X_train = X_train.astype("float32")
         return X_train
-
-
-# get activations for hidden layers of the model
-def get_activations(model, layer, X_batch):
-    get_activations = K.function([model.layers[0].input, K.learning_phase()], [model.layers[layer].output])
-    activations = get_activations([X_batch, 0])
-    return activations
 
 
 class Candle_Molecular_Train():

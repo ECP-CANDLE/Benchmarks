@@ -32,10 +32,10 @@ additional_definitions = [
         'type': str,
         'default': None,
         'help': 'Mode of learning rate scheduler'},
-    {'name': 'data_dir',
+    {'name': 'lmdb_filename',
         'type': str,
         'default': SUPPRESS,
-        'help': 'dataset path'},
+        'help': 'lmdb dataset path'},
     {'name': 'amp',
         'type': str,
         'default': 'O0',
@@ -83,7 +83,7 @@ required = [
     'dropout',
     'amp',
     'sched_mode',
-    'data_dir',
+    'lmdb_filename',
 ]
 
 
@@ -178,7 +178,7 @@ def run(params):
 
     device = 'cuda'
 
-    dataset = LMDBDataset(args.data_dir)
+    dataset = LMDBDataset(args.lmdb_filename)
     loader = DataLoader(
         dataset, batch_size=args.batch_size, shuffle=True, num_workers=4, drop_last=True
     )

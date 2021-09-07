@@ -50,7 +50,7 @@ def run(gParameters):
 
     origin = gParameters['data_url']
     train_data = gParameters['train_data']
-    data_loc = candle.fetch_file(origin + train_data, untar=True, md5_hash=None, subdir='Pilot3')
+    data_loc = candle.fetch_file(origin + train_data, unpack=True, md5_hash=None, subdir='Pilot3')
 
     print('Data downloaded and stored at: ' + data_loc)
     data_path = os.path.dirname(data_loc)

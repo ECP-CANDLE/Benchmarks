@@ -98,6 +98,13 @@ def sample_model(model, device, batch, size, temperature, condition=None):
     return row
 
 
+def get_data(gParams):
+    data_url = gParams['data_url']
+    gParams['vqvae'] = candle.fetch_file(data_url + gParams['vqvae'], subdir='Examples/histogen')
+    gParams['top'] = candle.fetch_file(data_url + gParams['top'], subdir='Examples/histogen')
+    gParams['bottom'] = candle.fetch_file(data_url + gParams['bottom'], subdir='Examples/histogen')
+
+
 def load_model(model, checkpoint, device):
     ndevices = torch.cuda.device_count()
     if ndevices == 0:
@@ -150,6 +157,9 @@ def load_model(model, checkpoint, device):
 
 
 def run(params):
+
+    # this needs to go first to overwrite data paths
+    get_data(params)
 
     args = candle.ArgumentStruct(**params)
 

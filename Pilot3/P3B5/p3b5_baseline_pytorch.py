@@ -29,7 +29,7 @@ def initialize_parameters():
 
 
 def fetch_data(gParameters):
-    """ Download and untar data
+    """ Download and unpack data
 
     Args:
         gParameters: parameters from candle
@@ -38,7 +38,7 @@ def fetch_data(gParameters):
         path to where the data is located
     """
     path = gParameters['data_url']
-    fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', untar=True)
+    fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', unpack=True)
     return fpath
 
 
