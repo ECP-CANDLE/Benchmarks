@@ -491,7 +491,7 @@ def restart(gParameters, model, verbose=True):
     model_file = dir_last + "/model.h5"
     if not os.path.exists(model_file):
         if param_ckpt_mode == "required":
-            raise Exception("ckpt_mode=='required' but no checkpoint"
+            raise Exception("ckpt_restart_mode=='required' but no checkpoint "
                             + "could be found!")
         # We must be under AUTO - proceed without restart
         assert param_ckpt_mode == "auto"
