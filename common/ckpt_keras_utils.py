@@ -707,7 +707,8 @@ def ckpt_parser(parser):
                         help="Toggle saving only weights (not optimizer) (NYI)")
     parser.add_argument("--ckpt_save_interval", type=int,
                         default=1,
-                        help="Interval to save checkpoints")
+                        help="Epoch interval to save checkpoints.  "
+                        + "Set to 0 to disable writing checkpoints")
     # keeping
     parser.add_argument("--ckpt_keep_mode",
                         choices=['linear', 'exponential'],
