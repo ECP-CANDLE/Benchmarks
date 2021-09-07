@@ -713,7 +713,7 @@ def ckpt_parser(parser):
     parser.add_argument("--ckpt_keep_mode",
                         choices=['linear', 'exponential'],
                         help="Checkpoint saving mode. "
-                             + "choices are 'linear' or 'exponential' ")
+                             + "Choices are 'linear' or 'exponential' ")
     parser.add_argument("--ckpt_keep_limit", type=int,
                         default=1000000,
                         help="Limit checkpoints to keep")
