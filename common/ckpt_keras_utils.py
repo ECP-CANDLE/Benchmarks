@@ -411,7 +411,7 @@ class CandleCheckpointCallback(Callback):
     def keep(self, epoch, epoch_now, kept):
         """
         kept: Number of epochs already kept
-        return True if we are keeping this epoch
+        return True if we are keeping this epoch, else False
         """
         if epoch == epoch_now:
             # We just wrote this!
