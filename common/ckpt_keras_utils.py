@@ -261,6 +261,8 @@ class CandleCheckpointCallback(Callback):
         model metrics in given logs
         Also updates epoch_best if appropriate
         """
+        if self.save_interval == 0:
+            return False  # Checkpoints are disabled.
         # skip early epochs to improve speed
         if epoch < self.skip_epochs:
             self.debug("model saving disabled until epoch %d" %
@@ -274,7 +276,7 @@ class CandleCheckpointCallback(Callback):
         if epoch == self.epoch_max:
             self.info("writing final epoch %i ..." % epoch)
             return True  # Final epoch - save!
-        if self.save_interval != 0 and epoch % self.save_interval == 0:
+        if epoch % self.save_interval == 0:
             return True  # We are on the save_interval: save!
         # else- not saving:
         self.debug("not writing this epoch.")
