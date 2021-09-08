@@ -496,7 +496,7 @@ def restart(gParameters, model, verbose=True):
         # We must be under AUTO - proceed without restart
         assert param_ckpt_mode == "auto"
         return None
-    logger.info("restarting: %s", model_file)
+    logger.info("restarting: '%s'" % model_file)
     result = restart_json(gParameters, logger, dir_last)
     logger.info("restarting: epoch=%i timestamp=%s",
                 result["epoch"], result["timestamp"])
