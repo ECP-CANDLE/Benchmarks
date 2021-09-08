@@ -525,6 +525,7 @@ def restart_json(gParameters, logger, directory):
     # print(str(J))
     logger.debug("ckpt-info.json contains:")
     logger.debug(json.dumps(J, indent=2))
+    logger.info("restarting from epoch: %i" % J["epoch"])
     if param(gParameters, "ckpt_checksum", False, ParamType.BOOLEAN):
         checksum = checksum_file(logger, directory + "/model.h5")
         if checksum != J["checksum"]:
