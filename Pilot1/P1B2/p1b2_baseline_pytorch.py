@@ -6,13 +6,6 @@ import sys
 
 import torch
 
-
-if True:
-    print("Restricting #of GPUs to 1")
-    os.environ["CUDA_VISIBLE_DEVICES"]="0"
-    #os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7"
-    #os.environ["CUDA_VISIBLE_DEVICES"]="0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15"
-
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
@@ -25,7 +18,7 @@ from torch_deps.random_seeding import seed_random_state
 
 np.set_printoptions(precision=4)
 
-def initialize_parameters(default_model = 'p1b2_default_model_pytorch.txt'):
+def initialize_parameters(default_model = 'p1b2_default_model.txt'):
 
     # Build benchmark object
     p1b2Bmk = bmk.BenchmarkP1B2(bmk.file_path, default_model, 'pytorch',
@@ -50,7 +43,12 @@ def run(params):
     args.dry_run = args.dry_run if hasattr(args,'dry_run') else False
     args.log_interval = args.log_interval if hasattr(args,'log_interval') else 10
 
+    args.classes = args.classes if hasattr(args,'classes') else 10
 
+    if args.loss=='categorical_crossentropy':
+        args.out_activation='log_softmax'
+        args.loss='nll'
+        
     seed = args.rng_seed
     candle.set_seed(seed)
     # Setting up random seed for reproducible and deterministic results

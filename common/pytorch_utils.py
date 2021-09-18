@@ -42,7 +42,7 @@ def get_function(name):
     return mapped
 
 
-def build_activation(type):
+def build_activation(type, dim=1):
 
     # activation
     if type == 'relu':
@@ -51,7 +51,10 @@ def build_activation(type):
         return torch.nn.Sigmoid()
     elif type == 'tanh':
         return torch.nn.Tanh()
-
+    elif type == 'softmax':
+         return torch.nn.Softmax(dim)    
+    elif type == 'log_softmax':
+         return torch.nn.LogSoftmax(dim)
 
 def build_optimizer(model, type, lr, kerasDefaults, trainable_only=True):
     if trainable_only:
@@ -62,16 +65,21 @@ def build_optimizer(model, type, lr, kerasDefaults, trainable_only=True):
     # schedule = optimizers.optimizer.Schedule() # constant lr (equivalent to default keras setting)
 
     if type == 'sgd':
-        return torch.optim.GradientDescentMomentum(params,
-                                                   lr=lr,
-                                                   momentum_coef=kerasDefaults['momentum_sgd'],
-                                                   nesterov=kerasDefaults['nesterov_sgd'])
+        #return torch.optim.GradientDescentMomentum(params,
+        #                                           lr=lr,
+        #                                           momentum_coef=kerasDefaults['momentum_sgd'],
+        #                                           nesterov=kerasDefaults['nesterov_sgd'])
+        return torch.optim.SGD(params,
+                               lr=lr,
+                               momentum=kerasDefaults['momentum_sgd'],
+                               nesterov=kerasDefaults['nesterov_sgd'])
 
     elif type == 'rmsprop':
         return torch.optim.RMSprop(model.parameters(),
                                    lr=lr,
                                    alpha=kerasDefaults['rho'],
-                                   eps=kerasDefaults['epsilon'])
+                                   eps=kerasDefaults['epsilon'],
+                                   weight_decay=kerasDefaults['weight_decay'])
 
     elif type == 'adagrad':
         return torch.optim.Adagrad(model.parameters(),
@@ -121,3 +129,11 @@ def xent(y_true, y_pred):
 
 def mse(y_true, y_pred):
     return F.mse_loss(y_pred, y_true)
+
+def build_loss(type, y_pred, y_true):
+    if type=='categorical_crossentropy':
+         return xent(y_true, y_pred)
+    elif type=='mse':
+         return mse(y_true, y_pred)
+    elif type=='nll':
+         return F.nll_loss(y_pred, y_true)
