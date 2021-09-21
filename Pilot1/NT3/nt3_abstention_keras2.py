@@ -34,6 +34,7 @@ class BenchmarkNT3Abs(candle.Benchmark):
             self.required = set(bmk.required)
         if additional_definitions is not None:
             self.additional_definitions = abs_definitions + bmk.additional_definitions
+        # print("Additional definitions:", self.additional_definitions)
 
 
 def initialize_parameters(default_model='nt3_noise_model.txt'):
@@ -67,11 +68,8 @@ def load_data(train_path, test_path, gParameters):
     df_y_train = df_train[:, 0].astype('int')
     df_y_test = df_test[:, 0].astype('int')
 
-    # only training set has noise
     Y_train = to_categorical(df_y_train, gParameters['classes'])
     Y_test = to_categorical(df_y_test, gParameters['classes'])
-#    Y_train, y_train_noise_gen = candle.label_flip(df_y_train, gParameters['label_noise'])
-#    Y_test, y_test_noise_gen = candle.label_flip(df_y_test, gParameters['label_noise'])
 
     df_x_train = df_train[:, 1:seqlen].astype(np.float32)
     df_x_test = df_test[:, 1:seqlen].astype(np.float32)
@@ -86,28 +84,10 @@ def load_data(train_path, test_path, gParameters):
     X_train = mat[:X_train.shape[0], :]
     X_test = mat[X_train.shape[0]:, :]
 
-    # check if noise is on
-    if gParameters['add_noise']:
-        # check if we want noise correlated with a feature
-        if gParameters['noise_correlated']:
-            Y_train, y_train_noise_gen = candle.label_flip_correlated(Y_train,
-                                                                      gParameters['label_noise'], X_train,
-                                                                      gParameters['feature_col'],
-                                                                      gParameters['feature_threshold'])
-        # else add uncorrelated noise
-        else:
-            Y_train, y_train_noise_gen = candle.label_flip(Y_train, gParameters['label_noise'])
-    # check if noise is on for RNA-seq data
-    elif gParameters['noise_gaussian']:
-        print("adding gnoise", gParameters['std_dev'])
-        X_train = candle.add_gaussian_noise(X_train, 0, gParameters['std_dev'])
-
     return X_train, Y_train, X_test, Y_test
 
 
 def run(gParameters):
-
-    print('Params:', gParameters)
 
     file_train = gParameters['train_data']
     file_test = gParameters['test_data']
@@ -117,6 +97,9 @@ def run(gParameters):
     test_file = candle.get_file(file_test, url + file_test, cache_subdir='Pilot1')
 
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
+
+    # only training set has noise
+    X_train, Y_train = candle.add_noise(X_train, Y_train, gParameters)
 
     # add extra class for abstention
     # first reverse the to_categorical
@@ -265,7 +248,7 @@ def run(gParameters):
     # path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
     # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
-    reduce_lr = ReduceLROnPlateau(monitor='abs_crossentropy',
+    reduce_lr = ReduceLROnPlateau(monitor='val_acc',
                                   factor=0.1, patience=10, verbose=1, mode='auto',
                                   epsilon=0.0001, cooldown=0, min_lr=0)
 

@@ -48,7 +48,6 @@ def load_data(train_path, test_path, gParameters):
     df_y_train = df_train[:, 0].astype('int')
     df_y_test = df_test[:, 0].astype('int')
 
-    # only training set has noise
     Y_train = to_categorical(df_y_train, gParameters['classes'])
     Y_test = to_categorical(df_y_test, gParameters['classes'])
 
@@ -64,22 +63,6 @@ def load_data(train_path, test_path, gParameters):
 
     X_train = mat[:X_train.shape[0], :]
     X_test = mat[X_train.shape[0]:, :]
-
-    # TODO: Add better names for noise boolean, make a featue for both RNA seq and label noise together
-    # check if noise is on (this is for label)
-    if gParameters['add_noise']:
-        # check if we want noise correlated with a feature
-        if gParameters['noise_correlated']:
-            Y_train, y_train_noise_gen = candle.label_flip_correlated(Y_train,
-                                                                      gParameters['label_noise'], X_train,
-                                                                      gParameters['feature_col'],
-                                                                      gParameters['feature_threshold'])
-        # else add uncorrelated noise
-        else:
-            Y_train, y_train_noise_gen = candle.label_flip(Y_train, gParameters['label_noise'])
-    # check if noise is on for RNA-seq data
-    elif gParameters['noise_gaussian']:
-        X_train = candle.add_gaussian_noise(X_train, 0, gParameters['std_dev'])
 
     return X_train, Y_train, X_test, Y_test
 
@@ -99,6 +82,9 @@ def run(gParameters):
     best_metric_last = None
 
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
+
+    # only training set has noise
+    X_train, Y_train = candle.add_noise(X_train, Y_train, gParameters)
 
     print('X_train shape:', X_train.shape)
     print('X_test shape:', X_test.shape)
