@@ -134,7 +134,7 @@ def run(args):
 
     criterion = nn.BCEWithLogitsLoss()
 
-    for epoch in range(args.num_epochs):
+    for epoch in range(args.epochs):
         train(train_loader, model, optimizer, criterion, args, epoch)
         validate(valid_loader, model, args, epoch)
 

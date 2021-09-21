@@ -30,7 +30,7 @@ required = [
     'weight_decay',
     'rng_seed',
     'batch_size',
-    'num_epochs',
+    'epochs',
 ]
 
 
