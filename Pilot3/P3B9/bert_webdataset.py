@@ -6,8 +6,8 @@ from transformers import DataCollatorForLanguageModeling
 from transformers import Trainer
 from transformers import TrainingArguments
 from transformers import HfArgumentParser
-import os
 import webdataset as wd
+
 
 @dataclass
 class ModelArguments:
@@ -24,11 +24,15 @@ class ModelArguments:
         default=128
     )
 
+
 class truncate(object):
-    def __init__(self,max_len):
+
+    def __init__(self, max_len):
         self.max_len = max_len
-    def __call__(self,doc):
+
+    def __call__(self, doc):
         return doc[:self.max_len]
+
 
 parser = HfArgumentParser((ModelArguments, TrainingArguments))
 model_args, training_args = parser.parse_args_into_dataclasses()
@@ -36,7 +40,7 @@ print(model_args, training_args)
 trunc = truncate(model_args.max_len)
 
 data_len = 1000
-print('total data len per gpu:',data_len)
+print('total data len per gpu:', data_len)
 dataset = wd.Dataset('part-000000.tar',
                      length=data_len, shuffle=True).decode('torch').rename(input_ids='pth').map_dict(input_ids=trunc).shuffle(1000)
 
