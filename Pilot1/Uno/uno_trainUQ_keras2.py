@@ -233,8 +233,10 @@ def run(params):
 
                 for j, input_feature in enumerate(x_list):
                     input_feature.columns = [''] * len(input_feature.columns)
-                    store.append('x_{}_{}'.format(partition, j), input_feature.astype('float32'), format='table', data_column=True)
-                store.append('y_{}'.format(partition), y.astype({target: 'float32'}), format='table', data_column=True,
+                    store.append('x_{}_{}'.format(partition, j), input_feature.astype('float32'),
+                                 format='table', data_columns=True)
+                store.append('y_{}'.format(partition), y.astype({target: 'float32'}),
+                             format='table', data_columns=True,
                              min_itemsize=config_min_itemsize)
                 logger.info('Generating {} dataset. {} / {}'.format(partition, i, gen.steps))
 
