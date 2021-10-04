@@ -15,7 +15,7 @@ from sklearn.preprocessing import MaxAbsScaler
 
 import nt3 as bmk
 import candle
-
+import pickle
 
 def initialize_parameters(default_model='nt3_default_model.txt'):
 
@@ -278,6 +278,10 @@ def run(gParameters):
 
         print("yaml %s: %.2f%%" % (loaded_model_yaml.metrics_names[1], score_yaml[1] * 100))
 
+    if gParameters['save_cf']:
+        model.save('{}/{}.autosave.model'.format(output_dir, model_name))
+        pickle.dump([X_train, Y_train], open('{}/{}.autosave.data.train.pkl'.format(output_dir, model_name), "wb"))
+        pickle.dump( [X_test, Y_test], open( '{}/{}.autosave.data.test.pkl'.format(output_dir, model_name), "wb" ))
     return history
 
 

@@ -94,7 +94,11 @@ input_output_conf = [
     {'name': 'run_id',
         'type': str,
         'default': 'RUN000',
-        'help': 'set the run unique identifier.'}
+        'help': 'set the run unique identifier.'},
+    {'name': 'save_cf',
+        'type': bool,
+        'default': False,
+        'help': 'save the model (Tensoflow saved model format) and data (pickle) objects for cf runs'}
 ]
 
 logging_conf = [
