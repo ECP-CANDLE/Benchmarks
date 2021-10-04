@@ -17,7 +17,7 @@ python sample_baseline_pytorch.py
 Training pipeline
 ```
 python train_vqvae_baseline_pytorch.py -e 1
-pythong extract_baseline_pytorch.py
+python extract_code_baseline_pytorch.py
 python train_pixelsnail_baseline_pytorch.py
 ```
 
