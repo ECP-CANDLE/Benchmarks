@@ -40,6 +40,10 @@ additional_definitions = [
         'type': int,
         'default': 1,
         'help': 'Warmup steps'},
+    {'name': 'output_dir',
+        'type': str,
+        'default': './outputs/',
+        'help': 'Output directory'},
 ]
 
 required = [
