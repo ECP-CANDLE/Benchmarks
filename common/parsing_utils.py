@@ -94,11 +94,18 @@ input_output_conf = [
     {'name': 'run_id',
         'type': str,
         'default': 'RUN000',
-        'help': 'set the run unique identifier.'},
-    {'name': 'save_cf',
+        'help': 'set the run unique identifier.'}
+]
+
+noise_conf = [ 
+    {'name': 'noise_save_cf',
         'type': bool,
         'default': False,
-        'help': 'save the model (Tensoflow saved model format) and data (pickle) objects for cf runs'}
+        'help': 'save the model (Tensoflow saved model format) and data (pickle) objects for cf runs'},
+    {'name': 'noise_cf', 
+     'type': str,
+     'default': None,
+     'help': 'pickle file to hold dataset with noise already added through counterfactuals'}
 ]
 
 logging_conf = [
@@ -315,7 +322,7 @@ ckpt_conf = [
 ]
 
 
-registered_conf = [basic_conf, input_output_conf, logging_conf, data_preprocess_conf, model_conf, training_conf, cyclic_learning_conf, ckpt_conf]
+registered_conf = [basic_conf, input_output_conf, logging_conf, data_preprocess_conf, model_conf, training_conf, cyclic_learning_conf, ckpt_conf, noise_conf]
 
 
 def extract_keywords(lst_dict, kw):

@@ -55,7 +55,15 @@ def main():
             #print(perturb_dataset[selector])
             X_data_noise[selector]-= args.scale*perturb_dataset[selector][:,:,None]
             #print(np.sum(X_data_noise - X_data))
-            pickle.dump([X_data_noise, y_data, selector, cluster_inds], open("nt3.data.scale_{}_cluster_{}_{}.noise_{}.pkl".format(args.scale,clusters[i][0], clusters[i][1], round(p,1)), "wb"))
+            
+            # Now split back into train test
+            X_train = X_data[0:(int)(0.8*X_data.shape[0])]
+            X_test = X_data[0.8*X_data.shape[0]:]
+
+            y_train = y_data[0:(int)(0.8*y_data.shape[0])]
+            y_test = y_data[0.8*y_data.shape[0]:]
+
+            pickle.dump([X_train, X_test, y_train, y_test, selector, cluster_inds], open("nt3.data.scale_{}_cluster_{}_{}.noise_{}.pkl".format(args.scale,clusters[i][0], clusters[i][1], round(p,1)), "wb"))
 
             # Threshold cf injection
             inds = []
@@ -69,7 +77,13 @@ def main():
             for j in inds:
                 perturb_dataset[:,j]=0
             X_data_noise_2[selector]-= args.scale*perturb_dataset[selector][:,:,None]
-            pickle.dump([X_data_noise_2, y_data, selector, cluster_inds], open("nt3.data.threshold_scale_{}_cluster_{}_{}.noise_{}.pkl".format(args.scale, clusters[i][0], clusters[i][1], round(p,1)), "wb"))
+            # Now split back into train test
+            X_train = X_data[0:(int)(0.8*X_data.shape[0])]
+            X_test = X_data[0.8*X_data.shape[0]:]
+            
+            y_train = y_data[0:(int)(0.8*y_data.shape[0])]
+            y_test = y_data[0.8*y_data.shape[0]:]
+            pickle.dump([X_train, X_test, y_train, y_test, selector, cluster_inds], open("nt3.data.threshold_scale_{}_cluster_{}_{}.noise_{}.pkl".format(args.scale, clusters[i][0], clusters[i][1], round(p,1)), "wb"))
             
 if __name__ == "__main__":
     main()

@@ -16,6 +16,7 @@ from abstain_functions import abs_definitions
 
 import nt3 as bmk
 import candle
+import pickle
 
 additional_definitions = abs_definitions
 
@@ -50,7 +51,13 @@ def initialize_parameters(default_model='nt3_noise_model.txt'):
     gParameters = candle.finalize_parameters(nt3Bmk)
 
     return gParameters
-
+    
+def load_data_cf(cf_path):
+    # Pickle file holds the test train split and cf index info                                                       
+    print("Loading data...")
+    X_train, X_test, Y_train, Y_test, polluted_inds, cluster_inds = pickle.load(open(cf_path, 'rb'))
+    print('done')
+    return X_train, Y_train, X_test, Y_test, polluted_inds, cluster_inds
 
 def load_data(train_path, test_path, gParameters):
 
@@ -104,6 +111,38 @@ def load_data(train_path, test_path, gParameters):
 
     return X_train, Y_train, X_test, Y_test
 
+def evaluate_cf(model, nb_classes, output_dir, y_pred, y, polluted_inds, cluster_inds, gParameters):
+    if len(polluted_inds) > 0:
+        y_pred = model.predict(X_test)
+        abstain_inds = []
+        for i in range(y_pred.shape[0]):
+            if np.argmax(y_pred[i]) == nb_classes:
+                abstain_inds.append(i)
+
+        # Cluster indices and polluted indices are wrt to entire train + test dataset                            
+        # whereas y_pred only contains test dataset so add offset for correct indexing                            
+        offset_testset = Y_train.shape[0]
+        abstain_inds=[i+offset_testset for i in abstain_inds]
+        polluted_percentage = np.sum([el in polluted_inds for el in abstain_inds])/np.max([len(abstain_inds),\
+1])
+        print("Percentage of abstained samples that were polluted {}".format(polluted_percentage))
+
+        cluster_inds_test = list(filter(lambda cluster_inds: cluster_inds >= offset_testset, cluster_inds))
+        cluster_inds_test_abstain = [el in abstain_inds for el in cluster_inds_test]
+        cluster_percentage = c = np.sum(cluster_inds_test_abstain)/len(cluster_inds_test)
+        print("Percentage of cluster (in test set) that was abstained {}".format(cluster_percentage))
+
+        unabstain_inds = []
+        for i in range(y_pred.shape[0]):
+            if np.argmax(y_pred[i]) != nb_classes and (i+offset_testset in cluster_inds_test):
+                unabstain_inds.append(i)
+        # Make sure number of unabstained indices in cluster test set plus number of abstainsed indices in cluster test set                                                                                                        
+        # equals number of indices in cluster in the test set                                                     
+        assert(len(unabstain_inds)+np.sum(cluster_inds_test_abstain) == len(cluster_inds_test))
+        score_cluster = 1 if len(unabstain_inds)==0 else model.evaluate(X_test[unabstain_inds], Y_test[unabstain_inds])[1]
+        print("Accuracy of unabastained cluster {}".format(score_cluster))
+        if gParameters['noise_save_cf']:
+            pickle.dump({'Abs polluted': polluted_percentage, 'Abs val cluster': cluster_percentage, 'Abs val acc': score_cluster}, open("{}/cluster_trace.pkl".format(output_dir), "wb"))
 
 def run(gParameters):
 
@@ -116,7 +155,10 @@ def run(gParameters):
     train_file = candle.get_file(file_train, url + file_train, cache_subdir='Pilot1')
     test_file = candle.get_file(file_test, url + file_test, cache_subdir='Pilot1')
 
-    X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
+    if gParameters['noise_cf'] is not None:
+        X_train, Y_train, X_test, Y_test, polluted_inds, cluster_inds  = load_data_cf(gParameters['noise_cf'])
+    else:
+        X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
     # add extra class for abstention
     # first reverse the to_categorical
@@ -291,6 +333,8 @@ def run(gParameters):
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
+    if gParameters['noise_cf'] is not None:
+        evaluate_cf(model, nb_classes, output_dir, y_pred, y, polluted_inds, cluster_inds, gParameters)
     alpha_trace = open(output_dir + "/alpha_trace", "w+")
     for alpha in abstention_cbk.alphavalues:
         alpha_trace.write(str(alpha) + '\n')
