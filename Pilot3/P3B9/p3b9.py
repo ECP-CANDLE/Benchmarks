@@ -51,7 +51,7 @@ required = [
     'learning_rate',
     'weight_decay',
     'adam_beta2',
-    'adam_epsilon'
+    'adam_epsilon',
     'max_steps',
     'warmup_steps',
 ]
