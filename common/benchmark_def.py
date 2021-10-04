@@ -150,7 +150,7 @@ class Benchmark:
 
         fileParams = self.format_benchmark_config_arguments(fileParams)
 
-        print(fileParams)
+        # print(fileParams)
 
         return fileParams
 
