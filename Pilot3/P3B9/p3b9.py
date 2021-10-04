@@ -40,14 +40,9 @@ additional_definitions = [
         'type': int,
         'default': 1,
         'help': 'Warmup steps'},
-    {'name': 'output_dir',
-        'type': str,
-        'default': './outputs/',
-        'help': 'Output directory'},
 ]
 
 required = [
-    'output_dir',
     'train_bool',
     'per_device_train_batch_size',
     'gradient_accumulation_steps',
