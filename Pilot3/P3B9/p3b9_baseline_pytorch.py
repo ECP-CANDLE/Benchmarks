@@ -9,23 +9,6 @@ BertTokenizer, BertConfig, BertForMaskedLM, DataCollatorForLanguageModeling, Tra
 
 import webdataset as wd
 
-@dataclass
-class TrainingArguments:
-    """
-    Arguments pertaining model training
-    """
-    model_name_or_path: str = field(
-        default=None
-    )
-    savepath: str = field(
-        default="./pretrained"
-    )
-    max_len: int = field(
-        default=128
-    )
-
-training_args  output_dir=./outputs, overwrite_output_dir=False, do_train=True, do_eval=None, do_predict=False, evaluation_strategy=IntervalStrategy.NO, prediction_loss_only=False, per_device_train_batch_size=16, per_device_eval_batch_size=8, gradient_accumulation_steps=1, eval_accumulation_steps=None, learning_rate=0.0001, weight_decay=0.0, adam_beta1=0.9, adam_beta2=0.98, adam_epsilon=2e-08, max_grad_norm=1.0, num_train_epochs=3.0, max_steps=10, lr_scheduler_type=SchedulerType.LINEAR, warmup_ratio=0.0, warmup_steps=1, logging_dir=runs/Oct05_09-42-26_cn194, logging_strategy=IntervalStrategy.STEPS, logging_first_step=False, logging_steps=500, save_strategy=IntervalStrategy.STEPS, save_steps=500, save_total_limit=None, no_cuda=False, seed=42, fp16=False, fp16_opt_level=O1, fp16_backend=auto, fp16_full_eval=False, local_rank=-1, tpu_num_cores=None, tpu_metrics_debug=False, debug=False, dataloader_drop_last=False, eval_steps=500, dataloader_num_workers=0, past_index=-1, run_name=./outputs, disable_tqdm=False, remove_unused_columns=True, label_names=None, load_best_model_at_end=False, metric_for_best_model=None, greater_is_better=None, ignore_data_skip=False, sharded_ddp=[], deepspeed=None, label_smoothing_factor=0.0, adafactor=False, group_by_length=False, length_column_name=length, report_to=['tensorboard'], ddp_find_unused_parameters=None, dataloader_pin_memory=True, skip_memory_metrics=False, _n_gpu=0, mp_parameters=
-
 class truncate(object):
 
     def __init__(self, max_len):
