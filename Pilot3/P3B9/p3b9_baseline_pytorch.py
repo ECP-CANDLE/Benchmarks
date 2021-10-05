@@ -45,7 +45,9 @@ def run(args):
     dd = {}
     dd['seed'] = args.rng_seed
     dd['do_train'] = args.train_bool
-    training_args = training_args + candle.ArgumentStruct(**dd)
+    dd = candle.ArgumentStruct(**dd)
+    print(dd)
+    training_args = training_args + dd
 
     #parser = HfArgumentParser((ModelArguments, TrainingArguments))
     #model_args, training_args = parser.parse_args_into_dataclasses()
