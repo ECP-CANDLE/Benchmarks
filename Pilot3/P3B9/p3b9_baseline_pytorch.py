@@ -49,7 +49,7 @@ def run(args):
     parser = HfArgumentParser((TrainingArguments))
     training_args = parser.parse_dict(args)[0]
     print(training_args)
-    
+
     # Convert from dictionary to structure
     args = candle.ArgumentStruct(**args)
 
@@ -65,7 +65,7 @@ def run(args):
     )
 
     config = BertConfig(
-        vocab_size=30_000,
+        vocab_size=args.vocab_size,
         hidden_size=args.hidden_size,
         intermediate_size=args.intermediate_size,
         max_position_embeddings=args.max_position_embeddings,
