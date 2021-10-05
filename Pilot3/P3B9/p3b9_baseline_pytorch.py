@@ -59,11 +59,8 @@ def run(args):
 
     data_len = 1000
     print('total data len per gpu:', data_len)
-    #dataset = wd.Dataset('part-000000.tar',
-    #                 length=data_len, shuffle=True).decode('torch').rename(input_ids='pth').map_dict(input_ids=trunc).shuffle(1000)
-    dataset = wd.WebDataset('part-000000.tar',
-                cache_size=data_len, resampled=True).decode('torch').rename(input_ids='pth').map_dict(input_ids=trunc).shuffle(1000)
-
+    dataset = wd.Dataset('part-000000.tar',
+                     length=data_len, shuffle=True).decode('torch').rename(input_ids='pth').map_dict(input_ids=trunc).shuffle(1000)
     tokenizer = BertTokenizer.from_pretrained('pubmed_bert-vocab.txt')
 
     data_collator = DataCollatorForLanguageModeling(
