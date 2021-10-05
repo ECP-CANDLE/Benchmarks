@@ -35,17 +35,16 @@ def initialize_parameters():
 
 def run(args):
 
-
-    parser = HfArgumentParser((TrainingArguments))
-    training_args = parser.parse_dict(args)
-    args = candle.ArgumentStruct(**args)
     # Repair argument overlap (i.e. arguments
     # that have same function but slightly different
     # names between CANDLE and hf parsers)
-    dd = {}
-    dd['seed'] = args.rng_seed
-    dd['do_train'] = args.train_bool
-    training_args = training_args + (*dd,)
+    args['seed'] = args['rng_seed']
+    args['do_train'] = args['train_bool']
+
+    parser = HfArgumentParser((TrainingArguments))
+    training_args = parser.parse_dict(args)
+    training_args = training_args[0]
+    args = candle.ArgumentStruct(**args)
 
     #parser = HfArgumentParser((ModelArguments, TrainingArguments))
     #model_args, training_args = parser.parse_args_into_dataclasses()
