@@ -12,9 +12,9 @@ print('TF version: ', tf.__version__)
 print('Eager execution enabled: ', tf.executing_eagerly()) # False
 print(tf.test.is_gpu_available())
 import pickle
-model_nt3 = tf.keras.models.load_model('/vol/ml/shahashka/xai-geom/nt3/nt3.autosave.model')
-with open('/vol/ml/shahashka/xai-geom/nt3/nt3.autosave.data.pkl', 'rb') as pickle_file:
-        X_train,Y_train,X_test,Y_test = pickle.load(pickle_file)
+model_nt3 = tf.keras.models.load_model('../nt3.autosave.model')
+with open('../nt3.autosave.data.pkl', 'rb') as pickle_file:
+        X_train,X_test,Y_train,Y_test = pickle.load(pickle_file)
 
 shape_cf = (1,) + X_train.shape[1:]
 print(shape_cf)
@@ -32,9 +32,10 @@ cf = CounterFactual(model_nt3, shape=shape_cf, target_proba=target_proba, tol=to
                                         feature_range=feature_range)
 shape = X_train[0].shape[0]
 results=[]
+failed_inds = []
 X = np.concatenate([X_train,X_test])
 
-for i in np.arange(902,903):
+for i in np.arange(0,10):#X.shape[0]):
     print(i)
     x_sample=X[i:i+1]
     print(x_sample.shape)
@@ -43,28 +44,13 @@ for i in np.arange(902,903):
         explanation = cf.explain(x_sample)
         print('Counterfactual prediction: {}, {}'.format(explanation.cf['class'], explanation.cf['proba']))
         print("Actual prediction: {}".format(model_nt3.predict(x_sample)))
-        results.append([explanation.cf['X'],explanation.cf['class'], explanation.cf['proba']])
+        results.append([i, explanation.cf['X'],explanation.cf['class'], explanation.cf['proba']])
         test = model_nt3.predict(explanation.cf['X'])
         print(test, explanation.cf['proba'], explanation.cf['class'])
     except:
         print("Failed cf generation")
-        results.append([None, None, None])
-    #if i %100==0:
-pickle.dump(results, open("redo_cf_rest.pkl", "wb"))
-       # results = []
-#for i in range(len(results)):
-#    plt.figure(figsize=(20, 4))
-#    sample = X_train[i].flatten()
-#    y = results[i][0].flatten()
-#    x = np.arange(y.shape[0])
-#    plt.plot(x,y,alpha=0.5, label='counterfactual')
-#    plt.plot(x,sample,alpha=0.5, label='input')
-#    plt.plot(x,sample-y, label='diff')
-#    props = dict(boxstyle='round', facecolor='wheat', alpha=1)
-#    prediction = model_nt3.predict(X_test[i:i+1])
-#    plt.text(0.05, 0.95, "original input: {} {} \n counterfactual: {} {}".format(np.argmax(prediction),
-#                                                                                 prediction,results[i][1] ,results[i][2]),
-#             fontsize=16,
-#             verticalalignment='top', bbox=props)
-#    plt.legend()
-#    plt.savefig("fig_{}.png".format(i))
+        failed_inds.append(i)
+    #if i%100 == 0:
+pickle.dump(results, open("cf_all.pkl", "wb"))
+    #results = []
+pickle.dump([failed_inds], open("cf_failed_inds.pkl", "wb"))

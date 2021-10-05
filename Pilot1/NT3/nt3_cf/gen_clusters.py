@@ -40,10 +40,12 @@ if __name__ == '__main__':
     indices_0 = np.array(indices_0)
     indices_1 = np.array(indices_1)
     sil = []
-    kmax = 10
+    print(len(perturb_vector_0), len(perturb_vector_1))
+    kmax = np.min([len(perturb_vector_0), len(perturb_vector_1),10])
 
     # dissimilarity would not be defined for a single cluster, thus, minimum number of clusters should be 2
     for k in range(2, kmax + 1):
+        print(k)
         kmeans = KMeans(n_clusters=k).fit(perturb_vector_0)
         labels = kmeans.labels_
         sil.append(silhouette_score(perturb_vector_0, labels, metric='euclidean'))
@@ -51,7 +53,7 @@ if __name__ == '__main__':
     plt.title("Silhouette scores to determine optimal k")
     plt.xlabel("k")
     plt.show()
-    k = np.argmax(sil) + 2
+    k = np.argmax(sil) + 2 if len(sil) > 0 else kmax
     print(k)
     data_2D = PCA(2).fit_transform(perturb_vector_0)
     kmeans_0 = KMeans(n_clusters=k).fit(perturb_vector_0)
@@ -71,7 +73,7 @@ if __name__ == '__main__':
     plt.title("Silhouette scores to determine optimal k")
     plt.xlabel("k")
     plt.show()
-    k = np.argmax(sil) + 2
+    k = np.argmax(sil) + 2 if len(sil) > 0 else kmax
     print(k)
     data_2D = PCA(2).fit_transform(perturb_vector_1)
     kmeans_1 = KMeans(n_clusters=k).fit(perturb_vector_1)
