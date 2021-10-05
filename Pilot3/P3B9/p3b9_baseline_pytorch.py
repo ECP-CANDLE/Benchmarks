@@ -35,19 +35,22 @@ def initialize_parameters():
 
 def run(args):
 
-    # Repair argument overlap (i.e. arguments
-    # that have same function but slightly different
-    # names between CANDLE and hf parsers)
+    # Repair argument overlap by duplication
+    # (i.e. arguments that have the same function
+    # but slightly different names between CANDLE
+    # and hf parsers are copied from CANDLE keyword
+    # to expected hf keyword)
     args['seed'] = args['rng_seed']
-    args['do_train'] = args['train_bool']
+    if 'train_bool' in args.keys():
+        args['do_train'] = args['train_bool']
     if 'eval_bool' in args.keys():
         args['do_eval'] = args['eval_bool']
 
     parser = HfArgumentParser((TrainingArguments))
     training_args = parser.parse_dict(args)[0]
-    #training_args = training_args[0]
     print(training_args)
-
+    
+    # Convert from dictionary to structure
     args = candle.ArgumentStruct(**args)
 
     trunc = truncate(args.max_len)
