@@ -42,8 +42,10 @@ def run(args):
     # Repair argument overlap (i.e. arguments
     # that have same function but slightly different
     # names between CANDLE and hf parsers)
-    training_args.seed = args.rng_seed
-    training_args.do_train = args.train_bool
+    dd = {}
+    dd['seed'] = args.rng_seed
+    dd['do_train'] = args.train_bool
+    training_args = training_args + candle.ArgumentStruct(**dd)
 
     #parser = HfArgumentParser((ModelArguments, TrainingArguments))
     #model_args, training_args = parser.parse_args_into_dataclasses()
