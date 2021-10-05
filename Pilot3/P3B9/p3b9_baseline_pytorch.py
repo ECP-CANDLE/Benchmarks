@@ -45,6 +45,8 @@ def run(args):
         args['do_train'] = args['train_bool']
     if 'eval_bool' in args.keys():
         args['do_eval'] = args['eval_bool']
+    if 'epochs' in args.keys():
+        args['num_train_epochs'] = args['epochs']
 
     parser = HfArgumentParser((TrainingArguments))
     training_args = parser.parse_dict(args)[0]
