@@ -40,16 +40,15 @@ def run(args):
     # names between CANDLE and hf parsers)
     args['seed'] = args['rng_seed']
     args['do_train'] = args['train_bool']
+    args['do_eval'] = args['eval_bool']
 
     parser = HfArgumentParser((TrainingArguments))
-    training_args = parser.parse_dict(args)
-    training_args = training_args[0]
+    training_args = parser.parse_dict(args)[0]
+    #training_args = training_args[0]
+    print(training_args)
+
     args = candle.ArgumentStruct(**args)
 
-    #parser = HfArgumentParser((ModelArguments, TrainingArguments))
-    #model_args, training_args = parser.parse_args_into_dataclasses()
-    #print(model_args, training_args)
-    print(training_args)
     trunc = truncate(args.max_len)
 
     print('total data len per gpu:', args.data_len_gpu)
