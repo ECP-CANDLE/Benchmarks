@@ -19,7 +19,7 @@ additional_definitions = [
     {'name': 'max_len',
         'type': int,
         'default': 512,
-        'help': 'Max length for'},
+        'help': 'Max length for truncation'},
     {'name': 'weight_decay',
         'type': float,
         'default': 0.0000,

@@ -11,6 +11,7 @@ adam_beta2 = 0.98
 adam_epsilon = 2e-8
 max_steps = 10
 warmup_steps = 1
+token_max_len = 128
 vocab_size = 30_000
 hidden_size = 768
 intermediate_size = 3072
