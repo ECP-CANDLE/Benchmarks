@@ -33,20 +33,17 @@ def initialize_parameters():
     return gParameters
 
 
-def subselect_args(list_select, args):
-
-    sel = {}
-    for ar in list_select:
-        sel[ar] = args[ar]
-
-    return sel
-
 def run(args):
 
 
     parser = HfArgumentParser((TrainingArguments))
     training_args = parser.parse_dict(args)
     args = candle.ArgumentStruct(**args)
+    # Repair argument overlap (i.e. arguments
+    # that have same function but slightly different
+    # names between CANDLE and hf parsers)
+    training_args.seed = args.rng_seed
+    training_args.do_train = args.train_bool
 
     #parser = HfArgumentParser((ModelArguments, TrainingArguments))
     #model_args, training_args = parser.parse_args_into_dataclasses()
