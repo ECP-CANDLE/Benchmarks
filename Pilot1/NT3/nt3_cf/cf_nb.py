@@ -35,7 +35,7 @@ results=[]
 failed_inds = []
 X = np.concatenate([X_train,X_test])
 
-for i in np.arange(0,10):#X.shape[0]):
+for i in np.arange(0,X.shape[0]):
     print(i)
     x_sample=X[i:i+1]
     print(x_sample.shape)
@@ -50,7 +50,7 @@ for i in np.arange(0,10):#X.shape[0]):
     except:
         print("Failed cf generation")
         failed_inds.append(i)
-    #if i%100 == 0:
-pickle.dump(results, open("cf_all.pkl", "wb"))
-    #results = []
+    if i%100 == 0 and i is not 0:
+        pickle.dump(results, open("cf_{}.pkl".format(i), "wb"))
+        results = []
 pickle.dump([failed_inds], open("cf_failed_inds.pkl", "wb"))
