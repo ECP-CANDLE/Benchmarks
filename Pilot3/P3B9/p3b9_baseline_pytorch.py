@@ -40,7 +40,8 @@ def run(args):
     # names between CANDLE and hf parsers)
     args['seed'] = args['rng_seed']
     args['do_train'] = args['train_bool']
-    args['do_eval'] = args['eval_bool']
+    if 'eval_bool' in args.keys():
+        args['do_eval'] = args['eval_bool']
 
     parser = HfArgumentParser((TrainingArguments))
     training_args = parser.parse_dict(args)[0]
