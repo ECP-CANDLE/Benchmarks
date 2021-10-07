@@ -17,7 +17,7 @@ from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-
+import sys
 
 import p1b3 as benchmark
 import candle
@@ -239,7 +239,7 @@ def run(gParameters):
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
     fh.setLevel(logging.DEBUG)
 
-    sh = logging.StreamHandler()
+    sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(logging.Formatter(''))
     sh.setLevel(logging.DEBUG if gParameters['verbose'] else logging.INFO)
 
