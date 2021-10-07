@@ -29,6 +29,7 @@ mpl.use('Agg')
 import NCI60
 import combo
 import candle
+import sys
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -46,7 +47,7 @@ def set_up_logger(logfile, verbose):
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
     fh.setLevel(logging.DEBUG)
 
-    sh = logging.StreamHandler()
+    sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(logging.Formatter(''))
     sh.setLevel(logging.DEBUG if verbose else logging.INFO)
 
