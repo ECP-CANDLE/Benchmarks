@@ -82,7 +82,7 @@ def extract(lmdb_env, loader, model, device):
     index = 0
 
     with lmdb_env.begin(write=True) as txn:
-        pbar = tqdm(loader)
+        pbar = tqdm(loader, file=sys.stdout)
 
         for img, _, filename in pbar:
             img = img.to(device)

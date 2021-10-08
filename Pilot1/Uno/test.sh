@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # AUC prediction model
 if [ ! -f "top_21_auc_1fold.uno.h5" ]; then
   curl -o top_21_auc_1fold.uno.h5 http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc_1fold.uno.h5

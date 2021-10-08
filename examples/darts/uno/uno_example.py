@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import torch
 import torch.nn as nn
@@ -9,8 +10,11 @@ import example_setup as bmk
 import darts
 import candle
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(sys.stdout, level=logging.INFO)
+# Set up the logger to go to stdout instead of stderr
 logger = logging.getLogger("darts_uno")
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 def initialize_parameters():

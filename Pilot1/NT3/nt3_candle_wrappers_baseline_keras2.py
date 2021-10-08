@@ -72,8 +72,6 @@ def load_data(train_path, test_path, gParameters):
 
 def run(gParameters):
 
-    print('Params:', gParameters)
-
     file_train = gParameters['train_data']
     file_test = gParameters['test_data']
     url = gParameters['data_url']
