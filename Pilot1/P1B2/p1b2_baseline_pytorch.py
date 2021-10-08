@@ -188,6 +188,9 @@ def fit(model, X_train, X_val, y_train, y_val, params):
         print('=> Average validation loss: {:.4f}'.format(val_loss / len(val_iter.dataset)))
         model.train(True)
 
+    if ndevices > 0:
+        return model.cpu()
+
     return model
 
 
@@ -241,14 +244,11 @@ def run(gParameters):
 
     # model save
     # save_filepath = "model_mlp_" + ext
-    #if torch.cuda.device_count() > 1:
-    #    torch.save({'state_dict': mlp.module.state_dict()}, save_filepath)
-    #else:
-    #    torch.save({'state_dict': mlp.state_dict()}, save_filepath)
+    # torch.save({'state_dict': mlp.state_dict()}, save_filepath)
 
     # Evalute model on test set
     mlp.train(False)
-    y_pred = mlp(torch.from_numpy(X_test))
+    y_pred = mlp(torch.from_numpy(X_test)).detach().numpy()
     scores = p1b2.evaluate_accuracy_one_hot(y_pred, y_test)
     print('Evaluation on test data:', scores)
 
