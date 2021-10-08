@@ -10,6 +10,9 @@ sys.path.append(lib_path2)
 import candle
 
 additional_definitions = [
+    {'name': 'attention_heads',
+     'action': 'store',
+     'type': int},
     {'name': 'attention_size',
      'action': 'store',
      'type': int},
