@@ -2,7 +2,6 @@ import random
 import numpy as np
 
 
-
 def add_noise_new(data, labels, params):
     # new refactoring of the noise injection methods
     # noise_mode sets the pattern of the noise injection
@@ -64,7 +63,7 @@ def add_noise(data, labels, params):
                                  row_ids=params['sample_ids'],
                                  y_noise_level=params['label_noise'])
     elif params['noise_column']:
-        data = add_column_noise(data, 0, params['std_dev'], 
+        data = add_column_noise(data, 0, params['std_dev'],
                                 col_ids=params['feature_col'],
                                 noise_type=params['noise_type'])
 
