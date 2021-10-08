@@ -12,6 +12,7 @@ from data_utils import drop_impute_and_scale_dataframe
 from data_utils import discretize_dataframe
 from data_utils import discretize_array
 from data_utils import lookup
+from data_utils import convert_to_class
 
 # import from file_utils
 from file_utils import get_file
