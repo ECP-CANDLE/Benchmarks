@@ -402,19 +402,19 @@ def design_mat(mod, numerical_covariates, batch_levels):
 
     mod = mod.drop(["batch"], axis=1)
     numerical_covariates = list(numerical_covariates)
-    sys.stderr.write("found %i batches\n" % design.shape[1])
+    sys.stdout.write("found %i batches\n" % design.shape[1])
     other_cols = [c for i, c in enumerate(mod.columns)
                   if i not in numerical_covariates]
     factor_matrix = mod[other_cols]
     design = pd.concat((design, factor_matrix), axis=1)
     if numerical_covariates is not None:
-        sys.stderr.write("found %i numerical covariates...\n" % len(numerical_covariates))
+        sys.stdout.write("found %i numerical covariates...\n" % len(numerical_covariates))
         for i, nC in enumerate(numerical_covariates):
             cname = mod.columns[nC]
-            sys.stderr.write("\t{0}\n".format(cname))
+            sys.stdout.write("\t{0}\n".format(cname))
             design[cname] = mod[mod.columns[nC]]
-    sys.stderr.write("found %i categorical variables:" % len(other_cols))
-    sys.stderr.write("\t" + ", ".join(other_cols) + '\n')
+    sys.stdout.write("found %i categorical variables:" % len(other_cols))
+    sys.stdout.write("\t" + ", ".join(other_cols) + '\n')
     return design
 
 
@@ -508,7 +508,7 @@ def combat_batch_effect_removal(data, batch_labels, model=None, numerical_covari
 
     design = design_mat(model, numerical_covariates, batch_levels)
 
-    sys.stderr.write("Standardizing Data across genes.\n")
+    sys.stdout.write("Standardizing Data across genes.\n")
     B_hat = np.dot(np.dot(la.inv(np.dot(design.T, design)), design.T), data.T)
     grand_mean = np.dot((n_batches / n_array).T, B_hat[:n_batch, :])
     var_pooled = np.dot(((data - np.dot(design, B_hat).T) ** 2), np.ones((int(n_array), 1)) / int(n_array))
@@ -520,7 +520,7 @@ def combat_batch_effect_removal(data, batch_labels, model=None, numerical_covari
 
     s_data = ((data - stand_mean) / np.dot(np.sqrt(var_pooled), np.ones((1, int(n_array)))))
 
-    sys.stderr.write("Fitting L/S model and finding priors\n")
+    sys.stdout.write("Fitting L/S model and finding priors\n")
     batch_design = design[design.columns[:n_batch]]
     gamma_hat = np.dot(np.dot(la.inv(np.dot(batch_design.T, batch_design)), batch_design.T), s_data.T)
 
@@ -535,7 +535,7 @@ def combat_batch_effect_removal(data, batch_labels, model=None, numerical_covari
     a_prior = list(map(aprior, delta_hat))
     b_prior = list(map(bprior, delta_hat))
 
-    sys.stderr.write("Finding parametric adjustments\n")
+    sys.stdout.write("Finding parametric adjustments\n")
     gamma_star, delta_star = [], []
     for i, batch_idxs in enumerate(batch_info):
         temp = it_sol(s_data[batch_idxs], gamma_hat[i],
