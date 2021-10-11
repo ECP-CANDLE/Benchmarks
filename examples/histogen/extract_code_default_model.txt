@@ -1,7 +1,6 @@
 [Global_Params]
 size = 256
 batch_size = 128
-use_gpus = True
 ckpt_directory = './'
 ckpt_restart = 'checkpoint/vqvae_001.pt'
 lmdb_filename = 'lmdb_001'
