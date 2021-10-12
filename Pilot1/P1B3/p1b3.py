@@ -26,6 +26,8 @@ sys.path.append(lib_path2)
 import candle
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(logging.StreamHandler(sys.stdout))
 
 # Number of data generator workers
 WORKERS = 1
