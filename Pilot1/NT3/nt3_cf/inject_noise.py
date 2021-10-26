@@ -19,8 +19,8 @@ def get_args():
 # Choose a random set of indices to inject cf noise into
 def random_noise(s,scale,size, cluster_inds, args):
     X_train, X_test, y_train, y_test = pickle.load(open(args.d, 'rb'))
+    #X_data, y_data = pickle.load(open(args.d, 'rb'))
     X_data = np.concatenate([X_train, X_test])
-    y_data = np.concatenate([y_train, y_test])
     genes = np.random.choice(np.arange(X_data.shape[0]), replace=False, size=size)
     noise = np.random.normal(0,1,size)
     X_data_noise = copy.deepcopy(X_data)
@@ -30,7 +30,10 @@ def random_noise(s,scale,size, cluster_inds, args):
         for i in cluster_inds:
             for j in range(size):
                 X_data_noise[i][genes[j]]+=noise[j]
-        pickle.dump([X_data_noise, y_data, [], cluster_inds], open("{}/nt3.data.random.scale_{}_{}.noise_{}.pkl".format(args.o,scale,cluster_name,round(p,1)), "wb"))
+        # Now split back into train test for output                                                             
+        X_train = X_data_noise[0:(int)(0.8*X_data.shape[0])]
+        X_test = X_data_noise[(int)(0.8*X_data.shape[0]):]
+        pickle.dump([X_train, X_test, y_train, y_test, [], cluster_inds], open("{}/nt3.data.random.scale_{}_{}.noise_{}.pkl".format(args.o,scale,cluster_name,round(p,1)), "wb"))
     
 def main():
     args = get_args()
@@ -39,13 +42,14 @@ def main():
         os.makedirs(args.o)
     # For 2 clusters (with sparse injection feature vector) add CF noise to x% of samples
     X_train, X_test, y_train, y_test = pickle.load(open(args.d, 'rb'))
+    print(X_train.shape, X_test.shape, y_train.shape, y_test.shape)
+    #X_data, y_data = pickle.load(open(args.d, 'rb')) 
     threshold_dataset = pickle.load(open(args.t, 'rb'))
     perturb_dataset = threshold_dataset['perturbation vector']
     
     
     #combine for easier indexing later
     X_data = np.concatenate([X_train, X_test])
-    y_data = np.concatenate([y_train, y_test])
 
     #account for failed indices
     failed_indices = pickle.load(open(args.f, 'rb'))[0]
@@ -54,7 +58,9 @@ def main():
         perturb_dataset.insert(i, np.zeros(X_data.shape[1]))
     perturb_dataset = np.array(perturb_dataset)
     
-    cluster_files = [args.c1, args.c2]
+    _, cf1 = os.path.split(args.c1)
+    _, cf2 = os.path.split(args.c2)
+    cluster_files = [cf1, cf2]
     for i in range(len(cluster_files)):
         print(cluster_files[i])
         d = pickle.load(open(cluster_files[i], "rb"))
@@ -73,11 +79,9 @@ def main():
             X_data_noise[selector]-= args.scale*perturb_dataset[selector][:,:,None]
             
             # Now split back into train test for output
-            X_train = X_data[0:(int)(0.8*X_data.shape[0])]
-            X_test = X_data[(int)(0.8*X_data.shape[0]):]
+            X_train = X_data_noise[0:(int)(0.8*X_data.shape[0])]
+            X_test = X_data_noise[(int)(0.8*X_data.shape[0]):]
 
-            y_train = y_data[0:(int)(0.8*y_data.shape[0])]
-            y_test = y_data[(int)(0.8*y_data.shape[0]):]
             s,_ = cluster_files[i].split(".")
             cluster_name = s[3:]
             pickle.dump([X_train, X_test, y_train, y_test, selector, cluster_inds], open("{}/nt3.data.scale_{}_{}.noise_{}.pkl".format(args.o, args.scale,cluster_name, round(p,1)), "wb"))
@@ -95,11 +99,8 @@ def main():
             X_data_noise_2[selector]-= args.scale*perturb_dataset[selector][:,:,None]
             
             # Now split back into train test
-            X_train = X_data[0:(int)(0.8*X_data.shape[0])]
-            X_test = X_data[(int)(0.8*X_data.shape[0]):]
-            
-            y_train = y_data[0:(int)(0.8*y_data.shape[0])]
-            y_test = y_data[(int)(0.8*y_data.shape[0]):]
+            X_train = X_data_noise_2[0:(int)(0.8*X_data.shape[0])]
+            X_test = X_data_noise_2[(int)(0.8*X_data.shape[0]):]
             
             pickle.dump([X_train, X_test, y_train, y_test, selector, cluster_inds], open("{}/nt3.data.threshold.scale_{}_{}.noise_{}.pkl".format(args.o, args.scale, cluster_name, round(p,1)), "wb"))
             
