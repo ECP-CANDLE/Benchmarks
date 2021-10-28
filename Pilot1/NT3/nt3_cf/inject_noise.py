@@ -94,8 +94,10 @@ def main():
                 inds.append(j)
             X_data_noise_2 = copy.deepcopy(X_data)
             
-            for j in inds:
-                perturb_dataset[:,j]=0
+            all_inds = np.arange(X_data.shape[0])
+            for j in all_inds:
+                if j not in inds:
+                    perturb_dataset[:,j]=0
             X_data_noise_2[selector]-= args.scale*perturb_dataset[selector][:,:,None]
             
             # Now split back into train test

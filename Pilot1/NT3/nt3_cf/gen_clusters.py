@@ -42,47 +42,49 @@ if __name__ == '__main__':
     sil = []
     print(len(perturb_vector_0), len(perturb_vector_1))
     kmax = np.min([len(perturb_vector_0), len(perturb_vector_1),10])
+    data_2D = PCA(20).fit_transform(perturb_vector_0)
 
     # dissimilarity would not be defined for a single cluster, thus, minimum number of clusters should be 2
     for k in range(2, kmax + 1):
         print(k)
-        kmeans = KMeans(n_clusters=k).fit(perturb_vector_0)
+        kmeans = KMeans(n_clusters=k).fit(data_2D[:,0:2])
         labels = kmeans.labels_
-        sil.append(silhouette_score(perturb_vector_0, labels, metric='euclidean'))
-    plt.plot(np.arange(2, kmax+1), sil)
-    plt.title("Silhouette scores to determine optimal k")
-    plt.xlabel("k")
-    plt.show()
+        sil.append(silhouette_score(data_2D[:,0:2], labels, metric='euclidean'))
+    #plt.plot(np.arange(2, kmax+1), sil)
+    #plt.title("Silhouette scores to determine optimal k")
+    #plt.xlabel("k")
+    #plt.show()
     k = np.argmax(sil) + 2 if len(sil) > 0 else kmax
     print(k)
-    data_2D = PCA(2).fit_transform(perturb_vector_0)
-    kmeans_0 = KMeans(n_clusters=k).fit(perturb_vector_0)
+    #data_2D = PCA(2).fit_transform(perturb_vector_0)
+    kmeans_0 = KMeans(n_clusters=k).fit(data_2D[:,0:2])
     labels_0 = kmeans_0.labels_
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     for i in range(k):
         plt.scatter(data_2D[:,0][labels_0==i], data_2D[:,1][labels_0==i], c=colors[i%len(colors)])
-    plt.title("CF 0 KMeans clusters with 2D PCA")
+    plt.title("KMeans clusters with 2D PCA")
     plt.savefig("CF_0.png")
-
+    k0 = k
     sil=[]
+    data_2D = PCA(20).fit_transform(perturb_vector_1)
     for k in range(2, kmax + 1):
-        kmeans = KMeans(n_clusters=k).fit(perturb_vector_1)
+        kmeans = KMeans(n_clusters=k).fit(data_2D[:,0:2])#perturb_vector_1)
         labels = kmeans.labels_
-        sil.append(silhouette_score(perturb_vector_1, labels, metric='euclidean'))
-    plt.plot(np.arange(2, kmax+1), sil)
-    plt.title("Silhouette scores to determine optimal k")
-    plt.xlabel("k")
-    plt.show()
+        sil.append(silhouette_score(data_2D[:,0:2], labels, metric='euclidean'))
+    #plt.plot(np.arange(2, kmax+1), sil)
+    #plt.title("Silhouette scores to determine optimal k")
+    #plt.xlabel("k")
+    #plt.show()
     k = np.argmax(sil) + 2 if len(sil) > 0 else kmax
     print(k)
-    data_2D = PCA(2).fit_transform(perturb_vector_1)
-    kmeans_1 = KMeans(n_clusters=k).fit(perturb_vector_1)
+    #data_2D = PCA(2).fit_transform(perturb_vector_1)
+    kmeans_1 = KMeans(n_clusters=k).fit(data_2D[:,0:2])#perturb_vector_1)
     labels_1 = kmeans_1.labels_
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     for i in range(k):
         plt.scatter(data_2D[:,0][labels_1==i], data_2D[:,1][labels_1==i], c=colors[i%len(colors)])
-    plt.title("CF 1 KMeans clusters with 2D PCA")
-    plt.savefig("CF_1.png")
+    plt.title("Perturbation vectors KMeans clusters with 2D PCA")
+    plt.savefig("CF 1.png")
 
 for i in range(len(kmeans_0.cluster_centers_)):
     diff_0=kmeans_0.cluster_centers_[i]
