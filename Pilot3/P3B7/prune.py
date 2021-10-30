@@ -234,6 +234,6 @@ def remove_prune_masks(model: nn.Module):
             prune.remove(module, name='weight')
         # prune 20% of connections in all linear layers
         elif isinstance(module, torch.nn.Linear):
-            prune.remove(module, name='weight', amount=0.2)
+            prune.random_unstructured(module, name='weight', amount=0.2)
 
     return model
