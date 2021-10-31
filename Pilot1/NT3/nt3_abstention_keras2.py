@@ -111,7 +111,7 @@ def load_data(train_path, test_path, gParameters):
 
     return X_train, Y_train, X_test, Y_test
 
-def evaluate_cf(model, nb_classes, output_dir, y_pred, y, polluted_inds, cluster_inds, gParameters):
+def evaluate_cf(model, nb_classes, output_dir, X_train, X_test, Y_train, Y_test, polluted_inds, cluster_inds, gParameters):
     if len(polluted_inds) > 0:
         y_pred = model.predict(X_test)
         abstain_inds = []
@@ -334,7 +334,7 @@ def run(gParameters):
     score = model.evaluate(X_test, Y_test, verbose=0)
 
     if gParameters['noise_cf'] is not None:
-        evaluate_cf(model, nb_classes, output_dir, y_pred, y, polluted_inds, cluster_inds, gParameters)
+        evaluate_cf(model, nb_classes, output_dir, X_train, X_test, Y_train, Y_test, polluted_inds, cluster_inds, gParameters)
     alpha_trace = open(output_dir + "/alpha_trace", "w+")
     for alpha in abstention_cbk.alphavalues:
         alpha_trace.write(str(alpha) + '\n')
