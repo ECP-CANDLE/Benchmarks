@@ -53,4 +53,4 @@ for i in np.arange(0,X.shape[0]):
     if i%100 == 0 and i is not 0:
         pickle.dump(results, open("cf_{}.pkl".format(i), "wb"))
         results = []
-pickle.dump([failed_inds], open("cf_failed_inds.pkl", "wb"))
+pickle.dump(failed_inds, open("cf_failed_inds.pkl", "wb"))
