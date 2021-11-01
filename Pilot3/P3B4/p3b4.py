@@ -46,7 +46,7 @@ required = [
 ]
 
 
-class BenchmarkP3B3(candle.Benchmark):
+class BenchmarkP3B4(candle.Benchmark):
 
     def set_locals(self):
         """Functionality to set variables specific for the benchmark
