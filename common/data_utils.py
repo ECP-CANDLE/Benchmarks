@@ -21,14 +21,19 @@ from default_utils import DEFAULT_DATATYPE
 # TAKEN from tensorflow
 def to_categorical(y, num_classes=None):
     """Converts a class vector (integers) to binary class matrix.
-    E.g. for use with categorical_crossentropy.
-    Arguments:
-        y: class vector to be converted into a matrix
+        E.g. for use with categorical_crossentropy.
+        Parameters
+        ----------
+        y: numpy array
+            class vector to be converted into a matrix
             (integers from 0 to num_classes).
-        num_classes: total number of classes.
-    Returns:
-        A binary matrix representation of the input. The classes axis is placed
-        last.
+        num_classes: int
+            total number of classes.
+        Returns
+        -------
+        categorical: numpy array
+            A binary matrix representation of the input. The classes axis is placed
+            last.
     """
     y = np.array(y, dtype='int')
     input_shape = y.shape

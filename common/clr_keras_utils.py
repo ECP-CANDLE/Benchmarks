@@ -50,7 +50,9 @@ class CyclicLR(Callback):
     """This callback implements a cyclical learning rate policy (CLR).
     The method cycles the learning rate between two boundaries with
     some constant frequency.
-    # Arguments
+
+    Parameters
+    ----------
         base_lr: initial learning rate which is the
             lower boundary in the cycle.
         max_lr: upper boundary in the cycle. Functionally,
