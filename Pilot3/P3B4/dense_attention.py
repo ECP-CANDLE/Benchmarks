@@ -28,12 +28,12 @@ from tensorflow.python.framework import smart_cond
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.engine.base_layer import Layer
-from tensorflow.python.keras.utils import tf_utils
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import init_ops
 from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import nn
 from tensorflow.python.util.tf_export import keras_export
+
 
 class BaseDenseAttention(Layer):
     """Base Attention class for Dense networks.
