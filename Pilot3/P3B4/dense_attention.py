@@ -24,6 +24,7 @@ from __future__ import print_function
 
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
+from tensorflow.python.framework import smart_cond
 from tensorflow.python.framework import tensor_shape
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.engine.base_layer import Layer
@@ -33,7 +34,6 @@ from tensorflow.python.ops import init_ops
 from tensorflow.python.ops import math_ops
 from tensorflow.python.ops import nn
 from tensorflow.python.util.tf_export import keras_export
-
 
 class BaseDenseAttention(Layer):
     """Base Attention class for Dense networks.
@@ -127,7 +127,7 @@ class BaseDenseAttention(Layer):
         def dropped_weights():
             return nn.dropout(weights, rate=self.dropout)
 
-        weights = tf_utils.smart_cond(
+        weights = smart_cond.smart_cond(
             training,
             dropped_weights,
             lambda: array_ops.identity(weights))
