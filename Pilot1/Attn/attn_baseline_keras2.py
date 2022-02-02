@@ -197,7 +197,7 @@ def run(params):
     Y_val = to_categorical(Y_val, nb_classes)
 
     y_integers = np.argmax(Y_train, axis=1)
-    class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
+    class_weights = compute_class_weight(class_weight='balanced', classes=np.unique(y_integers), y=y_integers)
     d_class_weights = dict(enumerate(class_weights))
 
     print('X_train shape:', X_train.shape)
