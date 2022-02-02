@@ -7,7 +7,7 @@ import os
 from tensorflow.keras import backend as K
 
 from tensorflow.keras.layers import Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten, LocallyConnected1D
-from tensorflow.keras.models import Sequential, model_from_json, model_from_yaml
+from tensorflow.keras.models import Sequential, model_from_json
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import CSVLogger, ReduceLROnPlateau
 

@@ -18,7 +18,7 @@ from tensorflow.keras import backend as K
 
 from tensorflow.keras.layers import Input, Dense, Dropout, BatchNormalization
 from tensorflow.keras.optimizers import SGD
-from tensorflow.keras.models import Model, model_from_json, model_from_yaml
+from tensorflow.keras.models import Model, model_from_json
 from tensorflow.keras.utils import to_categorical
 
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping

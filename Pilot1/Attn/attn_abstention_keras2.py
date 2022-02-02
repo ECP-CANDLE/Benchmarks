@@ -8,7 +8,7 @@ import h5py
 import tensorflow as tf
 
 from tensorflow.keras import backend as K
-from tensorflow.keras.models import model_from_json, model_from_yaml
+from tensorflow.keras.models import model_from_json
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 
 from sklearn.utils.class_weight import compute_class_weight
