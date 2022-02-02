@@ -4,10 +4,10 @@ Utility scripts for converting SMILES to other representations that may be usefu
 
 ### Example 1
 
-Adding a new column of 192-dimensional learned vector representations for the drug SMILES used in the Pilot1 project. The trained autoencoder model is from [ChemVAE](README.chemvae.md) trained on the ZINC database.
+Adding a new column of 192-dimensional learned vector representations for the drug SMILES used in the Pilot1 project. The trained autoencoder model is from [ChemVAE](https://github.com/aspuru-guzik-group/chemical_vae) trained on the ZINC database.
 
 ```
-convert-smiles-to-latent.py -f pilot1-drugs
+python convert-smiles-to-latent.py -f pilot1-drugs
 ```
 
 In this example, `pilot1-drugs` is a tab-delimited file with a `SMILES` column. The `--colname` argument can be used to select the column in the input file for SMILES information.

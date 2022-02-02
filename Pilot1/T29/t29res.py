@@ -213,11 +213,6 @@ def run(gParameters):
     with open("t29res.model.json", "w") as json_file:
         json_file.write(model_json)
 
-    # serialize model to YAML
-    model_yaml = model.to_yaml()
-    with open("t29res.model.yaml", "w") as yaml_file:
-        yaml_file.write(model_yaml)
-
     # serialize weights to HDF5
     model.save_weights("t29res.model.h5")
     print("Saved model to disk")
@@ -227,12 +222,6 @@ def run(gParameters):
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model_json = model_from_json(loaded_model_json)
-
-    # load yaml and create model
-    yaml_file = open('t29res.model.yaml', 'r')
-    loaded_model_yaml = yaml_file.read()
-    yaml_file.close()
-    loaded_model_yaml = model_from_yaml(loaded_model_yaml)
 
     # load weights into new model
     loaded_model_json.load_weights("t29res.model.h5")
@@ -246,33 +235,21 @@ def run(gParameters):
     print('json Validation accuracy:', score_json[1])
     print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1] * 100))
 
-    # load weights into new model
-    loaded_model_yaml.load_weights("t29res.model.h5")
-    print("Loaded yaml model from disk")
-
-    # evaluate loaded model on test data
-    loaded_model_yaml.compile(loss='binary_crossentropy', optimizer=gParameters['optimizer'], metrics=['accuracy'])
-    score_yaml = loaded_model_yaml.evaluate(X_test, Y_test, verbose=0)
-
-    print('yaml Validation loss:', score_yaml[0])
-    print('yaml Validation accuracy:', score_yaml[1])
-    print("yaml %s: %.2f%%" % (loaded_model_yaml.metrics_names[1], score_yaml[1] * 100))
-
     # predict using loaded yaml model on test and training data
-    predict_yaml_train = loaded_model_yaml.predict(X_train)
-    predict_yaml_test = loaded_model_yaml.predict(X_test)
+    predict_train = loaded_model_json.predict(X_train)
+    predict_test = loaded_model_json.predict(X_test)
 
-    print('Yaml_train_shape:', predict_yaml_train.shape)
-    print('Yaml_test_shape:', predict_yaml_test.shape)
+    print('train_shape:', predict_train.shape)
+    print('test_shape:', predict_test.shape)
 
-    predict_yaml_train_classes = np.argmax(predict_yaml_train, axis=1)
-    predict_yaml_test_classes = np.argmax(predict_yaml_test, axis=1)
+    predict_train_classes = np.argmax(predict_train, axis=1)
+    predict_test_classes = np.argmax(predict_test, axis=1)
 
-    np.savetxt("predict_yaml_train.csv", predict_yaml_train, delimiter=",", fmt="%.3f")
-    np.savetxt("predict_yaml_test.csv", predict_yaml_test, delimiter=",", fmt="%.3f")
+    np.savetxt("predict_train.csv", predict_train, delimiter=",", fmt="%.3f")
+    np.savetxt("predict_test.csv", predict_test, delimiter=",", fmt="%.3f")
 
-    np.savetxt("predict_yaml_train_classes.csv", predict_yaml_train_classes, delimiter=",", fmt="%d")
-    np.savetxt("predict_yaml_test_classes.csv", predict_yaml_test_classes, delimiter=",", fmt="%d")
+    np.savetxt("predict_train_classes.csv", predict_train_classes, delimiter=",", fmt="%d")
+    np.savetxt("predict_test_classes.csv", predict_test_classes, delimiter=",", fmt="%d")
 
     return history
 
