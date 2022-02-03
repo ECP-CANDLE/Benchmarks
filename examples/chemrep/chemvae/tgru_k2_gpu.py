@@ -61,16 +61,16 @@ self.implementation ==1 : mem
 self.implementation ==0 : cpu
 
 '''
-from keras.layers.recurrent import GRU
-from keras import backend as K
-from keras.engine import InputSpec
+from tensorflow.keras.layers import GRU
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import InputSpec
 import numpy as np
 
 if K.backend() == 'tensorflow':
     from .sampled_rnn_tf import sampled_rnn
 else:
 
-    raise NotImplemented("Backend not implemented")
+    raise NotImplementedError("Backend not implemented")
 
 
 class TerminalGRU(GRU):
@@ -88,7 +88,6 @@ class TerminalGRU(GRU):
         self.rnd_seed = rnd_seed
         self.uses_learning_phase = True
         self.supports_masking = False
-        self.units = units
         self.recurrent_dropout = min(1., max(0., recurrent_dropout))
         self.input_spec = [InputSpec(ndim=3),
                            InputSpec(ndim=3)]

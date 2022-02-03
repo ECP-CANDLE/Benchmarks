@@ -20,20 +20,19 @@ config.gpu_options.allow_growth = True
 import yaml
 import time
 import os
-from keras import backend as K
-from keras.models import Model
-from keras.optimizers import SGD, Adam, RMSprop
+from tensorflow.keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.optimizers import SGD, Adam, RMSprop
 from . import hyperparameters
 from . import mol_utils as mu
 from . import mol_callbacks as mol_cb
-from keras.callbacks import CSVLogger
+from tensorflow.keras.callbacks import CSVLogger
 from .models import encoder_model, load_encoder
 from .models import decoder_model, load_decoder
 from .models import property_predictor_model, load_property_predictor
 from .models import variational_layers
 from functools import partial
-from keras.layers import Lambda
-
+from tensorflow.keras.layers import Lambda
 
 
 def vectorize_data(params):
@@ -49,9 +48,9 @@ def vectorize_data(params):
     params['NCHARS'] = len(CHARS)
     NCHARS = len(CHARS)
     CHAR_INDICES = dict((c, i) for i, c in enumerate(CHARS))
-    #INDICES_CHAR = dict((i, c) for i, c in enumerate(CHARS))
+    # INDICES_CHAR = dict((i, c) for i, c in enumerate(CHARS))
 
-    ## Load data for properties
+    # Load data for properties
     if params['do_prop_pred'] and ('data_file' in params):
         if "data_normalization_out" in params:
             normalize_out = params["data_normalization_out"]
@@ -60,38 +59,40 @@ def vectorize_data(params):
 
         ################
         if ("reg_prop_tasks" in params) and ("logit_prop_tasks" in params):
-            smiles, Y_reg, Y_logit = mu.load_smiles_and_data_df(params['data_file'], MAX_LEN,
-                    reg_tasks=params['reg_prop_tasks'], logit_tasks=params['logit_prop_tasks'],
-                    normalize_out = normalize_out)
+            smiles, Y_reg, Y_logit = mu.load_smiles_and_data_df(
+                params['data_file'], MAX_LEN,
+                reg_tasks=params['reg_prop_tasks'], logit_tasks=params['logit_prop_tasks'],
+                normalize_out=normalize_out)
         elif "logit_prop_tasks" in params:
-            smiles, Y_logit = mu.load_smiles_and_data_df(params['data_file'], MAX_LEN,
-                    logit_tasks=params['logit_prop_tasks'], normalize_out=normalize_out)
+            smiles, Y_logit = mu.load_smiles_and_data_df(
+                params['data_file'], MAX_LEN,
+                logit_tasks=params['logit_prop_tasks'], normalize_out=normalize_out)
         elif "reg_prop_tasks" in params:
-            smiles, Y_reg = mu.load_smiles_and_data_df(params['data_file'], MAX_LEN,
-                    reg_tasks=params['reg_prop_tasks'], normalize_out=normalize_out)
+            smiles, Y_reg = mu.load_smiles_and_data_df(
+                params['data_file'], MAX_LEN,
+                reg_tasks=params['reg_prop_tasks'], normalize_out=normalize_out)
         else:
             raise ValueError("please sepcify logit and/or reg tasks")
 
-    ## Load data if no properties
+    # Load data if no properties
     else:
         smiles = mu.load_smiles_and_data_df(params['data_file'], MAX_LEN)
 
     if 'limit_data' in params.keys():
         sample_idx = np.random.choice(np.arange(len(smiles)), params['limit_data'], replace=False)
-        smiles=list(np.array(smiles)[sample_idx])
+        smiles = list(np.array(smiles)[sample_idx])
         if params['do_prop_pred'] and ('data_file' in params):
             if "reg_prop_tasks" in params:
-                Y_reg =  Y_reg[sample_idx]
+                Y_reg = Y_reg[sample_idx]
             if "logit_prop_tasks" in params:
-                Y_logit =  Y_logit[sample_idx]
+                Y_logit = Y_logit[sample_idx]
 
     print('Training set size is', len(smiles))
     print('first smiles: \"', smiles[0], '\"')
     print('total chars:', NCHARS)
 
     print('Vectorization...')
-    X = mu.smiles_to_hot(smiles, MAX_LEN, params[
-                             'PADDING'], CHAR_INDICES, NCHARS)
+    X = mu.smiles_to_hot(smiles, MAX_LEN, params['PADDING'], CHAR_INDICES, NCHARS)
 
     print('Total Data size', X.shape[0])
     if np.shape(X)[0] % params['batch_size'] != 0:
@@ -100,10 +101,10 @@ def vectorize_data(params):
         if params['do_prop_pred']:
             if "reg_prop_tasks" in params:
                 Y_reg = Y_reg[:np.shape(Y_reg)[0] // params['batch_size']
-                      * params['batch_size']]
+                              * params['batch_size']]
             if "logit_prop_tasks" in params:
                 Y_logit = Y_logit[:np.shape(Y_logit)[0] // params['batch_size']
-                      * params['batch_size']]
+                                  * params['batch_size']]
 
     np.random.seed(params['RAND_SEED'])
     rand_idx = np.arange(np.shape(X)[0])
@@ -182,22 +183,22 @@ def load_models(params):
         else:
             property_predictor = property_predictor_model(params)
 
-        if (('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0 ) and
-                ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0 )):
+        if (('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0) and
+                ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0)):
 
-            reg_prop_pred, logit_prop_pred   = property_predictor(z_mean)
+            reg_prop_pred, logit_prop_pred = property_predictor(z_mean)
             reg_prop_pred = Lambda(identity, name='reg_prop_pred')(reg_prop_pred)
             logit_prop_pred = Lambda(identity, name='logit_prop_pred')(logit_prop_pred)
-            model_outputs.extend([reg_prop_pred,  logit_prop_pred])
+            model_outputs.extend([reg_prop_pred, logit_prop_pred])
 
         # regression only scenario
-        elif ('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0 ):
+        elif ('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0):
             reg_prop_pred = property_predictor(z_mean)
             reg_prop_pred = Lambda(identity, name='reg_prop_pred')(reg_prop_pred)
             model_outputs.append(reg_prop_pred)
 
         # logit only scenario
-        elif ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0 ):
+        elif ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0):
             logit_prop_pred = property_predictor(z_mean)
             logit_prop_pred = Lambda(identity, name='logit_prop_pred')(logit_prop_pred)
             model_outputs.append(logit_prop_pred)
@@ -217,8 +218,8 @@ def kl_loss(truth_dummy, x_mean_log_var_output):
     x_mean, x_log_var = tf.split(x_mean_log_var_output, 2, axis=1)
     print('x_mean shape in kl_loss: ', x_mean.get_shape())
     kl_loss = - 0.5 * \
-        K.mean(1 + x_log_var - K.square(x_mean) -
-              K.exp(x_log_var), axis=-1)
+        K.mean(1 + x_log_var - K.square(x_mean) - K.exp(x_log_var), axis=-1)
+
     return kl_loss
 
 
@@ -236,53 +237,51 @@ def main_no_prop(params):
     elif params['optim'] == 'sgd':
         optim = SGD(lr=params['lr'], momentum=params['momentum'])
     else:
-        raise NotImplemented("Please define valid optimizer")
+        raise NotImplementedError("Please define valid optimizer")
 
     model_losses = {'x_pred': params['loss'],
-                        'z_mean_log_var': kl_loss}
+                    'z_mean_log_var': kl_loss}
 
     # vae metrics, callbacks
     vae_sig_schedule = partial(mol_cb.sigmoid_schedule, slope=params['anneal_sigmod_slope'],
                                start=params['vae_annealer_start'])
     vae_anneal_callback = mol_cb.WeightAnnealer_epoch(
-            vae_sig_schedule, kl_loss_var, params['kl_loss_weight'], 'vae' )
+        vae_sig_schedule, kl_loss_var, params['kl_loss_weight'], 'vae')
 
     csv_clb = CSVLogger(params["history_file"], append=False)
-    callbacks = [ vae_anneal_callback, csv_clb]
-
+    callbacks = [vae_anneal_callback, csv_clb]
 
     def vae_anneal_metric(y_true, y_pred):
         return kl_loss_var
 
     xent_loss_weight = K.variable(params['xent_loss_weight'])
-    model_train_targets = {'x_pred':X_train,
-                'z_mean_log_var':np.ones((np.shape(X_train)[0], params['hidden_dim'] * 2))}
-    model_test_targets = {'x_pred':X_test,
-        'z_mean_log_var':np.ones((np.shape(X_test)[0], params['hidden_dim'] * 2))}
+    model_train_targets = {'x_pred': X_train,
+                           'z_mean_log_var': np.ones((np.shape(X_train)[0], params['hidden_dim'] * 2))}
+    model_test_targets = {'x_pred': X_test,
+                          'z_mean_log_var': np.ones((np.shape(X_test)[0], params['hidden_dim'] * 2))}
 
     AE_only_model.compile(loss=model_losses,
-        loss_weights=[xent_loss_weight,
-          kl_loss_var],
-        optimizer=optim,
-        metrics={'x_pred': ['categorical_accuracy',vae_anneal_metric]}
-        )
+                          loss_weights=[xent_loss_weight, kl_loss_var], optimizer=optim,
+                          metrics={'x_pred': ['categorical_accuracy', vae_anneal_metric]}
+                          )
 
     keras_verbose = params['verbose_print']
 
     AE_only_model.fit(X_train, model_train_targets,
-                    batch_size=params['batch_size'],
-                    epochs=params['epochs'],
-                    initial_epoch=params['prev_epochs'],
-                    callbacks=callbacks,
-                    verbose=keras_verbose,
-                    validation_data=[ X_test, model_test_targets]
-                    )
+                      batch_size=params['batch_size'],
+                      epochs=params['epochs'],
+                      initial_epoch=params['prev_epochs'],
+                      callbacks=callbacks,
+                      verbose=keras_verbose,
+                      validation_data=[X_test, model_test_targets]
+                      )
 
     encoder.save(params['encoder_weights_file'])
     decoder.save(params['decoder_weights_file'])
     print('time of run : ', time.time() - start_time)
     print('**FINISHED**')
     return
+
 
 def main_property_run(params):
     start_time = time.time()
@@ -301,31 +300,30 @@ def main_property_run(params):
     elif params['optim'] == 'sgd':
         optim = SGD(lr=params['lr'], momentum=params['momentum'])
     else:
-        raise NotImplemented("Please define valid optimizer")
+        raise NotImplementedError("Please define valid optimizer")
 
-    model_train_targets = {'x_pred':X_train,
-                'z_mean_log_var':np.ones((np.shape(X_train)[0], params['hidden_dim'] * 2))}
-    model_test_targets = {'x_pred':X_test,
-        'z_mean_log_var':np.ones((np.shape(X_test)[0], params['hidden_dim'] * 2))}
+    model_train_targets = {'x_pred': X_train,
+                           'z_mean_log_var': np.ones((np.shape(X_train)[0], params['hidden_dim'] * 2))}
+    model_test_targets = {'x_pred': X_test,
+                          'z_mean_log_var': np.ones((np.shape(X_test)[0], params['hidden_dim'] * 2))}
     model_losses = {'x_pred': params['loss'],
-                        'z_mean_log_var': kl_loss}
+                    'z_mean_log_var': kl_loss}
 
     xent_loss_weight = K.variable(params['xent_loss_weight'])
     ae_loss_weight = 1. - params['prop_pred_loss_weight']
     model_loss_weights = {
-                    'x_pred': ae_loss_weight*xent_loss_weight,
-                    'z_mean_log_var':   ae_loss_weight*kl_loss_var}
+        'x_pred': ae_loss_weight * xent_loss_weight,
+        'z_mean_log_var': ae_loss_weight * kl_loss_var}
 
     prop_pred_loss_weight = params['prop_pred_loss_weight']
 
-
-    if ('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0 ):
+    if ('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0):
         model_train_targets['reg_prop_pred'] = Y_train[0]
         model_test_targets['reg_prop_pred'] = Y_test[0]
         model_losses['reg_prop_pred'] = params['reg_prop_pred_loss']
         model_loss_weights['reg_prop_pred'] = prop_pred_loss_weight
-    if ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0 ):
-        if ('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0 ):
+    if ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0):
+        if ('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0):
             model_train_targets['logit_prop_pred'] = Y_train[1]
             model_test_targets['logit_prop_pred'] = Y_test[1]
         else:
@@ -334,16 +332,16 @@ def main_property_run(params):
         model_losses['logit_prop_pred'] = params['logit_prop_pred_loss']
         model_loss_weights['logit_prop_pred'] = prop_pred_loss_weight
 
-
     # vae metrics, callbacks
     vae_sig_schedule = partial(mol_cb.sigmoid_schedule, slope=params['anneal_sigmod_slope'],
                                start=params['vae_annealer_start'])
     vae_anneal_callback = mol_cb.WeightAnnealer_epoch(
-            vae_sig_schedule, kl_loss_var, params['kl_loss_weight'], 'vae' )
+        vae_sig_schedule, kl_loss_var, params['kl_loss_weight'], 'vae')
 
     csv_clb = CSVLogger(params["history_file"], append=False)
 
-    callbacks = [ vae_anneal_callback, csv_clb]
+    callbacks = [vae_anneal_callback, csv_clb]
+
     def vae_anneal_metric(y_true, y_pred):
         return kl_loss_var
 
@@ -352,23 +350,22 @@ def main_property_run(params):
 
     if 'checkpoint_path' in params.keys():
         callbacks.append(mol_cb.EncoderDecoderCheckpoint(encoder, decoder,
-                params=params, prop_pred_model = property_predictor,save_best_only=False))
+                         params=params, prop_pred_model=property_predictor, save_best_only=False))
 
-    AE_PP_model.compile(loss=model_losses,
-               loss_weights=model_loss_weights,
-               optimizer=optim,
-               metrics={'x_pred': ['categorical_accuracy',
-                    vae_anneal_metric]})
-
+    AE_PP_model.compile(
+        loss=model_losses,
+        loss_weights=model_loss_weights,
+        optimizer=optim,
+        metrics={'x_pred': ['categorical_accuracy', vae_anneal_metric]})
 
     AE_PP_model.fit(X_train, model_train_targets,
-                         batch_size=params['batch_size'],
-                         epochs=params['epochs'],
-                         initial_epoch=params['prev_epochs'],
-                         callbacks=callbacks,
-                         verbose=keras_verbose,
-         validation_data=[X_test, model_test_targets]
-     )
+                    batch_size=params['batch_size'],
+                    epochs=params['epochs'],
+                    initial_epoch=params['prev_epochs'],
+                    callbacks=callbacks,
+                    verbose=keras_verbose,
+                    validation_data=[X_test, model_test_targets]
+                    )
 
     encoder.save(params['encoder_weights_file'])
     decoder.save(params['decoder_weights_file'])
@@ -393,7 +390,7 @@ if __name__ == "__main__":
     params = hyperparameters.load_params(args['exp_file'])
     print("All params:", params)
 
-    if params['do_prop_pred'] :
+    if params['do_prop_pred']:
         main_property_run(params)
     else:
         main_no_prop(params)

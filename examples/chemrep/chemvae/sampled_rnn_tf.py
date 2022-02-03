@@ -66,7 +66,7 @@ def sampled_rnn(step_function, inputs, initial_states, units, random_seed,
     from tensorflow.python.ops import control_flow_ops
     from tensorflow.python.framework import constant_op
     from tensorflow.python.framework import dtypes
-    import keras.backend as K
+    import tensorflow.keras.backend as K
 
     ndim = len(inputs.get_shape())
     if ndim < 3:

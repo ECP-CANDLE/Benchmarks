@@ -2,12 +2,12 @@ import argparse
 import cairosvg
 import io
 import os
-import numpy as np
+# import numpy as np
 import pandas as pd
 
 from PIL import Image, ImageOps
 from rdkit import Chem
-from rdkit.Chem import rdDepictor, RDConfig
+from rdkit.Chem import rdDepictor  # , RDConfig
 from rdkit.Chem.Draw import rdMolDraw2D
 
 
