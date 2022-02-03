@@ -5,14 +5,14 @@ import os
 os.environ['KERAS_BACKEND'] = 'tensorflow'
 import argparse
 
-import numpy as np
+# import numpy as np
 import pandas as pd
 
 # from rdkit.Chem import AllChem as Chem
 # from rdkit.Chem import PandasTools
 
 from chemvae.vae_utils import VAEUtils
-from chemvae import mol_utils as mu
+# from chemvae import mol_utils as mu
 
 
 def parse_args():

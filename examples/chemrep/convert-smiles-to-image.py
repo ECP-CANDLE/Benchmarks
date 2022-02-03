@@ -65,7 +65,7 @@ def smiles_to_image(mol, molSize=(512, 512), kekulize=True, mol_name='', mol_com
     if kekulize:
         try:
             Chem.Kekulize(mc)
-        except:
+        except ValueError:
             mc = Chem.Mol(mol.ToBinary())
     if not mc.GetNumConformers():
         rdDepictor.Compute2DCoords(mc)

@@ -135,9 +135,7 @@ class TerminalGRU(GRU):
         self.kernel_z = self.kernel[:, :self.units]
         self.recurrent_kernel_z = self.recurrent_kernel[:, :self.units]
         self.kernel_r = self.kernel[:, self.units: self.units * 2]
-        self.recurrent_kernel_r = self.recurrent_kernel[:,
-                                  self.units:
-                                  self.units * 2]
+        self.recurrent_kernel_r = self.recurrent_kernel[:, self.units: self.units * 2]
         self.kernel_h = self.kernel[:, self.units * 2:]
         self.recurrent_kernel_h = self.recurrent_kernel[:, self.units * 2:self.units * 3]
         self.recurrent_kernel_y = self.recurrent_kernel[:, self.units * 3:]
@@ -204,7 +202,7 @@ class TerminalGRU(GRU):
         preprocessed_input = self.preprocess_input(X)
 
         #################
-        ## Section for index matching of true inputs
+        # Section for index matching of true inputs
         #################
         #  Basically, we need to add an extra timestep of just 0s for predicting the first timestep output
 
@@ -217,7 +215,7 @@ class TerminalGRU(GRU):
         true_seq = K.concatenate([zeros, true_seq[:K.int_shape(true_seq)[0] - 1, :, :]], axis=0)
         shifted_raw_inputs = K.permute_dimensions(true_seq, axes)
 
-        ## concatenate to have same dimension as preprocessed inputs 3xoutput_dim
+        # concatenate to have same dimension as preprocessed inputs 3xoutput_dim
         # only for self.implementation = 0?
         shifted_raw_inputs = K.concatenate([shifted_raw_inputs,
                                             shifted_raw_inputs,
@@ -343,10 +341,9 @@ class TerminalGRU(GRU):
             r = self.recurrent_activation(x_r + K.dot(h_tm1 * rec_dp_mask[1],
                                                       self.recurrent_kernel_r))
 
-            hh = self.activation(x_h +
-                                 K.dot(r * h_tm1 * rec_dp_mask[2],
-                                       self.recurrent_kernel_h) +
-                                 K.dot(r * prev_sampled_output, self.recurrent_kernel_y))
+            hh = self.activation(x_h
+                                 + K.dot(r * h_tm1 * rec_dp_mask[2], self.recurrent_kernel_h)
+                                 + K.dot(r * prev_sampled_output, self.recurrent_kernel_y))
 
             output = z * h_tm1 + (1. - z) * hh
 
@@ -374,10 +371,9 @@ class TerminalGRU(GRU):
             r = self.recurrent_activation(x_r + K.dot(h_tm1 * rec_dp_mask[1],
                                                       self.recurrent_kernel_r))
 
-            hh = self.activation(x_h +
-                                 K.dot(r * h_tm1 * rec_dp_mask[2],
-                                       self.recurrent_kernel_h) +
-                                 K.dot(r * prev_sampled_output, self.recurrent_kernel_y))
+            hh = self.activation(x_h
+                                 + K.dot(r * h_tm1 * rec_dp_mask[2], self.recurrent_kernel_h)
+                                 + K.dot(r * prev_sampled_output, self.recurrent_kernel_y))
 
             output = z * h_tm1 + (1. - z) * hh
 

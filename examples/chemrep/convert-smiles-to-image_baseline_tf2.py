@@ -2,7 +2,6 @@ import argparse
 import cairosvg
 import io
 import os
-import sys
 # import numpy as np
 import pandas as pd
 
@@ -10,7 +9,6 @@ from PIL import Image, ImageOps
 from rdkit import Chem
 from rdkit.Chem import rdDepictor  # , RDConfig
 from rdkit.Chem.Draw import rdMolDraw2D
-import tensorflow.keras
 import tensorflow.keras.backend as K
 
 import convert_smiles as cs
@@ -71,7 +69,7 @@ def smiles_to_image(mol, molSize=(512, 512), kekulize=True, mol_name='', mol_com
     if kekulize:
         try:
             Chem.Kekulize(mc)
-        except:
+        except ValueError:
             mc = Chem.Mol(mol.ToBinary())
     if not mc.GetNumConformers():
         rdDepictor.Compute2DCoords(mc)
@@ -94,12 +92,13 @@ def initialize_parameters(default_model='cs_default_model.txt'):
 
     return gParameters
 
+
 def run(params):
     args = candle.ArgumentStruct(**params)
 
     try:
         out = args.out
-    except:
+    except AttributeError:
         out = args.filename + '.images'
     os.makedirs(out, exist_ok=True)
     print(f'Saving to {out}/\n')
@@ -121,4 +120,3 @@ if __name__ == '__main__':
     main()
     if K.backend() == 'tensorflow':
         K.clear_session()
-

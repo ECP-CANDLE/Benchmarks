@@ -17,7 +17,7 @@ def smiles_to_mol(smiles):
     try:
         mol = Chem.MolFromSmiles(smiles)
         return mol
-    except:
+    except ValueError:
         pass
     return None
 
@@ -215,7 +215,7 @@ def CheckSmiFeasible(smi):
     #    if you can't, then skip
     try:
         get_molecule_smi(Chem.MolFromSmiles(smi))
-    except:
+    except ValueError:
         return False
     return True
 

@@ -19,20 +19,16 @@ def encoder_model(params):
         'NCHARS']), name='input_molecule_smi')
 
     # Convolution layers
-    x = Convolution1D(int(params['conv_dim_depth'] *
-                          params['conv_d_growth_factor']),
-                      int(params['conv_dim_width'] *
-                          params['conv_w_growth_factor']),
+    x = Convolution1D(int(params['conv_dim_depth'] * params['conv_d_growth_factor']),
+                      int(params['conv_dim_width'] * params['conv_w_growth_factor']),
                       activation='tanh',
                       name="encoder_conv0")(x_in)
     if params['batchnorm_conv']:
         x = BatchNormalization(axis=-1, name="encoder_norm0")(x)
 
     for j in range(1, params['conv_depth'] - 1):
-        x = Convolution1D(int(params['conv_dim_depth'] *
-                              params['conv_d_growth_factor'] ** (j)),
-                          int(params['conv_dim_width'] *
-                              params['conv_w_growth_factor'] ** (j)),
+        x = Convolution1D(int(params['conv_dim_depth'] * params['conv_d_growth_factor'] ** (j)),
+                          int(params['conv_dim_width'] * params['conv_w_growth_factor'] ** (j)),
                           activation='tanh',
                           name="encoder_conv{}".format(j))(x)
         if params['batchnorm_conv']:
@@ -43,8 +39,7 @@ def encoder_model(params):
 
     # Middle layers
     if params['middle_layer'] > 0:
-        middle = Dense(int(params['hidden_dim'] *
-                           params['hg_growth_factor'] ** (params['middle_layer'] - 1)),
+        middle = Dense(int(params['hidden_dim'] * params['hg_growth_factor'] ** (params['middle_layer'] - 1)),
                        activation=params['activation'], name='encoder_dense0')(x)
         if params['dropout_rate_mid'] > 0:
             middle = Dropout(params['dropout_rate_mid'])(middle)
@@ -52,8 +47,7 @@ def encoder_model(params):
             middle = BatchNormalization(axis=-1, name='encoder_dense0_norm')(middle)
 
         for i in range(2, params['middle_layer'] + 1):
-            middle = Dense(int(params['hidden_dim'] *
-                               params['hg_growth_factor'] ** (params['middle_layer'] - i)),
+            middle = Dense(int(params['hidden_dim'] * params['hg_growth_factor'] ** (params['middle_layer'] - i)),
                            activation=params['activation'], name='encoder_dense{}'.format(i))(middle)
             if params['dropout_rate_mid'] > 0:
                 middle = Dropout(params['dropout_rate_mid'])(middle)
@@ -100,8 +94,7 @@ def decoder_model(params):
                                name="decoder_dense0_norm")(z)
 
     for i in range(1, params['middle_layer']):
-        z = Dense(int(params['hidden_dim'] *
-                      params['hg_growth_factor'] ** (i)),
+        z = Dense(int(params['hidden_dim'] * params['hg_growth_factor'] ** (i)),
                   activation=params['activation'],
                   name="decoder_dense{}".format(i))(z)
         if params['dropout_rate_mid'] > 0:
@@ -169,9 +162,9 @@ def load_decoder(params):
         return load_model(params['decoder_weights_file'])
 
 
-##====================
-## Middle part (var)
-##====================
+# ====================
+# Middle part (var)
+# ====================
 
 def variational_layers(z_mean, enc, kl_loss_var, params):
     # @inp mean : mean generated from encoder
@@ -187,7 +180,6 @@ def variational_layers(z_mean, enc, kl_loss_var, params):
 
         z_rand = z_mean + K.exp(z_log_var / 2) * kl_loss_var * epsilon
         return K.in_train_phase(z_rand, z_mean)
-
 
     # variational encoding
     z_log_var_layer = Dense(params['hidden_dim'], name='z_log_var_sample')
@@ -221,8 +213,7 @@ def property_predictor_model(params):
 
     if params['prop_pred_depth'] > 1:
         for p_i in range(1, params['prop_pred_depth']):
-            prop_mid = Dense(int(params['prop_hidden_dim'] *
-                                 params['prop_growth_factor'] ** p_i),
+            prop_mid = Dense(int(params['prop_hidden_dim'] * params['prop_growth_factor'] ** p_i),
                              activation=params['prop_pred_activation'],
                              name="property_predictor_dense{}".format(p_i)
                              )(prop_mid)
@@ -242,8 +233,8 @@ def property_predictor_model(params):
                                 name='logit_property_output')(prop_mid)
 
     # both regression and logistic
-    if (('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0) and
-            ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0)):
+    if (('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0)
+            and ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0)):
 
         return Model(ls_in, [reg_prop_pred, logit_prop_pred], name="property_predictor")
 

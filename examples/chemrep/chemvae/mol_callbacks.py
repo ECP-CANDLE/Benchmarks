@@ -17,7 +17,7 @@ class RmseCallback(Callback):
         df_norm = self.df_norm
         X_test = self.X_test
         Y_test = self.Y_test
-        y_pred = self.model.predict(X_test,self.config['batch_size'])
+        y_pred = self.model.predict(X_test, self.config['batch_size'])
         if type(y_pred) is list:
             if 'reg_prop_tasks' in self.config and 'logit_prop_tasks' in self.config:
                 y_pred = y_pred[-2]
@@ -94,7 +94,7 @@ class EncoderDecoderCheckpoint(ModelCheckpoint):
                  monitor_best_init=-np.Inf):
         # Saves models at the end of every epoch if they are better than previous models
         # prop_to_montior : a property that is a valid name in the model
-        # monitor_op : The operation to use when monitoring the property 
+        # monitor_op : The operation to use when monitoring the property
         #    (e.g. accuracy to be maximized so use np.greater, loss to minimized, so use np.loss)
         # monitor_best_init : starting point for monitor (use -np.Inf for maximization tests, and np.Inf for minimization tests)
 

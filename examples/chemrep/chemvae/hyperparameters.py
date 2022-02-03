@@ -21,8 +21,8 @@ def load_params(param_file=None, verbose=True):
         # general parameters
         'batch_size': 100,
         'epochs': 1,
-        'val_split': 0.1, #validation split
-        'loss': 'categorical_crossentropy', # set reconstruction loss
+        'val_split': 0.1,  # validation split
+        'loss': 'categorical_crossentropy',  # set reconstruction loss
 
         # convolution parameters
         'batchnorm_conv': True,
@@ -37,13 +37,13 @@ def load_params(param_file=None, verbose=True):
         'gru_depth': 4,
         'rnn_activation': 'tanh',
         'recurrent_dim': 50,
-        'do_tgru': True,                # use custom terminal gru layer 
-        'terminal_GRU_implementation': 0, # use CPU intensive implementation; other implementation modes (1 - GPU, 2- memory) are not yet implemented
+        'do_tgru': True,                # use custom terminal gru layer
+        'terminal_GRU_implementation': 0,  # use CPU intensive implementation; other implementation modes (1 - GPU, 2- memory) are not yet implemented
         'tgru_dropout': 0.0,
-        'temperature': 1.00,            # amount of noise for sampling the final output 
+        'temperature': 1.00,            # amount of noise for sampling the final output
 
-        # middle layer parameters 
-        'hg_growth_factor': 1.4928245388, # growth factor applied to determine size of next middle layer.
+        # middle layer parameters
+        'hg_growth_factor': 1.4928245388,  # growth factor applied to determine size of next middle layer.
         'hidden_dim': 100,
         'middle_layer': 1,
         'dropout_rate_mid': 0.0,
@@ -56,7 +56,7 @@ def load_params(param_file=None, verbose=True):
         'optim': 'adam',                # optimizer to be used
 
         # vae parameters
-        'vae_annealer_start': 22,       # Center for variational weigh annealer 
+        'vae_annealer_start': 22,       # Center for variational weigh annealer
         'batchnorm_vae': False,         # apply batch normalization to output of the variational layer
         'vae_activation': 'tanh',
         'xent_loss_weight': 1.0,        # loss weight to assign to reconstruction error.
@@ -70,9 +70,9 @@ def load_params(param_file=None, verbose=True):
         'prop_pred_depth': 3,
         'prop_hidden_dim': 36,
         'prop_growth_factor': 0.8,      # ratio between consecutive layer in property prediction
-        'prop_pred_activation': 'tanh', 
+        'prop_pred_activation': 'tanh',
         'reg_prop_pred_loss': 'mse',    # loss function to use with property prediction error for regression tasks
-        'logit_prop_pred_loss': 'binary_crossentropy',  # loss function to use with property prediction for logistic tasks 
+        'logit_prop_pred_loss': 'binary_crossentropy',  # loss function to use with property prediction for logistic tasks
         'prop_pred_loss_weight': 0.5,
         'prop_pred_dropout': 0.0,
         'prop_batchnorm': True,

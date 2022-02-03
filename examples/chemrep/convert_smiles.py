@@ -1,15 +1,8 @@
-
 from __future__ import print_function
 
 import os
 import sys
 import logging
-
-import pandas as pd
-
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
-from scipy.stats.stats import pearsonr
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
@@ -45,4 +38,3 @@ class BenchmarkConvertSmiles(candle.Benchmark):
             self.required = set(required)
         if additional_definitions is not None:
             self.additional_definitions = additional_definitions
-

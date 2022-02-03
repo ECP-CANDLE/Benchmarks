@@ -173,8 +173,10 @@ class VAEUtils(object):
             z = self.unstandardize_z(z)
 
         # both regression and logistic
-        if (('reg_prop_tasks' in self.params) and (len(self.params['reg_prop_tasks']) > 0) and
-                ('logit_prop_tasks' in self.params) and (len(self.params['logit_prop_tasks']) > 0)):
+        if (('reg_prop_tasks' in self.params)
+                and (len(self.params['reg_prop_tasks']) > 0)
+                and ('logit_prop_tasks' in self.params)
+                and (len(self.params['logit_prop_tasks']) > 0)):
 
             reg_pred, logit_pred = self.property_predictor.predict(z)
             if 'data_normalization_out' in self.params:
@@ -200,8 +202,10 @@ class VAEUtils(object):
         # Now reports predictions after un-normalization.
         def predict_prop(X):
             # both regression and logistic
-            if (('reg_prop_tasks' in self.params) and (len(self.params['reg_prop_tasks']) > 0) and
-                    ('logit_prop_tasks' in self.params) and (len(self.params['logit_prop_tasks']) > 0)):
+            if (('reg_prop_tasks' in self.params)
+                    and (len(self.params['reg_prop_tasks']) > 0)
+                    and ('logit_prop_tasks' in self.params)
+                    and (len(self.params['logit_prop_tasks']) > 0)):
                 reg_pred, logit_pred = self.property_predictor.predict(
                     self.encode(X))
                 if 'data_normalization_out' in self.params:

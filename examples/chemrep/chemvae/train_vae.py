@@ -183,8 +183,8 @@ def load_models(params):
         else:
             property_predictor = property_predictor_model(params)
 
-        if (('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0) and
-                ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0)):
+        if (('reg_prop_tasks' in params) and (len(params['reg_prop_tasks']) > 0)
+                and ('logit_prop_tasks' in params) and (len(params['logit_prop_tasks']) > 0)):
 
             reg_prop_pred, logit_prop_pred = property_predictor(z_mean)
             reg_prop_pred = Lambda(identity, name='reg_prop_pred')(reg_prop_pred)
