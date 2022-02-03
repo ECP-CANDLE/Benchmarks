@@ -16,14 +16,12 @@ import pandas as pd
 import shutil
 
 
-
 def ID_mapping(l1, l2):
     pos = {}
     for i in range(len(l1)):
         pos[l1[i]] = i
     idd = np.array([pos[i] for i in l2])
     return idd
-
 
 
 def load_example_data():
@@ -63,7 +61,6 @@ def load_example_data():
     ccl['sample'] = sample
 
     return res, ccl, drug
-
 
 
 def get_data_for_cross_validation(res, ccl, drug, sampleID):
@@ -106,7 +103,6 @@ def get_data_for_cross_validation(res, ccl, drug, sampleID):
     return train, val, test
 
 
-
 def get_model_parameter(model_file):
     config = configparser.ConfigParser()
     config.read(model_file)
@@ -117,7 +113,6 @@ def get_model_parameter(model_file):
             if k not in params:
                 params[k] = eval(v)
     return params
-
 
 
 def get_DNN_optimizer(opt_name):
@@ -143,7 +138,6 @@ def get_DNN_optimizer(opt_name):
     return optimizer
 
 
-
 def calculate_batch_size(num_sample, paraDNN):
     # max_half_num_batch: the number of batches will not be larger than 2 * max_half_num_batch
     max_half_num_batch = paraDNN['max_half_num_batch']
@@ -165,7 +159,6 @@ def calculate_batch_size(num_sample, paraDNN):
         batch_size = 256
 
     return batch_size
-
 
 
 class CNN2D_Regressor():
@@ -211,8 +204,9 @@ class CNN2D_Regressor():
                         d = ReLU(name='ReLU_' + str(i) + '_Kernel_' + str(j) + '_Input_' + str(input_id))(d)
                     else:
                         raise TypeError("Activation is not ReLU in subnetwork.")
-                    d = MaxPooling2D(pool_size=self.params['pool_size'][j], name='MaxPooling_' + str(i) + '_Kernel_'
-                        + str(j) + '_Input_' + str(input_id))(d)
+                    d = MaxPooling2D(pool_size=self.params['pool_size'][j],
+                                     name='MaxPooling_' + str(i) + '_Kernel_'
+                                     + str(j) + '_Input_' + str(input_id))(d)
                     dim = np.array(d.shape.as_list())
                     flag_0 = dim[1] < min_row_size
                     flag_1 = dim[2] < min_col_size
@@ -243,7 +237,6 @@ class CNN2D_Regressor():
         model.compile(optimizer=get_DNN_optimizer(self.params['optimizer']), loss=self.params['loss'])
         print(model.summary())
         self.model = model
-
 
 
 class CNN2D_Classifier():
@@ -290,8 +283,9 @@ class CNN2D_Classifier():
                         d = ReLU(name='ReLU_' + str(i) + '_Kernel_' + str(j) + '_Input_' + str(input_id))(d)
                     else:
                         raise TypeError("Activation is not ReLU in subnetwork.")
-                    d = MaxPooling2D(pool_size=self.params['pool_size'][j], name='MaxPooling_' + str(i) + '_Kernel_'
-                        + str(j) + '_Input_' + str(input_id), padding='same')(d)
+                    d = MaxPooling2D(pool_size=self.params['pool_size'][j],
+                                     name='MaxPooling_' + str(i) + '_Kernel_'
+                                     + str(j) + '_Input_' + str(input_id), padding='same')(d)
                     dim = np.array(d.shape.as_list())
                     flag_0 = dim[1] < min_row_size
                     flag_1 = dim[2] < min_col_size
@@ -322,7 +316,6 @@ class CNN2D_Classifier():
         model.compile(optimizer=get_DNN_optimizer(self.params['optimizer']), loss=self.params['loss'])
         print(model.summary())
         self.model = model
-
 
 
 def CNN2D_Regression_Analysis(train, resultFolder, para, val=None, test=None):
@@ -394,7 +387,7 @@ def CNN2D_Regression_Analysis(train, resultFolder, para, val=None, test=None):
         perM[i] = np.empty((len(para['drop']), para['epochs']))
         perM[i].fill(np.inf)
         perM[i] = pd.DataFrame(perM[i], index=['dropout_' + str(j) for j in para['drop']],
-            columns=['epoch_' + str(j) for j in range(para['epochs'])])
+                               columns=['epoch_' + str(j) for j in range(para['epochs'])])
 
     for dpID in range(len(para['drop'])):
         label = 'dropout_' + str(para['drop'][dpID])
@@ -417,11 +410,15 @@ def CNN2D_Regression_Analysis(train, resultFolder, para, val=None, test=None):
         temp = CNN2D_Regressor(para, input_data_dim, para['drop'][dpID])
 
         if val is not None:
-            history = temp.model.fit(x=trainData, y=trainLabel, batch_size=batch_size, epochs=para['epochs'],
-                verbose=para['verbose'], callbacks=callbacks, validation_data=(valData, valLabel), shuffle=True)
+            history = temp.model.fit(x=trainData, y=trainLabel, batch_size=batch_size,
+                                     epochs=para['epochs'], verbose=para['verbose'],
+                                     callbacks=callbacks, validation_data=(valData, valLabel),
+                                     shuffle=True)
         else:
-            history = temp.model.fit(x=trainData, y=trainLabel, batch_size=batch_size, epochs=para['epochs'],
-                verbose=para['verbose'], callbacks=callbacks, validation_data=None, shuffle=True)
+            history = temp.model.fit(x=trainData, y=trainLabel, batch_size=batch_size,
+                                     epochs=para['epochs'], verbose=para['verbose'],
+                                     callbacks=callbacks, validation_data=None, shuffle=True)
+
         numEpoch = len(history.history['loss'])
         i = np.where(perM['train'].index == label)[0]
         perM['train'].iloc[i, :numEpoch] = history.history['loss']
@@ -471,7 +468,6 @@ def CNN2D_Regression_Analysis(train, resultFolder, para, val=None, test=None):
         perf.loc[k, 'sCorPvalue'] = pval
 
     return predResult, perM, perf, 'dropout_' + str(para['drop'][dpID]) + '_epoch_' + str(epID + 1), batch_size
-
 
 
 def CNN2D_Classification_Analysis(train, num_class, resultFolder, para, class_weight=None, val=None, test=None):
@@ -530,7 +526,6 @@ def CNN2D_Classification_Analysis(train, num_class, resultFolder, para, class_we
         testLabel = None
         testSample = None
 
-
     if isinstance(trainData, list):
         input_data_dim = []
         for i in range(len(trainData)):
@@ -543,7 +538,7 @@ def CNN2D_Classification_Analysis(train, num_class, resultFolder, para, class_we
         perM[i] = np.empty((len(para['drop']), para['epochs']))
         perM[i].fill(np.inf)
         perM[i] = pd.DataFrame(perM[i], index=['dropout_' + str(j) for j in para['drop']],
-            columns=['epoch_' + str(j) for j in range(para['epochs'])])
+                               columns=['epoch_' + str(j) for j in range(para['epochs'])])
 
     if class_weight == 'balanced':
         weight = len(trainLabel) / (num_class * np.bincount(trainLabel))
@@ -572,13 +567,15 @@ def CNN2D_Classification_Analysis(train, num_class, resultFolder, para, class_we
         temp = CNN2D_Classifier(para, input_data_dim, num_class, para['drop'][dpID])
 
         if val is not None:
-            history = temp.model.fit(x=trainData, y=trainLabel, batch_size=batch_size, epochs=para['epochs'],
-                verbose=para['verbose'], callbacks=callbacks, validation_data=(valData, valLabel),
-                class_weight=class_weight, shuffle=True)
+            history = temp.model.fit(x=trainData, y=trainLabel, batch_size=batch_size,
+                                     epochs=para['epochs'], verbose=para['verbose'],
+                                     callbacks=callbacks, validation_data=(valData, valLabel),
+                                     class_weight=class_weight, shuffle=True)
         else:
-            history = temp.model.fit(x=trainData, y=trainLabel, batch_size=batch_size, epochs=para['epochs'],
-                verbose=para['verbose'], callbacks=callbacks, validation_data=None, class_weight=class_weight,
-                shuffle=True)
+            history = temp.model.fit(x=trainData, y=trainLabel, batch_size=batch_size,
+                                     epochs=para['epochs'], verbose=para['verbose'],
+                                     callbacks=callbacks, validation_data=None,
+                                     class_weight=class_weight, shuffle=True)
         numEpoch = len(history.history['loss'])
         i = np.where(perM['train'].index == label)[0]
         perM['train'].iloc[i, :numEpoch] = history.history['loss']
@@ -610,9 +607,9 @@ def CNN2D_Classification_Analysis(train, num_class, resultFolder, para, class_we
                                                    index=predResult['test']['proba'].index, columns=['prediction'])
     predResult['train'] = {}
     predResult['train']['proba'] = pd.DataFrame(model.predict(trainData), index=trainSample,
-                                               columns=['proba_' + str(i) for i in range(num_class)])
+                                                columns=['proba_' + str(i) for i in range(num_class)])
     predResult['train']['label'] = pd.DataFrame(np.argmax(a=predResult['train']['proba'].values, axis=1),
-                                               index=predResult['train']['proba'].index, columns=['prediction'])
+                                                index=predResult['train']['proba'].index, columns=['prediction'])
     if val is not None:
         predResult['val'] = {}
         predResult['val']['proba'] = pd.DataFrame(model.predict(valData), index=valSample,

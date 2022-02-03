@@ -6,8 +6,6 @@ import os
 from Prediction_Modeling_Functions import get_model_parameter, load_example_data, get_data_for_cross_validation, \
     CNN2D_Regression_Analysis, CNN2D_Classification_Analysis
 
-
-
 # Load the example drug response data, cell line gene expression image data, and drug descriptor image data
 res, ccl, drug = load_example_data()
 
@@ -21,7 +19,6 @@ sampleID = {}
 sampleID['trainID'] = rand_sample_ID[range(fold_size * (num_fold - 2))]
 sampleID['valID'] = rand_sample_ID[range(fold_size * (num_fold - 2), fold_size * (num_fold - 1))]
 sampleID['testID'] = rand_sample_ID[range(fold_size * (num_fold - 1), num_sample)]
-
 
 
 # Run regression prediction
@@ -61,7 +58,6 @@ cp.dump(para, output)
 output.close()
 
 
-
 # Run classification prediction
 # Create the directory for saving results
 result_dir = '../Results/Prediction_On_Images/Classification_Prediction'
@@ -84,8 +80,10 @@ para.update(subnetwork_para)
 # Generate data for cross-validation analysis
 train, val, test = get_data_for_cross_validation(res, ccl, drug, sampleID)
 
-predResult, perM, perf, winningModel, batch_size = CNN2D_Classification_Analysis(train=train, num_class=2,
-    resultFolder=result_dir, class_weight='balanced', para=para, val=val, test=test)
+predResult, perM, perf, winningModel, batch_size = \
+    CNN2D_Classification_Analysis(train=train, num_class=2,
+                                  resultFolder=result_dir, class_weight='balanced',
+                                  para=para, val=val, test=test)
 
 result = {}
 result['predResult'] = predResult       # Prediction values for the training, validation, and testing sets
