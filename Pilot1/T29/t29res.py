@@ -156,7 +156,7 @@ def run(gParameters):
     # set up a bunch of callbacks to do work during model training.
     checkpointer = ModelCheckpoint(filepath='t29res.autosave.model.h5', verbose=0, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('t29res.training.log')
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.4, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=3, min_lr=0.000000001)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.4, patience=10, verbose=1, mode='auto', min_delta=0.0001, cooldown=3, min_lr=0.000000001)
     callbacks = [checkpointer, csv_logger, reduce_lr]
 
     def warmup_scheduler(epoch):

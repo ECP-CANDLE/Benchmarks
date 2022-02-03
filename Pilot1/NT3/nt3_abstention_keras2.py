@@ -250,7 +250,7 @@ def run(gParameters):
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
     reduce_lr = ReduceLROnPlateau(monitor='val_loss',
                                   factor=0.1, patience=10, verbose=1, mode='auto',
-                                  epsilon=0.0001, cooldown=0, min_lr=0)
+                                  min_delta=0.0001, cooldown=0, min_lr=0)
 
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
