@@ -7,7 +7,7 @@ import os
 from tensorflow.keras import backend as K
 
 from tensorflow.keras.layers import Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten, LocallyConnected1D
-from tensorflow.keras.models import Sequential, model_from_json, model_from_yaml
+from tensorflow.keras.models import Sequential, model_from_json
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import CSVLogger, ReduceLROnPlateau
 
@@ -206,7 +206,7 @@ def run(gParameters):
     # path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
     # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
-    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', epsilon=0.0001, cooldown=0, min_lr=0)
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10, verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0)
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
     history = model.fit(X_train, Y_train,
