@@ -182,7 +182,7 @@ def run(params):
         file = 'pilot1/ft_goodperforming_model.pt'
     elif args.model == 'ft_poorperforming_model.pt':
         file = 'pilot1/ft_poorperforming_model.pt'
-    else: # Corresponding to args.model == 'autosave.model.pt':
+    else:  # Corresponding to args.model == 'autosave.model.pt':
         file = 'mosesrun/autosave.model.pt'
 
     print('Recovering trained model')

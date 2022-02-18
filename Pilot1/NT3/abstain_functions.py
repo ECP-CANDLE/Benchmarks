@@ -45,6 +45,9 @@ abs_definitions = [
      'nargs': '+',
      'type': int,
      'help': 'list of names corresponding to each task to use'},
+    {'name': 'cf_noise',
+     'type': str,
+     'help': 'input file with cf noise'}
 ]
 
 

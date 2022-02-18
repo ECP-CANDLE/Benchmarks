@@ -119,7 +119,7 @@ def initialize_parameters(default_model='train_pixelsnail_default_model.txt'):
 
 
 def train(args, epoch, loader, model, optimizer, scheduler, device):
-    loader = tqdm(loader)
+    loader = tqdm(loader, file=sys.stdout)
 
     criterion = nn.CrossEntropyLoss()
 

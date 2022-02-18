@@ -68,7 +68,15 @@ additional_definitions = [
      'type': int},
     {'name': 'num_filters',
      'nargs': '+',
-     'type': int}
+     'type': int},
+    {'name': 'task_list',
+     'nargs': '+',
+     'type': int,
+     'help': 'list of task indices to use'},
+    {'name': 'task_names',
+     'nargs': '+',
+     'type': int,
+     'help': 'list of names corresponding to each task to use'}
 ]
 
 

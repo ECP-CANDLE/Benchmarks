@@ -92,7 +92,7 @@ def initialize_parameters(default_model='train_vqvae_default_model.txt'):
 
 def train(epoch, loader, model, optimizer, scheduler, device):
     if dist.is_primary():
-        loader = tqdm(loader)
+        loader = tqdm(loader, file=sys.stdout)
 
     criterion = nn.MSELoss()
 

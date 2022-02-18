@@ -308,7 +308,7 @@ ckpt_conf = [
         'help': 'Toggle saving only weights (not optimizer) (NYI).'},
     {'name': 'ckpt_save_interval',
         'type': int,
-        'default': 1,
+        'default': 0,
         'help': 'Interval to save checkpoints.'},
     {'name': 'ckpt_keep_mode',
         'type': str,

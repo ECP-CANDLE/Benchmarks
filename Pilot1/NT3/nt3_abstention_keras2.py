@@ -7,7 +7,7 @@ import os
 from tensorflow.keras import backend as K
 
 from tensorflow.keras.layers import Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten, LocallyConnected1D
-from tensorflow.keras.models import Sequential, model_from_json, model_from_yaml
+from tensorflow.keras.models import Sequential, model_from_json
 from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.callbacks import CSVLogger, ReduceLROnPlateau
 
@@ -35,6 +35,7 @@ class BenchmarkNT3Abs(candle.Benchmark):
             self.required = set(bmk.required)
         if additional_definitions is not None:
             self.additional_definitions = abs_definitions + bmk.additional_definitions
+        # print("Additional definitions:", self.additional_definitions)
 
 
 def initialize_parameters(default_model='nt3_noise_model.txt'):
@@ -74,11 +75,8 @@ def load_data(train_path, test_path, gParameters):
     df_y_train = df_train[:, 0].astype('int')
     df_y_test = df_test[:, 0].astype('int')
 
-    # only training set has noise
     Y_train = to_categorical(df_y_train, gParameters['classes'])
     Y_test = to_categorical(df_y_test, gParameters['classes'])
-#    Y_train, y_train_noise_gen = candle.label_flip(df_y_train, gParameters['label_noise'])
-#    Y_test, y_test_noise_gen = candle.label_flip(df_y_test, gParameters['label_noise'])
 
     df_x_train = df_train[:, 1:seqlen].astype(np.float32)
     df_x_test = df_test[:, 1:seqlen].astype(np.float32)
@@ -92,22 +90,6 @@ def load_data(train_path, test_path, gParameters):
 
     X_train = mat[:X_train.shape[0], :]
     X_test = mat[X_train.shape[0]:, :]
-
-    # check if noise is on
-    if gParameters['add_noise']:
-        # check if we want noise correlated with a feature
-        if gParameters['noise_correlated']:
-            Y_train, y_train_noise_gen = candle.label_flip_correlated(Y_train,
-                                                                      gParameters['label_noise'], X_train,
-                                                                      gParameters['feature_col'],
-                                                                      gParameters['feature_threshold'])
-        # else add uncorrelated noise
-        else:
-            Y_train, y_train_noise_gen = candle.label_flip(Y_train, gParameters['label_noise'])
-    # check if noise is on for RNA-seq data
-    elif gParameters['noise_gaussian']:
-        print("adding gnoise", gParameters['std_dev'])
-        X_train = candle.add_gaussian_noise(X_train, 0, gParameters['std_dev'])
 
     return X_train, Y_train, X_test, Y_test
 
@@ -146,8 +128,6 @@ def evaluate_cf(model, nb_classes, output_dir, X_train, X_test, Y_train, Y_test,
 
 def run(gParameters):
 
-    print('Params:', gParameters)
-
     file_train = gParameters['train_data']
     file_test = gParameters['test_data']
     url = gParameters['data_url']
@@ -159,6 +139,9 @@ def run(gParameters):
         X_train, Y_train, X_test, Y_test, polluted_inds, cluster_inds  = load_data_cf(gParameters['noise_cf'])
     else:
         X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
+
+    # only training set has noise
+    X_train, Y_train = candle.add_noise(X_train, Y_train, gParameters)
 
     # add extra class for abstention
     # first reverse the to_categorical
@@ -307,9 +290,9 @@ def run(gParameters):
     # path = '{}/{}.autosave.model.h5'.format(output_dir, model_name)
     # checkpointer = ModelCheckpoint(filepath=path, verbose=1, save_weights_only=False, save_best_only=True)
     csv_logger = CSVLogger('{}/training.log'.format(output_dir))
-    reduce_lr = ReduceLROnPlateau(monitor='abs_crossentropy',
+    reduce_lr = ReduceLROnPlateau(monitor='val_loss',
                                   factor=0.1, patience=10, verbose=1, mode='auto',
-                                  epsilon=0.0001, cooldown=0, min_lr=0)
+                                  min_delta=0.0001, cooldown=0, min_lr=0)
 
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
     timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
@@ -348,11 +331,6 @@ def run(gParameters):
         with open("{}/{}.model.json".format(output_dir, model_name), "w") as json_file:
             json_file.write(model_json)
 
-        # serialize model to YAML
-        model_yaml = model.to_yaml()
-        with open("{}/{}.model.yaml".format(output_dir, model_name), "w") as yaml_file:
-            yaml_file.write(model_yaml)
-
         # serialize weights to HDF5
         model.save_weights("{}/{}.weights.h5".format(output_dir, model_name))
         print("Saved model to disk")
@@ -362,12 +340,6 @@ def run(gParameters):
         loaded_model_json = json_file.read()
         json_file.close()
         loaded_model_json = model_from_json(loaded_model_json)
-
-        # load yaml and create model
-        yaml_file = open('{}/{}.model.yaml'.format(output_dir, model_name), 'r')
-        loaded_model_yaml = yaml_file.read()
-        yaml_file.close()
-        loaded_model_yaml = model_from_yaml(loaded_model_yaml)
 
         # load weights into new model
         loaded_model_json.load_weights('{}/{}.weights.h5'.format(output_dir, model_name))
@@ -383,21 +355,6 @@ def run(gParameters):
         print('json Test accuracy:', score_json[1])
 
         print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1] * 100))
-
-        # load weights into new model
-        loaded_model_yaml.load_weights('{}/{}.weights.h5'.format(output_dir, model_name))
-        print("Loaded yaml model from disk")
-
-        # evaluate loaded model on test data
-        loaded_model_yaml.compile(loss=gParameters['loss'],
-                                  optimizer=gParameters['optimizer'],
-                                  metrics=[gParameters['metrics']])
-        score_yaml = loaded_model_yaml.evaluate(X_test, Y_test, verbose=0)
-
-        print('yaml Test score:', score_yaml[0])
-        print('yaml Test accuracy:', score_yaml[1])
-
-        print("yaml %s: %.2f%%" % (loaded_model_yaml.metrics_names[1], score_yaml[1] * 100))
 
     return history
 

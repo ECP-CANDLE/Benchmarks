@@ -11,5 +11,4 @@ n_out_res_block = 0
 n_cond_res_block = 3
 dropout = 0.1
 amp = 'O0'
-use_gpus = True
 ckpt_directory = './'
