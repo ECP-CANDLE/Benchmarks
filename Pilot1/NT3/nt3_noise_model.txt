@@ -34,4 +34,3 @@ init_abs_epoch = 2
 task_list = 0
 task_names = ['activation_5']
 noise_save_cf = True
-noise_cf = '/vol/ml/shahashka/nt3_cf/cf_data/data_with_cf_noise/nt3.data.scale_1.0_cluster_0_1.noise_0.1.pkl'

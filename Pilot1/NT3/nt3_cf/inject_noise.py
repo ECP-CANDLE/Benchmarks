@@ -20,10 +20,10 @@ def get_args():
 def random_noise(s,scale,size, cluster_inds, args):
     X_train, X_test, y_train, y_test = pickle.load(open(args.d, 'rb'))
     #X_data, y_data = pickle.load(open(args.d, 'rb'))
-    X_data = np.concatenate([X_train, X_test])
-    genes = np.random.choice(np.arange(X_data.shape[0]), replace=False, size=size)
+    #X_data = np.concatenate([X_train, X_test])
+    genes = np.random.choice(np.arange(X_train.shape[0]), replace=False, size=size)
     noise = np.random.normal(0,1,size)
-    X_data_noise = copy.deepcopy(X_data)
+    X_data_noise = copy.deepcopy(X_train)
     s, _ = s.split(".")
     cluster_name = s[3:]
     for p in np.arange(0.1,1.0, 0.1):
@@ -31,9 +31,9 @@ def random_noise(s,scale,size, cluster_inds, args):
             for j in range(size):
                 X_data_noise[i][genes[j]]+=noise[j]
         # Now split back into train test for output                                                             
-        X_train = X_data_noise[0:(int)(0.8*X_data.shape[0])]
-        X_test = X_data_noise[(int)(0.8*X_data.shape[0]):]
-        pickle.dump([X_train, X_test, y_train, y_test, [], cluster_inds], open("{}/nt3.data.random.scale_{}_{}.noise_{}.pkl".format(args.o,scale,cluster_name,round(p,1)), "wb"))
+        #X_train = X_data_noise[0:(int)(0.8*X_data.shape[0])]
+        #X_test = X_data_noise[(int)(0.8*X_data.shape[0]):]
+        pickle.dump([X_data_noise, X_test, y_train, y_test, [], cluster_inds], open("{}/nt3.data.random.scale_{}_{}.noise_{}.pkl".format(args.o,scale,cluster_name,round(p,1)), "wb"))
     
 def main():
     args = get_args()
@@ -49,42 +49,46 @@ def main():
     
     
     #combine for easier indexing later
-    X_data = np.concatenate([X_train, X_test])
+    #X_data = np.concatenate([X_train, X_test])
 
     #account for failed indices
     failed_indices = pickle.load(open(args.f, 'rb'))[0]
+    failed_indices=[919]
     print(failed_indices)
     for i in failed_indices:
-        perturb_dataset.insert(i, np.zeros(X_data.shape[1]))
+        perturb_dataset.insert(i, np.zeros(X_train.shape[1]))
     perturb_dataset = np.array(perturb_dataset)
     
     _, cf1 = os.path.split(args.c1)
     _, cf2 = os.path.split(args.c2)
     cluster_files = [cf1, cf2]
+    perturb_dataset = perturb_dataset[0:X_train.shape[0]]
     for i in range(len(cluster_files)):
         print(cluster_files[i])
         d = pickle.load(open(cluster_files[i], "rb"))
         cluster_inds = d['sample indices in this cluster']
+        cluster_inds_noise = list(filter(lambda val: val < 1120, cluster_inds))
+
         if args.r:
-            random_noise(cluster_files[i],args.scale,20, cluster_inds, args)
+            random_noise(cluster_files[i],args.scale,20, cluster_inds_noise, args)
         
         # Sweep through percentages
         for p in np.arange(0.1,1.0, 0.1):
             print("p={}".format(p))
-            X_data_noise = copy.deepcopy(X_data)
+            X_data_noise = copy.deepcopy(X_train)
             
             #Full cf injection
             # Choose x% of the indices to be perturbed
-            selector = np.random.choice(a=cluster_inds, replace=False, size = (int)(p*len(cluster_inds)))
+            selector = np.random.choice(a=cluster_inds_noise, replace=False, size = (int)(p*len(cluster_inds_noise)))
             X_data_noise[selector]-= args.scale*perturb_dataset[selector][:,:,None]
             
             # Now split back into train test for output
-            X_train = X_data_noise[0:(int)(0.8*X_data.shape[0])]
-            X_test = X_data_noise[(int)(0.8*X_data.shape[0]):]
+            #X_train = X_data_noise[0:(int)(0.8*X_data.shape[0])]
+            #X_test = X_data_noise[(int)(0.8*X_data.shape[0]):]
 
             s,_ = cluster_files[i].split(".")
             cluster_name = s[3:]
-            pickle.dump([X_train, X_test, y_train, y_test, selector, cluster_inds], open("{}/nt3.data.scale_{}_{}.noise_{}.pkl".format(args.o, args.scale,cluster_name, round(p,1)), "wb"))
+            pickle.dump([X_data_noise, X_test, y_train, y_test, selector, cluster_inds], open("{}/nt3.data.scale_{}_{}.noise_{}.pkl".format(args.o, args.scale,cluster_name, round(p,1)), "wb"))
 
             # Add cf noise only to those indices that passed the threshold value (instead of the full cf profile)
             inds = []
@@ -92,19 +96,19 @@ def main():
                 inds.append(j)
             for j in d['negative threshold indices'][0]:
                 inds.append(j)
-            X_data_noise_2 = copy.deepcopy(X_data)
+            X_data_noise_2 = copy.deepcopy(X_train)
             
-            all_inds = np.arange(X_data.shape[0])
+            all_inds = np.arange(X_train.shape[0])
             for j in all_inds:
                 if j not in inds:
                     perturb_dataset[:,j]=0
             X_data_noise_2[selector]-= args.scale*perturb_dataset[selector][:,:,None]
             
             # Now split back into train test
-            X_train = X_data_noise_2[0:(int)(0.8*X_data.shape[0])]
-            X_test = X_data_noise_2[(int)(0.8*X_data.shape[0]):]
+            #X_train = X_data_noise_2[0:(int)(0.8*X_data.shape[0])]
+            #X_test = X_data_noise_2[(int)(0.8*X_data.shape[0]):]
             
-            pickle.dump([X_train, X_test, y_train, y_test, selector, cluster_inds], open("{}/nt3.data.threshold.scale_{}_{}.noise_{}.pkl".format(args.o, args.scale, cluster_name, round(p,1)), "wb"))
+            pickle.dump([X_data_noise_2, X_test, y_train, y_test, selector, cluster_inds], open("{}/nt3.data.threshold.scale_{}_{}.noise_{}.pkl".format(args.o, args.scale, cluster_name, round(p,1)), "wb"))
             
 if __name__ == "__main__":
     main()

@@ -386,7 +386,7 @@ class ArgumentStruct:
        or object entries) can be used.
     """
     def __init__(self, **entries):
-        self.__dict__.update(entries)
+       self.__dict__.update(entries)
 
 
 class ListOfListsAction(argparse.Action):
@@ -573,7 +573,6 @@ def args_overwrite_config(args, config):
     for key in args_dict.keys():
         # try casting here
         params[key] = args_dict[key]
-
     if 'data_type' not in params:
         params['data_type'] = DEFAULT_DATATYPE
     else:

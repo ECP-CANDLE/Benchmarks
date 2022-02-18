@@ -17,7 +17,7 @@ import nt3 as bmk
 import candle
 import pickle
 
-def initialize_parameters(default_model='nt3_default_model.txt'):
+def initialize_parameters(default_model='nt3_noise_model.txt'):
 
     # Build benchmark object
     nt3Bmk = bmk.BenchmarkNT3(
