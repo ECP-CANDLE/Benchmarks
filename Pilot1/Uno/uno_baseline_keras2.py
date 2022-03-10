@@ -289,7 +289,7 @@ def run(params):
                               cell_subset_path=args.cell_subset_path, drug_subset_path=args.drug_subset_path)
         train_gen = CombinedDataGenerator(loader, batch_size=args.batch_size, shuffle=args.shuffle)
         val_gen = CombinedDataGenerator(loader, partition='val', batch_size=args.batch_size, shuffle=args.shuffle)
-        store = pd.HDFStore(fname, complevel=9, complib='blosc:snappy')
+        store = pd.HDFStore(fname)
 
         config_min_itemsize = {'Sample': 30, 'Drug1': 10}
         if not args.single:
@@ -302,8 +302,8 @@ def run(params):
 
                 for j, input_feature in enumerate(x_list):
                     input_feature.columns = [''] * len(input_feature.columns)
-                    store.append('x_{}_{}'.format(partition, j), input_feature.astype('float32'), format='table', data_columns=True)
-                store.append('y_{}'.format(partition), y.astype({target: 'float32'}), format='table', data_columns=True,
+                    store.append('x_{}_{}'.format(partition, j), input_feature.astype('float32'), format='table')
+                store.append('y_{}'.format(partition), y.astype({target: 'float32'}), format='table',
                              min_itemsize=config_min_itemsize)
                 logger.info('Generating {} dataset. {} / {}'.format(partition, i, gen.steps))
 
