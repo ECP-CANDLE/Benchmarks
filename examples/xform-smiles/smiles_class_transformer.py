@@ -1,23 +1,23 @@
-## Setup
+# Setup
 
 import pandas as pd
-import numpy as np
+# import numpy as np
 import os
 import sys
-import gzip
+# import gzip
 import argparse
 
-import math
+# import math
 import matplotlib
 matplotlib.use('Agg')
 
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 import tensorflow as tf
 
 from tensorflow import keras
 from tensorflow.keras import backend as K
-from tensorflow.keras.optimizers import SGD, Adam, RMSprop
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 from tensorflow.keras import layers
 from tensorflow.keras.preprocessing import sequence
@@ -28,10 +28,10 @@ lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
 psr = argparse.ArgumentParser(description='input csv file')
-psr.add_argument('--in_train',  default='in_train')
-psr.add_argument('--in_vali',  default='in_vali')
-psr.add_argument('--ep',  type=int, default=400)
-args=vars(psr.parse_args())
+psr.add_argument('--in_train', default='in_train')
+psr.add_argument('--in_vali', default='in_vali')
+psr.add_argument('--ep', type=int, default=400)
+args = vars(psr.parse_args())
 print(args)
 
 EPOCH = args['ep']
@@ -40,23 +40,25 @@ BATCH = 32
 data_path_train = args['in_train']
 data_path_vali = args['in_vali']
 
-DR    = 0.1      # Dropout rate                  
+DR = 0.1      # Dropout rate
 
-### define r2 for reporting
+# define r2 for reporting
+
 
 def r2(y_true, y_pred):
-    SS_res =  K.sum(K.square(y_true - y_pred))
+    SS_res = K.sum(K.square(y_true - y_pred))
     SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
-    return (1 - SS_res/(SS_tot + K.epsilon()))
+    return (1 - SS_res / (SS_tot + K.epsilon()))
 
-## Implement a Transformer block as a layer
+# Implement a Transformer block as a layer
+
 
 class TransformerBlock(layers.Layer):
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
         super(TransformerBlock, self).__init__()
         self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
         self.ffn = keras.Sequential(
-            [layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim),]
+            [layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim), ]
         )
         self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
@@ -71,8 +73,9 @@ class TransformerBlock(layers.Layer):
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out1 + ffn_output)
 
-## Implement embedding layer
-## Two seperate embedding layers, one for tokens, one for token index (positions).
+# Implement embedding layer
+# Two seperate embedding layers, one for tokens, one for token index (positions).
+
 
 class TokenAndPositionEmbedding(layers.Layer):
     def __init__(self, maxlen, vocab_size, embed_dim):
@@ -88,10 +91,10 @@ class TokenAndPositionEmbedding(layers.Layer):
         return x + positions
 
 
-## Input and prepare dataset
+# Input and prepare dataset
 
-vocab_size = 40000  # 
-maxlen = 250  # 
+vocab_size = 40000  #
+maxlen = 250  #
 
 
 data_train = pd.read_csv(data_path_train)
@@ -107,10 +110,12 @@ y_val = data_vali["type"].values.reshape(-1, 1) * 1.0
 tokenizer = text.Tokenizer(num_words=vocab_size)
 tokenizer.fit_on_texts(data_train["smiles"])
 
+
 def prep_text(texts, tokenizer, max_sequence_length):
     # Turns text into into padded sequences.
     text_sequences = tokenizer.texts_to_sequences(texts)
     return sequence.pad_sequences(text_sequences, maxlen=maxlen)
+
 
 x_train = prep_text(data_train["smiles"], tokenizer, maxlen)
 x_val = prep_text(data_vali["smiles"], tokenizer, maxlen)
@@ -118,7 +123,7 @@ x_val = prep_text(data_vali["smiles"], tokenizer, maxlen)
 print(x_train.shape)
 print(y_train.shape)
 
-## Create regression/classifier model using N transformer layers
+# Create regression/classifier model using N transformer layers
 
 embed_dim = 128  # Embedding size for each token
 num_heads = 16  # Number of attention heads
@@ -133,9 +138,9 @@ x = transformer_block(x)
 x = transformer_block(x)
 x = transformer_block(x)
 
-#x = layers.GlobalAveragePooling1D()(x)  --- the original model used this but the accuracy was much lower
+# x = layers.GlobalAveragePooling1D()(x)  --- the original model used this but the accuracy was much lower
 
-x = layers.Reshape((1,32000), input_shape=(250,128,))(x)  # reshaping increases parameters but improves accuracy a lot
+x = layers.Reshape((1, 32000), input_shape=(250, 128,))(x)  # reshaping increases parameters but improves accuracy a lot
 x = layers.Dropout(0.1)(x)
 x = layers.Dense(1024, activation="relu")(x)
 x = layers.Dropout(0.1)(x)
@@ -151,7 +156,7 @@ model = keras.Model(inputs=inputs, outputs=outputs)
 
 model.summary()
 
-## Train and Evaluate
+# Train and Evaluate
 
 model.compile(loss='sparse_categorical_crossentropy',
               optimizer=Adam(lr=0.000001),
@@ -169,8 +174,6 @@ history = model.fit(x_train, y_train,
                     epochs=EPOCH,
                     verbose=1,
                     validation_data=(x_val, y_val),
-                    callbacks = [checkpointer,csv_logger, reduce_lr, early_stop])
+                    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
 
 model.load_weights('smile_class.autosave.model.h5')
-
-
