@@ -6,20 +6,20 @@ The CANDLE versions make use of the common network design in smiles_transformer.
 models in `sct_baseline_keras.py` and `srt_baseline_keras.py`, for classification and regression, respectively. 
 All the relevant arguments are contained in the respective default model files, 
 `class_default_model.txt` and `regress_default_model.txt`.
-They can be invoked with 'python sct_baseline_keras.py' and all variables can be overwritten from the command line.
+They can be invoked with `python sct_baseline_keras.py` and all variables can be overwritten from the command line.
 The datasets will be automatically downloaded and stored in the `../../Data/Pilot1 directory`. 
 
 Running the original versions:
 
 The datasets
 
-classificaiton problem.
+Classification problem.
 
 CHEMBL -- 1.5M training examples.. for Lipinski (1/0)  (Lipinski criteria for drug likeness)  validation 100K samples non-overlapping
 
 Classification validation accuracy is about 91% after 10-20 epochs
 
-regression problem
+Regression problem
 
 CHEMBL -- 1.5M training examples (shuffled and resampled so not same 1.5M as classification) .. predicting molecular Weight validation
 is also 100K samples non-overlapping.
@@ -33,16 +33,17 @@ We save the best validation loss in the *.h5 dumps.
 
 To run the models
 
-CUDA_VISIBLE_DEVICES=1 python smiles_class_transformer.py --in_train chm.lipinski.trn.csv --in_vali chm.lipinski.val.csv --ep 25
+`CUDA_VISIBLE_DEVICES=1 python smiles_class_transformer.py --in_train chm.lipinski.trn.csv --in_vali chm.lipinski.val.csv --ep 25`
 
 or
 
-CUDA_VISIBLE_DEVICES=0 python smiles_regress_transformer.py --in_train chm.weight.trn.csv --in_vali chm.weight.val.csv --ep 25
+`CUDA_VISIBLE_DEVICES=0 python smiles_regress_transformer.py --in_train chm.weight.trn.csv --in_vali chm.weight.val.csv --ep 25`
 
 
 
 Regression output should look something like
 
+```
 Epoch 1/25
 2022-03-21 12:53:11.402337: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcublas.so.10
 46875/46875 [==============================] - 4441s 95ms/step - loss: 11922.3690 - mae: 77.4828 - r2: 0.3369 - val_loss: 1460.3314 - val_mae: 21.4797 - val_r2: 0.9164
@@ -144,4 +145,5 @@ Epoch 25/25
 46875/46875 [==============================] - 4422s 94ms/step - loss: 4259.8291 - mae: 48.3112 - r2: 0.7556 - val_loss: 813.1475 - val_mae: 12.2975 - val_r2: 0.9564
 
 Epoch 00025: val_loss did not improve from 800.85254
+```
 
