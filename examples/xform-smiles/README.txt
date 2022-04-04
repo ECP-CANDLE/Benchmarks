@@ -1,3 +1,13 @@
+CANDLE benchmark versions are now available.
+
+The original examples are retained and can be run as noted below. 
+
+The CANDLE versions make use of the common network design in smiles_transformer.py, and implement the 
+models in sct_baseline_keras.py and srt_baseline_keras.py, for classification and regression, respectively. 
+All the relevant arguments are contained in the respective default model files, 
+class_default_model.txt and regress_default_model.txt.
+They can be invoked with 'python sct_baseline_keras.py' and all variables can be overwritten from the command line.
+
 The datasets
 
 classificaiton problem.
