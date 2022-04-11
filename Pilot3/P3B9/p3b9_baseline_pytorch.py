@@ -2,12 +2,12 @@ import torch
 import p3b9 as bmk
 import candle
 
-from dataclasses import dataclass, field
 from transformers import (
-BertTokenizer, BertConfig, BertForMaskedLM, DataCollatorForLanguageModeling, Trainer, TrainingArguments, HfArgumentParser
+    BertTokenizer, BertConfig, BertForMaskedLM, DataCollatorForLanguageModeling, Trainer, TrainingArguments, HfArgumentParser
 )
 
 import webdataset as wd
+
 
 class truncate(object):
 
@@ -59,7 +59,8 @@ def run(args):
 
     print('total data len per gpu:', args.data_len_gpu)
     dataset = wd.Dataset(args.dataset,
-                     length=args.data_len_gpu, shuffle=True).decode('torch').rename(input_ids='pth').map_dict(input_ids=trunc).shuffle(1000)
+                         length=args.data_len_gpu,
+                         shuffle=True).decode('torch').rename(input_ids='pth').map_dict(input_ids=trunc).shuffle(1000)
     tokenizer = BertTokenizer.from_pretrained(args.name_pretrained_tokenizer)
 
     data_collator = DataCollatorForLanguageModeling(
