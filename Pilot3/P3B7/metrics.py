@@ -1,4 +1,4 @@
-from torchmetrics.classification.f_beta import F1Score as F1
+from torchmetrics import F1Score as F1
 
 
 class F1Meter:
