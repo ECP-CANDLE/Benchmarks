@@ -8,3 +8,5 @@
 2. pubmed_bert-vocab.txt is the tokenizer vocabulary.
 3. bert_webdataset.py contains the model training code, relying heavily on [Huggingface Transformers](https://github.com/huggingface/transformers)
 4. run.sh is a sample runscript for running this benchmark locally.
+
+Benchmark requires webdataset==0.1.62.
