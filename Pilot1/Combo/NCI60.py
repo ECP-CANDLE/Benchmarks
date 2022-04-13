@@ -286,7 +286,7 @@ def load_drug_set_descriptors(drug_set='ALMANAC', ncols=None, scaling='std', add
     # df1['NAME'] = df1['NAME'].map(lambda x: x[4:])
     df1.rename(columns={'NAME': 'Drug'}, inplace=True)
 
-    df2 = df.drop('NAME', 1)
+    df2 = df.drop('NAME', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
 
@@ -336,7 +336,7 @@ def load_drug_descriptors_new(ncols=None, scaling='std', add_prefix=True):
     # df1['NAME'] = df1['NAME'].map(lambda x: x[4:])
     df1.rename(columns={'NAME': 'Drug'}, inplace=True)
 
-    df2 = df.drop('NAME', 1)
+    df2 = df.drop('NAME', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
 
@@ -383,7 +383,7 @@ def load_drug_descriptors(ncols=None, scaling='std', add_prefix=True):
     df1['NAME'] = df1['NAME'].map(lambda x: x[4:])
     df1.rename(columns={'NAME': 'NSC'}, inplace=True)
 
-    df2 = df.drop('NAME', 1)
+    df2 = df.drop('NAME', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
 
@@ -427,7 +427,7 @@ def load_drug_descriptors_old(ncols=None, scaling='std', add_prefix=True):
     df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
     df1.rename(columns={'NAME': 'NSC'}, inplace=True)
 
-    df2 = df.drop('NAME', 1)
+    df2 = df.drop('NAME', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
 
@@ -489,7 +489,7 @@ def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_
 
     df1 = df['Sample']
 
-    df2 = df.drop('Sample', 1)
+    df2 = df.drop('Sample', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('rnaseq.')
 
@@ -541,7 +541,7 @@ def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_
     df1 = df['CELLNAME']
     df1 = df1.map(lambda x: x.replace(':', '.'))
 
-    df2 = df.drop('CELLNAME', 1)
+    df2 = df.drop('CELLNAME', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('rnaseq.')
 
@@ -589,7 +589,7 @@ def load_cell_expression_u133p2(ncols=None, scaling='std', add_prefix=True, use_
     df1 = df['CELLNAME']
     df1 = df1.map(lambda x: x.replace(':', '.'))
 
-    df2 = df.drop('CELLNAME', 1)
+    df2 = df.drop('CELLNAME', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('expr.')
 
@@ -639,7 +639,7 @@ def load_cell_expression_5platform(ncols=None, scaling='std', add_prefix=True, u
     df1 = df['CellLine']
     df1.name = 'CELLNAME'
 
-    df2 = df.drop('CellLine', 1)
+    df2 = df.drop('CellLine', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('expr_5p.')
 
@@ -680,7 +680,7 @@ def load_cell_mirna(ncols=None, scaling='std', add_prefix=True):
     df1 = df['CellLine']
     df1.name = 'CELLNAME'
 
-    df2 = df.drop('CellLine', 1)
+    df2 = df.drop('CellLine', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('mRNA.')
 
@@ -775,7 +775,7 @@ def load_drug_autoencoded_AG(ncols=None, scaling='std', add_prefix=True):
         global_cache[path] = df
 
     df1 = pd.DataFrame(df.loc[:, 'NSC'].astype(int).astype(str))
-    df2 = df.drop('NSC', 1)
+    df2 = df.drop('NSC', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('smiles_latent_AG.')
 

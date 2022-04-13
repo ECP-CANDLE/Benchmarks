@@ -251,15 +251,15 @@ def load_drug_data(ncols=None, scaling='std', imputing='mean', dropna=None, add_
     df_desc = load_drug_set_descriptors(drug_set='Combined_PubChem', ncols=ncols)
     df_fp = load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=ncols)
 
-    df_desc = pd.merge(df_info[['ID', 'Drug']], df_desc, on='Drug').drop('Drug', 1).rename(columns={'ID': 'Drug'})
-    df_fp = pd.merge(df_info[['ID', 'Drug']], df_fp, on='Drug').drop('Drug', 1).rename(columns={'ID': 'Drug'})
+    df_desc = pd.merge(df_info[['ID', 'Drug']], df_desc, on='Drug').drop('Drug', axis=1).rename(columns={'ID': 'Drug'})
+    df_fp = pd.merge(df_info[['ID', 'Drug']], df_fp, on='Drug').drop('Drug', axis=1).rename(columns={'ID': 'Drug'})
 
     df_desc2 = load_drug_set_descriptors(drug_set='NCI60', usecols=df_desc.columns.tolist() if ncols else None)
     df_fp2 = load_drug_set_fingerprints(drug_set='NCI60', usecols=df_fp.columns.tolist() if ncols else None)
 
     df_desc = pd.concat([df_desc, df_desc2]).reset_index(drop=True)
     df1 = pd.DataFrame(df_desc.loc[:, 'Drug'])
-    df2 = df_desc.drop('Drug', 1)
+    df2 = df_desc.drop('Drug', axis=1)
     df2 = impute_and_scale(df2, scaling=scaling, imputing=imputing, dropna=dropna)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
@@ -267,7 +267,7 @@ def load_drug_data(ncols=None, scaling='std', imputing='mean', dropna=None, add_
 
     df_fp = pd.concat([df_fp, df_fp2]).reset_index(drop=True)
     df1 = pd.DataFrame(df_fp.loc[:, 'Drug'])
-    df2 = df_fp.drop('Drug', 1)
+    df2 = df_fp.drop('Drug', axis=1)
     df2 = impute_and_scale(df2, scaling=None, imputing=imputing, dropna=dropna)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
@@ -289,7 +289,7 @@ def load_mordred_descriptors(ncols=None, scaling='std', imputing='mean', dropna=
     df1 = pd.DataFrame(df.loc[:, 'DRUG'])
     df1.rename(columns={'DRUG': 'Drug'}, inplace=True)
 
-    df2 = df.drop('DRUG', 1)
+    df2 = df.drop('DRUG', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('mordred.')
 
@@ -298,7 +298,7 @@ def load_mordred_descriptors(ncols=None, scaling='std', imputing='mean', dropna=
     df_desc = pd.concat([df1, df2], axis=1)
 
     df1 = pd.DataFrame(df_desc.loc[:, 'Drug'])
-    df2 = df_desc.drop('Drug', 1)
+    df2 = df_desc.drop('Drug', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('mordred.')
     if feature_subset:
@@ -316,13 +316,13 @@ def load_drug_descriptors(ncols=None, scaling='std', imputing='mean', dropna=Non
     df_info['Drug'] = df_info['PUBCHEM']
 
     df_desc = load_drug_set_descriptors(drug_set='Combined_PubChem', ncols=ncols)
-    df_desc = pd.merge(df_info[['ID', 'Drug']], df_desc, on='Drug').drop('Drug', 1).rename(columns={'ID': 'Drug'})
+    df_desc = pd.merge(df_info[['ID', 'Drug']], df_desc, on='Drug').drop('Drug', axis=1).rename(columns={'ID': 'Drug'})
 
     df_desc2 = load_drug_set_descriptors(drug_set='NCI60', usecols=df_desc.columns.tolist() if ncols else None)
 
     df_desc = pd.concat([df_desc, df_desc2]).reset_index(drop=True)
     df1 = pd.DataFrame(df_desc.loc[:, 'Drug'])
-    df2 = df_desc.drop('Drug', 1)
+    df2 = df_desc.drop('Drug', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
     if feature_subset:
@@ -340,13 +340,13 @@ def load_drug_fingerprints(ncols=None, scaling='std', imputing='mean', dropna=No
     df_info['Drug'] = df_info['PUBCHEM']
 
     df_fp = load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=ncols)
-    df_fp = pd.merge(df_info[['ID', 'Drug']], df_fp, on='Drug').drop('Drug', 1).rename(columns={'ID': 'Drug'})
+    df_fp = pd.merge(df_info[['ID', 'Drug']], df_fp, on='Drug').drop('Drug', axis=1).rename(columns={'ID': 'Drug'})
 
     df_fp2 = load_drug_set_fingerprints(drug_set='NCI60', usecols=df_fp.columns.tolist() if ncols else None)
 
     df_fp = pd.concat([df_fp, df_fp2]).reset_index(drop=True)
     df1 = pd.DataFrame(df_fp.loc[:, 'Drug'])
-    df2 = df_fp.drop('Drug', 1)
+    df2 = df_fp.drop('Drug', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
     if feature_subset:
@@ -431,7 +431,7 @@ def load_drug_set_descriptors(drug_set='Combined_PubChem', ncols=None, usecols=N
     df1 = pd.DataFrame(df.loc[:, 'NAME'])
     df1.rename(columns={'NAME': 'Drug'}, inplace=True)
 
-    df2 = df.drop('NAME', 1)
+    df2 = df.drop('NAME', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('dragon7.')
 
@@ -471,7 +471,7 @@ def load_drug_set_fingerprints(drug_set='Combined_PubChem', ncols=None, usecols=
         df1 = pd.DataFrame(df.loc[:, col1])
         df1.rename(columns={col1: 'Drug'}, inplace=True)
 
-        df2 = df.drop(col1, 1)
+        df2 = df.drop(col1, axis=1)
         if add_prefix:
             df2 = df2.add_prefix('dragon7.')
 
@@ -554,7 +554,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         df1 = df_sample_source.merge(df_source, on='Source', how='left').drop('Source', axis=1)
         logger.info('Embedding RNAseq data source into features: %d additional columns', df1.shape[1] - 1)
 
-    df2 = df.drop('Sample', 1)
+    df2 = df.drop('Sample', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('rnaseq.')
 

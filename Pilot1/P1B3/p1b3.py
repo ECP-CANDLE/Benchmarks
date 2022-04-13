@@ -260,7 +260,7 @@ def load_cellline_expressions(path, dtype, ncols=None, scaling='std'):
     df1 = df1.map(lambda x: x.replace('.', ':'))
     df1.name = 'CELLNAME'
 
-    df2 = df.drop('CellLine', 1)
+    df2 = df.drop('CellLine', axis=1)
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -298,7 +298,7 @@ def load_cellline_mirna(path, dtype, ncols=None, scaling='std'):
     df1 = df1.map(lambda x: x.replace('.', ':'))
     df1.name = 'CELLNAME'
 
-    df2 = df.drop('CellLine', 1)
+    df2 = df.drop('CellLine', axis=1)
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -383,7 +383,7 @@ def load_drug_descriptors(path, dtype, ncols=None, scaling='std'):
     df1 = pd.DataFrame(df.loc[:, 'NAME'])
     df1.rename(columns={'NAME': 'NSC'}, inplace=True)
 
-    df2 = df.drop('NAME', 1)
+    df2 = df.drop('NAME', axis=1)
 
     # # Filter columns if requested
 
@@ -421,7 +421,7 @@ def load_drug_autoencoded(path, dtype, ncols=None, scaling='std'):
     df = pd.read_csv(path, engine='c', converters={'NSC': str}, dtype=dtype)
 
     df1 = pd.DataFrame(df.loc[:, 'NSC'])
-    df2 = df.drop('NSC', 1)
+    df2 = df.drop('NSC', axis=1)
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -737,7 +737,7 @@ class DataGenerator(object):
                 elif fea == 'noise':
                     df = df.merge(self.data.df_drug_rand, on='NSC')
 
-            df = df.drop(['CELLNAME', 'NSC'], 1)
+            df = df.drop(['CELLNAME', 'NSC'], axis=1)
             x = np.array(df.iloc[:, 1:])
 
             if self.cell_noise_sigma:
