@@ -11,7 +11,7 @@ import sys
 # import matplotlib.pyplot as plt
 
 from tensorflow.keras import backend as K
-from tensorflow.keras.optimizers import Adam  # RMSprop, SGD
+import tensorflow.keras.optimizers as optimizers
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 
 file_path = os.path.dirname(os.path.realpath(__file__))
@@ -20,6 +20,15 @@ sys.path.append(lib_path)
 
 import candle
 import smiles_transformer as st
+
+import tensorflow.config.experimental
+gpus = tensorflow.config.experimental.list_physical_devices('GPU')
+try:
+    for gpu in gpus:
+        print("setting memory growth")
+        tensorflow.config.experimental.set_memory_growth(gpu, True)
+except RuntimeError as e:
+    print(e)
 
 
 def initialize_parameters(default_model='regress_default_model.txt'):
@@ -43,8 +52,21 @@ def run(params):
 
     model = st.transformer_model(params)
 
+    optimizer = optimizers.deserialize({'class_name': params['optimizer'], 'config': {}})
+
+    # I don't know why we set base_lr. It doesn't appear to be used.
+    if 'base_lr' in params and params['base_lr'] > 0:
+        base_lr = params['base_lr']
+    else:
+        base_lr = K.get_value(optimizer.lr)
+
+    if 'learning_rate' in params and params['learning_rate'] > 0:
+        K.set_value(optimizer.lr, params['learning_rate'])
+        print('Done setting optimizer {} learning rate to {}'.format(
+            params['optimizer'],params['learning_rate']))
+
     model.compile(loss='mean_squared_error',
-                  optimizer=Adam(lr=0.00001),
+                  optimizer=optimizer,
                   metrics=['mae', st.r2])
 
     # set up a bunch of callbacks to do work during model training..
