@@ -13,7 +13,11 @@ from tensorflow.keras.metrics import mean_squared_error, mean_absolute_error
 
 import numpy as np
 
+from typing import List, Optional, Tuple, Type, Union
+
 from scipy.stats import norm, cauchy
+
+Array = Type[np.ndarray]
 
 piSQ = np.pi**2
 
@@ -22,7 +26,7 @@ piSQ = np.pi**2
 # For Abstention Model
 
 
-def abstention_loss(alpha, mask):
+def abstention_loss(alpha, mask: Array):
     """ Function to compute abstention loss.
         It is composed by two terms:
         (i) original loss of the multiclass classification problem,
@@ -62,7 +66,7 @@ def abstention_loss(alpha, mask):
     return loss
 
 
-def sparse_abstention_loss(alpha, mask):
+def sparse_abstention_loss(alpha, mask: Array):
     """ Function to compute abstention loss.
         It is composed by two terms:
         (i) original loss of the multiclass classification problem,
@@ -100,7 +104,7 @@ def sparse_abstention_loss(alpha, mask):
     return loss
 
 
-def abstention_acc_metric(nb_classes):
+def abstention_acc_metric(nb_classes: Union[int, Array]):
     """ Abstained accuracy:
         Function to estimate accuracy over the predicted samples
         after removing the samples where the model is abstaining.
@@ -138,7 +142,7 @@ def abstention_acc_metric(nb_classes):
     return metric
 
 
-def sparse_abstention_acc_metric(nb_classes):
+def sparse_abstention_acc_metric(nb_classes: Union[int, Array]):
     """ Abstained accuracy:
         Function to estimate accuracy over the predicted samples
         after removing the samples where the model is abstaining.
@@ -179,7 +183,7 @@ def sparse_abstention_acc_metric(nb_classes):
     return metric
 
 
-def abstention_metric(nb_classes):
+def abstention_metric(nb_classes: Union[int, Array]):
     """ Function to estimate fraction of the samples where the model is abstaining.
 
     Parameters
@@ -209,7 +213,7 @@ def abstention_metric(nb_classes):
     return metric
 
 
-def acc_class_i_metric(class_i):
+def acc_class_i_metric(class_i: int):
     """ Function to estimate accuracy over the ith class prediction.
         This estimation is global (i.e. abstaining samples are not removed)
 
@@ -259,7 +263,7 @@ def acc_class_i_metric(class_i):
     return metric
 
 
-def abstention_acc_class_i_metric(nb_classes, class_i):
+def abstention_acc_class_i_metric(nb_classes: Union[int, Array], class_i: int):
     """ Function to estimate accuracy over the class i prediction after removing the samples where the model is abstaining.
 
     Parameters
@@ -310,7 +314,7 @@ def abstention_acc_class_i_metric(nb_classes, class_i):
     return metric
 
 
-def abstention_class_i_metric(nb_classes, class_i):
+def abstention_class_i_metric(nb_classes: Union[int, Array], class_i: int):
     """ Function to estimate fraction of the samples where the model is abstaining in class i.
 
     Parameters
@@ -357,7 +361,7 @@ class AbstentionAdapt_Callback(Callback):
         The factor alpha is modified if the current abstention accuracy is less than the minimum accuracy set or if the current abstention fraction is greater than the maximum fraction set. Thresholds for minimum and maximum correction factors are computed and the correction over alpha is not allowed to be less or greater than them, respectively, to avoid huge swings in the abstention loss evolution.
     """
 
-    def __init__(self, acc_monitor, abs_monitor, alpha0, init_abs_epoch=4, alpha_scale_factor=0.8, min_abs_acc=0.9, max_abs_frac=0.4, acc_gain=5.0, abs_gain=1.0):
+    def __init__(self, acc_monitor, abs_monitor, alpha0: float, init_abs_epoch: int = 4, alpha_scale_factor: float = 0.8, min_abs_acc: float = 0.9, max_abs_frac: float = 0.4, acc_gain: float = 5.0, abs_gain: float = 1.0):
         """ Initializer of the AbstentionAdapt_Callback.
         Parameters
         ----------
@@ -391,9 +395,9 @@ class AbstentionAdapt_Callback(Callback):
         self.max_abs_frac = max_abs_frac  # maximum abstention fraction (value specified as parameter of the run)
         self.acc_gain = acc_gain  # factor for adjusting alpha scale
         self.abs_gain = abs_gain  # factor for adjusting alpha scale
-        self.alphavalues = []  # array to store alpha evolution
+        self.alphavalues: List[float] = []  # array to store alpha evolution
 
-    def on_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, epoch: int, logs=None):
         """ Updates the weight of abstention term on epoch end.
         Parameters
         ----------
@@ -435,7 +439,7 @@ class AbstentionAdapt_Callback(Callback):
         self.alphavalues.append(new_alpha_val)
 
 
-def modify_labels(numclasses_out, ytrain, ytest, yval=None):
+def modify_labels(numclasses_out: int, ytrain: Array, ytest: Array, yval: Optional[Array] = None) -> Tuple[Array, ...]:
     """ This function generates a categorical representation with a class added for indicating abstention.
 
     Parameters
@@ -489,7 +493,7 @@ def modify_labels(numclasses_out, ytrain, ytest, yval=None):
 ###################################################################
 
 
-def add_model_output(modelIn, mode=None, num_add=None, activation=None):
+def add_model_output(modelIn, mode: Optional[str] = None, num_add: Optional[int] = None, activation: Optional[str] = None):
     """ This function modifies the last dense layer in the passed keras model. The modification includes adding units and optionally changing the activation function.
 
     Parameters
@@ -567,7 +571,7 @@ def add_model_output(modelIn, mode=None, num_add=None, activation=None):
 # UQ regression - utilities
 
 
-def r2_heteroscedastic_metric(nout):
+def r2_heteroscedastic_metric(nout: int):
     """This function computes the r2 for the heteroscedastic model. The r2 is computed over the prediction of the mean and the standard deviation prediction is not taken into account.
 
     Parameters
@@ -598,7 +602,7 @@ def r2_heteroscedastic_metric(nout):
     return metric
 
 
-def mae_heteroscedastic_metric(nout):
+def mae_heteroscedastic_metric(nout: int):
     """This function computes the mean absolute error (mae) for the heteroscedastic model. The mae is computed over the prediction of the mean and the standard deviation prediction is not taken into account.
 
     Parameters
@@ -626,7 +630,7 @@ def mae_heteroscedastic_metric(nout):
     return metric
 
 
-def mse_heteroscedastic_metric(nout):
+def mse_heteroscedastic_metric(nout: int):
     """This function computes the mean squared error (mse) for the heteroscedastic model. The mse is computed over the prediction of the mean and the standard deviation prediction is not taken into account.
 
     Parameters
@@ -654,7 +658,7 @@ def mse_heteroscedastic_metric(nout):
     return metric
 
 
-def meanS_heteroscedastic_metric(nout):
+def meanS_heteroscedastic_metric(nout: int):
     """This function computes the mean log of the variance (log S) for the heteroscedastic model. The mean log is computed over the standard deviation prediction and the mean prediction is not taken into account.
 
     Parameters
@@ -682,7 +686,7 @@ def meanS_heteroscedastic_metric(nout):
     return metric
 
 
-def heteroscedastic_loss(nout):
+def heteroscedastic_loss(nout: int):
     """This function computes the heteroscedastic loss for the heteroscedastic model. Both mean and standard deviation predictions are taken into account.
 
     Parameters
@@ -717,7 +721,7 @@ def heteroscedastic_loss(nout):
     return loss
 
 
-def quantile_loss(quantile, y_true, y_pred):
+def quantile_loss(quantile: float, y_true, y_pred):
     """This function computes the quantile loss for a given quantile fraction.
 
     Parameters
@@ -734,7 +738,7 @@ def quantile_loss(quantile, y_true, y_pred):
     return K.mean(K.maximum(quantile * error, (quantile - 1) * error))
 
 
-def triple_quantile_loss(nout, lowquantile, highquantile):
+def triple_quantile_loss(nout: int, lowquantile: float, highquantile: float):
     """This function computes the quantile loss for the median and low and high quantiles. The median is given twice the weight of the other components.
 
     Parameters
@@ -759,20 +763,20 @@ def triple_quantile_loss(nout, lowquantile, highquantile):
 
         y_shape = K.shape(y_true)
         if nout > 1:
-            y_out0 = K.reshape(y_pred[:, 0::nout], y_shape)
-            y_out1 = K.reshape(y_pred[:, 1::nout], y_shape)
-            y_out2 = K.reshape(y_pred[:, 2::nout], y_shape)
+            y_qtl0 = K.reshape(y_pred[:, 0::3], y_shape)
+            y_qtl1 = K.reshape(y_pred[:, 1::3], y_shape)
+            y_qtl2 = K.reshape(y_pred[:, 2::3], y_shape)
         else:
-            y_out0 = K.reshape(y_pred[:, 0], y_shape)
-            y_out1 = K.reshape(y_pred[:, 1], y_shape)
-            y_out2 = K.reshape(y_pred[:, 2], y_shape)
+            y_qtl0 = K.reshape(y_pred[:, 0], y_shape)
+            y_qtl1 = K.reshape(y_pred[:, 1], y_shape)
+            y_qtl2 = K.reshape(y_pred[:, 2], y_shape)
 
-        return quantile_loss(lowquantile, y_true, y_out1) + quantile_loss(highquantile, y_true, y_out2) + 2. * quantile_loss(0.5, y_true, y_out0)
+        return quantile_loss(lowquantile, y_true, y_qtl1) + quantile_loss(highquantile, y_true, y_qtl2) + 2. * quantile_loss(0.5, y_true, y_qtl0)
 
     return loss
 
 
-def quantile_metric(nout, index, quantile):
+def quantile_metric(nout: int, index: int, quantile: float):
     """This function computes the quantile metric for a given quantile and corresponding output index. This is provided as a metric to track evolution while training.
 
     Parameters
@@ -795,10 +799,10 @@ def quantile_metric(nout, index, quantile):
         """
         y_shape = K.shape(y_true)
         if nout > 1:
-            y_out = K.reshape(y_pred[:, index::nout], y_shape)
+            y_qtl = K.reshape(y_pred[:, index::3], y_shape)
         else:
-            y_out = K.reshape(y_pred[:, index], y_shape)
-        return quantile_loss(quantile, y_true, y_out)
+            y_qtl = K.reshape(y_pred[:, index], y_shape)
+        return quantile_loss(quantile, y_true, y_qtl)
 
     metric.__name__ = 'quantile_{}'.format(quantile)
     return metric
@@ -809,7 +813,7 @@ def quantile_metric(nout, index, quantile):
 # For the Contamination Model
 
 
-def add_index_to_output(y_train):
+def add_index_to_output(y_train: Array) -> Array:
     """ This function adds a column to the training output to store the indices of the corresponding samples in the training set.
 
     Parameters
@@ -819,12 +823,16 @@ def add_index_to_output(y_train):
     """
     # Add indices to y
     y_train_index = range(y_train.shape[0])
-    y_train_augmented = np.vstack([y_train, y_train_index]).T
+    if y_train.ndim > 1:
+        shp = (y_train.shape[0], 1)
+        y_train_augmented = np.hstack([y_train, np.reshape(y_train_index, shp)])
+    else:
+        y_train_augmented = np.vstack([y_train, y_train_index]).T
 
     return y_train_augmented
 
 
-def contamination_loss(nout, T_k, a, sigmaSQ, gammaSQ):
+def contamination_loss(nout: int, T_k, a, sigmaSQ, gammaSQ):
     """ Function to compute contamination loss. It is composed by two terms: (i) the loss with respect to the normal distribution that models the distribution of the training data samples, (ii) the loss with respect to the Cauchy distribution that models the distribution of the outlier samples. Note that the evaluation of this contamination loss function does not make sense for any data different to the training set. This is because latent variables are only defined for samples in the training set.
 
     Parameters
@@ -884,6 +892,11 @@ class Contamination_Callback(Callback):
             Maximum value of a variable to allow
         """
         super(Contamination_Callback, self).__init__()
+        if y.ndim > 1:
+            if y.shape[1] > 1:
+                raise Exception(
+                    'ERROR ! Contamination model can be applied to one-output regression, but provided training data has: '
+                    + str(y.ndim) + 'outpus... Exiting')
 
         self.x = x                              # Features of training set
         self.y = y                              # Output of training set
@@ -904,7 +917,7 @@ class Contamination_Callback(Callback):
         self.sigmaSQvalues = []  # array to store sigmaSQ evolution
         self.gammaSQvalues = []  # array to store gammaSQ evolution
 
-    def on_epoch_end(self, epoch, logs={}):
+    def on_epoch_end(self, epoch: int, logs={}):
         """ Updates the parameters of the distributions in the contamination model on epoch end. The parameters updated are: 'a' for the global weight of the membership to the normal distribution, 'sigmaSQ' for the variance of the normal distribution and 'gammaSQ' for the scale of the Cauchy distribution of outliers. The latent variables are updated as well: 'T_k' describing in the first column the probability of membership to normal distribution and in the second column probability of membership to the Cauchy distribution i.e. outlier. Stores evolution of global parameters (a, sigmaSQ and gammaSQ).
 
         Parameters
@@ -953,7 +966,7 @@ class Contamination_Callback(Callback):
         self.gammaSQvalues.append(gammaSQ_eval)
 
 
-def mse_contamination_metric(nout):
+def mse_contamination_metric(nout: int):
     """This function computes the mean squared error (mse) for the contamination model. The mse is computed over the prediction. Therefore, the augmentation for the index variable is ignored.
 
     Parameters
@@ -977,7 +990,7 @@ def mse_contamination_metric(nout):
     return metric
 
 
-def mae_contamination_metric(nout):
+def mae_contamination_metric(nout: int):
     """This function computes the mean absolute error (mae) for the contamination model. The mae is computed over the prediction. Therefore, the augmentation for the index variable is ignored.
 
     Parameters
@@ -1001,7 +1014,7 @@ def mae_contamination_metric(nout):
     return metric
 
 
-def r2_contamination_metric(nout):
+def r2_contamination_metric(nout: int):
     """This function computes the r2 for the contamination model. The r2 is computed over the prediction. Therefore, the augmentation for the index variable is ignored.
 
     Parameters
