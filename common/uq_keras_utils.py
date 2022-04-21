@@ -759,15 +759,15 @@ def triple_quantile_loss(nout, lowquantile, highquantile):
 
         y_shape = K.shape(y_true)
         if nout > 1:
-            y_out0 = K.reshape(y_pred[:, 0::nout], y_shape)
-            y_out1 = K.reshape(y_pred[:, 1::nout], y_shape)
-            y_out2 = K.reshape(y_pred[:, 2::nout], y_shape)
+            y_qtl0 = K.reshape(y_pred[:, 0::3], y_shape)
+            y_qtl1 = K.reshape(y_pred[:, 1::3], y_shape)
+            y_qtl2 = K.reshape(y_pred[:, 2::3], y_shape)
         else:
-            y_out0 = K.reshape(y_pred[:, 0], y_shape)
-            y_out1 = K.reshape(y_pred[:, 1], y_shape)
-            y_out2 = K.reshape(y_pred[:, 2], y_shape)
+            y_qtl0 = K.reshape(y_pred[:, 0], y_shape)
+            y_qtl1 = K.reshape(y_pred[:, 1], y_shape)
+            y_qtl2 = K.reshape(y_pred[:, 2], y_shape)
 
-        return quantile_loss(lowquantile, y_true, y_out1) + quantile_loss(highquantile, y_true, y_out2) + 2. * quantile_loss(0.5, y_true, y_out0)
+        return quantile_loss(lowquantile, y_true, y_qtl1) + quantile_loss(highquantile, y_true, y_qtl2) + 2. * quantile_loss(0.5, y_true, y_qtl0)
 
     return loss
 
@@ -795,10 +795,10 @@ def quantile_metric(nout, index, quantile):
         """
         y_shape = K.shape(y_true)
         if nout > 1:
-            y_out = K.reshape(y_pred[:, index::nout], y_shape)
+            y_qtl = K.reshape(y_pred[:, index::3], y_shape)
         else:
-            y_out = K.reshape(y_pred[:, index], y_shape)
-        return quantile_loss(quantile, y_true, y_out)
+            y_qtl = K.reshape(y_pred[:, index], y_shape)
+        return quantile_loss(quantile, y_true, y_qtl)
 
     metric.__name__ = 'quantile_{}'.format(quantile)
     return metric
@@ -819,7 +819,11 @@ def add_index_to_output(y_train):
     """
     # Add indices to y
     y_train_index = range(y_train.shape[0])
-    y_train_augmented = np.vstack([y_train, y_train_index]).T
+    if y_train.ndim > 1:
+        shp = (y_train.shape[0], 1)
+        y_train_augmented = np.hstack([y_train, np.reshape(y_train_index, shp)])
+    else:
+        y_train_augmented = np.vstack([y_train, y_train_index]).T
 
     return y_train_augmented
 
@@ -884,6 +888,11 @@ class Contamination_Callback(Callback):
             Maximum value of a variable to allow
         """
         super(Contamination_Callback, self).__init__()
+        if y.ndim > 1:
+            if y.shape[1] > 1:
+                raise Exception(
+                    'ERROR ! Contamination model can be applied to one-output regression, but provided training data has: '
+                    + str(y.ndim) + 'outpus... Exiting')
 
         self.x = x                              # Features of training set
         self.y = y                              # Output of training set

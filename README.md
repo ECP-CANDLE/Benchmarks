@@ -17,8 +17,6 @@ At this point, we will refer to a benchmark by it's problem area and benchmark n
 
 Over time, we will be adding implementations that make use of different tensor frameworks. The primary (baseline) benchmarks are implemented using keras, and are named with '_baseline' in the name, for example p3b1_baseline_keras2.py. 
 
-Implementations that use alternative tensor frameworks, such as mxnet or neon, will have the name of the framework in the name. Examples can be seen in the P1B3 benchmark contribs/ directory, for example:
-        p1b3_mxnet.py
-        p1b3_neon.py
+Implementations that use alternative tensor frameworks, such as pytorch, will have the name of the framework in the name. Examples can be seen in the Pilot1 benchmark UnoMT directory, for example: `unoMT_baseline_pytorch.py`
 
-Documentation: https://ecp-candle.github.io/Candle/html/readme.html
+Documentation: https://ecp-candle.github.io/Candle/

@@ -2,9 +2,9 @@ import torch
 import p3b7 as bmk
 import candle
 
-import numpy as np
+import pandas as pd
+from pathlib import Path
 
-import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from data import P3B3, Egress
@@ -13,10 +13,7 @@ from util import to_device
 from meters import AccuracyMeter
 from metrics import F1Meter
 
-from prune import (
-    negative_prune, min_max_prune,
-    create_prune_masks, remove_prune_masks
-)
+from prune import create_prune_masks, remove_prune_masks
 
 
 TASKS = {
@@ -134,7 +131,7 @@ def evaluate(model, loader, device):
 
     accmeter.update_accuracy()
 
-    print(f'Validation accuracy:')
+    print(f'{"Validation accuracy:"}')
     accmeter.print_task_accuracies()
 
     loss /= len(loader.dataset)
@@ -142,39 +139,27 @@ def evaluate(model, loader, device):
     return loss
 
 
-def save_dataframe(metrics, filename):
+def save_dataframe(metrics, filename, args):
     """Save F1 metrics"""
     df = pd.DataFrame(metrics, index=[0])
-    path = Path(ARGS.savepath).joinpath(f'f1/{filename}.csv')
+    path = Path(args.savepath).joinpath(f'f1/{filename}.csv')
     df.to_csv(path, index=False)
 
 
 def run(args):
     args = candle.ArgumentStruct(**args)
     args.cuda = torch.cuda.is_available()
-    args.device = torch.device(f"cuda" if args.cuda else "cpu")
+    args.device = torch.device(f'{"cuda"}' if args.cuda else "cpu")
 
-    if args.use_synthetic_data:
-        train_data, valid_data = get_synthetic_data(args)
+    train_data, valid_data = get_synthetic_data(args)
 
-        hparams = Hparams(
-            kernel1=args.kernel1,
-            kernel2=args.kernel2,
-            kernel3=args.kernel3,
-            embed_dim=args.embed_dim,
-            n_filters=args.n_filters,
-        )
-    else:
-        train_data, valid_data = get_egress_data(tasks)
-
-        hparams = Hparams(
-            kernel1=args.kernel1,
-            kernel2=args.kernel2,
-            kernel3=args.kernel3,
-            embed_dim=args.embed_dim,
-            n_filters=args.n_filters,
-            vocab_size=len(train_data.vocab)
-        )
+    hparams = Hparams(
+        kernel1=args.kernel1,
+        kernel2=args.kernel2,
+        kernel3=args.kernel3,
+        embed_dim=args.embed_dim,
+        n_filters=args.n_filters,
+    )
 
     train_loader = DataLoader(train_data, batch_size=args.batch_size)
     valid_loader = DataLoader(valid_data, batch_size=args.batch_size)
