@@ -55,15 +55,15 @@ def run(params):
     optimizer = optimizers.deserialize({'class_name': params['optimizer'], 'config': {}})
 
     # I don't know why we set base_lr. It doesn't appear to be used.
-    if 'base_lr' in params and params['base_lr'] > 0:
-        base_lr = params['base_lr']
-    else:
-        base_lr = K.get_value(optimizer.lr)
+    # if 'base_lr' in params and params['base_lr'] > 0:
+    #     base_lr = params['base_lr']
+    # else:
+    #     base_lr = K.get_value(optimizer.lr)
 
     if 'learning_rate' in params and params['learning_rate'] > 0:
         K.set_value(optimizer.lr, params['learning_rate'])
         print('Done setting optimizer {} learning rate to {}'.format(
-            params['optimizer'],params['learning_rate']))
+            params['optimizer'], params['learning_rate']))
 
     model.compile(loss='mean_squared_error',
                   optimizer=optimizer,
@@ -86,6 +86,7 @@ def run(params):
     model.load_weights('smile_regress.autosave.model.h5')
 
     return history
+
 
 def main():
     params = initialize_parameters()
