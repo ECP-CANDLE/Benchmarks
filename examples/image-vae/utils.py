@@ -29,7 +29,7 @@ class MS_SSIM(torch.nn.Module):
         _, c, w, h = img1.size()
         window_size = min(w, h, 11)
         sigma = 1.5 * window_size / 11
-        window = create_window(window_size, sigma, self.channel).cuda(img1.get_device())
+        window = create_window(window_size, sigma, self.channel).xpu()
         mu1 = F.conv2d(img1, window, padding=window_size // 2, groups=self.channel)
         mu2 = F.conv2d(img2, window, padding=window_size // 2, groups=self.channel)
 
@@ -52,10 +52,10 @@ class MS_SSIM(torch.nn.Module):
 
     def ms_ssim(self, img1, img2, levels=5):
 
-        weight = Variable(torch.Tensor([0.0448, 0.2856, 0.3001, 0.2363, 0.1333]).cuda(img1.get_device()))
+        weight = Variable(torch.Tensor([0.0448, 0.2856, 0.3001, 0.2363, 0.1333]).xpu())
 
-        msssim = Variable(torch.Tensor(levels, ).cuda(img1.get_device()))
-        mcs = Variable(torch.Tensor(levels, ).cuda(img1.get_device()))
+        msssim = Variable(torch.Tensor(levels, ).xpu())
+        mcs = Variable(torch.Tensor(levels, ).xpu())
         for i in range(levels):
             ssim_map, mcs_map = self._ssim(img1, img2)
             msssim[i] = ssim_map

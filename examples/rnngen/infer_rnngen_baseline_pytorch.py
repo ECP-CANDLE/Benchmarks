@@ -7,6 +7,7 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils.rnn
 import torch.utils.data
+import ipex
 
 from model.model import CharRNN
 from model.vocab import START_CHAR, END_CHAR
@@ -189,8 +190,13 @@ def run(params):
     trained = candle.fetch_file(data_url + file, subdir='examples/rnngen')
 
     # Configure GPU
-    if args.use_gpus and torch.cuda.is_available():
-        device = 'cuda'
+    if args.use_gpus:
+        if torch.cuda.is_available():
+            device = 'cuda'
+        elif torch.xpu.is_available():
+            device = 'xpu'
+        else:
+            raise NameError('No GPU available')
     else:
         device = 'cpu'
     print('Using device:', device)

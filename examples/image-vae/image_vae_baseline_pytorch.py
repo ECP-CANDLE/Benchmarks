@@ -8,6 +8,7 @@ import torch
 from sklearn.linear_model import LinearRegression
 from torch import nn, optim
 from torchvision.utils import save_image
+import ipex
 
 from dataloader import MoleLoader
 from model import GeneralVae, PictureDecoder, PictureEncoder, customLoss
@@ -109,10 +110,10 @@ def run(gParams):
     save_files = args.model_path
 
     data_para = False
-    if torch.cuda.device_count() > 1:
+    if torch.xpu.device_count() > 1:
         data_para = True
     cuda = True
-    device = torch.device("cuda" if cuda and torch.cuda.is_available() else "cpu")
+    device = torch.device("xpu" if cuda and torch.xpu.is_available() else "cpu")
     kwargs = {'num_workers': args.workers, 'pin_memory': True} if cuda else {'num_workers': args.workers}
 
     print("\nloading data...")
@@ -149,8 +150,8 @@ def run(gParams):
 
     loss_picture = customLoss()
 
-    if data_para and torch.cuda.device_count() > 1:
-        print("Let's use", torch.cuda.device_count(), "GPUs!")
+    if data_para and torch.xpu.device_count() > 1:
+        print("Let's use", torch.xpu.device_count(), "GPUs!")
         model = nn.DataParallel(model)
         loss_picture = nn.DataParallel(loss_picture)
 
@@ -174,7 +175,7 @@ def run(gParams):
         model.train()
         loss_meter = AverageMeter()
         for batch_idx, (_, data, _) in enumerate(train_loader_food):
-            data = data.float().cuda()
+            data = data.float().xpu()
             optimizer.zero_grad()
 
             recon_batch, mu, logvar, _ = model(data)
@@ -212,7 +213,7 @@ def run(gParams):
         test_loss = 0
         with torch.no_grad():
             for i, (_, data, _) in enumerate(val_loader_food):
-                data = data.float().cuda()
+                data = data.float().xpu()
 
                 recon_batch, mu, logvar, _ = model(data)
                 print('recon', recon_batch.shape, mu.shape, logvar.shape, data.shape)
