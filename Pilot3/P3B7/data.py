@@ -200,7 +200,7 @@ class Egress(Dataset):
         self._preprocess(raw_data)
 
     def _preprocess(self, raw_data):
-        print(f'{"Preprocessing data..."}')
+        print("Preprocessing data...")
         self._make_processed_dirs()
 
         with open(raw_data, 'rb') as f:
@@ -215,7 +215,7 @@ class Egress(Dataset):
         self._save_split('train', corpus.train, y_train)
         self._save_split('valid', corpus.valid, y_valid)
         self._save_vocab(corpus.vocab)
-        print(f'{"Done!"}')
+        print("Done!")
 
     def _save_split(self, split, data, target):
         target = self._create_target(target)

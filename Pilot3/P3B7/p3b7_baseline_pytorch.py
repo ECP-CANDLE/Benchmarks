@@ -131,7 +131,7 @@ def evaluate(model, loader, device):
 
     accmeter.update_accuracy()
 
-    print(f'{"Validation accuracy:"}')
+    print("Validation accuracy:")
     accmeter.print_task_accuracies()
 
     loss /= len(loader.dataset)
@@ -149,7 +149,7 @@ def save_dataframe(metrics, filename, args):
 def run(args):
     args = candle.ArgumentStruct(**args)
     args.cuda = torch.cuda.is_available()
-    args.device = torch.device(f'{"cuda"}' if args.cuda else "cpu")
+    args.device = torch.device("cuda" if args.cuda else "cpu")
 
     train_data, valid_data = get_synthetic_data(args)
 
