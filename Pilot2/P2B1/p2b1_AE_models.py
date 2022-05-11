@@ -9,13 +9,8 @@ from tensorflow.keras.layers import BatchNormalization
 from tensorflow.keras.regularizers import l2
 
 import os
-import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
-sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
 
 
 def full_conv_mol_auto(bead_k_size=20, mol_k_size=12, weights_path=None, input_shape=(1, 784),
