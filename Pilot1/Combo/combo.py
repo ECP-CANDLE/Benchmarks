@@ -1,12 +1,9 @@
 from __future__ import print_function
 
 import os
-import sys
 import logging
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
 
 import candle
 

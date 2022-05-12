@@ -2,7 +2,6 @@ from __future__ import print_function
 import pandas as pd
 import numpy as np
 import os
-import sys
 
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Dense, Dropout, Activation, Conv1D, MaxPooling1D, Flatten, LocallyConnected1D
@@ -14,10 +13,6 @@ from sklearn.preprocessing import MaxAbsScaler
 
 TIMEOUT = 3600  # in sec; set this to -1 for no timeout
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', 'common'))
-sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
 
 import nt3 as bmk
 import candle

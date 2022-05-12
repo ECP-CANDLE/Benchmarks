@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import pickle
-import sys
 
 import numpy as np
 import pandas as pd
@@ -22,11 +21,8 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 from sklearn.model_selection import ShuffleSplit, KFold
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
-# import candle
-import file_utils
+import candle
 
 global_cache = {}
 
@@ -40,7 +36,7 @@ logger = logging.getLogger(__name__)
 
 def get_file(url):
     fname = os.path.basename(url)
-    return file_utils.get_file(fname, origin=url, cache_subdir='Pilot1')
+    return candle.get_file(fname, origin=url, cache_subdir='Pilot1')
 
 
 def read_IDs_file(fname):

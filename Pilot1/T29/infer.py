@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import os
-import sys
 from tensorflow import keras as ke
 from tensorflow.keras.models import model_from_json
 from tensorflow.keras.utils import to_categorical
@@ -10,8 +9,6 @@ from sklearn.preprocessing import MaxAbsScaler
 file_path = os.path.dirname(os.path.realpath(__file__))
 
 # candle
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
 import candle
 
 

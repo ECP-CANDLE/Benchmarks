@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import os
-import sys
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -18,8 +17,7 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 
 # candle
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
+
 import candle
 
 

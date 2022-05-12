@@ -2,7 +2,6 @@ from __future__ import print_function
 
 import collections
 import os
-import sys
 
 import numpy as np
 import pandas as pd
@@ -14,8 +13,6 @@ except ImportError:
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 
