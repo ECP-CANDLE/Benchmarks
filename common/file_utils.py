@@ -204,7 +204,6 @@ def directory_from_parameters(params, commonroot='Output'):
             String to specify the common folder to store results.
 
     """
-
     if commonroot in set(['.', './']):  # Same directory --> convert to absolute path
         outdir = os.path.abspath('.')
     else:  # Create path specified

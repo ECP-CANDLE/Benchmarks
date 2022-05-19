@@ -102,6 +102,17 @@ input_output_conf = [
         'help': 'set the run unique identifier.'}
 ]
 
+noise_conf = [ 
+    {'name': 'noise_save_cf',
+        'type': bool,
+        'default': False,
+        'help': 'save the model (Tensoflow saved model format) and data (pickle) objects for cf runs'},
+    {'name': 'noise_cf', 
+     'type': str,
+     'default': None,
+     'help': 'pickle file to hold dataset with noise already added through counterfactuals'}
+]
+
 logging_conf = [
     {'name': 'verbose',
         'abv': 'v',
@@ -316,7 +327,7 @@ ckpt_conf = [
 ]
 
 
-registered_conf = [basic_conf, input_output_conf, logging_conf, data_preprocess_conf, model_conf, training_conf, cyclic_learning_conf, ckpt_conf]
+registered_conf = [basic_conf, input_output_conf, logging_conf, data_preprocess_conf, model_conf, training_conf, cyclic_learning_conf, ckpt_conf, noise_conf]
 
 
 def extract_keywords(lst_dict, kw):
@@ -380,7 +391,7 @@ class ArgumentStruct:
        or object entries) can be used.
     """
     def __init__(self, **entries):
-        self.__dict__.update(entries)
+       self.__dict__.update(entries)
 
 
 class ListOfListsAction(argparse.Action):
@@ -567,7 +578,6 @@ def args_overwrite_config(args, config):
     for key in args_dict.keys():
         # try casting here
         params[key] = args_dict[key]
-
     if 'data_type' not in params:
         params['data_type'] = DEFAULT_DATATYPE
     else:

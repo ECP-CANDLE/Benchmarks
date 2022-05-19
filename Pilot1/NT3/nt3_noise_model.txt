@@ -38,4 +38,5 @@ alpha = 0.3
 alpha_scale_factor = 0.8
 init_abs_epoch = 5
 task_list = 0
+noise_save_cf = True
 task_names = ['activation_4']

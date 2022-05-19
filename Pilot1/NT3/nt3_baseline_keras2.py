@@ -15,9 +15,9 @@ from sklearn.preprocessing import MaxAbsScaler
 
 import nt3 as bmk
 import candle
+import pickle
 
-
-def initialize_parameters(default_model='nt3_default_model.txt'):
+def initialize_parameters(default_model='nt3_noise_model.txt'):
 
     # Build benchmark object
     nt3Bmk = bmk.BenchmarkNT3(
@@ -238,6 +238,10 @@ def run(gParameters):
 
         print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1] * 100))
 
+
+    if gParameters['noise_save_cf']:
+        model.save('{}/{}.autosave.model'.format(output_dir, model_name))
+        pickle.dump([X_train, X_test, Y_train, Y_test], open('{}/{}.autosave.data.pkl'.format(output_dir, model_name), "wb"))
     return history
 
 
