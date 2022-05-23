@@ -4,6 +4,7 @@ import sys
 
 import numpy as np
 import torch
+import ipex
 from sklearn.linear_model import LinearRegression
 from torchvision.utils import save_image
 
@@ -78,8 +79,7 @@ if __name__ == '__main__':
     log_interval = 25
     LR = 5.0e-4
 
-    cuda = True
-    device = torch.device("cuda" if cuda and torch.cuda.is_available() else "cpu")
+    device = torch.device("xpu" if torch.xpu.is_available() else "cpu")
 
     encoder = PictureEncoder(rep_size=512)
     decoder = PictureDecoder(rep_size=512)

@@ -2,6 +2,7 @@ import os
 import sys
 
 import torch
+import ipex
 from torchvision.utils import save_image
 from tqdm import tqdm
 
@@ -106,11 +107,11 @@ def get_data(gParams):
 
 
 def load_model(model, checkpoint, device):
-    ndevices = torch.cuda.device_count()
+    ndevices = torch.xpu.device_count()
     if ndevices == 0:
         ckpt = torch.load(os.path.join('checkpoint', checkpoint), map_location=torch.device('cpu'))
     else:
-        ckpt = torch.load(os.path.join('checkpoint', checkpoint))
+        ckpt = torch.load(os.path.join('checkpoint', checkpoint), map_location=device)
 
     if 'args' in ckpt:
         args = ckpt['args']
@@ -166,14 +167,14 @@ def run(params):
     # Configure GPUs
     if args.use_gpus:
         device_ids = []
-        ndevices = torch.cuda.device_count()
+        ndevices = torch.xpu.device_count()
         if ndevices > 1:
             for i in range(ndevices):
-                device_i = torch.device('cuda:' + str(i))
+                device_i = torch.device('xpu:' + str(i))
                 device_ids.append(device_i)
             device = device_ids[0]
         elif ndevices == 1:
-            device = torch.device('cuda:0')
+            device = torch.device('xpu:0')
         else:
             device = torch.device('cpu')
     else:
