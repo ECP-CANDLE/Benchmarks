@@ -11,7 +11,6 @@ For the CANDLE versions, all the relevant arguments are contained in the respect
 ```
 class_default_model.txt
 python sct_baseline_keras2.py
-
 ```
 and
 
@@ -24,7 +23,6 @@ python srt_baseline_keras2.py
 The original code demonstrating a simple transformer regressor and a simple transformer classifier are available as
 ```
 smiles_regress_transformer.py
-
 ```
 and
 
@@ -50,7 +48,6 @@ val_data = https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/xform-s
 To run the models
 ```
 CUDA_VISIBLE_DEVICES=1 python smiles_class_transformer.py --in_train chm.lipinski.trn.csv --in_vali chm.lipinski.val.csv --ep 25
-
 ```
 or
 
