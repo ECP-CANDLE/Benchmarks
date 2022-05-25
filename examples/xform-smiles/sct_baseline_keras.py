@@ -1,7 +1,6 @@
 # Setup
 
 import os
-import sys
 # import gzip
 
 # import math
@@ -15,8 +14,6 @@ from tensorflow.keras.optimizers import Adam  # RMSprop, SGD
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 import smiles_transformer as st
@@ -62,6 +59,8 @@ def run(params):
                         callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
 
     model.load_weights('smile_class.autosave.model.h5')
+
+    return history
 
 
 def main():

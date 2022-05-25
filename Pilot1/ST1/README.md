@@ -1,9 +1,9 @@
 # Simple transformers for classification and regression using SMILE string input
 
 ## Introduction
-The ST1 benchmark represent two versions of a simple transformer, one that can perform regression and the other classification. We chose the transformer architecture to see if we could train directly on SMILE strings. This benchmark brings novel capability to the suite of Pilot1 benchmarks in two ways. First, the featureization of a small molecule is simple its SMILE string. The secone novel aspect to the set of Pilot1 benchmarks is that the model is based on the Transformer architecture, albeit this benchmark is a simpler version of the large Transformer models that train on billions and greater parameters.
+The ST1 benchmark represent two versions of a simple transformer, one that can perform regression and the other classification. We chose the transformer architecture to see if we could train directly on SMILE strings. This benchmark brings novel capability to the suite of Pilot1 benchmarks in two ways. First, the featureization of a small molecule is simply its SMILE string. The second novel aspect to the set of Pilot1 benchmarks is that the model is based on the Transformer architecture, albeit this benchmark is a simpler version of the large Transformer models that train on billions and greater parameters.
 
-Both the original code and the CANDLE versions are available. The original examples are retained and can be run as noted below. The CANDLE versions make use of the common network design in smiles_transformer.py, and implement the models in `sct_baseline2_keras.py` and `srt_baseline_keras2.py`, for classification and regression, respectively. 
+Both the original code and the CANDLE versions are available. The original examples are retained and can be run as noted below. The CANDLE versions make use of the common network design in `smiles_transformer.py`, and implement the models in `sct_baseline_keras2.py` and `srt_baseline_keras2.py`, for classification and regression, respectively. 
 
 The example classification problem takes as input SMILE strings and trains a model to predict whether or not a compound is 'drug-like' based on Lipinski criteria. The example regression problem takes as input SMILE strings and trains a model to predict the molecular weight. Data are freely downloadable and automatically downloaded by the CANDLE versions.
 
@@ -12,8 +12,10 @@ For the CANDLE versions, all the relevant arguments are contained in the respect
 class_default_model.txt
 python sct_baseline_keras2.py
 
+```
 and
 
+```
 regress_default_model.txt
 python srt_baseline_keras2.py
 ```
@@ -23,12 +25,16 @@ The original code demonstrating a simple transformer regressor and a simple tran
 ```
 smiles_regress_transformer.py
 
+```
 and
 
+```
 smiles_class_transformer.py
 ```
 
-The example data sets are the same as for the CANDLE versions, and allow one to predict whether a small molecule is "drug-like" based on Lipinski criteria (classification problem), or predict the molecular weight (regression) from a SMILE string as input. The example data sets are downloadable using the information in the regress_default_model.txt or class_default_model.txt files. These data files must be downloaded manually and specified on the command line for execution.
+The example data sets are the same as for the CANDLE versions, and allow one to predict whether a small molecule is "drug-like" based on Lipinski criteria (classification problem), or predict the molecular weight (regression) from a SMILE string as input.
+The example data sets are downloadable using the information in the `regress_default_model.txt` or `class_default_model.txt` files.
+These data files must be downloaded manually and specified on the command line for execution.
 
 ```
 # for regression
@@ -45,8 +51,10 @@ To run the models
 ```
 CUDA_VISIBLE_DEVICES=1 python smiles_class_transformer.py --in_train chm.lipinski.trn.csv --in_vali chm.lipinski.val.csv --ep 25
 
+```
 or
 
+```
 CUDA_VISIBLE_DEVICES=0 python smiles_regress_transformer.py --in_train chm.weight.trn.csv --in_vali chm.weight.val.csv --ep 25
 ```
 The model with the best validation loss is saved in the .h5 dumps. Log files contain the trace. Regression output should look something like this.

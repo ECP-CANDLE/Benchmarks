@@ -1,16 +1,16 @@
-from keras import backend
-from keras import optimizers
-from keras.models import Model, load_model
-from keras.layers import Input, Dense, Dropout, concatenate, Conv2D, BatchNormalization, ReLU, MaxPooling2D, \
+from tensorflow.keras import backend
+from tensorflow.keras import optimizers
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.layers import Input, Dense, Dropout, concatenate, Conv2D, BatchNormalization, ReLU, MaxPooling2D, \
     Flatten, AlphaDropout
-from keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 from scipy import stats
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error, roc_auc_score, accuracy_score, \
     matthews_corrcoef
 
 import configparser
 import numpy as np
-import keras
+import tensorflow.keras as keras
 import os
 import pandas as pd
 import shutil

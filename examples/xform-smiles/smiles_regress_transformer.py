@@ -3,7 +3,6 @@
 import pandas as pd
 # import numpy as np
 import os
-import sys
 # import gzip
 import argparse
 
@@ -26,8 +25,6 @@ from tensorflow.keras.preprocessing import text
 
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 psr = argparse.ArgumentParser(description='input csv file')
 psr.add_argument('--in_train', default='in_train')

@@ -148,7 +148,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         df1 = df_sample_source.merge(df_source, on='Source', how='left').drop('Source', axis=1)
         logger.info('Embedding RNAseq data source into features: %d additional columns', df1.shape[1] - 1)
 
-    df2 = df.drop('Sample', 1)
+    df2 = df.drop('Sample', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('rnaseq.')
 

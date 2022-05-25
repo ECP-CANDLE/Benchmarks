@@ -16,3 +16,5 @@ vocab_size = 40000
 epochs = 400
 batch_size = 32
 loss = 'mean_squared_error'
+optimizer = 'adam'
+learning_rate = 0.00001

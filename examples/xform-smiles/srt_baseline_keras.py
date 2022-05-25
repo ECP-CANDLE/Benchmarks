@@ -1,7 +1,6 @@
 # Setup
 
 import os
-import sys
 # import gzip
 
 # import math
@@ -11,12 +10,9 @@ import sys
 # import matplotlib.pyplot as plt
 
 from tensorflow.keras import backend as K
-import tensorflow.keras.optimizers as optimizers
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 import smiles_transformer as st
@@ -52,7 +48,11 @@ def run(params):
 
     model = st.transformer_model(params)
 
-    optimizer = optimizers.deserialize({'class_name': params['optimizer'], 'config': {}})
+    kerasDefaults = candle.keras_default_config()
+
+    optimizer = candle.build_optimizer(params['optimizer'], params['learning_rate'], kerasDefaults)
+
+# optimizer = optimizers.deserialize({'class_name': params['optimizer'], 'config': {}})
 
     # I don't know why we set base_lr. It doesn't appear to be used.
     # if 'base_lr' in params and params['base_lr'] > 0:
@@ -60,10 +60,10 @@ def run(params):
     # else:
     #     base_lr = K.get_value(optimizer.lr)
 
-    if 'learning_rate' in params and params['learning_rate'] > 0:
-        K.set_value(optimizer.lr, params['learning_rate'])
-        print('Done setting optimizer {} learning rate to {}'.format(
-            params['optimizer'], params['learning_rate']))
+#     if 'learning_rate' in params and params['learning_rate'] > 0:
+#         K.set_value(optimizer.lr, params['learning_rate'])
+#         print('Done setting optimizer {} learning rate to {}'.format(
+#             params['optimizer'],params['learning_rate']))
 
     model.compile(loss='mean_squared_error',
                   optimizer=optimizer,
@@ -76,14 +76,16 @@ def run(params):
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.75, patience=20, verbose=1, mode='auto', epsilon=0.0001, cooldown=3, min_lr=0.000000001)
     early_stop = EarlyStopping(monitor='val_loss', patience=100, verbose=1, mode='auto')
 
-    model.fit(x_train, y_train,
-              batch_size=params['batch_size'],
-              epochs=params['epochs'],
-              verbose=1,
-              validation_data=(x_val, y_val),
-              callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
+    history = model.fit(x_train, y_train,
+                        batch_size=params['batch_size'],
+                        epochs=params['epochs'],
+                        verbose=1,
+                        validation_data=(x_val, y_val),
+                        callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
 
     model.load_weights('smile_regress.autosave.model.h5')
+
+    return history
 
 
 def main():
