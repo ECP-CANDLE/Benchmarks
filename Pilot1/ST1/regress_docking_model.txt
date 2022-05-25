@@ -1,0 +1,19 @@
+[Global_Params]
+data_url = "https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/xform-smiles-data/"
+train_data = 'Nsp13.helicase_m1_pocket2.train'
+val_data = 'Nsp13.helicase_m1_pocket2.val'
+dropout = 0.1
+dense = [1024, 256, 64, 16]
+activation = 'relu'
+out_layer = 1
+out_activation = 'relu'
+transformer_depth = 4
+embed_dim = 128
+ff_dim = 128
+maxlen = 250
+num_heads = 16
+vocab_size = 40000
+epochs = 400
+batch_size = 32
+loss = 'mean_squared_error'
+optimizer='Adam'
