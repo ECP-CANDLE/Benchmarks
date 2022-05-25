@@ -1,48 +1,55 @@
-CANDLE benchmark versions are now available.
+# Simple transformers for classification and regression using SMILE string input
 
-The original examples are retained and can be run as noted below. 
+## Introduction
+The ST1 benchmark represent two versions of a simple transformer, one that can perform regression and the other classification. We chose the transformer architecture to see if we could train directly on SMILE strings. This benchmark brings novel capability to the suite of Pilot1 benchmarks in two ways. First, the featureization of a small molecule is simple its SMILE string. The secone novel aspect to the set of Pilot1 benchmarks is that the model is based on the Transformer architecture, albeit this benchmark is a simpler version of the large Transformer models that train on billions and greater parameters.
 
-The CANDLE versions make use of the common network design in smiles_transformer.py, and implement the 
-models in `sct_baseline_keras.py` and `srt_baseline_keras.py`, for classification and regression, respectively. 
-All the relevant arguments are contained in the respective default model files, 
-`class_default_model.txt` and `regress_default_model.txt`.
-They can be invoked with `python sct_baseline_keras.py` and all variables can be overwritten from the command line.
-The datasets will be automatically downloaded and stored in the `../../Data/Pilot1 directory`. 
+Both the original code and the CANDLE versions are available. The original examples are retained and can be run as noted below. The CANDLE versions make use of the common network design in smiles_transformer.py, and implement the models in `sct_baseline2_keras.py` and `srt_baseline_keras2.py`, for classification and regression, respectively. 
 
-Running the original versions:
+The example classification problem takes as input SMILE strings and trains a model to predict whether or not a compound is 'drug-like' based on Lipinski criteria. The example regression problem takes as input SMILE strings and trains a model to predict the molecular weight. Data are freely downloadable and automatically downloaded by the CANDLE versions.
 
-The datasets
+For the CANDLE versions, all the relevant arguments are contained in the respective default model files. All variables can be overwritten from the command line. The datasets will be automatically downloaded and stored in the `../../Data/Pilot1 directory`. The respective default model files and commands to invoke the classifier and regressor are:
+```
+class_default_model.txt
+python sct_baseline_keras2.py
 
-Classification problem.
+and
 
-CHEMBL -- 1.5M training examples.. for Lipinski (1/0)  (Lipinski criteria for drug likeness)  validation 100K samples non-overlapping
+regress_default_model.txt
+python srt_baseline_keras2.py
+```
 
-Classification validation accuracy is about 91% after 10-20 epochs
+## Running the original versions
+The original code demonstrating a simple transformer regressor and a simple transformer classifier are available as
+```
+smiles_regress_transformer.py
 
-Regression problem
+and
 
-CHEMBL -- 1.5M training examples (shuffled and resampled so not same 1.5M as classification) .. predicting molecular Weight validation
-is also 100K samples non-overlapping.
+smiles_class_transformer.py
+```
 
-Regression problem achieves R^2 about .95 after ~20 epochs.
+The example data sets are the same as for the CANDLE versions, and allow one to predict whether a small molecule is "drug-like" based on Lipinski criteria (classification problem), or predict the molecular weight (regression) from a SMILE string as input. The example data sets are downloadable using the information in the regress_default_model.txt or class_default_model.txt files. These data files must be downloaded manually and specified on the command line for execution.
 
-See the log files for trace.
+```
+# for regression
+train_data = https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/xform-smiles-data/chm.weight.trn.csv
+val_data = https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/xform-smiles-data/chm.weight.val.csv
 
-We save the best validation loss in the *.h5 dumps.
 
+# for classification
+train_data = https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/xform-smiles-data/chm.lipinski.trn.csv
+val_data = https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/xform-smiles-data/chm.lipinski.val.csv
+```
 
 To run the models
-
-`CUDA_VISIBLE_DEVICES=1 python smiles_class_transformer.py --in_train chm.lipinski.trn.csv --in_vali chm.lipinski.val.csv --ep 25`
+```
+CUDA_VISIBLE_DEVICES=1 python smiles_class_transformer.py --in_train chm.lipinski.trn.csv --in_vali chm.lipinski.val.csv --ep 25
 
 or
 
-`CUDA_VISIBLE_DEVICES=0 python smiles_regress_transformer.py --in_train chm.weight.trn.csv --in_vali chm.weight.val.csv --ep 25`
-
-
-
-Regression output should look something like
-
+CUDA_VISIBLE_DEVICES=0 python smiles_regress_transformer.py --in_train chm.weight.trn.csv --in_vali chm.weight.val.csv --ep 25
+```
+The model with the best validation loss is saved in the .h5 dumps. Log files contain the trace. Regression output should look something like this.
 ```
 Epoch 1/25
 2022-03-21 12:53:11.402337: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcublas.so.10
@@ -146,4 +153,26 @@ Epoch 25/25
 
 Epoch 00025: val_loss did not improve from 800.85254
 ```
+
+
+## Background on the example classification problem
+
+CHEMBL -- 1.5M training examples.. for Lipinski (1/0)  (Lipinski criteria for drug likeness)  validation 100K samples non-overlapping
+
+Classification validation accuracy is about 91% after 10-20 epochs
+
+## Background on the example regression problem
+
+CHEMBL -- 1.5M training examples (shuffled and resampled so not same 1.5M as classification) .. predicting molecular Weight validation
+is also 100K samples non-overlapping.
+
+Regression problem achieves R^2 about .95 after ~20 epochs.
+
+
+
+
+
+
+
+
 
