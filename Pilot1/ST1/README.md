@@ -166,7 +166,7 @@ Predicting Lipinski criteria for drug likeness (1/0)
 Validation 100K samples non-overlapping
 Classification validation accuracy is about 91% after 10-20 epochs
 
-## Background on the example regression problem
+## Example regression problem metrics
 CHEMBL -- 1.5M training examples (shuffled and resampled so not same 1.5M as classification)
 Predicting molecular Weight validation
 Is also 100K samples non-overlapping.
