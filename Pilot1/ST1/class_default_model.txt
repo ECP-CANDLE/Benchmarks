@@ -16,3 +16,5 @@ vocab_size = 40000
 epochs = 400
 batch_size = 32
 loss = 'sparse_categorical_crossentropy'
+learning_rate = 0.000001
+optimizer = 'adam'

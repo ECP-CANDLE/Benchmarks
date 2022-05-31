@@ -1,22 +1,11 @@
 # Setup
 
 import os
-import sys
-# import gzip
-
-# import math
-# import matplotlib
-# matplotlib.use('Agg')
-
-# import matplotlib.pyplot as plt
 
 from tensorflow.keras import backend as K
-from tensorflow.keras.optimizers import Adam  # RMSprop, SGD
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 import smiles_transformer as st
@@ -26,8 +15,8 @@ def initialize_parameters(default_model='class_default_model.txt'):
 
     # Build benchmark object
     sctBmk = st.BenchmarkST(st.file_path, default_model, 'keras',
-                            prog='p1b1_baseline',
-                            desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
+                            prog='sct_baseline',
+                            desc='Transformer model for SMILES classification')
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(sctBmk)
@@ -43,8 +32,12 @@ def run(params):
 
     model = st.transformer_model(params)
 
-    model.compile(loss='sparse_categorical_crossentropy',
-                  optimizer=Adam(lr=0.000001),
+    kerasDefaults = candle.keras_default_config()
+
+    optimizer = candle.build_optimizer(params['optimizer'], params['learning_rate'], kerasDefaults)
+
+    model.compile(loss=params['loss'],
+                  optimizer=optimizer,
                   metrics=['accuracy'])
 
     # set up a bunch of callbacks to do work during model training..
@@ -62,6 +55,8 @@ def run(params):
                         callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
 
     model.load_weights('smile_class.autosave.model.h5')
+
+    return history
 
 
 def main():
