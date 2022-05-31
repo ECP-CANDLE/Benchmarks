@@ -13,11 +13,8 @@ from dataloader import MoleLoader
 from model import GeneralVae, PictureDecoder, PictureEncoder, customLoss
 from utils import AverageMeter
 import os
-import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 

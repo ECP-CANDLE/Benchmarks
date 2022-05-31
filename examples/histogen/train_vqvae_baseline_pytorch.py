@@ -16,10 +16,6 @@ import distributed as dist
 
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..'))
-sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
 
 port = (2 ** 15 + 2 ** 14 + hash(os.getuid()
         if sys.platform != "win32" else 1) % 2 ** 14)
