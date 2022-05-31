@@ -32,7 +32,7 @@ smiles_class_transformer.py
 
 The example data sets are the same as for the CANDLE versions, and allow one to predict whether a small molecule is "drug-like" based on Lipinski criteria (classification problem), or predict the molecular weight (regression) from a SMILE string as input.
 The example data sets are downloadable using the information in the `regress_default_model.txt` or `class_default_model.txt` files.
-These data files must be downloaded manually and specified on the command line for execution.
+These data files must be downloaded manually and specified on the command line for execution of the original versions.
 
 ```
 # for regression
@@ -160,17 +160,16 @@ Epoch 00025: val_loss did not improve from 800.85254
 ```
 
 
-## Background on the example classification problem
-
-CHEMBL -- 1.5M training examples.. for Lipinski (1/0)  (Lipinski criteria for drug likeness)  validation 100K samples non-overlapping
-
+##  Example classification problem metrics
+CHEMBL -- 1.5M training examples
+Predicting Lipinski criteria for drug likeness (1/0)
+Validation 100K samples non-overlapping
 Classification validation accuracy is about 91% after 10-20 epochs
 
-## Background on the example regression problem
-
-CHEMBL -- 1.5M training examples (shuffled and resampled so not same 1.5M as classification) .. predicting molecular Weight validation
-is also 100K samples non-overlapping.
-
+## Example regression problem metrics
+CHEMBL -- 1.5M training examples (shuffled and resampled so not same 1.5M as classification)
+Predicting molecular Weight validation
+Is also 100K samples non-overlapping.
 Regression problem achieves R^2 about .95 after ~20 epochs.
 
 
