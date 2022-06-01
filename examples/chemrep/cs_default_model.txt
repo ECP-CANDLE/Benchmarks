@@ -1,3 +1,0 @@
-[Global_Params]
-filename = 'pilot1-drugs'
-colname = 'SMILES'
