@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 
 import numpy as np
 import torch
@@ -13,8 +12,6 @@ logger = logging.getLogger('cairosvg')
 logger.setLevel(logging.CRITICAL)
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 
@@ -25,6 +22,8 @@ additional_definitions = [
      'default': 'samples/'},
     {'name': 'checkpoint', 'type': str,
      'help': 'saved model to sample from'},
+    {'name': 'model_path', 'type': str,
+     'help': 'path to saved model to sample from'},
     {'name': 'num_samples', 'type': int, 'default': 64, 'help': 'number of samples to draw'},
     {'name': 'image', 'type': candle.str2bool, 'help': 'save images instead of numpy array'}
 ]

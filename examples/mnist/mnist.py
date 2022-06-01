@@ -1,8 +1,5 @@
 import os
-import sys
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 from tensorflow.keras import backend as K
 import candle

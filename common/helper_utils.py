@@ -86,7 +86,7 @@ def set_up_logger(logfile, logger, verbose=False,
     fh.setFormatter(logging.Formatter(fmt_line, datefmt=fmt_date))
     fh.setLevel(logging.DEBUG)
 
-    sh = logging.StreamHandler()
+    sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(logging.Formatter(''))
     sh.setLevel(logging.DEBUG if verbose else logging.INFO)
 

@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import logging
 import numpy as np
@@ -15,8 +14,6 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.metrics import binary_crossentropy, mean_squared_error
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 
@@ -33,6 +30,20 @@ additional_definitions = [
      'help': 'number of top sample types to use'},
     {'name': 'n_samples', 'type': int, 'default': 10000,
      'help': 'number of RNAseq samples to generate'},
+    {'name': 'encoder_layers',
+     'nargs': '+',
+     'type': int,
+     'help': 'encoder network structure'},
+    {'name': 'encoder_activation',
+     'type': str,
+     'help': 'encoder layer activation'},
+    {'name': 'decoder_layers',
+     'nargs': '+',
+     'type': int,
+     'help': 'decoder network structure'},
+    {'name': 'decoder_activation',
+     'type': str,
+     'help': 'decoder layer activation'},
     {'name': 'plot', 'type': candle.str2bool,
      'help': 'plot test performance comparision with and without synthetic training data'}
 ]
@@ -113,7 +124,7 @@ def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):
 
 
 def load_cell_type(gParams):
-    link = gParams['data_url'] + gParams['cell_types']
+    link = gParams['data_url'] + gParams['train_data']
     path = candle.fetch_file(link, subdir='Examples')
     df = pd.read_csv(path, engine='c', sep='\t', header=None)
     df.columns = ['Sample', 'type']
@@ -169,7 +180,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         df1 = df_sample_source.merge(df_source, on='Source', how='left').drop('Source', axis=1)
         logger.info('Embedding RNAseq data source into features: %d additional columns', df1.shape[1] - 1)
 
-    df2 = df.drop('Sample', 1)
+    df2 = df.drop('Sample', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('rnaseq.')
 

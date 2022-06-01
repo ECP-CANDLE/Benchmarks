@@ -42,18 +42,18 @@ def get_function(name):
     return mapped
 
 
-def build_activation(type):
+def build_activation(activation):
 
     # activation
-    if type == 'relu':
+    if activation == 'relu':
         return torch.nn.ReLU()
-    elif type == 'sigmoid':
+    elif activation == 'sigmoid':
         return torch.nn.Sigmoid()
-    elif type == 'tanh':
+    elif activation == 'tanh':
         return torch.nn.Tanh()
 
 
-def build_optimizer(model, type, lr, kerasDefaults, trainable_only=True):
+def build_optimizer(model, optimizer, lr, kerasDefaults, trainable_only=True):
     if trainable_only:
         params = filter(lambda p: p.requires_grad, model.parameters())
     else:
@@ -61,57 +61,57 @@ def build_optimizer(model, type, lr, kerasDefaults, trainable_only=True):
 
     # schedule = optimizers.optimizer.Schedule() # constant lr (equivalent to default keras setting)
 
-    if type == 'sgd':
+    if optimizer == 'sgd':
         return torch.optim.GradientDescentMomentum(params,
                                                    lr=lr,
                                                    momentum_coef=kerasDefaults['momentum_sgd'],
                                                    nesterov=kerasDefaults['nesterov_sgd'])
 
-    elif type == 'rmsprop':
+    elif optimizer == 'rmsprop':
         return torch.optim.RMSprop(model.parameters(),
                                    lr=lr,
                                    alpha=kerasDefaults['rho'],
                                    eps=kerasDefaults['epsilon'])
 
-    elif type == 'adagrad':
+    elif optimizer == 'adagrad':
         return torch.optim.Adagrad(model.parameters(),
                                    lr=lr,
                                    eps=kerasDefaults['epsilon'])
 
-    elif type == 'adadelta':
+    elif optimizer == 'adadelta':
         return torch.optim.Adadelta(params,
                                     eps=kerasDefaults['epsilon'],
                                     rho=kerasDefaults['rho'])
 
-    elif type == 'adam':
+    elif optimizer == 'adam':
         return torch.optim.Adam(params,
                                 lr=lr,
                                 betas=[kerasDefaults['beta_1'], kerasDefaults['beta_2']],
                                 eps=kerasDefaults['epsilon'])
 
 
-def initialize(weights, type, kerasDefaults, seed=None, constant=0.):
+def initialize(weights, initializer, kerasDefaults, seed=None, constant=0.):
 
-    if type == 'constant':
+    if initializer == 'constant':
         return torch.nn.init.constant_(weights, val=constant)
 
-    elif type == 'uniform':
+    elif initializer == 'uniform':
         return torch.nn.init.uniform(weights,
                                      a=kerasDefaults['minval_uniform'],
                                      b=kerasDefaults['maxval_uniform'])
 
-    elif type == 'normal':
+    elif initializer == 'normal':
         return torch.nn.init.normal(weights,
                                     mean=kerasDefaults['mean_normal'],
                                     std=kerasDefaults['stddev_normal'])
 
-    elif type == 'glorot_normal':  # not quite Xavier
+    elif initializer == 'glorot_normal':  # not quite Xavier
         return torch.nn.init.xavier_normal(weights)
 
-    elif type == 'glorot_uniform':
+    elif initializer == 'glorot_uniform':
         return torch.nn.init.xavier_uniform_(weights)
 
-    elif type == 'he_normal':
+    elif initializer == 'he_normal':
         return torch.nn.init.kaiming_uniform(weights)
 
 

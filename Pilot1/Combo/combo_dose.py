@@ -6,6 +6,7 @@ import argparse
 import collections
 import logging
 import os
+import sys
 import threading
 
 import numpy as np
@@ -49,7 +50,7 @@ def set_up_logger(logfile, verbose):
     fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
     fh.setLevel(logging.DEBUG)
 
-    sh = logging.StreamHandler()
+    sh = logging.StreamHandler(sys.stdout)
     sh.setFormatter(logging.Formatter(''))
     sh.setLevel(logging.DEBUG if verbose else logging.INFO)
 

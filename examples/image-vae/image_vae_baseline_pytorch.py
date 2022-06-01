@@ -13,11 +13,8 @@ from dataloader import MoleLoader
 from model import GeneralVae, PictureDecoder, PictureEncoder, customLoss
 from utils import AverageMeter
 import os
-import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 
@@ -97,7 +94,7 @@ def run(gParams):
     test_file = candle.fetch_file(data_url + test_data, subdir='Examples/image_vae')
 
     starting_epoch = 1
-    total_epochs = gParams['epochs']
+    total_epochs = args.epochs
 
     rng_seed = 42
     torch.manual_seed(rng_seed)
@@ -260,10 +257,10 @@ def run(gParams):
 
         val_losses.append(test_loss)
 
-    if total_epochs is None:
+    if total_epochs == 0:
         trn_rng = itertools.count(start=starting_epoch)
     else:
-        trn_rng = range(starting_epoch, total_epochs + 1)
+        trn_rng = range(starting_epoch, total_epochs)
 
     for epoch in trn_rng:
         for param_group in optimizer.param_groups:

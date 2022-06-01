@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 python nt3_baseline_keras2.py -e 2
 # python nt3_baseline_keras2_tensorrt.py -e 2
 python nt3_abstention_keras2.py -e 2

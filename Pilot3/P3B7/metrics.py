@@ -1,4 +1,4 @@
-from pytorch_lightning.metrics.classification import F1
+from torchmetrics import F1Score as F1
 
 
 class F1Meter:

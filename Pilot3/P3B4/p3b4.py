@@ -1,15 +1,15 @@
 from __future__ import print_function
 
 import os
-import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
 
 import candle
 
 additional_definitions = [
+    {'name': 'attention_heads',
+     'action': 'store',
+     'type': int},
     {'name': 'attention_size',
      'action': 'store',
      'type': int},
@@ -43,7 +43,7 @@ required = [
 ]
 
 
-class BenchmarkP3B3(candle.Benchmark):
+class BenchmarkP3B4(candle.Benchmark):
 
     def set_locals(self):
         """Functionality to set variables specific for the benchmark

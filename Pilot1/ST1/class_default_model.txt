@@ -1,0 +1,20 @@
+[Global_Params]
+data_url = "https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/xform-smiles-data/"
+train_data = 'chm.lipinski.trn.csv'
+val_data = 'chm.lipinski.val.csv'
+dropout = 0.1
+dense = [1024, 256, 64, 16]
+activation = 'relu'
+out_layer = 2
+out_activation = 'softmax'
+transformer_depth = 4
+embed_dim = 128
+ff_dim = 128
+maxlen = 250
+num_heads = 16
+vocab_size = 40000
+epochs = 400
+batch_size = 32
+loss = 'sparse_categorical_crossentropy'
+learning_rate = 0.000001
+optimizer = 'adam'

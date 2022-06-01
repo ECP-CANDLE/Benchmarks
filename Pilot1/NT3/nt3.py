@@ -1,9 +1,6 @@
 import os
-import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
 
 import candle
 
@@ -17,14 +14,22 @@ additional_definitions = [
      'type': float},
     {'name': 'feature_col',
      'type': int},
+    {'name': 'sample_ids',
+     'type': int},
     {'name': 'feature_threshold',
      'type': float},
     {'name': 'add_noise',
      'type': candle.str2bool},
     {'name': 'noise_correlated',
      'type': candle.str2bool},
+    {'name': 'noise_column',
+     'type': candle.str2bool},
+    {'name': 'noise_cluster',
+     'type': candle.str2bool},
     {'name': 'noise_gaussian',
-     'type': candle.str2bool}
+     'type': candle.str2bool},
+    {'name': 'noise_type',
+     'type': str}
 ]
 
 required = [
@@ -63,4 +68,4 @@ class BenchmarkNT3(candle.Benchmark):
             self.required = set(required)
         if additional_definitions is not None:
             self.additional_definitions = self.additional_definitions + additional_definitions
-            print(self.additional_definitions)
+            # print(self.additional_definitions)

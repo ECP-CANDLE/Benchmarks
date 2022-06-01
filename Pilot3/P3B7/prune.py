@@ -128,7 +128,6 @@ class NegativePrune(BasePruningMethod):
         # Check that the amount of units to prune is not > than the number of
         # parameters in t
         tensor_size = t.nelement()
-        tNP = t.detach().cpu().numpy()
         # Compute number of units to prune: amount if int,
         # else amount * tensor_size
         nparams_toprune = _compute_nparams_toprune(self.amount, tensor_size)
@@ -234,6 +233,6 @@ def remove_prune_masks(model: nn.Module):
             prune.remove(module, name='weight')
         # prune 20% of connections in all linear layers
         elif isinstance(module, torch.nn.Linear):
-            prune.remove(module, name='weight', amount=0.2)
+            prune.remove(module, name='weight')
 
     return model

@@ -172,6 +172,10 @@ class CandleCheckpointCallback(Callback):
     def report_initial(self):
         """ Simply report that we are ready to run """
         self.info("Callback initialized.")
+        if self.save_interval == 0:
+            self.info("Checkpoint save interval == 0 "
+                      + "-> checkpoints are disabled.")
+            return  # Skip the rest of this output
         if self.metadata is not None:
             self.info("metadata='%s'" % self.metadata)
         if self.save_best:
@@ -261,6 +265,8 @@ class CandleCheckpointCallback(Callback):
         model metrics in given logs
         Also updates epoch_best if appropriate
         """
+        if self.save_interval == 0:
+            return False  # Checkpoints are disabled.
         # skip early epochs to improve speed
         if epoch < self.skip_epochs:
             self.debug("model saving disabled until epoch %d" %
@@ -274,7 +280,7 @@ class CandleCheckpointCallback(Callback):
         if epoch == self.epoch_max:
             self.info("writing final epoch %i ..." % epoch)
             return True  # Final epoch - save!
-        if self.save_interval != 0 and epoch % self.save_interval == 0:
+        if epoch % self.save_interval == 0:
             return True  # We are on the save_interval: save!
         # else- not saving:
         self.debug("not writing this epoch.")
@@ -393,31 +399,30 @@ class CandleCheckpointCallback(Callback):
         kept = 0
         # Consider most recent epochs first:
         for epoch in reversed(self.epochs):
-            self.debug('checking %s' % epoch)
+            self.debug('clean(): checking epoch directory: %i' % epoch)
             if not self.keep(epoch, epoch_now, kept):
                 deleted += 1
                 self.delete(epoch)
-                self.debug('deleted')
+                self.debug('clean(): deleted epoch: %i' % epoch)
             else:
                 kept += 1
-                self.debug('kept %s' % kept)
         return (kept, deleted)
 
     def keep(self, epoch, epoch_now, kept):
         """
         kept: Number of epochs already kept
-        return True if we are keeping this epoch
+        return True if we are keeping this epoch, else False
         """
         if epoch == epoch_now:
             # We just wrote this!
-            self.debug('latest')
+            self.debug('keep(): epoch is latest: %i' % epoch)
             return True
         if self.epoch_best == epoch:
             # This is the best epoch
-            self.debug('best')
+            self.debug('keep(): epoch is best: %i' % epoch)
             return True
         if kept < self.keep_limit:
-            self.debug('< limit %s' % self.keep_limit)
+            self.debug('keep(): epoch count is < limit %i' % self.keep_limit)
             return True
         # No reason to keep this: delete it:
         return False
@@ -486,12 +491,12 @@ def restart(gParameters, model, verbose=True):
     model_file = dir_last + "/model.h5"
     if not os.path.exists(model_file):
         if param_ckpt_mode == "required":
-            raise Exception("ckpt_mode=='required' but no checkpoint"
+            raise Exception("ckpt_restart_mode=='required' but no checkpoint "
                             + "could be found!")
         # We must be under AUTO - proceed without restart
         assert param_ckpt_mode == "auto"
         return None
-    logger.info("restarting: %s", model_file)
+    logger.info("restarting: '%s'" % model_file)
     result = restart_json(gParameters, logger, dir_last)
     logger.info("restarting: epoch=%i timestamp=%s",
                 result["epoch"], result["timestamp"])
@@ -502,7 +507,7 @@ def restart(gParameters, model, verbose=True):
     stop = time.time()
     duration = stop - start
     rate = MB / duration
-    logger.info("model read:  %0.3f MB in %0.3f seconds (%0.2f MB/s).",
+    logger.info("restarting: model read:  %0.3f MB in %0.3f seconds (%0.2f MB/s).",
                 MB, duration, rate)
     return result
 
@@ -520,6 +525,7 @@ def restart_json(gParameters, logger, directory):
     # print(str(J))
     logger.debug("ckpt-info.json contains:")
     logger.debug(json.dumps(J, indent=2))
+    logger.info("restarting from epoch: %i" % J["epoch"])
     if param(gParameters, "ckpt_checksum", False, ParamType.BOOLEAN):
         checksum = checksum_file(logger, directory + "/model.h5")
         if checksum != J["checksum"]:
@@ -589,8 +595,8 @@ def param_type_check(key, value, type_):
     if type_ is ParamType.FLOAT or \
        type_ is ParamType.FLOAT_NN:
         return param_type_check_float(key, value, type_)
-    raise ValueError("param_type_check(): unknown type: '%s'" %
-                     str(type_))
+    raise TypeError("param_type_check(): unknown type: '%s'" %
+                    str(type_))
 
 
 def param_type_check_bool(key, value):
@@ -707,12 +713,13 @@ def ckpt_parser(parser):
                         help="Toggle saving only weights (not optimizer) (NYI)")
     parser.add_argument("--ckpt_save_interval", type=int,
                         default=1,
-                        help="Interval to save checkpoints")
+                        help="Epoch interval to save checkpoints.  "
+                        + "Set to 0 to disable writing checkpoints")
     # keeping
     parser.add_argument("--ckpt_keep_mode",
                         choices=['linear', 'exponential'],
                         help="Checkpoint saving mode. "
-                             + "choices are 'linear' or 'exponential' ")
+                             + "Choices are 'linear' or 'exponential' ")
     parser.add_argument("--ckpt_keep_limit", type=int,
                         default=1000000,
                         help="Limit checkpoints to keep")

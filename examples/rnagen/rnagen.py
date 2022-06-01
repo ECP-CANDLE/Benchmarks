@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import logging
 import argparse
@@ -16,10 +15,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.metrics import binary_crossentropy, mean_squared_error
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
-import file_utils
 import candle
 
 DATA_URL = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/rnagen/'
@@ -51,7 +47,7 @@ def parse_args():
 
 def get_file(url):
     fname = os.path.basename(url)
-    return file_utils.get_file(fname, origin=url, cache_subdir='Examples')
+    return candle.get_file(fname, origin=url, cache_subdir='Examples')
 
 
 def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):
@@ -148,7 +144,7 @@ def load_cell_rnaseq(ncols=None, scaling='std', imputing='mean', add_prefix=True
         df1 = df_sample_source.merge(df_source, on='Source', how='left').drop('Source', axis=1)
         logger.info('Embedding RNAseq data source into features: %d additional columns', df1.shape[1] - 1)
 
-    df2 = df.drop('Sample', 1)
+    df2 = df.drop('Sample', axis=1)
     if add_prefix:
         df2 = df2.add_prefix('rnaseq.')
 

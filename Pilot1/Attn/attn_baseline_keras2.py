@@ -10,7 +10,7 @@ import tensorflow.keras as ke
 from tensorflow.keras import backend as K
 
 from tensorflow.keras.layers import Input, Dense, Dropout, BatchNormalization
-from tensorflow.keras.models import Model, model_from_json, model_from_yaml
+from tensorflow.keras.models import Model, model_from_json
 from tensorflow.keras.utils import to_categorical
 
 from tensorflow.keras.callbacks import Callback, ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
@@ -197,7 +197,7 @@ def run(params):
     Y_val = to_categorical(Y_val, nb_classes)
 
     y_integers = np.argmax(Y_train, axis=1)
-    class_weights = compute_class_weight('balanced', np.unique(y_integers), y_integers)
+    class_weights = compute_class_weight(class_weight='balanced', classes=np.unique(y_integers), y=y_integers)
     d_class_weights = dict(enumerate(class_weights))
 
     print('X_train shape:', X_train.shape)
@@ -363,11 +363,6 @@ def save_and_test_saved_model(params, model, root_fname, X_train, X_test, Y_test
     with open(params['save_path'] + root_fname + ".model.json", "w") as json_file:
         json_file.write(model_json)
 
-    # serialize model to YAML
-    model_yaml = model.to_yaml()
-    with open(params['save_path'] + root_fname + ".model.yaml", "w") as yaml_file:
-        yaml_file.write(model_yaml)
-
     # serialize weights to HDF5
     model.save_weights(params['save_path'] + root_fname + ".model.h5")
     print("Saved model to disk")
@@ -377,12 +372,6 @@ def save_and_test_saved_model(params, model, root_fname, X_train, X_test, Y_test
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model_json = model_from_json(loaded_model_json)
-
-    # load yaml and create model
-    yaml_file = open(params['save_path'] + root_fname + '.model.yaml', 'r')
-    loaded_model_yaml = yaml_file.read()
-    yaml_file.close()
-    loaded_model_yaml = model_from_yaml(loaded_model_yaml)
 
     # load weights into new model
     loaded_model_json.load_weights(params['save_path'] + root_fname + ".model.h5")
@@ -397,30 +386,19 @@ def save_and_test_saved_model(params, model, root_fname, X_train, X_test, Y_test
 
     print("json %s: %.2f%%" % (loaded_model_json.metrics_names[1], score_json[1] * 100))
 
-    # load weights into new model
-    loaded_model_yaml.load_weights(params['save_path'] + root_fname + ".model.h5")
-    print("Loaded yaml model from disk")
+    # predict using loaded model on test and training data
+    predict_train = loaded_model_json.predict(X_train)
+    predict_test = loaded_model_json.predict(X_test)
+    print('train_shape:', predict_train.shape)
+    print('test_shape:', predict_test.shape)
 
-    # evaluate loaded model on test data
-    loaded_model_yaml.compile(loss='binary_crossentropy', optimizer=params['optimizer'], metrics=['accuracy'])
-    score_yaml = loaded_model_yaml.evaluate(X_test, Y_test, verbose=0)
-    print('yaml Validation loss:', score_yaml[0])
-    print('yaml Validation accuracy:', score_yaml[1])
-    print("yaml %s: %.2f%%" % (loaded_model_yaml.metrics_names[1], score_yaml[1] * 100))
+    predict_train_classes = np.argmax(predict_train, axis=1)
+    predict_test_classes = np.argmax(predict_test, axis=1)
+    np.savetxt(params['save_path'] + root_fname + "_predict_train.csv", predict_train, delimiter=",", fmt="%.3f")
+    np.savetxt(params['save_path'] + root_fname + "_predict_test.csv", predict_test, delimiter=",", fmt="%.3f")
 
-    # predict using loaded yaml model on test and training data
-    predict_yaml_train = loaded_model_yaml.predict(X_train)
-    predict_yaml_test = loaded_model_yaml.predict(X_test)
-    print('Yaml_train_shape:', predict_yaml_train.shape)
-    print('Yaml_test_shape:', predict_yaml_test.shape)
-
-    predict_yaml_train_classes = np.argmax(predict_yaml_train, axis=1)
-    predict_yaml_test_classes = np.argmax(predict_yaml_test, axis=1)
-    np.savetxt(params['save_path'] + root_fname + "_predict_yaml_train.csv", predict_yaml_train, delimiter=",", fmt="%.3f")
-    np.savetxt(params['save_path'] + root_fname + "_predict_yaml_test.csv", predict_yaml_test, delimiter=",", fmt="%.3f")
-
-    np.savetxt(params['save_path'] + root_fname + "_predict_yaml_train_classes.csv", predict_yaml_train_classes, delimiter=",", fmt="%d")
-    np.savetxt(params['save_path'] + root_fname + "_predict_yaml_test_classes.csv", predict_yaml_test_classes, delimiter=",", fmt="%d")
+    np.savetxt(params['save_path'] + root_fname + "_predict_train_classes.csv", predict_train_classes, delimiter=",", fmt="%d")
+    np.savetxt(params['save_path'] + root_fname + "_predict_test_classes.csv", predict_test_classes, delimiter=",", fmt="%d")
 
 
 def main():

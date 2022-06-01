@@ -301,6 +301,7 @@ def get_default_neon_parser(parser):
     parser.add_argument("--model_name", dest='model_name', type=str,
                         default=argparse.SUPPRESS,
                         help="specify model name to use when building filenames for saving")
+
     parser.add_argument("-d", "--data_type", dest='data_type',
                         default=argparse.SUPPRESS,
                         choices=['f16', 'f32', 'f64'],
@@ -321,9 +322,11 @@ def get_default_neon_parser(parser):
     parser.add_argument("-r", "--rng_seed", dest='rng_seed', type=int,
                         default=argparse.SUPPRESS,
                         help="random number generator seed")
+
     parser.add_argument("-e", "--epochs", type=int,
                         default=argparse.SUPPRESS,
                         help="number of training epochs")
+
     parser.add_argument("-z", "--batch_size", type=int,
                         default=argparse.SUPPRESS,
                         help="batch size")
@@ -348,6 +351,7 @@ def get_common_parser(parser):
     parser.add_argument("--train_bool", dest='train_bool', type=str2bool,
                         default=True,
                         help="train model")
+
     parser.add_argument("--eval_bool", dest='eval_bool', type=str2bool,
                         default=argparse.SUPPRESS,
                         help="evaluate model (use it for inference)")
@@ -364,6 +368,10 @@ def get_common_parser(parser):
     parser.add_argument("--train_data", action="store",
                         default=argparse.SUPPRESS,
                         help="training data filename")
+
+    parser.add_argument("--val_data", action="store",
+                        default=argparse.SUPPRESS,
+                        help="validation data filename")
 
     parser.add_argument("--test_data", action="store",
                         default=argparse.SUPPRESS,

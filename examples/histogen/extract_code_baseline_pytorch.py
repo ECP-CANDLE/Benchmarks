@@ -13,11 +13,6 @@ from dataset import ImageFileDataset, CodeRow
 from vqvae import VQVAE
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..'))
-sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
-
 
 import candle
 
@@ -82,7 +77,7 @@ def extract(lmdb_env, loader, model, device):
     index = 0
 
     with lmdb_env.begin(write=True) as txn:
-        pbar = tqdm(loader)
+        pbar = tqdm(loader, file=sys.stdout)
 
         for img, _, filename in pbar:
             img = img.to(device)
