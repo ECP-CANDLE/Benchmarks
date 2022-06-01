@@ -25,7 +25,7 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 import candle
 import nt3 as bmk
 
-""" Import Tensorflow Modules """
+# Import Tensorflow Modules
 import tensorflow as tf
 from tensorflow.core.protobuf import saver_pb2
 from tensorflow.python.framework import graph_io
@@ -44,71 +44,70 @@ from tensorflow.python.training import saver as saver_lib
 # P     = 60483   # 60483
 # DR    = 0.1      # Dropout rate
 
-"""
-def common_parser(parser):
 
-    parser.add_argument("--config_file", dest='config_file', type=str,
-                        default=os.path.join(file_path, 'nt3_default_model.txt'),
-                        help="specify model configuration file")
+# def common_parser(parser):
 
-    # Parse has been split between arguments that are common with the default neon parser
-    # and all the other options
-    parser = p1_common.get_default_neon_parse(parser)
-    parser = p1_common.get_p1_common_parser(parser)
+#     parser.add_argument("--config_file", dest='config_file', type=str,
+#                         default=os.path.join(file_path, 'nt3_default_model.txt'),
+#                         help="specify model configuration file")
 
-    return parser
+#     # Parse has been split between arguments that are common with the default neon parser
+#     # and all the other options
+#     parser = p1_common.get_default_neon_parse(parser)
+#     parser = p1_common.get_p1_common_parser(parser)
 
-def get_nt3_parser():
+#     return parser
 
-    parser = argparse.ArgumentParser(prog='nt3_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                     description='Train Autoencoder - Pilot 1 Benchmark NT3')
+# def get_nt3_parser():
 
-    return common_parser(parser)
+#     parser = argparse.ArgumentParser(prog='nt3_baseline', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+#                                      description='Train Autoencoder - Pilot 1 Benchmark NT3')
 
-def read_config_file(file):
-    config = configparser.ConfigParser()
-    config.read(file)
-    section = config.sections()
-    fileParams = {}
+#     return common_parser(parser)
 
-    fileParams['data_url'] = eval(config.get(section[0],'data_url'))
-    fileParams['train_data'] = eval(config.get(section[0],'train_data'))
-    fileParams['test_data'] = eval(config.get(section[0],'test_data'))
-    fileParams['model_name'] = eval(config.get(section[0],'model_name'))
-    fileParams['conv'] = eval(config.get(section[0],'conv'))
-    fileParams['dense'] = eval(config.get(section[0],'dense'))
-    fileParams['activation'] = eval(config.get(section[0],'activation'))
-    fileParams['out_activation'] = eval(config.get(section[0],'out_activation'))
-    fileParams['loss'] = eval(config.get(section[0],'loss'))
-    fileParams['optimizer'] = eval(config.get(section[0],'optimizer'))
-    fileParams['metrics'] = eval(config.get(section[0],'metrics'))
-    fileParams['epochs'] = eval(config.get(section[0],'epochs'))
-    fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
-    fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
-    fileParams['dropout'] = eval(config.get(section[0],'dropout'))
-    fileParams['classes'] = eval(config.get(section[0],'classes'))
-    fileParams['pool'] = eval(config.get(section[0],'pool'))
-    fileParams['save_path'] = eval(config.get(section[0], 'save_path'))
+# def read_config_file(file):
+#     config = configparser.ConfigParser()
+#     config.read(file)
+#     section = config.sections()
+#     fileParams = {}
 
-    # parse the remaining values
-    for k,v in config.items(section[0]):
-        if not k in fileParams:
-            fileParams[k] = eval(v)
+#     fileParams['data_url'] = eval(config.get(section[0],'data_url'))
+#     fileParams['train_data'] = eval(config.get(section[0],'train_data'))
+#     fileParams['test_data'] = eval(config.get(section[0],'test_data'))
+#     fileParams['model_name'] = eval(config.get(section[0],'model_name'))
+#     fileParams['conv'] = eval(config.get(section[0],'conv'))
+#     fileParams['dense'] = eval(config.get(section[0],'dense'))
+#     fileParams['activation'] = eval(config.get(section[0],'activation'))
+#     fileParams['out_activation'] = eval(config.get(section[0],'out_activation'))
+#     fileParams['loss'] = eval(config.get(section[0],'loss'))
+#     fileParams['optimizer'] = eval(config.get(section[0],'optimizer'))
+#     fileParams['metrics'] = eval(config.get(section[0],'metrics'))
+#     fileParams['epochs'] = eval(config.get(section[0],'epochs'))
+#     fileParams['batch_size'] = eval(config.get(section[0],'batch_size'))
+#     fileParams['learning_rate'] = eval(config.get(section[0], 'learning_rate'))
+#     fileParams['dropout'] = eval(config.get(section[0],'dropout'))
+#     fileParams['classes'] = eval(config.get(section[0],'classes'))
+#     fileParams['pool'] = eval(config.get(section[0],'pool'))
+#     fileParams['save_path'] = eval(config.get(section[0], 'save_path'))
 
-    return fileParams
+#     # parse the remaining values
+#     for k,v in config.items(section[0]):
+#         if not k in fileParams:
+#             fileParams[k] = eval(v)
 
-def initialize_parameters():
-    # Get command-line parameters
-    parser = get_nt3_parser()
-    args = parser.parse_args()
-    #print('Args:', args)
-    # Get parameters from configuration file
-    fileParameters = read_config_file(args.config_file)
-    #print ('Params:', fileParameters)
-    # Consolidate parameter set. Command-line parameters overwrite file configuration
-    gParameters = p1_common.args_overwrite_config(args, fileParameters)
-    return gParameters
-    """
+#     return fileParams
+
+# def initialize_parameters():
+#     # Get command-line parameters
+#     parser = get_nt3_parser()
+#     args = parser.parse_args()
+#     #print('Args:', args)
+#     # Get parameters from configuration file
+#     fileParameters = read_config_file(args.config_file)
+#     #print ('Params:', fileParameters)
+#     # Consolidate parameter set. Command-line parameters overwrite file configuration
+#     gParameters = p1_common.args_overwrite_config(args, fileParameters)
+#     return gParameters
 
 
 def initialize_parameters(default_model="nt3_default_model.txt"):

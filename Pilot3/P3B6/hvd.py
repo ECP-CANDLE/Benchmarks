@@ -14,10 +14,6 @@ from torch.utils.data.distributed import DistributedSampler
 # import p3b6 as bmk
 
 
-
-
-
-
 hvd.init()
 
 

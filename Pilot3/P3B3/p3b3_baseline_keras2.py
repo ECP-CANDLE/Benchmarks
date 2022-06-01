@@ -1,22 +1,20 @@
 from __future__ import print_function
 
-import numpy as np
-from tensorflow.keras import backend as K
-
-"""
-from tensorflow.keras.layers import Input, Dense, Dropout, Activation
-from tensorflow.keras.optimizers import SGD, Adam, RMSprop
-from tensorflow.keras.models import Model
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
-
-from sklearn.metrics import f1_score
-"""
-
-# import keras
-
 import candle
 import keras_mt_shared_cnn
+import numpy as np
 import p3b3 as bmk
+from tensorflow.keras import backend as K
+
+# from tensorflow.keras.layers import Input, Dense, Dropout, Activation
+# from tensorflow.keras.optimizers import SGD, Adam, RMSprop
+# from tensorflow.keras.models import Model
+# from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
+
+# from sklearn.metrics import f1_score
+
+
+# import keras
 
 
 def initialize_parameters(default_model="p3b3_default_model.txt"):

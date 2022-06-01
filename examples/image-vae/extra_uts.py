@@ -259,7 +259,7 @@ def sample_from_discretized_mix_logistic(m, nr_mix):
     return out
 
 
-""" utilities for shifting the image around, efficient alternative to masking convolutions """
+# utilities for shifting the image around, efficient alternative to masking convolutions
 
 
 def down_shift(x, pad=None):

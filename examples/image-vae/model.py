@@ -213,11 +213,9 @@ class down_right_shifted_deconv2d(nn.Module):
         return x
 
 
-"""
-skip connection parameter : 0 = no skip connection
-                            1 = skip connection where skip input size === input size
-                            2 = skip connection where skip input size === 2 * input size
-"""
+# skip connection parameter : 0 = no skip connection
+#                             1 = skip connection where skip input size === input size
+#                             2 = skip connection where skip input size === 2 * input size
 
 
 class gated_resnet(nn.Module):

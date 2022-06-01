@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-""" DARTS operations contstructor """
+# DARTS operations contstructor
 OPS = {
     "none": lambda c, stride, affine: Identity(),
     "conv_3": lambda c, stride, affine: ConvBlock(c, c, 3, stride),

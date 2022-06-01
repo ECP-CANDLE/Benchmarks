@@ -274,39 +274,37 @@ def load_data(params, seed):
     return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
 
 
-"""
-def load_data(params, seed):
+# def load_data(params, seed):
 
-    # start change #
-    if params["train_data"].endswith("csv") or params["train_data"].endswith("csv"):
-        print("processing csv in file {}".format(params["train_data"]))
+#     # start change #
+#     if params["train_data"].endswith("csv") or params["train_data"].endswith("csv"):
+#         print("processing csv in file {}".format(params["train_data"]))
 
-        url = params["data_url"]
-        file_train = params["train_data"]
-        train_file = candle.get_file(
-            file_train, url + file_train, cache_subdir="Pilot1"
-        )
-        df = (pd.read_csv(train_file, skiprows=1).values).astype("float32")
+#         url = params["data_url"]
+#         file_train = params["train_data"]
+#         train_file = candle.get_file(
+#             file_train, url + file_train, cache_subdir="Pilot1"
+#         )
+#         df = (pd.read_csv(train_file, skiprows=1).values).astype("float32")
 
-        PL = df.shape[1]
-        print("PL=", PL)
+#         PL = df.shape[1]
+#         print("PL=", PL)
 
-        PS = PL - 1
+#         PS = PL - 1
 
-        df_y = df[:, 0].astype("float32")
-        df_x = df[:, 1:PL].astype(np.float32)
+#         df_y = df[:, 0].astype("float32")
+#         df_x = df[:, 1:PL].astype(np.float32)
 
-        df_y.shape
-        df_x.shape
-        scaler = StandardScaler()
-        df_x = scaler.fit_transform(df_x)
+#         df_y.shape
+#         df_x.shape
+#         scaler = StandardScaler()
+#         df_x = scaler.fit_transform(df_x)
 
-        X_train, X_test, Y_train, Y_test = train_test_split(
-            df_x, df_y, test_size=0.20, random_state=42
-        )
-    else:
-        print("expecting in file file suffix csv")
-        sys.exit()
+#         X_train, X_test, Y_train, Y_test = train_test_split(
+#             df_x, df_y, test_size=0.20, random_state=42
+#         )
+#     else:
+#         print("expecting in file file suffix csv")
+#         sys.exit()
 
-    return X_train, Y_train, X_test, Y_test, PS
-"""
+#     return X_train, Y_train, X_test, Y_test, PS
