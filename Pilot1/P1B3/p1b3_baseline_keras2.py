@@ -5,32 +5,46 @@
 from __future__ import division, print_function
 
 import logging
-import numpy as np
-
-from tensorflow.keras import backend as K
-from tensorflow.keras import metrics
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Dropout, LocallyConnected1D, Conv1D, MaxPooling1D, Flatten, Conv2D, LocallyConnected2D
-from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
 
 # For non-interactive plotting
 import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
+import numpy as np
+from tensorflow.keras import backend as K
+from tensorflow.keras import metrics
+from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ProgbarLogger
+from tensorflow.keras.layers import (
+    Activation,
+    BatchNormalization,
+    Conv1D,
+    Conv2D,
+    Dense,
+    Dropout,
+    Flatten,
+    LocallyConnected1D,
+    LocallyConnected2D,
+    MaxPooling1D,
+)
+from tensorflow.keras.models import Sequential
 
-
-import p1b3 as benchmark
+mpl.use("Agg")
 import candle
+import matplotlib.pyplot as plt
+import p1b3 as benchmark
 import tensorflow as tf
+
 tf.compat.v1.disable_eager_execution()
 
 
-def initialize_parameters(default_model='p1b3_default_model.txt'):
+def initialize_parameters(default_model="p1b3_default_model.txt"):
 
     # Build benchmark object
-    p1b3Bmk = benchmark.BenchmarkP1B3(benchmark.file_path, default_model, 'keras',
-                                      prog='p1b3_baseline',
-                                      desc='Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1')
+    p1b3Bmk = benchmark.BenchmarkP1B3(
+        benchmark.file_path,
+        default_model,
+        "keras",
+        prog="p1b3_baseline",
+        desc="Multi-task (DNN) for data extraction from clinical reports - Pilot 3 Benchmark 1",
+    )
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p1b3Bmk)
@@ -39,7 +53,7 @@ def initialize_parameters(default_model='p1b3_default_model.txt'):
 
 
 def str2lst(string_val):
-    result = [int(x) for x in string_val.split(' ')]
+    result = [int(x) for x in string_val.split(" ")]
     return result
 
 
@@ -49,7 +63,7 @@ def evaluate_keras_metric(y_true, y_pred, metric):
     return K.eval(objective)
 
 
-def evaluate_model(model, generator, steps, metric, category_cutoffs=[0.]):
+def evaluate_model(model, generator, steps, metric, category_cutoffs=[0.0]):
     y_true, y_pred = None, None
     count = 0
     while count < steps:
@@ -57,21 +71,31 @@ def evaluate_model(model, generator, steps, metric, category_cutoffs=[0.]):
         y_batch_pred = model.predict_on_batch(x_batch)
         y_batch_pred = y_batch_pred.ravel()
         y_true = np.concatenate((y_true, y_batch)) if y_true is not None else y_batch
-        y_pred = np.concatenate((y_pred, y_batch_pred)) if y_pred is not None else y_batch_pred
+        y_pred = (
+            np.concatenate((y_pred, y_batch_pred))
+            if y_pred is not None
+            else y_batch_pred
+        )
         count += 1
 
-    loss = evaluate_keras_metric(y_true.astype(np.float32), y_pred.astype(np.float32), metric)
+    loss = evaluate_keras_metric(
+        y_true.astype(np.float32), y_pred.astype(np.float32), metric
+    )
 
     y_true_class = np.digitize(y_true, category_cutoffs)
     y_pred_class = np.digitize(y_pred, category_cutoffs)
 
     # theano does not like integer input
-    acc = evaluate_keras_metric(y_true_class.astype(np.float32), y_pred_class.astype(np.float32), 'binary_accuracy')  # works for multiclass labels as well
+    acc = evaluate_keras_metric(
+        y_true_class.astype(np.float32),
+        y_pred_class.astype(np.float32),
+        "binary_accuracy",
+    )  # works for multiclass labels as well
 
     return loss, acc, y_true, y_pred, y_true_class, y_pred_class
 
 
-def plot_error(y_true, y_pred, batch, file_ext, file_pre='output_dir', subsample=1000):
+def plot_error(y_true, y_pred, batch, file_ext, file_pre="output_dir", subsample=1000):
     if batch % 10:
         return
 
@@ -88,28 +112,38 @@ def plot_error(y_true, y_pred, batch, file_ext, file_pre='output_dir', subsample
     bins = np.linspace(-200, 200, 100)
     if batch == 0:
         y_shuf = np.random.permutation(y_true)
-        plt.hist(y_shuf - y_true, bins, alpha=0.5, label='Random')
+        plt.hist(y_shuf - y_true, bins, alpha=0.5, label="Random")
 
-    plt.hist(diffs, bins, alpha=0.3, label='Epoch {}'.format(batch + 1))
+    plt.hist(diffs, bins, alpha=0.3, label="Epoch {}".format(batch + 1))
     plt.title("Histogram of errors in percentage growth")
-    plt.legend(loc='upper right')
-    plt.savefig(file_pre + '.histogram' + file_ext + '.b' + str(batch) + '.png')
+    plt.legend(loc="upper right")
+    plt.savefig(file_pre + ".histogram" + file_ext + ".b" + str(batch) + ".png")
     plt.close()
 
     # Plot measured vs. predicted values
     fig, ax = plt.subplots()
-    plt.grid('on')
-    ax.scatter(y_true, y_pred, color='red', s=10)
-    ax.plot([y_true.min(), y_true.max()],
-            [y_true.min(), y_true.max()], 'k--', lw=4)
-    ax.set_xlabel('Measured')
-    ax.set_ylabel('Predicted')
-    plt.savefig(file_pre + '.diff' + file_ext + '.b' + str(batch) + '.png')
+    plt.grid("on")
+    ax.scatter(y_true, y_pred, color="red", s=10)
+    ax.plot([y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "k--", lw=4)
+    ax.set_xlabel("Measured")
+    ax.set_ylabel("Predicted")
+    plt.savefig(file_pre + ".diff" + file_ext + ".b" + str(batch) + ".png")
     plt.close()
 
 
 class MyLossHistory(Callback):
-    def __init__(self, progbar, val_gen, test_gen, val_steps, test_steps, metric, category_cutoffs=[0.], ext='', pre='save'):
+    def __init__(
+        self,
+        progbar,
+        val_gen,
+        test_gen,
+        val_steps,
+        test_steps,
+        metric,
+        category_cutoffs=[0.0],
+        ext="",
+        pre="save",
+    ):
         super(MyLossHistory, self).__init__()
         self.progbar = progbar
         self.val_gen = val_gen
@@ -126,18 +160,28 @@ class MyLossHistory(Callback):
         self.best_val_acc = -np.Inf
 
     def on_epoch_end(self, batch, logs={}):
-        val_loss, val_acc, y_true, y_pred, y_true_class, y_pred_class = evaluate_model(self.model, self.val_gen, self.val_steps, self.metric, self.category_cutoffs)
-        test_loss, test_acc, _, _, _, _ = evaluate_model(self.model, self.test_gen, self.test_steps, self.metric, self.category_cutoffs)
-        self.progbar.append_extra_log_values([('val_acc', val_acc), ('test_loss', test_loss), ('test_acc', test_acc)])
-        if float(logs.get('val_loss', 0)) < self.best_val_loss:
+        val_loss, val_acc, y_true, y_pred, y_true_class, y_pred_class = evaluate_model(
+            self.model, self.val_gen, self.val_steps, self.metric, self.category_cutoffs
+        )
+        test_loss, test_acc, _, _, _, _ = evaluate_model(
+            self.model,
+            self.test_gen,
+            self.test_steps,
+            self.metric,
+            self.category_cutoffs,
+        )
+        self.progbar.append_extra_log_values(
+            [("val_acc", val_acc), ("test_loss", test_loss), ("test_acc", test_acc)]
+        )
+        if float(logs.get("val_loss", 0)) < self.best_val_loss:
             plot_error(y_true, y_pred, batch, self.ext, self.pre)
-        self.best_val_loss = min(float(logs.get('val_loss', 0)), self.best_val_loss)
-        self.best_val_acc = max(float(logs.get('val_acc', 0)), self.best_val_acc)
+        self.best_val_loss = min(float(logs.get("val_loss", 0)), self.best_val_loss)
+        self.best_val_acc = max(float(logs.get("val_acc", 0)), self.best_val_acc)
 
 
 class MyProgbarLogger(ProgbarLogger):
     def __init__(self, samples):
-        super(MyProgbarLogger, self).__init__(count_mode='steps')
+        super(MyProgbarLogger, self).__init__(count_mode="steps")
         self.samples = samples
         self.params = {}
 
@@ -145,8 +189,8 @@ class MyProgbarLogger(ProgbarLogger):
         super(MyProgbarLogger, self).on_train_begin(logs)
         self.verbose = 1
         self.extra_log_values = []
-        self.params['samples'] = self.samples
-        self.params['metrics'] = []
+        self.params["samples"] = self.samples
+        self.params["metrics"] = []
 
     def on_batch_begin(self, batch, logs=None):
         if self.seen < self.target:
@@ -159,14 +203,14 @@ class MyProgbarLogger(ProgbarLogger):
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
-        epoch_log = 'Epoch {}/{}'.format(epoch + 1, self.epochs)
-        for k in self.params['metrics']:
+        epoch_log = "Epoch {}/{}".format(epoch + 1, self.epochs)
+        for k in self.params["metrics"]:
             if k in logs:
                 self.log_values.append((k, logs[k]))
-                epoch_log += ' - {}: {:.4f}'.format(k, logs[k])
+                epoch_log += " - {}: {:.4f}".format(k, logs[k])
         for k, v in self.extra_log_values:
             self.log_values.append((k, v))
-            epoch_log += ' - {}: {:.4f}'.format(k, float(v))
+            epoch_log += " - {}: {:.4f}".format(k, float(v))
         if self.verbose:
             self.progbar.update(self.seen, self.log_values)
         benchmark.logger.debug(epoch_log)
@@ -179,12 +223,20 @@ def add_conv_layer(model, layer_params, input_dim=None, locally_connected=False)
         stride = layer_params[2]
         if locally_connected:
             if input_dim:
-                model.add(LocallyConnected1D(filters, filter_len, strides=stride, input_shape=(input_dim, 1)))
+                model.add(
+                    LocallyConnected1D(
+                        filters, filter_len, strides=stride, input_shape=(input_dim, 1)
+                    )
+                )
             else:
                 model.add(LocallyConnected1D(filters, filter_len, strides=stride))
         else:
             if input_dim:
-                model.add(Conv1D(filters, filter_len, strides=stride, input_shape=(input_dim, 1)))
+                model.add(
+                    Conv1D(
+                        filters, filter_len, strides=stride, input_shape=(input_dim, 1)
+                    )
+                )
             else:
                 model.add(Conv1D(filters, filter_len, strides=stride))
     elif len(layer_params) == 5:  # 2D convolution
@@ -193,12 +245,20 @@ def add_conv_layer(model, layer_params, input_dim=None, locally_connected=False)
         stride = (layer_params[3], layer_params[4])
         if locally_connected:
             if input_dim:
-                model.add(LocallyConnected2D(filters, filter_len, strides=stride, input_shape=(input_dim, 1)))
+                model.add(
+                    LocallyConnected2D(
+                        filters, filter_len, strides=stride, input_shape=(input_dim, 1)
+                    )
+                )
             else:
                 model.add(LocallyConnected2D(filters, filter_len, strides=stride))
         else:
             if input_dim:
-                model.add(Conv2D(filters, filter_len, strides=stride, input_shape=(input_dim, 1)))
+                model.add(
+                    Conv2D(
+                        filters, filter_len, strides=stride, input_shape=(input_dim, 1)
+                    )
+                )
             else:
                 model.add(Conv2D(filters, filter_len, strides=stride))
     return model
@@ -213,132 +273,188 @@ def run(gParameters):
        to run the model with.
     """
     #
-    if 'dense' in gParameters:
-        dval = gParameters['dense']
+    if "dense" in gParameters:
+        dval = gParameters["dense"]
         if type(dval) != list:
             res = list(dval)
-        # try:
-        #     is_str = isinstance(dval, basestring)
-        # except NameError:
-        #     is_str = isinstance(dval, str)
-        # if is_str:
-        #     res = str2lst(dval)
-            gParameters['dense'] = res
-        print(gParameters['dense'])
+            # try:
+            #     is_str = isinstance(dval, basestring)
+            # except NameError:
+            #     is_str = isinstance(dval, str)
+            # if is_str:
+            #     res = str2lst(dval)
+            gParameters["dense"] = res
+        print(gParameters["dense"])
 
-    if 'conv' in gParameters:
-        flat = gParameters['conv']
-        gParameters['conv'] = [flat[i:i + 3] for i in range(0, len(flat), 3)]
-        print('Conv input', gParameters['conv'])
+    if "conv" in gParameters:
+        flat = gParameters["conv"]
+        gParameters["conv"] = [flat[i : i + 3] for i in range(0, len(flat), 3)]
+        print("Conv input", gParameters["conv"])
     # print('Params:', gParameters)
     # Construct extension to save model
-    ext = benchmark.extension_from_parameters(gParameters, '.keras')
-    logfile = gParameters['logfile'] if gParameters['logfile'] else gParameters['output_dir'] + ext + '.log'
+    ext = benchmark.extension_from_parameters(gParameters, ".keras")
+    logfile = (
+        gParameters["logfile"]
+        if gParameters["logfile"]
+        else gParameters["output_dir"] + ext + ".log"
+    )
 
     fh = logging.FileHandler(logfile)
-    fh.setFormatter(logging.Formatter("[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+    fh.setFormatter(
+        logging.Formatter(
+            "[%(asctime)s %(process)d] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
+    )
     fh.setLevel(logging.DEBUG)
 
     sh = logging.StreamHandler()
-    sh.setFormatter(logging.Formatter(''))
-    sh.setLevel(logging.DEBUG if gParameters['verbose'] else logging.INFO)
+    sh.setFormatter(logging.Formatter(""))
+    sh.setLevel(logging.DEBUG if gParameters["verbose"] else logging.INFO)
 
     benchmark.logger.setLevel(logging.DEBUG)
     benchmark.logger.addHandler(fh)
     benchmark.logger.addHandler(sh)
-    benchmark.logger.info('Params: {}'.format(gParameters))
+    benchmark.logger.info("Params: {}".format(gParameters))
 
     # Get default parameters for initialization and optimizer functions
     kerasDefaults = candle.keras_default_config()
-    seed = gParameters['rng_seed']
+    seed = gParameters["rng_seed"]
 
     # Build dataset loader object
-    loader = benchmark.DataLoader(seed=seed, dtype=gParameters['data_type'],
-                                  val_split=gParameters['val_split'],
-                                  test_cell_split=gParameters['test_cell_split'],
-                                  cell_features=gParameters['cell_features'],
-                                  drug_features=gParameters['drug_features'],
-                                  feature_subsample=gParameters['feature_subsample'],
-                                  scaling=gParameters['scaling'],
-                                  scramble=gParameters['scramble'],
-                                  min_logconc=gParameters['min_logconc'],
-                                  max_logconc=gParameters['max_logconc'],
-                                  subsample=gParameters['subsample'],
-                                  category_cutoffs=gParameters['category_cutoffs'])
+    loader = benchmark.DataLoader(
+        seed=seed,
+        dtype=gParameters["data_type"],
+        val_split=gParameters["val_split"],
+        test_cell_split=gParameters["test_cell_split"],
+        cell_features=gParameters["cell_features"],
+        drug_features=gParameters["drug_features"],
+        feature_subsample=gParameters["feature_subsample"],
+        scaling=gParameters["scaling"],
+        scramble=gParameters["scramble"],
+        min_logconc=gParameters["min_logconc"],
+        max_logconc=gParameters["max_logconc"],
+        subsample=gParameters["subsample"],
+        category_cutoffs=gParameters["category_cutoffs"],
+    )
 
     # Initialize weights and learning rule
-    initializer_weights = candle.build_initializer(gParameters['initialization'], kerasDefaults, seed)
-    initializer_bias = candle.build_initializer('constant', kerasDefaults, 0.)
+    initializer_weights = candle.build_initializer(
+        gParameters["initialization"], kerasDefaults, seed
+    )
+    initializer_bias = candle.build_initializer("constant", kerasDefaults, 0.0)
 
     # Define model architecture
     gen_shape = None
     out_dim = 1
 
     model = Sequential()
-    if 'dense' in gParameters:  # Build dense layers
-        for layer in gParameters['dense']:
+    if "dense" in gParameters:  # Build dense layers
+        for layer in gParameters["dense"]:
             if layer:
-                model.add(Dense(layer, input_dim=loader.input_dim,
-                                kernel_initializer=initializer_weights,
-                                bias_initializer=initializer_bias))
-                if gParameters['batch_normalization']:
+                model.add(
+                    Dense(
+                        layer,
+                        input_dim=loader.input_dim,
+                        kernel_initializer=initializer_weights,
+                        bias_initializer=initializer_bias,
+                    )
+                )
+                if gParameters["batch_normalization"]:
                     model.add(BatchNormalization())
-                model.add(Activation(gParameters['activation']))
-                if gParameters['dropout']:
-                    model.add(Dropout(gParameters['dropout']))
+                model.add(Activation(gParameters["activation"]))
+                if gParameters["dropout"]:
+                    model.add(Dropout(gParameters["dropout"]))
     else:  # Build convolutional layers
-        gen_shape = 'add_1d'
-        layer_list = list(range(0, len(gParameters['conv'])))
+        gen_shape = "add_1d"
+        layer_list = list(range(0, len(gParameters["conv"])))
         lc_flag = False
-        if 'locally_connected' in gParameters:
+        if "locally_connected" in gParameters:
             lc_flag = True
 
         for _, i in enumerate(layer_list):
             if i == 0:
-                add_conv_layer(model, gParameters['conv'][i], input_dim=loader.input_dim, locally_connected=lc_flag)
+                add_conv_layer(
+                    model,
+                    gParameters["conv"][i],
+                    input_dim=loader.input_dim,
+                    locally_connected=lc_flag,
+                )
             else:
-                add_conv_layer(model, gParameters['conv'][i], locally_connected=lc_flag)
-            if gParameters['batch_normalization']:
+                add_conv_layer(model, gParameters["conv"][i], locally_connected=lc_flag)
+            if gParameters["batch_normalization"]:
                 model.add(BatchNormalization())
-            model.add(Activation(gParameters['activation']))
-            if gParameters['pool']:
-                model.add(MaxPooling1D(pool_size=gParameters['pool']))
+            model.add(Activation(gParameters["activation"]))
+            if gParameters["pool"]:
+                model.add(MaxPooling1D(pool_size=gParameters["pool"]))
         model.add(Flatten())
 
     model.add(Dense(out_dim))
 
     # Define optimizer
-    optimizer = candle.build_optimizer(gParameters['optimizer'],
-                                       gParameters['learning_rate'],
-                                       kerasDefaults)
+    optimizer = candle.build_optimizer(
+        gParameters["optimizer"], gParameters["learning_rate"], kerasDefaults
+    )
 
     # Compile and display model
-    model.compile(loss=gParameters['loss'], optimizer=optimizer)
+    model.compile(loss=gParameters["loss"], optimizer=optimizer)
     model.summary()
-    benchmark.logger.debug('Model: {}'.format(model.to_json()))
+    benchmark.logger.debug("Model: {}".format(model.to_json()))
 
-    train_gen = benchmark.DataGenerator(loader, batch_size=gParameters['batch_size'], shape=gen_shape, name='train_gen', cell_noise_sigma=gParameters['cell_noise_sigma']).flow()
-    val_gen = benchmark.DataGenerator(loader, partition='val', batch_size=gParameters['batch_size'], shape=gen_shape, name='val_gen').flow()
-    val_gen2 = benchmark.DataGenerator(loader, partition='val', batch_size=gParameters['batch_size'], shape=gen_shape, name='val_gen2').flow()
-    test_gen = benchmark.DataGenerator(loader, partition='test', batch_size=gParameters['batch_size'], shape=gen_shape, name='test_gen').flow()
+    train_gen = benchmark.DataGenerator(
+        loader,
+        batch_size=gParameters["batch_size"],
+        shape=gen_shape,
+        name="train_gen",
+        cell_noise_sigma=gParameters["cell_noise_sigma"],
+    ).flow()
+    val_gen = benchmark.DataGenerator(
+        loader,
+        partition="val",
+        batch_size=gParameters["batch_size"],
+        shape=gen_shape,
+        name="val_gen",
+    ).flow()
+    val_gen2 = benchmark.DataGenerator(
+        loader,
+        partition="val",
+        batch_size=gParameters["batch_size"],
+        shape=gen_shape,
+        name="val_gen2",
+    ).flow()
+    test_gen = benchmark.DataGenerator(
+        loader,
+        partition="test",
+        batch_size=gParameters["batch_size"],
+        shape=gen_shape,
+        name="test_gen",
+    ).flow()
 
-    train_steps = int(loader.n_train / gParameters['batch_size'])
-    val_steps = int(loader.n_val / gParameters['batch_size'])
-    test_steps = int(loader.n_test / gParameters['batch_size'])
+    train_steps = int(loader.n_train / gParameters["batch_size"])
+    val_steps = int(loader.n_val / gParameters["batch_size"])
+    test_steps = int(loader.n_test / gParameters["batch_size"])
 
-    if 'train_steps' in gParameters:
-        train_steps = gParameters['train_steps']
-    if 'val_steps' in gParameters:
-        val_steps = gParameters['val_steps']
-    if 'test_steps' in gParameters:
-        test_steps = gParameters['test_steps']
+    if "train_steps" in gParameters:
+        train_steps = gParameters["train_steps"]
+    if "val_steps" in gParameters:
+        val_steps = gParameters["val_steps"]
+    if "test_steps" in gParameters:
+        test_steps = gParameters["test_steps"]
 
-    checkpointer = ModelCheckpoint(filepath=gParameters['output_dir'] + '.model' + ext + '.h5', save_best_only=True)
-    progbar = MyProgbarLogger(train_steps * gParameters['batch_size'])
-    loss_history = MyLossHistory(progbar=progbar, val_gen=val_gen2, test_gen=test_gen,
-                                 val_steps=val_steps, test_steps=test_steps,
-                                 metric=gParameters['loss'], category_cutoffs=gParameters['category_cutoffs'],
-                                 ext=ext, pre=gParameters['output_dir'])
+    checkpointer = ModelCheckpoint(
+        filepath=gParameters["output_dir"] + ".model" + ext + ".h5", save_best_only=True
+    )
+    progbar = MyProgbarLogger(train_steps * gParameters["batch_size"])
+    loss_history = MyLossHistory(
+        progbar=progbar,
+        val_gen=val_gen2,
+        test_gen=test_gen,
+        val_steps=val_steps,
+        test_steps=test_steps,
+        metric=gParameters["loss"],
+        category_cutoffs=gParameters["category_cutoffs"],
+        ext=ext,
+        pre=gParameters["output_dir"],
+    )
 
     # Seed random generator for training
     np.random.seed(seed)
@@ -346,13 +462,15 @@ def run(gParameters):
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
 
     # history = model.fit(train_gen, steps_per_epoch=train_steps, # this should be the deprecation fix
-    history = model.fit(train_gen, steps_per_epoch=train_steps,
-                        epochs=gParameters['epochs'],
-                        validation_data=val_gen,
-                        validation_steps=val_steps,
-                        verbose=0,
-                        callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
-                        )
+    history = model.fit(
+        train_gen,
+        steps_per_epoch=train_steps,
+        epochs=gParameters["epochs"],
+        validation_data=val_gen,
+        validation_steps=val_steps,
+        verbose=0,
+        callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
+    )
     # callbacks=[checkpointer, loss_history, candleRemoteMonitor], # this just caused the job to hang on Biowulf
 
     benchmark.logger.removeHandler(fh)
@@ -368,9 +486,9 @@ def main():
     run(gParameters)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
     try:
         K.clear_session()
-    except AttributeError:      # theano does not have this function
+    except AttributeError:  # theano does not have this function
         pass

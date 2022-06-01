@@ -5,8 +5,8 @@
 
 # Borrowed from https://github.com/neocxi/pixelsnail-public and ported it to PyTorch
 
+from functools import lru_cache, partial
 from math import sqrt
-from functools import partial, lru_cache
 
 import numpy as np
 import torch
@@ -75,7 +75,7 @@ class CausalConv2d(nn.Module):
         out_channel,
         kernel_size,
         stride=1,
-        padding='downright',
+        padding="downright",
         activation=None,
     ):
         super().__init__()
@@ -85,16 +85,16 @@ class CausalConv2d(nn.Module):
 
         self.kernel_size = kernel_size
 
-        if padding == 'downright':
+        if padding == "downright":
             pad = [kernel_size[1] - 1, 0, kernel_size[0] - 1, 0]
 
-        elif padding == 'down' or padding == 'causal':
+        elif padding == "down" or padding == "causal":
             pad = kernel_size[1] // 2
 
             pad = [pad, pad, kernel_size[0] - 1, 0]
 
         self.causal = 0
-        if padding == 'causal':
+        if padding == "causal":
             self.causal = kernel_size[1] // 2
 
         self.pad = nn.ZeroPad2d(pad)
@@ -112,7 +112,7 @@ class CausalConv2d(nn.Module):
         out = self.pad(input)
 
         if self.causal > 0:
-            self.conv.conv.weight_v.data[:, :, -1, self.causal:].zero_()
+            self.conv.conv.weight_v.data[:, :, -1, self.causal :].zero_()
 
         out = self.conv(out)
 
@@ -125,7 +125,7 @@ class GatedResBlock(nn.Module):
         in_channel,
         channel,
         kernel_size,
-        conv='wnconv2d',
+        conv="wnconv2d",
         activation=nn.ELU,
         dropout=0.1,
         auxiliary_channel=0,
@@ -133,14 +133,14 @@ class GatedResBlock(nn.Module):
     ):
         super().__init__()
 
-        if conv == 'wnconv2d':
+        if conv == "wnconv2d":
             conv_module = partial(WNConv2d, padding=kernel_size // 2)
 
-        elif conv == 'causal_downright':
-            conv_module = partial(CausalConv2d, padding='downright')
+        elif conv == "causal_downright":
+            conv_module = partial(CausalConv2d, padding="downright")
 
-        elif conv == 'causal':
-            conv_module = partial(CausalConv2d, padding='causal')
+        elif conv == "causal":
+            conv_module = partial(CausalConv2d, padding="causal")
 
         self.activation = activation()
         self.conv1 = conv_module(in_channel, channel, kernel_size)
@@ -254,7 +254,7 @@ class PixelBlock(nn.Module):
                     in_channel,
                     channel,
                     kernel_size,
-                    conv='causal',
+                    conv="causal",
                     dropout=dropout,
                     condition_dim=condition_dim,
                 )
@@ -353,17 +353,17 @@ class PixelSNAIL(nn.Module):
             kernel = kernel_size
 
         self.horizontal = CausalConv2d(
-            n_class, channel, [kernel // 2, kernel], padding='down'
+            n_class, channel, [kernel // 2, kernel], padding="down"
         )
         self.vertical = CausalConv2d(
-            n_class, channel, [(kernel + 1) // 2, kernel // 2], padding='downright'
+            n_class, channel, [(kernel + 1) // 2, kernel // 2], padding="downright"
         )
 
         coord_x = (torch.arange(height).float() - height / 2) / height
         coord_x = coord_x.view(1, 1, height, 1).expand(1, 1, height, width)
         coord_y = (torch.arange(width).float() - width / 2) / width
         coord_y = coord_y.view(1, 1, 1, width).expand(1, 1, height, width)
-        self.register_buffer('background', torch.cat([coord_x, coord_y], 1))
+        self.register_buffer("background", torch.cat([coord_x, coord_y], 1))
 
         self.blocks = nn.ModuleList()
 
@@ -408,8 +408,8 @@ class PixelSNAIL(nn.Module):
         background = self.background[:, :, :height, :].expand(batch, 2, height, width)
 
         if condition is not None:
-            if 'condition' in cache:
-                condition = cache['condition']
+            if "condition" in cache:
+                condition = cache["condition"]
                 condition = condition[:, :, :height, :]
 
             else:
@@ -420,7 +420,7 @@ class PixelSNAIL(nn.Module):
                 )
                 condition = self.cond_resnet(condition)
                 condition = F.interpolate(condition, scale_factor=2)
-                cache['condition'] = condition.detach().clone()
+                cache["condition"] = condition.detach().clone()
                 condition = condition[:, :, :height, :]
 
         for block in self.blocks:

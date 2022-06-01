@@ -1,66 +1,140 @@
-from __future__ import print_function
-from __future__ import division
+from __future__ import division, print_function
 
 import os
 import pickle
 import re
 import warnings
-import numpy as np
 
+import numpy as np
+from lightgbm import LGBMClassifier, LGBMRegressor
 from sklearn import metrics
+from sklearn.ensemble import (
+    AdaBoostClassifier,
+    AdaBoostRegressor,
+    RandomForestClassifier,
+    RandomForestRegressor,
+)
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.linear_model import (
+    ElasticNetCV,
+    LassoCV,
+    LinearRegression,
+    LogisticRegression,
+    Ridge,
+)
 from sklearn.model_selection import GroupKFold, StratifiedKFold
 from sklearn.naive_bayes import GaussianNB
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.linear_model import LinearRegression, ElasticNetCV, LassoCV, Ridge, LogisticRegression
-from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor, RandomForestClassifier, AdaBoostClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-
-from xgboost import XGBRegressor
-from xgboost import XGBClassifier
-
-from lightgbm import LGBMClassifier
-from lightgbm import LGBMRegressor
+from xgboost import XGBClassifier, XGBRegressor
 
 warnings.filterwarnings(action="ignore", category=DeprecationWarning)
 
 
 def get_model(model_or_name, threads=-1, classify=False, seed=0):
     regression_models = {
-        'xgboost': (XGBRegressor(max_depth=6, n_jobs=threads, random_state=seed), 'XGBRegressor'),
-        'lightgbm': (LGBMRegressor(n_jobs=threads, random_state=seed, verbose=-1), 'LGBMRegressor'),
-        'randomforest': (RandomForestRegressor(n_estimators=100, n_jobs=threads), 'RandomForestRegressor'),
-        'adaboost': (AdaBoostRegressor(), 'AdaBoostRegressor'),
-        'linear': (LinearRegression(), 'LinearRegression'),
-        'elasticnet': (ElasticNetCV(positive=True), 'ElasticNetCV'),
-        'lasso': (LassoCV(positive=True), 'LassoCV'),
-        'ridge': (Ridge(), 'Ridge'),
-
-        'xgb.1k': (XGBRegressor(max_depth=6, n_estimators=1000, n_jobs=threads, random_state=seed), 'XGBRegressor.1K'),
-        'xgb.10k': (XGBRegressor(max_depth=6, n_estimators=10000, n_jobs=threads, random_state=seed), 'XGBRegressor.10K'),
-        'lgbm.1k': (LGBMRegressor(n_estimators=1000, n_jobs=threads, random_state=seed, verbose=-1), 'LGBMRegressor.1K'),
-        'lgbm.10k': (LGBMRegressor(n_estimators=10000, n_jobs=threads, random_state=seed, verbose=-1), 'LGBMRegressor.10K'),
-        'rf.1k': (RandomForestRegressor(n_estimators=1000, n_jobs=threads), 'RandomForestRegressor.1K'),
-        'rf.10k': (RandomForestRegressor(n_estimators=10000, n_jobs=threads), 'RandomForestRegressor.10K')
+        "xgboost": (
+            XGBRegressor(max_depth=6, n_jobs=threads, random_state=seed),
+            "XGBRegressor",
+        ),
+        "lightgbm": (
+            LGBMRegressor(n_jobs=threads, random_state=seed, verbose=-1),
+            "LGBMRegressor",
+        ),
+        "randomforest": (
+            RandomForestRegressor(n_estimators=100, n_jobs=threads),
+            "RandomForestRegressor",
+        ),
+        "adaboost": (AdaBoostRegressor(), "AdaBoostRegressor"),
+        "linear": (LinearRegression(), "LinearRegression"),
+        "elasticnet": (ElasticNetCV(positive=True), "ElasticNetCV"),
+        "lasso": (LassoCV(positive=True), "LassoCV"),
+        "ridge": (Ridge(), "Ridge"),
+        "xgb.1k": (
+            XGBRegressor(
+                max_depth=6, n_estimators=1000, n_jobs=threads, random_state=seed
+            ),
+            "XGBRegressor.1K",
+        ),
+        "xgb.10k": (
+            XGBRegressor(
+                max_depth=6, n_estimators=10000, n_jobs=threads, random_state=seed
+            ),
+            "XGBRegressor.10K",
+        ),
+        "lgbm.1k": (
+            LGBMRegressor(
+                n_estimators=1000, n_jobs=threads, random_state=seed, verbose=-1
+            ),
+            "LGBMRegressor.1K",
+        ),
+        "lgbm.10k": (
+            LGBMRegressor(
+                n_estimators=10000, n_jobs=threads, random_state=seed, verbose=-1
+            ),
+            "LGBMRegressor.10K",
+        ),
+        "rf.1k": (
+            RandomForestRegressor(n_estimators=1000, n_jobs=threads),
+            "RandomForestRegressor.1K",
+        ),
+        "rf.10k": (
+            RandomForestRegressor(n_estimators=10000, n_jobs=threads),
+            "RandomForestRegressor.10K",
+        ),
     }
 
     classification_models = {
-        'xgboost': (XGBClassifier(max_depth=6, n_jobs=threads, random_state=seed), 'XGBClassifier'),
-        'lightgbm': (LGBMClassifier(n_jobs=threads, random_state=seed, verbose=-1), 'LGBMClassifier'),
-        'randomforest': (RandomForestClassifier(n_estimators=100, n_jobs=threads), 'RandomForestClassifier'),
-        'adaboost': (AdaBoostClassifier(), 'AdaBoostClassifier'),
-        'logistic': (LogisticRegression(), 'LogisticRegression'),
-        'gaussian': (GaussianProcessClassifier(), 'GaussianProcessClassifier'),
-        'knn': (KNeighborsClassifier(), 'KNeighborsClassifier'),
-        'bayes': (GaussianNB(), 'GaussianNB'),
-        'svm': (SVC(), 'SVC'),
-
-        'xgb.1k': (XGBClassifier(max_depth=6, n_estimators=1000, n_jobs=threads, random_state=seed), 'XGBClassifier.1K'),
-        'xgb.10k': (XGBClassifier(max_depth=6, n_estimators=10000, n_jobs=threads, random_state=seed), 'XGBClassifier.10K'),
-        'lgbm.1k': (LGBMClassifier(n_estimators=1000, n_jobs=threads, random_state=seed, verbose=-1), 'LGBMClassifier.1K'),
-        'lgbm.10k': (LGBMClassifier(n_estimators=1000, n_jobs=threads, random_state=seed, verbose=-1), 'LGBMClassifier.10K'),
-        'rf.1k': (RandomForestClassifier(n_estimators=1000, n_jobs=threads), 'RandomForestClassifier.1K'),
-        'rf.10k': (RandomForestClassifier(n_estimators=10000, n_jobs=threads), 'RandomForestClassifier.10K')
+        "xgboost": (
+            XGBClassifier(max_depth=6, n_jobs=threads, random_state=seed),
+            "XGBClassifier",
+        ),
+        "lightgbm": (
+            LGBMClassifier(n_jobs=threads, random_state=seed, verbose=-1),
+            "LGBMClassifier",
+        ),
+        "randomforest": (
+            RandomForestClassifier(n_estimators=100, n_jobs=threads),
+            "RandomForestClassifier",
+        ),
+        "adaboost": (AdaBoostClassifier(), "AdaBoostClassifier"),
+        "logistic": (LogisticRegression(), "LogisticRegression"),
+        "gaussian": (GaussianProcessClassifier(), "GaussianProcessClassifier"),
+        "knn": (KNeighborsClassifier(), "KNeighborsClassifier"),
+        "bayes": (GaussianNB(), "GaussianNB"),
+        "svm": (SVC(), "SVC"),
+        "xgb.1k": (
+            XGBClassifier(
+                max_depth=6, n_estimators=1000, n_jobs=threads, random_state=seed
+            ),
+            "XGBClassifier.1K",
+        ),
+        "xgb.10k": (
+            XGBClassifier(
+                max_depth=6, n_estimators=10000, n_jobs=threads, random_state=seed
+            ),
+            "XGBClassifier.10K",
+        ),
+        "lgbm.1k": (
+            LGBMClassifier(
+                n_estimators=1000, n_jobs=threads, random_state=seed, verbose=-1
+            ),
+            "LGBMClassifier.1K",
+        ),
+        "lgbm.10k": (
+            LGBMClassifier(
+                n_estimators=1000, n_jobs=threads, random_state=seed, verbose=-1
+            ),
+            "LGBMClassifier.10K",
+        ),
+        "rf.1k": (
+            RandomForestClassifier(n_estimators=1000, n_jobs=threads),
+            "RandomForestClassifier.1K",
+        ),
+        "rf.10k": (
+            RandomForestClassifier(n_estimators=10000, n_jobs=threads),
+            "RandomForestClassifier.10K",
+        ),
     }
 
     if isinstance(model_or_name, str):
@@ -79,11 +153,11 @@ def get_model(model_or_name, threads=-1, classify=False, seed=0):
     return model, name
 
 
-def score_format(metric, score, signed=False, eol=''):
+def score_format(metric, score, signed=False, eol=""):
     if signed:
-        return '{:<25} = {:+.5f}'.format(metric, score) + eol
+        return "{:<25} = {:+.5f}".format(metric, score) + eol
     else:
-        return '{:<25} =  {:.5f}'.format(metric, score) + eol
+        return "{:<25} =  {:.5f}".format(metric, score) + eol
 
 
 def top_important_features(model, feature_names, n_top=1000):
@@ -100,11 +174,11 @@ def top_important_features(model, feature_names, n_top=1000):
 
 
 def sprint_features(top_features, n_top=1000):
-    str = ''
+    str = ""
     for i, feature in enumerate(top_features):
         if i >= n_top:
             break
-        str += '{:9.5f}\t{}\n'.format(feature[0], feature[1])
+        str += "{:9.5f}\t{}\n".format(feature[0], feature[1])
     return str
 
 
@@ -112,7 +186,7 @@ def discretize(y, bins=5, cutoffs=None, min_count=0, verbose=False, return_bins=
     thresholds = cutoffs
     if thresholds is None:
         if verbose:
-            print('Creating {} balanced categories...'.format(bins))
+            print("Creating {} balanced categories...".format(bins))
         percentiles = [100 / bins * (i + 1) for i in range(bins - 1)]
         thresholds = [np.percentile(y, x) for x in percentiles]
     classes = np.digitize(y, thresholds)
@@ -122,17 +196,20 @@ def discretize(y, bins=5, cutoffs=None, min_count=0, verbose=False, return_bins=
         good_bins = len(bc)
         min_y = np.min(y)
         max_y = np.max(y)
-        print('Category cutoffs:', ['{:.3g}'.format(t) for t in thresholds])
-        print('Bin counts:')
+        print("Category cutoffs:", ["{:.3g}".format(t) for t in thresholds])
+        print("Bin counts:")
         for i, count in enumerate(bc):
             lower = min_y if i == 0 else thresholds[i - 1]
             upper = max_y if i == len(bc) - 1 else thresholds[i]
-            removed = ''
+            removed = ""
             if count < min_count:
-                removed = ' .. removed (<{})'.format(min_count)
+                removed = " .. removed (<{})".format(min_count)
                 good_bins -= 1
-            print('  Class {}: {:7d} ({:.4f}) - between {:+.2f} and {:+.2f}{}'.
-                  format(i, count, count / len(y), lower, upper, removed))
+            print(
+                "  Class {}: {:7d} ({:.4f}) - between {:+.2f} and {:+.2f}{}".format(
+                    i, count, count / len(y), lower, upper, removed
+                )
+            )
         # print('  Total: {:9d}'.format(len(y)))
     if return_bins:
         return classes, thresholds, good_bins
@@ -140,7 +217,7 @@ def discretize(y, bins=5, cutoffs=None, min_count=0, verbose=False, return_bins=
         return classes
 
 
-def categorize_dataframe(df, ycol='0', bins=5, cutoffs=None, verbose=False):
+def categorize_dataframe(df, ycol="0", bins=5, cutoffs=None, verbose=False):
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
     y = df.loc[:, ycol].values
@@ -153,36 +230,62 @@ def make_group_from_columns(df, groupcols):
     return df[groupcols].astype(str).sum(axis=1).values
 
 
-def summarize(df, ycol='0', classify=False, bins=0, cutoffs=None, min_count=0):
+def summarize(df, ycol="0", classify=False, bins=0, cutoffs=None, min_count=0):
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
     y = df.loc[:, ycol].values
-    print('Target column: {}'.format(ycol))
-    print('  count = {}, uniq = {}, mean = {:.3g}, std = {:.3g}'.format(len(y), len(np.unique(y)), np.mean(y), np.std(y)))
-    print('  min = {:.3g}, q1 = {:.3g}, median = {:.3g}, q3 = {:.3g}, max = {:.3g}'.format(np.min(y), np.percentile(y, 25), np.median(y), np.percentile(y, 75), np.max(y)))
+    print("Target column: {}".format(ycol))
+    print(
+        "  count = {}, uniq = {}, mean = {:.3g}, std = {:.3g}".format(
+            len(y), len(np.unique(y)), np.mean(y), np.std(y)
+        )
+    )
+    print(
+        "  min = {:.3g}, q1 = {:.3g}, median = {:.3g}, q3 = {:.3g}, max = {:.3g}".format(
+            np.min(y),
+            np.percentile(y, 25),
+            np.median(y),
+            np.percentile(y, 75),
+            np.max(y),
+        )
+    )
     # y_discrete, thresholds, _ = discretize(y, bins=4)
     # print('Quartiles of y:', ['{:.2g}'.format(t) for t in thresholds])
     good_bins = None
     if classify:
         if cutoffs is not None or bins >= 2:
-            _, _, good_bins = discretize(y, bins=bins, cutoffs=cutoffs, min_count=min_count, verbose=True)
+            _, _, good_bins = discretize(
+                y, bins=bins, cutoffs=cutoffs, min_count=min_count, verbose=True
+            )
         else:
-            if df[ycol].dtype in [np.dtype('float64'), np.dtype('float32')]:
-                warnings.warn('Warning: classification target is float; consider using --bins or --cutoffs')
+            if df[ycol].dtype in [np.dtype("float64"), np.dtype("float32")]:
+                warnings.warn(
+                    "Warning: classification target is float; consider using --bins or --cutoffs"
+                )
             good_bins = len(np.unique(y))
     print()
     return good_bins
 
 
-def split_data(df, ycol='0', classify=False, cv=5, bins=0, cutoffs=None, groupcols=None, ignore_categoricals=False, verbose=True):
+def split_data(
+    df,
+    ycol="0",
+    classify=False,
+    cv=5,
+    bins=0,
+    cutoffs=None,
+    groupcols=None,
+    ignore_categoricals=False,
+    verbose=True,
+):
     if groupcols is not None:
         groups = make_group_from_columns(df, groupcols)
 
-    cat_cols = df.select_dtypes(['object']).columns
+    cat_cols = df.select_dtypes(["object"]).columns
     if ignore_categoricals:
         df[cat_cols] = 0
     else:
-        df[cat_cols] = df[cat_cols].apply(lambda x: x.astype('category').cat.codes)
+        df[cat_cols] = df[cat_cols].apply(lambda x: x.astype("category").cat.codes)
 
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
@@ -192,9 +295,21 @@ def split_data(df, ycol='0', classify=False, cv=5, bins=0, cutoffs=None, groupco
     features = df.drop(ycol, axis=1).columns.tolist()
 
     if verbose:
-        print('Target column: {}'.format(ycol))
-        print('  count = {}, uniq = {}, mean = {:.3g}, std = {:.3g}'.format(len(y), len(np.unique(y)), np.mean(y), np.std(y)))
-        print('  min = {:.3g}, q1 = {:.3g}, median = {:.3g}, q3 = {:.3g}, max = {:.3g}'.format(np.min(y), np.percentile(y, 25), np.median(y), np.percentile(y, 75), np.max(y)))
+        print("Target column: {}".format(ycol))
+        print(
+            "  count = {}, uniq = {}, mean = {:.3g}, std = {:.3g}".format(
+                len(y), len(np.unique(y)), np.mean(y), np.std(y)
+            )
+        )
+        print(
+            "  min = {:.3g}, q1 = {:.3g}, median = {:.3g}, q3 = {:.3g}, max = {:.3g}".format(
+                np.min(y),
+                np.percentile(y, 25),
+                np.median(y),
+                np.percentile(y, 75),
+                np.max(y),
+            )
+        )
 
     if not classify:
         y_even = discretize(y, bins=5, verbose=False)
@@ -202,8 +317,10 @@ def split_data(df, ycol='0', classify=False, cv=5, bins=0, cutoffs=None, groupco
         y = discretize(y, bins=bins, min_count=cv, verbose=verbose)
     elif cutoffs:
         y = discretize(y, cutoffs=cutoffs, min_count=cv, verbose=verbose)
-    elif df[ycol].dtype in [np.dtype('float64'), np.dtype('float32')]:
-        warnings.warn('Warning: classification target is float; consider using --bins or --cutoffs')
+    elif df[ycol].dtype in [np.dtype("float64"), np.dtype("float32")]:
+        warnings.warn(
+            "Warning: classification target is float; consider using --bins or --cutoffs"
+        )
         y = y.astype(int)
 
     if classify:
@@ -216,7 +333,7 @@ def split_data(df, ycol='0', classify=False, cv=5, bins=0, cutoffs=None, groupco
         y = y[mask]
         removed = len(mask) - np.sum(mask)
         if removed and verbose:
-            print('Removed {} rows in small classes: count < {}'.format(removed, cv))
+            print("Removed {} rows in small classes: count < {}".format(removed, cv))
 
     if groupcols is None:
         if classify:
@@ -241,16 +358,16 @@ def verify_path(path):
         os.makedirs(folder)
 
 
-def infer(model, df, ycol='0', ignore_categoricals=False, classify=False, prefix=''):
+def infer(model, df, ycol="0", ignore_categoricals=False, classify=False, prefix=""):
     if type(model) == str:
-        with open(model, 'rb') as f:
+        with open(model, "rb") as f:
             model = pickle.load(f)
 
-    cat_cols = df.select_dtypes(['object']).columns
+    cat_cols = df.select_dtypes(["object"]).columns
     if ignore_categoricals:
         df[cat_cols] = 0
     else:
-        df[cat_cols] = df[cat_cols].apply(lambda x: x.astype('category').cat.codes)
+        df[cat_cols] = df[cat_cols].apply(lambda x: x.astype("category").cat.codes)
 
     if ycol.isdigit():
         ycol = df.columns[int(ycol)]
@@ -260,29 +377,39 @@ def infer(model, df, ycol='0', ignore_categoricals=False, classify=False, prefix
     y_pred = model.predict(x)
 
     if classify:
-        metric_names = 'accuracy_score matthews_corrcoef f1_score precision_score recall_score log_loss'.split()
+        metric_names = "accuracy_score matthews_corrcoef f1_score precision_score recall_score log_loss".split()
     else:
-        metric_names = 'r2_score explained_variance_score mean_absolute_error mean_squared_error'.split()
+        metric_names = "r2_score explained_variance_score mean_absolute_error mean_squared_error".split()
 
     scores = {}
-    print('Average test metrics:')
+    print("Average test metrics:")
     scores_fname = "{}.test.scores".format(prefix)
     with open(scores_fname, "w") as scores_file:
         for m in metric_names:
             try:
                 s = getattr(metrics, m)(y, y_pred)
                 scores[m] = s
-                print(' ', score_format(m, s))
-                scores_file.write(score_format(m, s, eol='\n'))
+                print(" ", score_format(m, s))
+                scores_file.write(score_format(m, s, eol="\n"))
             except Exception:
                 pass
-        scores_file.write('\nModel:\n{}\n\n'.format(model))
+        scores_file.write("\nModel:\n{}\n\n".format(model))
 
     print()
     return scores
 
 
-def train(model, x, y, features=None, classify=False, threads=-1, prefix='', name=None, save=False):
+def train(
+    model,
+    x,
+    y,
+    features=None,
+    classify=False,
+    threads=-1,
+    prefix="",
+    name=None,
+    save=False,
+):
     verify_path(prefix)
     model, model_name = get_model(model, threads, classify=classify)
     model.fit(x, y)
@@ -290,7 +417,7 @@ def train(model, x, y, features=None, classify=False, threads=-1, prefix='', nam
     if save:
         model_desc_fname = "{}.{}.description".format(prefix, name)
         with open(model_desc_fname, "w") as f:
-            f.write('{}\n'.format(model))
+            f.write("{}\n".format(model))
         if features:
             top_features = top_important_features(model, features)
             if top_features is not None:
@@ -298,12 +425,14 @@ def train(model, x, y, features=None, classify=False, threads=-1, prefix='', nam
                 with open(fea_fname, "w") as fea_file:
                     fea_file.write(sprint_features(top_features))
         model_fname = "{}.{}.model.pkl".format(prefix, name)
-        with open(model_fname, 'wb') as f:
+        with open(model_fname, "wb") as f:
             pickle.dump(model, f)
         return model_fname
 
 
-def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class_weight=None):
+def classify(
+    model, x, y, splits, features, threads=-1, prefix="", seed=0, class_weight=None
+):
     verify_path(prefix)
     model, name = get_model(model, threads, classify=True, seed=seed)
 
@@ -313,8 +442,8 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class
     best_model = None
     best_score = -np.Inf
 
-    print('>', name)
-    print('Cross validation:')
+    print(">", name)
+    print("Cross validation:")
     for i, (train_index, test_index) in enumerate(splits):
         x_train, x_test = x[train_index], x[test_index]
         y_train, y_test = y[train_index], y[test_index]
@@ -324,7 +453,11 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class
         test_score = model.score(x_test, y_test)
         train_scores.append(train_score)
         test_scores.append(test_score)
-        print("  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(i + 1, len(splits), test_score, train_score))
+        print(
+            "  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(
+                i + 1, len(splits), test_score, train_score
+            )
+        )
         if test_score > best_score:
             best_model = model
             best_score = test_score
@@ -333,10 +466,12 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class
         tests = np.concatenate((tests, y_test)) if tests is not None else y_test
         if hasattr(model, "predict_proba"):
             probas_ = model.predict_proba(x_test)
-            probas = np.concatenate((probas, probas_)) if probas is not None else probas_
+            probas = (
+                np.concatenate((probas, probas_)) if probas is not None else probas_
+            )
 
     uniques, counts = np.unique(tests, return_counts=True)
-    average = 'binary' if len(uniques) <= 2 else 'weighted'
+    average = "binary" if len(uniques) <= 2 else "weighted"
 
     roc_auc_score = None
     if probas is not None:
@@ -345,19 +480,23 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class
         roc_fname = "{}.{}.ROC".format(prefix, name)
         if roc_auc_score:
             with open(roc_fname, "w") as roc_file:
-                roc_file.write('\t'.join(['Threshold', 'FPR', 'TPR']) + '\n')
+                roc_file.write("\t".join(["Threshold", "FPR", "TPR"]) + "\n")
                 for ent in zip(thresholds, fpr, tpr):
-                    roc_file.write('\t'.join("{0:.5f}".format(x) for x in list(ent)) + '\n')
+                    roc_file.write(
+                        "\t".join("{0:.5f}".format(x) for x in list(ent)) + "\n"
+                    )
 
-    print('Average validation metrics:')
+    print("Average validation metrics:")
     naive_accuracy = max(counts) / len(tests)
     accuracy = np.sum(preds == tests) / len(tests)
     accuracy_gain = accuracy - naive_accuracy
-    print(' ', score_format('accuracy_gain', accuracy_gain, signed=True))
+    print(" ", score_format("accuracy_gain", accuracy_gain, signed=True))
     scores_fname = "{}.{}.scores".format(prefix, name)
-    metric_names = 'accuracy_score matthews_corrcoef f1_score precision_score recall_score log_loss'.split()
+    metric_names = "accuracy_score matthews_corrcoef f1_score precision_score recall_score log_loss".split()
     with open(scores_fname, "w") as scores_file:
-        scores_file.write(score_format('accuracy_gain', accuracy_gain, signed=True, eol='\n'))
+        scores_file.write(
+            score_format("accuracy_gain", accuracy_gain, signed=True, eol="\n")
+        )
         for m in metric_names:
             s = None
             try:
@@ -368,12 +507,12 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class
                 except Exception:
                     pass
             if s:
-                print(' ', score_format(m, s))
-                scores_file.write(score_format(m, s, eol='\n'))
+                print(" ", score_format(m, s))
+                scores_file.write(score_format(m, s, eol="\n"))
         if roc_auc_score:
-            print(' ', score_format('roc_auc_score', roc_auc_score))
-            scores_file.write(score_format('roc_auc_score', roc_auc_score, eol='\n'))
-        scores_file.write('\nModel:\n{}\n\n'.format(model))
+            print(" ", score_format("roc_auc_score", roc_auc_score))
+            scores_file.write(score_format("roc_auc_score", roc_auc_score, eol="\n"))
+        scores_file.write("\nModel:\n{}\n\n".format(model))
 
     print()
     top_features = top_important_features(best_model, features)
@@ -386,7 +525,7 @@ def classify(model, x, y, splits, features, threads=-1, prefix='', seed=0, class
     return score
 
 
-def regress(model, x, y, splits, features, threads=-1, prefix='', seed=0):
+def regress(model, x, y, splits, features, threads=-1, prefix="", seed=0):
     verify_path(prefix)
     model, name = get_model(model, threads, seed=seed)
 
@@ -395,8 +534,8 @@ def regress(model, x, y, splits, features, threads=-1, prefix='', seed=0):
     best_model = None
     best_score = -np.Inf
 
-    print('>', name)
-    print('Cross validation:')
+    print(">", name)
+    print("Cross validation:")
     for i, (train_index, test_index) in enumerate(splits):
         x_train, x_test = x[train_index], x[test_index]
         y_train, y_test = y[train_index], y[test_index]
@@ -405,7 +544,11 @@ def regress(model, x, y, splits, features, threads=-1, prefix='', seed=0):
         test_score = model.score(x_test, y_test)
         train_scores.append(train_score)
         test_scores.append(test_score)
-        print("  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(i + 1, len(splits), test_score, train_score))
+        print(
+            "  fold {}/{}: score = {:.3f}  (train = {:.3f})".format(
+                i + 1, len(splits), test_score, train_score
+            )
+        )
         if test_score > best_score:
             best_model = model
             best_score = test_score
@@ -413,18 +556,18 @@ def regress(model, x, y, splits, features, threads=-1, prefix='', seed=0):
         preds = np.concatenate((preds, y_pred)) if preds is not None else y_pred
         tests = np.concatenate((tests, y_test)) if tests is not None else y_test
 
-    print('Average validation metrics:')
+    print("Average validation metrics:")
     scores_fname = "{}.{}.scores".format(prefix, name)
-    metric_names = 'r2_score explained_variance_score mean_absolute_error mean_squared_error'.split()
+    metric_names = "r2_score explained_variance_score mean_absolute_error mean_squared_error".split()
     with open(scores_fname, "w") as scores_file:
         for m in metric_names:
             try:
                 s = getattr(metrics, m)(tests, preds)
-                print(' ', score_format(m, s))
-                scores_file.write(score_format(m, s, eol='\n'))
+                print(" ", score_format(m, s))
+                scores_file.write(score_format(m, s, eol="\n"))
             except Exception:
                 pass
-        scores_file.write('\nModel:\n{}\n\n'.format(model))
+        scores_file.write("\nModel:\n{}\n\n".format(model))
 
     print()
     top_features = top_important_features(best_model, features)

@@ -13,13 +13,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-def train_drug_target(device: torch.device,
-
-                      drug_target_net: nn.Module,
-                      data_loader: torch.utils.data.DataLoader,
-
-                      max_num_batches: int,
-                      optimizer: torch.optim, ):
+def train_drug_target(
+    device: torch.device,
+    drug_target_net: nn.Module,
+    data_loader: torch.utils.data.DataLoader,
+    max_num_batches: int,
+    optimizer: torch.optim,
+):
 
     drug_target_net.train()
 
@@ -36,10 +36,11 @@ def train_drug_target(device: torch.device,
         optimizer.step()
 
 
-def valid_drug_target(device: torch.device,
-
-                      drug_target_net: nn.Module,
-                      data_loader: torch.utils.data.DataLoader, ):
+def valid_drug_target(
+    device: torch.device,
+    drug_target_net: nn.Module,
+    data_loader: torch.utils.data.DataLoader,
+):
 
     drug_target_net.eval()
 
@@ -53,12 +54,11 @@ def valid_drug_target(device: torch.device,
             out_target = drug_target_net(drug_feature)
             pred_target = out_target.max(1, keepdim=True)[1]
 
-            correct_target += pred_target.eq(
-                target.view_as(pred_target)).sum().item()
+            correct_target += pred_target.eq(target.view_as(pred_target)).sum().item()
 
     # Get overall accuracy
-    target_acc = 100. * correct_target / len(data_loader.dataset)
+    target_acc = 100.0 * correct_target / len(data_loader.dataset)
 
-    print('\tDrug Target Family Classification Accuracy: %5.2f%%' % target_acc)
+    print("\tDrug Target Family Classification Accuracy: %5.2f%%" % target_acc)
 
     return target_acc

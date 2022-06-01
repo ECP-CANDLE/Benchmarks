@@ -21,7 +21,9 @@ class CharRNN(nn.Module):
 
         x, _ = self.lstm(x)
 
-        x, _ = nn.utils.rnn.pad_packed_sequence(x, padding_value=0, total_length=self.max_len)
+        x, _ = nn.utils.rnn.pad_packed_sequence(
+            x, padding_value=0, total_length=self.max_len
+        )
 
         x = self.linear(x)
         if with_softmax:

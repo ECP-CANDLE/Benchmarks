@@ -2,11 +2,10 @@ import argparse
 import os
 
 import torch
+from pixelsnail import PixelSNAIL
 from torchvision.utils import save_image
 from tqdm import tqdm
-
 from vqvae import VQVAE
-from pixelsnail import PixelSNAIL
 
 
 @torch.no_grad()
@@ -25,15 +24,15 @@ def sample_model(model, device, batch, size, temperature, condition=None):
 
 
 def load_model(model, checkpoint, device):
-    ckpt = torch.load(os.path.join('checkpoint', checkpoint))
+    ckpt = torch.load(os.path.join("checkpoint", checkpoint))
 
-    if 'args' in ckpt:
-        args = ckpt['args']
+    if "args" in ckpt:
+        args = ckpt["args"]
 
-    if model == 'vqvae':
+    if model == "vqvae":
         model = VQVAE()
 
-    elif model == 'pixelsnail_top':
+    elif model == "pixelsnail_top":
         model = PixelSNAIL(
             [32, 32],
             512,
@@ -46,7 +45,7 @@ def load_model(model, checkpoint, device):
             n_out_res_block=args.n_out_res_block,
         )
 
-    elif model == 'pixelsnail_bottom':
+    elif model == "pixelsnail_bottom":
         model = PixelSNAIL(
             [64, 64],
             512,
@@ -61,8 +60,8 @@ def load_model(model, checkpoint, device):
             cond_res_channel=args.n_res_channel,
         )
 
-    if 'model' in ckpt:
-        ckpt = ckpt['model']
+    if "model" in ckpt:
+        ckpt = ckpt["model"]
 
     model.load_state_dict(ckpt)
     model = model.to(device)
@@ -71,22 +70,22 @@ def load_model(model, checkpoint, device):
     return model
 
 
-if __name__ == '__main__':
-    device = 'cuda'
+if __name__ == "__main__":
+    device = "cuda"
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch', type=int, default=8)
-    parser.add_argument('--vqvae', type=str)
-    parser.add_argument('--top', type=str)
-    parser.add_argument('--bottom', type=str)
-    parser.add_argument('--temp', type=float, default=1.0)
-    parser.add_argument('filename', type=str)
+    parser.add_argument("--batch", type=int, default=8)
+    parser.add_argument("--vqvae", type=str)
+    parser.add_argument("--top", type=str)
+    parser.add_argument("--bottom", type=str)
+    parser.add_argument("--temp", type=float, default=1.0)
+    parser.add_argument("filename", type=str)
 
     args = parser.parse_args()
 
-    model_vqvae = load_model('vqvae', args.vqvae, device)
-    model_top = load_model('pixelsnail_top', args.top, device)
-    model_bottom = load_model('pixelsnail_bottom', args.bottom, device)
+    model_vqvae = load_model("vqvae", args.vqvae, device)
+    model_top = load_model("pixelsnail_top", args.top, device)
+    model_bottom = load_model("pixelsnail_bottom", args.bottom, device)
 
     top_sample = sample_model(model_top, device, args.batch, [32, 32], args.temp)
     bottom_sample = sample_model(

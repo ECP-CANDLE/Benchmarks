@@ -1,8 +1,9 @@
+from itertools import cycle, islice
 
 import numpy as np
+
 # import pandas as pd
 
-from itertools import cycle, islice
 
 
 def find_columns_with_str(df, substr):
@@ -12,9 +13,18 @@ def find_columns_with_str(df, substr):
 
 
 class FromFileDataGenerator(object):
-    """Generate testing batches from loaded data
-    """
-    def __init__(self, df_data, indices, target_str, feature_names_list, num_features_list, batch_size=32, shuffle=True):
+    """Generate testing batches from loaded data"""
+
+    def __init__(
+        self,
+        df_data,
+        indices,
+        target_str,
+        feature_names_list,
+        num_features_list,
+        batch_size=32,
+        shuffle=True,
+    ):
 
         self.batch_size = batch_size
 
@@ -34,8 +44,8 @@ class FromFileDataGenerator(object):
         except KeyError:  # The 'target_str' column is not available in data file
             # No ground truth available
             y_fake = np.zeros(df_data.shape[0])
-            df_data['fake_target'] = y_fake
-            self.target = df_data.columns.get_loc('fake_target')
+            df_data["fake_target"] = y_fake
+            self.target = df_data.columns.get_loc("fake_target")
         else:  # 'target_str' column is available --> use this column
             self.target = target
 
@@ -52,9 +62,12 @@ class FromFileDataGenerator(object):
                     offset = first_col
 
         if offset == self.df_data.shape[1]:
-            raise Exception('ERROR ! Feature names from model are not in file. '
-                            + 'These are features in model: ' + str(sorted(feature_names))
-                            + '... Exiting')
+            raise Exception(
+                "ERROR ! Feature names from model are not in file. "
+                + "These are features in model: "
+                + str(sorted(feature_names))
+                + "... Exiting"
+            )
 
         return offset
 

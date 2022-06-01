@@ -1,4 +1,4 @@
-from math import cos, pi, floor, sin
+from math import cos, floor, pi, sin
 
 from torch.optim import lr_scheduler
 
@@ -210,10 +210,10 @@ class CycleAnnealScheduler:
             self.iteration = 0
 
         for group in self.optimizer.param_groups:
-            group['lr'] = lr
+            group["lr"] = lr
 
             if self.momentum is not None:
-                group['betas'] = (momentum, group['betas'][1])
+                group["betas"] = (momentum, group["betas"][1])
 
         return lr
 
@@ -257,7 +257,7 @@ class CycleScheduler:
         momentum=(0.95, 0.85),
         divider=25,
         warmup_proportion=0.3,
-        phase=('linear', 'cos'),
+        phase=("linear", "cos"),
     ):
         self.optimizer = optimizer
 
@@ -265,7 +265,7 @@ class CycleScheduler:
         phase2 = n_iter - phase1
         lr_min = lr_max / divider
 
-        phase_map = {'linear': anneal_linear, 'cos': anneal_cos}
+        phase_map = {"linear": anneal_linear, "cos": anneal_cos}
 
         self.lr_phase = [
             Phase(lr_min, lr_max, phase1, phase_map[phase[0]]),
@@ -296,14 +296,14 @@ class CycleScheduler:
             momentum = None
 
         for group in self.optimizer.param_groups:
-            group['lr'] = lr
+            group["lr"] = lr
 
             if self.momentum is not None:
-                if 'betas' in group:
-                    group['betas'] = (momentum, group['betas'][1])
+                if "betas" in group:
+                    group["betas"] = (momentum, group["betas"][1])
 
                 else:
-                    group['momentum'] = momentum
+                    group["momentum"] = momentum
 
         if self.lr_phase[self.phase].is_done:
             self.phase += 1
@@ -336,7 +336,7 @@ class LRFinder(lr_scheduler._LRScheduler):
         lr = (
             self.lr_mult * self.iteration
             if self.linear
-            else self.lr_mult ** self.iteration
+            else self.lr_mult**self.iteration
         )
         lr = self.lr_min + lr if self.linear else self.lr_min * lr
 
@@ -349,6 +349,6 @@ class LRFinder(lr_scheduler._LRScheduler):
         self.losses.append(loss)
 
     def save(self, filename):
-        with open(filename, 'w') as f:
+        with open(filename, "w") as f:
             for lr, loss in zip(self.lrs, self.losses):
-                f.write('{},{}\n'.format(lr, loss))
+                f.write("{},{}\n".format(lr, loss))
