@@ -2,59 +2,59 @@
 
 ## Background
 
-Data preprocessing is an important front-end step in data analysis that prepares data for subsequent analysis. 
-It not only enables the subsequent analysis by processing and transforming data, but also influences the quality of subsequent analysis sometimes significantly. 
-Several common examples of data preprocessing are data standardization and normalization to remove/suppress noise, removal of batch effect to combine datasets for larger studies, and generation of new representations of data to enable new analyses. 
-Feature selection can be viewed as a kind of data preprocessing for prediction analysis. 
-Its goal is to select a (minimum) subset of available features, based on which prediction models with a good performance can be constructed. 
+Data preprocessing is an important front-end step in data analysis that prepares data for subsequent analysis.
+It not only enables the subsequent analysis by processing and transforming data, but also influences the quality of subsequent analysis sometimes significantly.
+Several common examples of data preprocessing are data standardization and normalization to remove/suppress noise, removal of batch effect to combine datasets for larger studies, and generation of new representations of data to enable new analyses.
+Feature selection can be viewed as a kind of data preprocessing for prediction analysis.
+Its goal is to select a (minimum) subset of available features, based on which prediction models with a good performance can be constructed.
 And the performance can be evaluated from multiple aspects, such as the prediction accuracy and the speed of constructing the prediction model.
 
-The data preprocessing methods can generate data partitions to enable flexible cross-validation analysis, normalize and remove batch effects from gene expression data of cancer cells, and generate genomic representations at the gene set level for cancer cells. 
-The feature selection methods can filter features based on missing values and variations, and perform feature decorrelation. 
-Features without much variation might not be useful for prediction and highly-correlated features are not necessary to be all included in the prediction model. 
-We also implement and extend the co-expression extrapolation (COXEN) gene selection method for Pilot 1 project [3], which can select predictive and generalizable genes for predicting drug response in the precision oncology applications. 
+The data preprocessing methods can generate data partitions to enable flexible cross-validation analysis, normalize and remove batch effects from gene expression data of cancer cells, and generate genomic representations at the gene set level for cancer cells.
+The feature selection methods can filter features based on missing values and variations, and perform feature decorrelation.
+Features without much variation might not be useful for prediction and highly-correlated features are not necessary to be all included in the prediction model.
+We also implement and extend the co-expression extrapolation (COXEN) gene selection method for Pilot 1 project [3], which can select predictive and generalizable genes for predicting drug response in the precision oncology applications.
 
 ## General Data Preprocessing Functions
 
-```generate_cross_validation_partition```
+`generate_cross_validation_partition`
 
 To flexibly generate data partitions for cross-validation analysis, such as partitioning of grouped samples into sets that do not share groups.
 
 ## Data Preprocessing Functions Specific to Pilot 1 Applications
 
-```quantile_normalizationa```
+`quantile_normalizationa`
 
 To perform quantile normalization of genomic data [1] with tolerance of missing values. [[see example code]](#quantile-normalization-of-gene-expression-data)
 
-```combat_batch_effect_removal```
+`combat_batch_effect_removal`
 
 To perform ComBat analysis [2] on gene expression data to remove batch effects. [[see example code]](#combat-batch-normalization-on-gene-expression-data)
 
-```generate_gene_set_data```
+`generate_gene_set_data`
 
 To calculate genomic representations at gene set level, such as the average expression values of genes in a pathway and the total number of SNP mutations in a genetic pathway. [[see example code]](#generate-gene-set-level-data)
 
 ## General Feature Selection Functions
 
-```select_features_by_missing_values```
+`select_features_by_missing_values`
 
 To remove features with (many) missing values. [[see example code]](#select-features-based-on-missing-values)
 
-```select_features_by_variation```
+`select_features_by_variation`
 
 To remove features with no or small variations. [[see example code]](#select-features-based-on-variation)
 
-```select_decorrelated_features``` 
+`select_decorrelated_features`
 
 To select a subset of features that are not identical or highly correlated with each other. [[see example code]](#select-decorrelated-features)
 
 ## Feature (Gene) Selection Functions Specific to Pilot 1 Applications
 
-```coxen_single_drug_gene_selection``` 
+`coxen_single_drug_gene_selection`
 
 To perform co-expression extrapolation (COXEN) analysis [3] that selects predictive and generalizable genes for predicting the response of tumor cells to a specific drug.
 
-```coxen_multi_drug_gene_selection```
+`coxen_multi_drug_gene_selection`
 
 To extend the COXEN approach for selecting genes to predict the response of tumor cells to multiple drugs in precision oncology applications.
 
@@ -62,10 +62,12 @@ To extend the COXEN approach for selecting genes to predict the response of tumo
 
 The code demonstrates feature selection methods that CANDLE provides.
 
-It can be run by executing ``` python M16_test.py ```
+It can be run by executing `python M16_test.py`
 
 ### Download data
+
 Code
+
 ```python
 # download all the data if needed from the repo
 data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/Candle_Milestone_16_Version_12_15_2019/Data/Data_For_Testing/'
@@ -81,7 +83,9 @@ gene_expression = candle.get_file(file_name, data_url+file_name, cache_subdir='e
 file_name = 'CCLE_NCI60_Gene_Expression_Full_Data.txt'
 ccle_nci60 = candle.get_file(file_name, data_url+file_name, cache_subdir='examples')
 ```
+
 Output
+
 ```bash
 Importing candle utils for keras
 Origin =  http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/Candle_Milestone_16_Version_12_15_2019/Data/Data_For_Testing/small_drug_descriptor_data_unique_samples.txt
@@ -91,7 +95,9 @@ Origin =  http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/Candle_
 ```
 
 ### Download gene set
+
 Code
+
 ```python
 # download all the gene_set files needed
 data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/Candle_Milestone_16_Version_12_15_2019/Data/Gene_Sets/MSigDB.v7.0/'
@@ -103,7 +109,9 @@ for gene_set_category in ['c2.cgp','c2.cp.biocarta','c2.cp.kegg','c2.cp.pid','c2
 data_dir = local_file.split(file_name)[0]
 print('Gene Set data is locally stored at ', data_dir)
 ```
+
 Output
+
 ```
 Origin =  http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/Candle_Milestone_16_Version_12_15_2019/Data/Gene_Sets/MSigDB.v7.0/c2.cgp.v7.0.entrez.gmt
 Origin =  http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/Candle_Milestone_16_Version_12_15_2019/Data/Gene_Sets/MSigDB.v7.0/c2.cgp.v7.0.symbols.gmt
@@ -127,7 +135,9 @@ Gene Set data is locally stored at  /Users/hsyoo/projects/CANDLE/Benchmarks/comm
 ```
 
 ### Select features based on missing values
+
 Code
+
 ```python
 print('Testing select_features_by_missing_values')
 print('Drug descriptor dataframe includes 10 drugs (rows) and 10 drug descriptor features (columns)')
@@ -140,7 +150,9 @@ print('Select features with missing rates smaller than 0.3')
 id = candle.select_features_by_missing_values(data.values, threshold=0.3)
 print('Feature IDs', id)
 ```
+
 Output
+
 ```bash
 Testing select_features_by_missing_values
 Drug descriptor dataframe includes 10 drugs (rows) and 10 drug descriptor features (columns)
@@ -164,7 +176,9 @@ Feature IDs [0 1 2 3 4 5 6 9]
 ```
 
 ### Select features based on variation
+
 Code
+
 ```python
 print('Testing select_features_by_variation')
 print('Select features with a variance larger than 100')
@@ -176,6 +190,7 @@ print('Feature IDs', id)
 ```
 
 Output
+
 ```
 Testing select_features_by_variation
 Select features with a variance larger than 100
@@ -185,7 +200,9 @@ Feature IDs [0 5]
 ```
 
 ### Select decorrelated features
+
 Code
+
 ```python
 print('Testing select_decorrelated_features')
 print('Select features that are not identical to each other and are not all missing.')
@@ -195,7 +212,9 @@ print('Select features whose absolute mutual Spearman correlation coefficient is
 id = candle.select_decorrelated_features(data, method='spearman', threshold=0.8, random_seed=10)
 print('Feature IDs', id)
 ```
+
 Output
+
 ```
 Testing select_decorrelated_features
 Select features that are not identical to each other and are not all missing.
@@ -205,7 +224,9 @@ Feature IDs [0 2 6 9]
 ```
 
 ### Generate cross-validation partitions of data
+
 Code
+
 ```python
 print('Testing generate_cross_validation_partition')
 print('Generate 5-fold cross-validation partition of 10 samples twice')
@@ -218,7 +239,9 @@ print('Generate partition indices to divide the data into 4 sets without shared 
 p = candle.generate_cross_validation_partition(data.CELL, n_folds=5, n_repeats=1, portions=[1, 1, 1, 2], random_seed=1)
 print(p)
 ```
+
 Output
+
 ```
 Testing generate_cross_validation_partition
 Generate 5-fold cross-validation partition of 10 samples twice
@@ -251,7 +274,9 @@ Finding parametric adjustments
 ```
 
 ### Quantile normalization of gene expression data
+
 Code
+
 ```python
 print('Testing quantile_normalization')
 print('Gene expression data of 897 cell lines (columns) and 17741 genes (rows).')
@@ -274,12 +299,14 @@ print('Max difference of median between cell lines is ' + str(np.round(a=np.max(
 first_quartile = norm_data.quantile(0.25, axis=0)
 print('Max difference of first quartile between cell lines is ' + str(np.round(a=np.max(first_quartile) - np.min(first_quartile), decimals=2)))
 ```
+
 Output
+
 ```
 Testing quantile_normalization
 Gene expression data of 897 cell lines (columns) and 17741 genes (rows).
                      CCL_61  CCL_62  CCL_63  ...  CCL_1076  CCL_1077  CCL_1078
-entrezID geneSymbol                          ...                              
+entrezID geneSymbol                          ...
 1        A1BG          0.99    0.03    0.36  ...      2.56      3.55      3.04
 29974    A1CF          4.03    3.03    0.00  ...      0.00      0.03      0.00
 2        A2M           2.68    0.03    0.16  ...      0.77      0.31      1.20
@@ -304,6 +331,7 @@ Max difference of first quartile between cell lines is 0.06
 ```
 
 ### Generate gene-set-level data
+
 ```python
 print('Testing generate_gene_set_data')
 gene_set_data = candle.generate_gene_set_data(np.transpose(norm_data), [i[0] for i in norm_data.index], gene_name_type='entrez',
@@ -315,7 +343,9 @@ gene_set_data = candle.generate_gene_set_data(np.transpose(norm_data), [i[1] for
 print('Generate gene-set-level data of 897 cell lines and 186 KEGG pathways')
 print(gene_set_data)
 ```
+
 Output
+
 ```
 Testing generate_gene_set_data
 Generate gene-set-level data of 897 cell lines and 189 oncogenic signature gene sets
@@ -351,7 +381,9 @@ CCL_1078                       -10.355489  ...              -26.232325
 ```
 
 ### Combat batch normalization on gene expression data
+
 Code
+
 ```python
 print('Testing combat_batch_effect_removal')
 print('Gene expression data of 60 NCI60 cell lines and 1018 CCLE cell lines with 17741 genes.')
@@ -397,12 +429,14 @@ print('Average third quartile of CCLE cell lines is ' + str(np.round(a=np.mean(c
 print('Average median of CCLE cell lines is ' + str(np.round(a=np.mean(corrected_data_CCLE.quantile(0.5, axis=1)), decimals=2)))
 print('Average first quartile of CCLE cell lines is ' + str(np.round(a=np.mean(corrected_data_CCLE.quantile(0.25, axis=1)), decimals=2)))
 ```
+
 Output
+
 ```
 Testing combat_batch_effect_removal
 Gene expression data of 60 NCI60 cell lines and 1018 CCLE cell lines with 17741 genes.
                      NCI60.786-0|CCL_1  ...  CCLE.ZR7530|CCL_1078
-entrezID geneSymbol                     ...                      
+entrezID geneSymbol                     ...
 1        A1BG                     0.00  ...                  3.04
 29974    A1CF                     0.00  ...                  0.00
 2        A2M                      0.00  ...                  1.20
@@ -435,9 +469,8 @@ Average first quartile of CCLE cell lines is 0.13
 
 ## References
 
-1. Bolstad BM, Irizarry RA, Astrand M, et al. \(2003\) *A comparison of normalization methods for high density oligonucleotide array data based on variance and bias* Bioinformatics. 2003 Jan 22;19\(2\):185-93.  
+1. Bolstad BM, Irizarry RA, Astrand M, et al. \(2003\) _A comparison of normalization methods for high density oligonucleotide array data based on variance and bias_ Bioinformatics. 2003 Jan 22;19\(2\):185-93.
 
-2. Johnson WE, Rabinovic A, and Li C \(2007\) *Adjusting batch effects in microarray expression data using Empirical Bayes methods* Biostatistics 8\(1\):118-127.
+2. Johnson WE, Rabinovic A, and Li C \(2007\) _Adjusting batch effects in microarray expression data using Empirical Bayes methods_ Biostatistics 8\(1\):118-127.
 
-3. Lee JK, Havaleshko DM, Cho H, et al. \(2007\) *A strategy for predicting the chemosensitivity of human cancers and its application to drug discovery* Proc Natl Acad Sci USA, 2007 Aug 7; 104\(32\):13086-91. Epub 2007 Jul 31
-
+3. Lee JK, Havaleshko DM, Cho H, et al. \(2007\) _A strategy for predicting the chemosensitivity of human cancers and its application to drug discovery_ Proc Natl Acad Sci USA, 2007 Aug 7; 104\(32\):13086-91. Epub 2007 Jul 31

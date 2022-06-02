@@ -2,8 +2,7 @@ from torchmetrics import F1Score as F1
 
 
 class F1Meter:
-
-    def __init__(self, tasks, average='micro'):
+    def __init__(self, tasks, average="micro"):
         self.metrics = self._create_metrics(tasks, average)
 
     def _create_metrics(self, tasks, avg):

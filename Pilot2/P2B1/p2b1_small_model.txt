@@ -1,5 +1,5 @@
 [Global_Params]
-num_hidden=[512,256,128,64,32,16] 
+num_hidden=[512,256,128,64,32,16]
 batch_size=32
 learning_rate=0.01
 epochs=10

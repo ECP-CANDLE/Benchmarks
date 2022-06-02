@@ -2,7 +2,7 @@ import torch
 
 
 def to_device(tensor, device: torch.device):
-    """ Convert tensor-like object to given PyTorch device """
+    """Convert tensor-like object to given PyTorch device"""
     if tensor is None:
         return tensor
     elif isinstance(tensor, torch.Tensor):

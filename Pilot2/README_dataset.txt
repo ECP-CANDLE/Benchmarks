@@ -1,5 +1,5 @@
 BAASiC Pilot 2 Data Set
-Produced at the Lawrence Livermore National Laboratory. 
+Produced at the Lawrence Livermore National Laboratory.
 
 LLNL-MI-724660
 All rights reserved.
