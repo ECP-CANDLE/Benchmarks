@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import logging
 import argparse
@@ -16,10 +15,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.metrics import binary_crossentropy, mean_squared_error
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
-import file_utils
 import candle
 
 DATA_URL = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/rnagen/'
@@ -51,7 +47,7 @@ def parse_args():
 
 def get_file(url):
     fname = os.path.basename(url)
-    return file_utils.get_file(fname, origin=url, cache_subdir='Examples')
+    return candle.get_file(fname, origin=url, cache_subdir='Examples')
 
 
 def impute_and_scale(df, scaling='std', imputing='mean', dropna='all'):

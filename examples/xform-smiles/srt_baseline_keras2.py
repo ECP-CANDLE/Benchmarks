@@ -1,22 +1,12 @@
 # Setup
 
 import os
-import sys
-# import gzip
-
-# import math
-# import matplotlib
-# matplotlib.use('Agg')
-
-# import matplotlib.pyplot as plt
 
 from tensorflow.keras import backend as K
 import tensorflow.keras.optimizers as optimizers
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 import smiles_transformer as st

@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 
 import numpy as np
 import torch
@@ -13,8 +12,6 @@ logger = logging.getLogger('cairosvg')
 logger.setLevel(logging.CRITICAL)
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 

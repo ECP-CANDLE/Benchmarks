@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 import os
-import sys
 import argparse
 
 import math
@@ -19,13 +18,10 @@ from tensorflow.keras.models import Model, model_from_json, model_from_yaml
 
 from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 
-
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 psr = argparse.ArgumentParser(description='input csv file')
 psr.add_argument('--in', default='in_file')

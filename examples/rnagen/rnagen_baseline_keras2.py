@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import logging
 import numpy as np
@@ -15,8 +14,6 @@ from tensorflow.keras import backend as K
 from tensorflow.keras.metrics import binary_crossentropy, mean_squared_error
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path)
 
 import candle
 
