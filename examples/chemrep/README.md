@@ -14,16 +14,18 @@ In this example, `pilot1-drugs` is a tab-delimited file with a `SMILES` column. 
 
 ### Example 2
 
-Creating images for SMILES. 
+Creating images for SMILES.
 
 ```
 python convert-smiles-to-image.py -f pilot1-drugs
 ```
+
 This will create an output folder named `pilot1-drugs.images` with the converted images for the drugs in the original tab-delimited file.
 
 ### Installation
 
 Installation with a conda environment is recommended.
+
 ```
 conda env create -f environment.yml
 source activate chemrep

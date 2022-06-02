@@ -19,4 +19,3 @@ python uno_infer.py --data "$CANDLE_DATA_DIR/Pilot1/Uno/top_21_auc_1fold.uno.h5"
 
 # CLR model
 python uno_clr_keras2.py --config_file uno_auc_clr_model.txt --use_exported_data ../../Data/Pilot1/Uno/top_21_auc_1fold.uno.h5 -e 3
-

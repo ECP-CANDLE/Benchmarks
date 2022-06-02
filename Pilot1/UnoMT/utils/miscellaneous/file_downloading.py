@@ -8,19 +8,20 @@
 
 """
 import errno
+import logging
 import os
 import urllib
-import logging
 
-FTP_ROOT = 'http://ftp.mcs.anl.gov/pub/candle/public/' \
-           'benchmarks/Pilot1/combo/'
+FTP_ROOT = "http://ftp.mcs.anl.gov/pub/candle/public/" "benchmarks/Pilot1/combo/"
 
 logger = logging.getLogger(__name__)
 
 
-def download_files(filenames: str or iter,
-                   target_folder: str,
-                   ftp_root: str = FTP_ROOT, ):
+def download_files(
+    filenames: str or iter,
+    target_folder: str,
+    ftp_root: str = FTP_ROOT,
+):
     """download_files(['some', 'file', 'names'], './data/, 'ftp://some-server')
 
     This function download one or more files from given FTP server to target
@@ -37,14 +38,16 @@ def download_files(filenames: str or iter,
     """
 
     if type(filenames) is str:
-        filenames = [filenames, ]
+        filenames = [
+            filenames,
+        ]
 
     # Create  target folder if not exist
     try:
         os.makedirs(target_folder)
     except OSError as e:
         if e.errno != errno.EEXIST:
-            logger.error('Failed to create data folders', exc_info=True)
+            logger.error("Failed to create data folders", exc_info=True)
             raise
 
     # Download each file in the list
@@ -52,14 +55,13 @@ def download_files(filenames: str or iter,
         file_path = os.path.join(target_folder, filename)
 
         if not os.path.exists(file_path):
-            logger.debug('File does not exit. Downloading %s ...' % filename)
+            logger.debug("File does not exit. Downloading %s ..." % filename)
 
             url = ftp_root + filename
             try:
                 url_data = urllib.request.urlopen(url)
-                with open(file_path, 'wb') as f:
+                with open(file_path, "wb") as f:
                     f.write(url_data.read())
             except IOError:
-                logger.error('Failed to open and download url %s.' % url,
-                             exc_info=True)
+                logger.error("Failed to open and download url %s." % url, exc_info=True)
                 raise

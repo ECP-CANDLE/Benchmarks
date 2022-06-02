@@ -1,66 +1,55 @@
-import sys
 import os
-
-import torch
-from torch import nn, optim
-from torch.utils.data import DataLoader
-
-from torchvision import datasets, transforms, utils
-
-from tqdm import tqdm
+import sys
 from argparse import SUPPRESS
 
-from vqvae import VQVAE
-from scheduler import CycleScheduler
 import distributed as dist
-
+import torch
+from scheduler import CycleScheduler
+from torch import nn, optim
+from torch.utils.data import DataLoader
+from torchvision import datasets, transforms, utils
+from tqdm import tqdm
+from vqvae import VQVAE
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..'))
+lib_path = os.path.abspath(os.path.join(file_path, ".."))
 sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+lib_path2 = os.path.abspath(os.path.join(file_path, "..", "..", "common"))
 sys.path.append(lib_path2)
 
-port = (2 ** 15 + 2 ** 14 + hash(os.getuid()
-        if sys.platform != "win32" else 1) % 2 ** 14)
+port = 2**15 + 2**14 + hash(os.getuid() if sys.platform != "win32" else 1) % 2**14
 
 import candle
 
 additional_definitions = [
-    {'name': 'dist_url',
-        'type': str,
-        'default': 'tcp://127.0.0.1:{port}',
-        'help': ''},
-    {'name': 'sched_mode',
-        'type': str,
-        'default': None,
-        'help': 'Mode of learning rate scheduler'},
-    {'name': 'n_gpu_per_machine',
-        'type': int,
-        'default': 1,
-        'help': 'Number of gpus to use per machine'},
-    {'name': 'data_dir',
-        'type': str,
-        'default': SUPPRESS,
-        'help': 'dataset path'},
-    {'name': 'image_size',
-        'type': int,
-        'default': 256,
-        'help': 'Image size to use'},
+    {"name": "dist_url", "type": str, "default": "tcp://127.0.0.1:{port}", "help": ""},
+    {
+        "name": "sched_mode",
+        "type": str,
+        "default": None,
+        "help": "Mode of learning rate scheduler",
+    },
+    {
+        "name": "n_gpu_per_machine",
+        "type": int,
+        "default": 1,
+        "help": "Number of gpus to use per machine",
+    },
+    {"name": "data_dir", "type": str, "default": SUPPRESS, "help": "dataset path"},
+    {"name": "image_size", "type": int, "default": 256, "help": "Image size to use"},
 ]
 
 required = [
-    'n_gpu_per_machine',
-    'dist_url',
-    'epochs',
-    'learning_rate',
-    'sched_mode',
-    'image_size',
+    "n_gpu_per_machine",
+    "dist_url",
+    "epochs",
+    "learning_rate",
+    "sched_mode",
+    "image_size",
 ]
 
 
 class TrainBk(candle.Benchmark):
-
     def set_locals(self):
         """Functionality to set variables specific for the benchmark
         - required: set of required parameters for the benchmark.
@@ -74,12 +63,16 @@ class TrainBk(candle.Benchmark):
             self.additional_definitions = additional_definitions
 
 
-def initialize_parameters(default_model='train_vqvae_default_model.txt'):
+def initialize_parameters(default_model="train_vqvae_default_model.txt"):
 
     # Build benchmark object
-    trvq = TrainBk(file_path, default_model, 'pytorch',
-                   prog='train_vqae_baseline',
-                   desc='Histology train vqae - Examples')
+    trvq = TrainBk(
+        file_path,
+        default_model,
+        "pytorch",
+        prog="train_vqae_baseline",
+        desc="Histology train vqae - Examples",
+    )
 
     print("Created sample benchmark")
 
@@ -160,7 +153,7 @@ def config_and_train(args):
     # Configure GPUs
     ndevices = torch.cuda.device_count()
     if ndevices < 1:
-        raise Exception('No CUDA gpus available')
+        raise Exception("No CUDA gpus available")
 
     device = "cuda"
 
@@ -177,7 +170,10 @@ def config_and_train(args):
     dataset = datasets.ImageFolder(args.data_dir, transform=transform)
     sampler = dist.data_sampler(dataset, shuffle=True, distributed=args.distributed)
     loader = DataLoader(
-        dataset, batch_size=args.batch_size // args.n_gpu_per_machine, sampler=sampler, num_workers=2
+        dataset,
+        batch_size=args.batch_size // args.n_gpu_per_machine,
+        sampler=sampler,
+        num_workers=2,
     )
 
     model = VQVAE().to(device)
@@ -204,16 +200,23 @@ def config_and_train(args):
         train(i, loader, model, optimizer, scheduler, device)
 
         if dist.is_primary():
-            torch.save(model.state_dict(), f"{args.ckpt_directory}/checkpoint/vqvae_{str(i + 1).zfill(3)}.pt")
+            torch.save(
+                model.state_dict(),
+                f"{args.ckpt_directory}/checkpoint/vqvae_{str(i + 1).zfill(3)}.pt",
+            )
 
 
 def fetch_data(params):
-    data_url = params['data_url']
-    if params['data_dir'] is None:
-        params['data_dir'] = candle.fetch_file(data_url + params['train_data'], subdir='Examples/histogen')
+    data_url = params["data_url"]
+    if params["data_dir"] is None:
+        params["data_dir"] = candle.fetch_file(
+            data_url + params["train_data"], subdir="Examples/histogen"
+        )
     else:
-        tempfile = candle.fetch_file(data_url + params['train_data'], subdir='Examples/histogen')
-        params['data_dir'] = os.path.join(os.path.dirname(tempfile), params['data_dir'])
+        tempfile = candle.fetch_file(
+            data_url + params["train_data"], subdir="Examples/histogen"
+        )
+        params["data_dir"] = os.path.join(os.path.dirname(tempfile), params["data_dir"])
 
 
 def run(params):
@@ -221,7 +224,9 @@ def run(params):
     fetch_data(params)
     args = candle.ArgumentStruct(**params)
 
-    dist.launch(config_and_train, args.n_gpu_per_machine, 1, 0, args.dist_url, args=(args,))
+    dist.launch(
+        config_and_train, args.n_gpu_per_machine, 1, 0, args.dist_url, args=(args,)
+    )
 
 
 def main():
@@ -229,5 +234,5 @@ def main():
     run(params)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

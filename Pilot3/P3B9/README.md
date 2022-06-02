@@ -2,7 +2,7 @@
 
 **Overview**: This benchmark uses masked language learning to pretraing a BERT model. As it is only being trained on a small dataset, the purpose of this benchmark is to evaluate the pretraining performance on new accelerator hardware.
 
-**Files**: 
+**Files**:
 
 1. part-000000.tar is a tar achieve with a set of 1000 PubMed abstracts and formatted for [WebDataset](https://github.com/webdataset/webdataset).
 2. pubmed_bert-vocab.txt is the tokenizer vocabulary.

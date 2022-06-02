@@ -1,48 +1,52 @@
 # Setup
 
-import pandas as pd
-# import numpy as np
-import os
-import sys
 # import gzip
 import argparse
 
+# import numpy as np
+import os
+import sys
+
 # import math
 import matplotlib
-matplotlib.use('Agg')
+import pandas as pd
+
+matplotlib.use("Agg")
 
 # import matplotlib.pyplot as plt
 
 
 import tensorflow as tf
-
 from tensorflow import keras
 from tensorflow.keras import backend as K
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
 from tensorflow.keras import layers
-from tensorflow.keras.preprocessing import sequence
-from tensorflow.keras.preprocessing import text
-
+from tensorflow.keras.callbacks import (
+    CSVLogger,
+    EarlyStopping,
+    ModelCheckpoint,
+    ReduceLROnPlateau,
+)
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.preprocessing import sequence, text
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+lib_path = os.path.abspath(os.path.join(file_path, "..", "..", "common"))
 sys.path.append(lib_path)
 
-psr = argparse.ArgumentParser(description='input csv file')
-psr.add_argument('--in_train', default='in_train')
-psr.add_argument('--in_vali', default='in_vali')
-psr.add_argument('--ep', type=int, default=400)
+psr = argparse.ArgumentParser(description="input csv file")
+psr.add_argument("--in_train", default="in_train")
+psr.add_argument("--in_vali", default="in_vali")
+psr.add_argument("--ep", type=int, default=400)
 args = vars(psr.parse_args())
 print(args)
 
-EPOCH = args['ep']
+EPOCH = args["ep"]
 BATCH = 32
 
-data_path_train = args['in_train']
-data_path_vali = args['in_vali']
+data_path_train = args["in_train"]
+data_path_vali = args["in_vali"]
 
-DR = 0.1      # Dropout rate
+DR = 0.1  # Dropout rate
 
 # define r2 for reporting
 
@@ -50,7 +54,8 @@ DR = 0.1      # Dropout rate
 def r2(y_true, y_pred):
     SS_res = K.sum(K.square(y_true - y_pred))
     SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
-    return (1 - SS_res / (SS_tot + K.epsilon()))
+    return 1 - SS_res / (SS_tot + K.epsilon())
+
 
 # Implement a Transformer block as a layer
 
@@ -60,7 +65,10 @@ class TransformerBlock(layers.Layer):
         super(TransformerBlock, self).__init__()
         self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
         self.ffn = keras.Sequential(
-            [layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim), ]
+            [
+                layers.Dense(ff_dim, activation="relu"),
+                layers.Dense(embed_dim),
+            ]
         )
         self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
@@ -74,6 +82,7 @@ class TransformerBlock(layers.Layer):
         ffn_output = self.ffn(out1)
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out1 + ffn_output)
+
 
 # Implement embedding layer
 # Two seperate embedding layers, one for tokens, one for token index (positions).
@@ -142,7 +151,9 @@ x = transformer_block(x)
 
 # x = layers.GlobalAveragePooling1D()(x)  --- the original model used this but the accuracy was much lower
 
-x = layers.Reshape((1, 32000), input_shape=(250, 128,))(x)  # reshaping increases parameters but improves accuracy a lot
+x = layers.Reshape((1, 32000), input_shape=(250, 128,))(
+    x
+)  # reshaping increases parameters but improves accuracy a lot
 x = layers.Dropout(0.1)(x)
 x = layers.Dense(1024, activation="relu")(x)
 x = layers.Dropout(0.1)(x)
@@ -160,22 +171,39 @@ model.summary()
 
 # Train and Evaluate
 
-model.compile(loss='mean_squared_error',
-              optimizer=Adam(lr=0.00001),
-              metrics=['mae', r2])
+model.compile(
+    loss="mean_squared_error", optimizer=Adam(lr=0.00001), metrics=["mae", r2]
+)
 
 # set up a bunch of callbacks to do work during model training..
 
-checkpointer = ModelCheckpoint(filepath='smile_regress.autosave.model.h5', verbose=1, save_weights_only=True, save_best_only=True)
-csv_logger = CSVLogger('smile_regress.training.log')
-reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.75, patience=20, verbose=1, mode='auto', epsilon=0.0001, cooldown=3, min_lr=0.000000001)
-early_stop = EarlyStopping(monitor='val_loss', patience=100, verbose=1, mode='auto')
+checkpointer = ModelCheckpoint(
+    filepath="smile_regress.autosave.model.h5",
+    verbose=1,
+    save_weights_only=True,
+    save_best_only=True,
+)
+csv_logger = CSVLogger("smile_regress.training.log")
+reduce_lr = ReduceLROnPlateau(
+    monitor="val_loss",
+    factor=0.75,
+    patience=20,
+    verbose=1,
+    mode="auto",
+    epsilon=0.0001,
+    cooldown=3,
+    min_lr=0.000000001,
+)
+early_stop = EarlyStopping(monitor="val_loss", patience=100, verbose=1, mode="auto")
 
-history = model.fit(x_train, y_train,
-                    batch_size=BATCH,
-                    epochs=EPOCH,
-                    verbose=1,
-                    validation_data=(x_val, y_val),
-                    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
+history = model.fit(
+    x_train,
+    y_train,
+    batch_size=BATCH,
+    epochs=EPOCH,
+    verbose=1,
+    validation_data=(x_val, y_val),
+    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop],
+)
 
-model.load_weights('smile_regress.autosave.model.h5')
+model.load_weights("smile_regress.autosave.model.h5")
