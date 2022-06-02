@@ -6,21 +6,14 @@ from torch.autograd import Variable
 
 
 def gaussian(window_size, sigma):
-    gauss = torch.Tensor(
-        [
-            exp(-((x - window_size // 2) ** 2) / float(2 * sigma**2))
-            for x in range(window_size)
-        ]
-    )
+    gauss = torch.Tensor([exp(-(x - window_size // 2) ** 2 / float(2 * sigma ** 2)) for x in range(window_size)])
     return gauss / gauss.sum()
 
 
 def create_window(window_size, sigma, channel):
     _1D_window = gaussian(window_size, sigma).unsqueeze(1)
     _2D_window = _1D_window.mm(_1D_window.t()).float().unsqueeze(0).unsqueeze(0)
-    window = Variable(
-        _2D_window.expand(channel, 1, window_size, window_size).contiguous()
-    )
+    window = Variable(_2D_window.expand(channel, 1, window_size, window_size).contiguous())
     return window
 
 
@@ -44,18 +37,9 @@ class MS_SSIM(torch.nn.Module):
         mu2_sq = mu2.pow(2)
         mu1_mu2 = mu1 * mu2
 
-        sigma1_sq = (
-            F.conv2d(img1 * img1, window, padding=window_size // 2, groups=self.channel)
-            - mu1_sq
-        )
-        sigma2_sq = (
-            F.conv2d(img2 * img2, window, padding=window_size // 2, groups=self.channel)
-            - mu2_sq
-        )
-        sigma12 = (
-            F.conv2d(img1 * img2, window, padding=window_size // 2, groups=self.channel)
-            - mu1_mu2
-        )
+        sigma1_sq = F.conv2d(img1 * img1, window, padding=window_size // 2, groups=self.channel) - mu1_sq
+        sigma2_sq = F.conv2d(img2 * img2, window, padding=window_size // 2, groups=self.channel) - mu2_sq
+        sigma12 = F.conv2d(img1 * img2, window, padding=window_size // 2, groups=self.channel) - mu1_mu2
 
         C1 = (0.01 * self.max_val) ** 2
         C2 = (0.03 * self.max_val) ** 2
@@ -68,22 +52,10 @@ class MS_SSIM(torch.nn.Module):
 
     def ms_ssim(self, img1, img2, levels=5):
 
-        weight = Variable(
-            torch.Tensor([0.0448, 0.2856, 0.3001, 0.2363, 0.1333]).cuda(
-                img1.get_device()
-            )
-        )
+        weight = Variable(torch.Tensor([0.0448, 0.2856, 0.3001, 0.2363, 0.1333]).cuda(img1.get_device()))
 
-        msssim = Variable(
-            torch.Tensor(
-                levels,
-            ).cuda(img1.get_device())
-        )
-        mcs = Variable(
-            torch.Tensor(
-                levels,
-            ).cuda(img1.get_device())
-        )
+        msssim = Variable(torch.Tensor(levels, ).cuda(img1.get_device()))
+        mcs = Variable(torch.Tensor(levels, ).cuda(img1.get_device()))
         for i in range(levels):
             ssim_map, mcs_map = self._ssim(img1, img2)
             msssim[i] = ssim_map
@@ -93,9 +65,7 @@ class MS_SSIM(torch.nn.Module):
             img1 = filtered_im1
             img2 = filtered_im2
 
-        value = torch.prod(mcs[0 : levels - 1] ** weight[0 : levels - 1]) * (
-            msssim[levels - 1] ** weight[levels - 1]
-        )
+        value = (torch.prod(mcs[0:levels - 1] ** weight[0:levels - 1]) * (msssim[levels - 1] ** weight[levels - 1]))
         return value
 
     def forward(self, img1, img2):

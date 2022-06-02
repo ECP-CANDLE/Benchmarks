@@ -1,33 +1,37 @@
+import torch
+import p3b7 as bmk
+import candle
+
+import pandas as pd
 from pathlib import Path
 
-import candle
-import p3b7 as bmk
-import pandas as pd
-import torch
+from torch.utils.data import DataLoader
+
 from data import P3B3, Egress
+from mtcnn import MTCNN, Hparams
+from util import to_device
 from meters import AccuracyMeter
 from metrics import F1Meter
-from mtcnn import MTCNN, Hparams
+
 from prune import create_prune_masks, remove_prune_masks
-from torch.utils.data import DataLoader
-from util import to_device
+
 
 TASKS = {
-    "subsite": 15,
-    "laterality": 3,
-    "behavior": 3,
-    "grade": 3,
+    'subsite': 15,
+    'laterality': 3,
+    'behavior': 3,
+    'grade': 3,
 }
 
-TRAIN_F1_MICRO = F1Meter(TASKS, "micro")
-VALID_F1_MICRO = F1Meter(TASKS, "micro")
+TRAIN_F1_MICRO = F1Meter(TASKS, 'micro')
+VALID_F1_MICRO = F1Meter(TASKS, 'micro')
 
-TRAIN_F1_MACRO = F1Meter(TASKS, "macro")
-VALID_F1_MACRO = F1Meter(TASKS, "macro")
+TRAIN_F1_MACRO = F1Meter(TASKS, 'macro')
+VALID_F1_MACRO = F1Meter(TASKS, 'macro')
 
 
 def initialize_parameters():
-    """Initialize the parameters for the P3B7 benchmark"""
+    """Initialize the parameters for the P3B7 benchmark """
     p3b7_bench = bmk.BenchmarkP3B7(
         bmk.file_path,
         "default_model.txt",
@@ -50,7 +54,9 @@ def fetch_data(gParameters):
         path to where the data is located
     """
     path = gParameters.data_url
-    fpath = candle.fetch_file(path + gParameters.train_data, "Pilot3", unpack=True)
+    fpath = candle.fetch_file(
+        path + gParameters.train_data, 'Pilot3', unpack=True
+    )
     return fpath
 
 
@@ -64,8 +70,8 @@ def get_synthetic_data(args):
         train and valid data
     """
     datapath = fetch_data(args)
-    train_data = P3B3(datapath, "train")
-    valid_data = P3B3(datapath, "test")
+    train_data = P3B3(datapath, 'train')
+    valid_data = P3B3(datapath, 'test')
     return train_data, valid_data
 
 
@@ -79,8 +85,8 @@ def get_egress_data(tasks):
     Returns:
         train and valid data
     """
-    train_data = Egress("./data", "train")
-    valid_data = Egress("./data", "valid")
+    train_data = Egress('./data', 'train')
+    valid_data = Egress('./data', 'valid')
     return train_data, valid_data
 
 
@@ -92,8 +98,8 @@ def train(model, loader, optimizer, device, epoch):
         optimizer.zero_grad()
         data, target = data.to(device), to_device(target, device)
         logits = model(data)
-        _ = TRAIN_F1_MICRO.f1(to_device(logits, "cpu"), to_device(target, "cpu"))
-        _ = TRAIN_F1_MACRO.f1(to_device(logits, "cpu"), to_device(target, "cpu"))
+        _ = TRAIN_F1_MICRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
+        _ = TRAIN_F1_MACRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
         loss = model.loss_value(logits, target, reduce="mean")
         loss.backward()
         optimizer.step()
@@ -103,7 +109,7 @@ def train(model, loader, optimizer, device, epoch):
     avg_loss = total_loss / len(loader.dataset)
 
     accmeter.update_accuracy()
-    print(f"\nEpoch {epoch} Training Accuracy:")
+    print(f'\nEpoch {epoch} Training Accuracy:')
     accmeter.print_task_accuracies()
     accmeter.reset()
     return avg_loss
@@ -118,8 +124,8 @@ def evaluate(model, loader, device):
         for idx, (data, target) in enumerate(loader):
             data, target = data.to(device), to_device(target, device)
             logits = model(data)
-            _ = VALID_F1_MICRO.f1(to_device(logits, "cpu"), to_device(target, "cpu"))
-            _ = VALID_F1_MACRO.f1(to_device(logits, "cpu"), to_device(target, "cpu"))
+            _ = VALID_F1_MICRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
+            _ = VALID_F1_MACRO.f1(to_device(logits, 'cpu'), to_device(target, 'cpu'))
             loss += model.loss_value(logits, target, reduce="mean").item()
             accmeter.update(logits, target)
 
@@ -136,7 +142,7 @@ def evaluate(model, loader, device):
 def save_dataframe(metrics, filename, args):
     """Save F1 metrics"""
     df = pd.DataFrame(metrics, index=[0])
-    path = Path(args.savepath).joinpath(f"f1/{filename}.csv")
+    path = Path(args.savepath).joinpath(f'f1/{filename}.csv')
     df.to_csv(path, index=False)
 
 

@@ -10,13 +10,16 @@
 
 import logging
 
+import torch
 import numpy as np
 import pandas as pd
-import torch
 import torch.utils.data as data
 from sklearn.model_selection import train_test_split
-from utils.data_processing.cell_line_dataframes import get_cl_meta_df, get_rna_seq_df
-from utils.data_processing.label_encoding import encode_int_to_onehot, get_label_dict
+
+from utils.data_processing.cell_line_dataframes import get_rna_seq_df, \
+    get_cl_meta_df
+from utils.data_processing.label_encoding import encode_int_to_onehot, \
+    get_label_dict
 
 logger = logging.getLogger(__name__)
 
@@ -43,21 +46,23 @@ class CLClassDataset(data.Dataset):
     """
 
     def __init__(
-        self,
-        data_root: str,
-        training: bool,
-        rand_state: int = 0,
-        summary: bool = True,
-        # Data type settings (for storage and data loading)
-        int_dtype: type = np.int8,
-        float_dtype: type = np.float16,
-        output_dtype: type = np.float32,
-        # Pre-processing settings
-        rnaseq_scaling: str = "std",
-        # Partitioning (train/validation) and data usage settings
-        rnaseq_feature_usage: str = "source_scale",
-        validation_ratio: float = 0.2,
-    ):
+            self,
+            data_root: str,
+            training: bool,
+            rand_state: int = 0,
+            summary: bool = True,
+
+            # Data type settings (for storage and data loading)
+            int_dtype: type = np.int8,
+            float_dtype: type = np.float16,
+            output_dtype: type = np.float32,
+
+            # Pre-processing settings
+            rnaseq_scaling: str = 'std',
+
+            # Partitioning (train/validation) and data usage settings
+            rnaseq_feature_usage: str = 'source_scale',
+            validation_ratio: float = 0.2, ):
         """dataset = CLClassDataset('./data/', True)
 
         Construct a RNA sequence dataset based on the parameters provided.
@@ -94,8 +99,8 @@ class CLClassDataset(data.Dataset):
         self.__output_dtype = output_dtype
 
         # Feature scaling
-        if rnaseq_scaling is None or rnaseq_scaling == "":
-            rnaseq_scaling = "none"
+        if rnaseq_scaling is None or rnaseq_scaling == '':
+            rnaseq_scaling = 'none'
         self.__rnaseq_scaling = rnaseq_scaling.lower()
 
         self.__rnaseq_feature_usage = rnaseq_feature_usage
@@ -106,28 +111,27 @@ class CLClassDataset(data.Dataset):
             data_root=data_root,
             rnaseq_feature_usage=rnaseq_feature_usage,
             rnaseq_scaling=rnaseq_scaling,
-            float_dtype=float_dtype,
-        )
+            float_dtype=float_dtype)
 
-        self.__cl_meta_df = get_cl_meta_df(data_root=data_root, int_dtype=int_dtype)
+        self.__cl_meta_df = get_cl_meta_df(
+            data_root=data_root,
+            int_dtype=int_dtype)
 
         # Put all the sequence in one column as list and specify dtype
-        self.__rnaseq_df["seq"] = list(
-            map(float_dtype, self.__rnaseq_df.values.tolist())
-        )
+        self.__rnaseq_df['seq'] = \
+            list(map(float_dtype, self.__rnaseq_df.values.tolist()))
 
         # Join the RNA sequence data with meta data. cl_df will have columns:
         # ['data_src', 'site', 'type', 'category', 'seq']
-        self.__cl_df = pd.concat(
-            [self.__cl_meta_df, self.__rnaseq_df[["seq"]]], axis=1, join="inner"
-        )
+        self.__cl_df = pd.concat([self.__cl_meta_df,
+                                  self.__rnaseq_df[['seq']]],
+                                 axis=1, join='inner')
 
         # Encode data source from int into one-hot encoding
-        num_data_src = len(get_label_dict(data_root, "data_src_dict.txt"))
-        enc_data_src = encode_int_to_onehot(
-            self.__cl_df["data_src"].tolist(), num_classes=num_data_src
-        )
-        self.__cl_df["data_src"] = list(map(int_dtype, enc_data_src))
+        num_data_src = len(get_label_dict(data_root, 'data_src_dict.txt'))
+        enc_data_src = encode_int_to_onehot(self.__cl_df['data_src'].tolist(),
+                                            num_classes=num_data_src)
+        self.__cl_df['data_src'] = list(map(int_dtype, enc_data_src))
 
         # Train/validation split ##############################################
         self.__split_drug_resp()
@@ -138,7 +142,7 @@ class CLClassDataset(data.Dataset):
         # Public attributes ###################################################
         self.cells = self.__cl_df.index.tolist()
         self.num_cells = self.__cl_df.shape[0]
-        self.rnaseq_dim = len(self.__cl_df.iloc[0]["seq"])
+        self.rnaseq_dim = len(self.__cl_df.iloc[0]['seq'])
 
         # Clear the dataframes ################################################
         self.__rnaseq_df = None
@@ -147,16 +151,12 @@ class CLClassDataset(data.Dataset):
 
         # Dataset summary #####################################################
         if summary:
-            print("=" * 80)
-            print(
-                ("Training" if self.training else "Validation")
-                + " RNA Sequence Dataset Summary:"
-            )
-            print(
-                "\t%i Unique Cell Lines (feature dim: %4i)."
-                % (self.num_cells, self.rnaseq_dim)
-            )
-            print("=" * 80)
+            print('=' * 80)
+            print(('Training' if self.training else 'Validation')
+                  + ' RNA Sequence Dataset Summary:')
+            print('\t%i Unique Cell Lines (feature dim: %4i).'
+                  % (self.num_cells, self.rnaseq_dim))
+            print('=' * 80)
 
     def __len__(self):
         """length = len(cl_class_dataset)
@@ -206,37 +206,32 @@ class CLClassDataset(data.Dataset):
             None
         """
         split_kwargs = {
-            "test_size": self.__validation_ratio,
-            "random_state": self.__rand_state,
-            "shuffle": True,
-        }
+            'test_size': self.__validation_ratio,
+            'random_state': self.__rand_state,
+            'shuffle': True, }
 
         try:
-            training_cl_df, validation_cl_df = train_test_split(
-                self.__cl_df, **split_kwargs, stratify=self.__cl_df["type"].tolist()
-            )
+            training_cl_df, validation_cl_df = \
+                train_test_split(self.__cl_df, **split_kwargs,
+                                 stratify=self.__cl_df['type'].tolist())
         except ValueError:
-            logger.warning(
-                "Failed to split cell lines in stratified way. "
-                "Splitting randomly ..."
-            )
-            training_cl_df, validation_cl_df = train_test_split(
-                self.__cl_df, **split_kwargs
-            )
+            logger.warning('Failed to split cell lines in stratified way. '
+                           'Splitting randomly ...')
+            training_cl_df, validation_cl_df = \
+                train_test_split(self.__cl_df, **split_kwargs)
 
         self.__cl_df = training_cl_df if self.training else validation_cl_df
 
 
 # Test segment for cell line classification dataset
-if __name__ == "__main__":
+if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG)
 
     # Test DrugRespDataset class
     dataloader = torch.utils.data.DataLoader(
-        CLClassDataset(data_root="../../data/", training=False),
-        batch_size=512,
-        shuffle=False,
-    )
+        CLClassDataset(data_root='../../data/',
+                       training=False),
+        batch_size=512, shuffle=False)
 
     tmp = dataloader.dataset[0]

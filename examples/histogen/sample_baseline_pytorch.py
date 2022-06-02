@@ -2,39 +2,59 @@ import os
 import sys
 
 import torch
-from pixelsnail import PixelSNAIL
 from torchvision.utils import save_image
 from tqdm import tqdm
+
 from vqvae import VQVAE
+from pixelsnail import PixelSNAIL
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, ".."))
+lib_path = os.path.abspath(os.path.join(file_path, '..'))
 sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, "..", "..", "common"))
+lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
 
 import candle
 
 additional_definitions = [
-    {"name": "vqvae", "type": str, "default": "histology.pt", "help": ""},
-    {"name": "top", "type": str, "default": "top.pt", "help": ""},
-    {"name": "bottom", "type": str, "default": "bottom.pt", "help": ""},
-    {"name": "temp", "type": float, "default": 1.0, "help": ""},
-    {"name": "filename", "type": str, "default": "", "help": ""},
-    {"name": "use_gpus", "type": candle.str2bool, "default": False, "help": ""},
+    {'name': 'vqvae',
+        'type': str,
+        'default': 'histology.pt',
+        'help': ''},
+    {'name': 'top',
+        'type': str,
+        'default': 'top.pt',
+        'help': ''},
+    {'name': 'bottom',
+        'type': str,
+        'default': 'bottom.pt',
+        'help': ''},
+    {'name': 'temp',
+        'type': float,
+        'default': 1.0,
+        'help': ''},
+    {'name': 'filename',
+        'type': str,
+        'default': '',
+        'help': ''},
+    {'name': 'use_gpus',
+        'type': candle.str2bool,
+        'default': False,
+        'help': ''},
 ]
 
 required = [
-    "top",
-    "bottom",
-    "vqvae",
-    "filename",
-    "batch_size",
+    'top',
+    'bottom',
+    'vqvae',
+    'filename',
+    'batch_size',
 ]
 
 
 class SampleBk(candle.Benchmark):
+
     def set_locals(self):
         """Functionality to set variables specific for the benchmark
         - required: set of required parameters for the benchmark.
@@ -48,16 +68,11 @@ class SampleBk(candle.Benchmark):
             self.additional_definitions = additional_definitions
 
 
-def initialize_parameters(default_model="sample_default_model.txt"):
+def initialize_parameters(default_model='sample_default_model.txt'):
 
     # Build benchmark object
-    sample = SampleBk(
-        file_path,
-        default_model,
-        "pytorch",
-        prog="sample_baseline",
-        desc="Histology Sample - Examples",
-    )
+    sample = SampleBk(file_path, default_model, 'pytorch',
+                      prog='sample_baseline', desc='Histology Sample - Examples')
 
     print("Created sample benchmark")
 
@@ -84,34 +99,26 @@ def sample_model(model, device, batch, size, temperature, condition=None):
 
 
 def get_data(gParams):
-    data_url = gParams["data_url"]
-    gParams["vqvae"] = candle.fetch_file(
-        data_url + gParams["vqvae"], subdir="Examples/histogen"
-    )
-    gParams["top"] = candle.fetch_file(
-        data_url + gParams["top"], subdir="Examples/histogen"
-    )
-    gParams["bottom"] = candle.fetch_file(
-        data_url + gParams["bottom"], subdir="Examples/histogen"
-    )
+    data_url = gParams['data_url']
+    gParams['vqvae'] = candle.fetch_file(data_url + gParams['vqvae'], subdir='Examples/histogen')
+    gParams['top'] = candle.fetch_file(data_url + gParams['top'], subdir='Examples/histogen')
+    gParams['bottom'] = candle.fetch_file(data_url + gParams['bottom'], subdir='Examples/histogen')
 
 
 def load_model(model, checkpoint, device):
     ndevices = torch.cuda.device_count()
     if ndevices == 0:
-        ckpt = torch.load(
-            os.path.join("checkpoint", checkpoint), map_location=torch.device("cpu")
-        )
+        ckpt = torch.load(os.path.join('checkpoint', checkpoint), map_location=torch.device('cpu'))
     else:
-        ckpt = torch.load(os.path.join("checkpoint", checkpoint))
+        ckpt = torch.load(os.path.join('checkpoint', checkpoint))
 
-    if "args" in ckpt:
-        args = ckpt["args"]
+    if 'args' in ckpt:
+        args = ckpt['args']
 
-    if model == "vqvae":
+    if model == 'vqvae':
         model = VQVAE()
 
-    elif model == "pixelsnail_top":
+    elif model == 'pixelsnail_top':
         model = PixelSNAIL(
             [32, 32],
             512,
@@ -124,7 +131,7 @@ def load_model(model, checkpoint, device):
             n_out_res_block=args.n_out_res_block,
         )
 
-    elif model == "pixelsnail_bottom":
+    elif model == 'pixelsnail_bottom':
         model = PixelSNAIL(
             [64, 64],
             512,
@@ -139,8 +146,8 @@ def load_model(model, checkpoint, device):
             cond_res_channel=args.n_res_channel,
         )
 
-    if "model" in ckpt:
-        ckpt = ckpt["model"]
+    if 'model' in ckpt:
+        ckpt = ckpt['model']
 
     model.load_state_dict(ckpt)
     model = model.to(device)
@@ -162,19 +169,19 @@ def run(params):
         ndevices = torch.cuda.device_count()
         if ndevices > 1:
             for i in range(ndevices):
-                device_i = torch.device("cuda:" + str(i))
+                device_i = torch.device('cuda:' + str(i))
                 device_ids.append(device_i)
             device = device_ids[0]
         elif ndevices == 1:
-            device = torch.device("cuda:0")
+            device = torch.device('cuda:0')
         else:
-            device = torch.device("cpu")
+            device = torch.device('cpu')
     else:
-        device = torch.device("cpu")
+        device = torch.device('cpu')
 
-    model_vqvae = load_model("vqvae", args.vqvae, device)
-    model_top = load_model("pixelsnail_top", args.top, device)
-    model_bottom = load_model("pixelsnail_bottom", args.bottom, device)
+    model_vqvae = load_model('vqvae', args.vqvae, device)
+    model_top = load_model('pixelsnail_top', args.top, device)
+    model_bottom = load_model('pixelsnail_bottom', args.bottom, device)
 
     top_sample = sample_model(model_top, device, args.batch_size, [32, 32], args.temp)
     bottom_sample = sample_model(
@@ -192,5 +199,5 @@ def main():
     run(params)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

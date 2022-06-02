@@ -3,14 +3,13 @@
 2D-Images are a relatively unexplored representation for molecular learning tasks. We create a molecular generator and embedding based on 2D-depictions of molecules. We use a variational autoencoder (VAE) to encode 2D-images of molecules to a latent space of 512, and with a gaussian prior sample the space and decode directly to images. A modified ResNet is used to encode molecular depictions to a latent space. A decoder is created by performing the inverse operations of ResNet (i.e. run blocks in reverse order replacing convolutional layers with deconvolution layers (transpose convolution). One can embed molecules in this space by use of only the decoder, or by generating random gaussian noise one can decode a latent vector into a molecular image. In the latent space, generation can also be steered through interpolation or epsilon-sampling. VAEs are prone to mode collapse and exploding gradients. Mode collapse occurs when enforcing a normal prior on the latent space causes any learning to “collapse” and the model ceases to learn. Exploding gradients occurs when the gradients become so large that the optimization routine becomes unstable and again learning ceases to occur. To mode collapse, we use KL-divergence loss annealing. KL-divergence loss annealing slowly ramps up the weight of the normal prior in latent space as the model learns to reconstruct the encoded images better. This essentially enforces that the decoder and encoder learn at similar rates. The avoid exploding gradients, we use gradient clipping which limits the magnitude of any particular optimization step. This enforces a slow and gradual learning process.
 
 ## Requirement
-
 ```
  conda install -c rdkit rdkit
  conda install pytorch torchvision
  conda install scikit-learn
 
  pip install cairosvg
-```
+ ```
 
 ## Training
 
@@ -45,10 +44,10 @@ Train Epoch: 1 [51200/198082 (26%)]	Loss: 12336.477529 2021-03-30 11:00:26.03727
 ```
 
 ## Inferencing
-
 To sample the model:
 
 ```
 ./fetch.sh
 python sample.py -n 64 -b 64 --checkpoint models/model.pt -o samples/ --image
 ```
+

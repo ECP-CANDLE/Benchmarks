@@ -1,28 +1,25 @@
 from __future__ import print_function
 
-import candle
 import numpy as np
-import p3b4 as bmk
-
 # import os, sys, gzip
 # import time
 import tensorflow as tf
+
 from tf_mthcan import hcan
+
+import p3b4 as bmk
+import candle
 
 tf.compat.v1.disable_eager_execution()
 
 
-def initialize_parameters(default_model="p3b4_default_model.txt"):
+def initialize_parameters(default_model='p3b4_default_model.txt'):
 
     # Build benchmark object
-    p3b4Bmk = bmk.BenchmarkP3B4(
-        bmk.file_path,
-        default_model,
-        "keras",
-        prog="p3b4_baseline",
-        desc="Hierarchical Convolutional Attention Networks for \
-                                data extraction from clinical reports - Pilot 3 Benchmark 4",
-    )
+    p3b4Bmk = bmk.BenchmarkP3B4(bmk.file_path, default_model, 'keras',
+                                prog='p3b4_baseline',
+                                desc='Hierarchical Convolutional Attention Networks for \
+                                data extraction from clinical reports - Pilot 3 Benchmark 4')
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b4Bmk)
@@ -32,13 +29,13 @@ def initialize_parameters(default_model="p3b4_default_model.txt"):
 
 
 def fetch_data(gParameters):
-    """Downloads and decompresses the data if not locally available.
-    Since the training data depends on the model definition it is not loaded,
-    instead the local path where the raw data resides is returned
+    """ Downloads and decompresses the data if not locally available.
+        Since the training data depends on the model definition it is not loaded,
+        instead the local path where the raw data resides is returned
     """
 
-    path = gParameters["data_url"]
-    fpath = candle.fetch_file(path + gParameters["train_data"], "Pilot3", unpack=True)
+    path = gParameters['data_url']
+    fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', unpack=True)
 
     return fpath
 
@@ -51,26 +48,26 @@ def run(gParameters):
     # Get default parameters for initialization and optimizer functions
     kerasDefaults = candle.keras_default_config()
 
-    learning_rate = gParameters["learning_rate"]
-    batch_size = gParameters["batch_size"]
-    epochs = gParameters["epochs"]
-    dropout = gParameters["dropout"]
-    embed_train = gParameters["embed_train"]
+    learning_rate = gParameters['learning_rate']
+    batch_size = gParameters['batch_size']
+    epochs = gParameters['epochs']
+    dropout = gParameters['dropout']
+    embed_train = gParameters['embed_train']
 
-    optimizer = gParameters["optimizer"]
+    optimizer = gParameters['optimizer']
 
-    wv_len = gParameters["wv_len"]
-    attention_size = gParameters["attention_size"]
+    wv_len = gParameters['wv_len']
+    attention_size = gParameters['attention_size']
 
-    max_words = gParameters["max_words"]
-    max_lines = gParameters["max_lines"]
-    min_words = gParameters["min_words"]
-    min_lines = gParameters["min_lines"]
+    max_words = gParameters['max_words']
+    max_lines = gParameters['max_lines']
+    min_words = gParameters['min_words']
+    min_lines = gParameters['min_lines']
 
-    train_x = np.load(fpath + "/train_X.npy")
-    train_y = np.load(fpath + "/train_Y.npy")
-    test_x = np.load(fpath + "/test_X.npy")
-    test_y = np.load(fpath + "/test_Y.npy")
+    train_x = np.load(fpath + '/train_X.npy')
+    train_y = np.load(fpath + '/train_Y.npy')
+    test_x = np.load(fpath + '/test_X.npy')
+    test_y = np.load(fpath + '/test_Y.npy')
 
     num_classes = []
     for task in range(len(train_y[0, :])):
@@ -108,17 +105,13 @@ def run(gParameters):
     mask = np.concatenate(mask, 0)
 
     # train model
-    model = hcan(
-        vocab,
-        num_classes,
-        max_lines,
-        max_words,
-        attention_size=attention_size,
-        dropout_rate=dropout,
-        lr=learning_rate,
-        optimizer=optimizer,
-        embed_train=embed_train,
-    )
+    model = hcan(vocab, num_classes, max_lines, max_words,
+                 attention_size=attention_size,
+                 dropout_rate=dropout,
+                 lr=learning_rate,
+                 optimizer=optimizer,
+                 embed_train=embed_train
+                 )
 
     ret = model.train(
         train_x,
@@ -126,19 +119,18 @@ def run(gParameters):
             np.array(train_y[:, 0]),
             np.array(train_y[:, 1]),
             np.array(train_y[:, 2]),
-            np.array(train_y[:, 3]),
+            np.array(train_y[:, 3])
         ],
-        batch_size=batch_size,
-        epochs=epochs,
+        batch_size=batch_size, epochs=epochs,
         validation_data=[
             test_x,
             [
                 np.array(test_y[:, 0]),
                 np.array(test_y[:, 1]),
                 np.array(test_y[:, 2]),
-                np.array(test_y[:, 3]),
-            ],
-        ],
+                np.array(test_y[:, 3])
+            ]
+        ]
     )
 
     return ret
@@ -149,10 +141,10 @@ def main():
     gParameters = initialize_parameters()
     avg_loss = run(gParameters)
     # print("Return: ", avg_loss.history)
-    print("Return: ", avg_loss.history["val_loss"][-1])
+    print("Return: ", avg_loss.history['val_loss'][-1])
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
 
     # try:

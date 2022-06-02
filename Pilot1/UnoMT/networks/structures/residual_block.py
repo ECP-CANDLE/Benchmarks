@@ -12,7 +12,11 @@ from networks.initialization.weight_init import basic_weight_init
 
 
 class ResBlock(nn.Module):
-    def __init__(self, layer_dim: int, num_layers: int, dropout: float):
+
+    def __init__(self,
+                 layer_dim: int,
+                 num_layers: int,
+                 dropout: float):
 
         super(ResBlock, self).__init__()
 
@@ -21,13 +25,15 @@ class ResBlock(nn.Module):
 
         for i in range(num_layers):
 
-            self.block.add_module("res_dense_%d" % i, nn.Linear(layer_dim, layer_dim))
+            self.block.add_module('res_dense_%d' % i,
+                                  nn.Linear(layer_dim, layer_dim))
 
-            if dropout > 0.0:
-                self.block.add_module("res_dropout_%d" % i, nn.Dropout(dropout))
+            if dropout > 0.:
+                self.block.add_module('res_dropout_%d' % i,
+                                      nn.Dropout(dropout))
 
             if i != (num_layers - 1):
-                self.block.add_module("res_relu_%d" % i, nn.ReLU())
+                self.block.add_module('res_relu_%d' % i, nn.ReLU())
 
         self.activation = nn.ReLU()
 
@@ -38,8 +44,11 @@ class ResBlock(nn.Module):
         return self.activation(self.block(x) + x)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 
-    res_block = ResBlock(layer_dim=200, num_layers=2, dropout=0.2)
+    res_block = ResBlock(
+        layer_dim=200,
+        num_layers=2,
+        dropout=0.2)
 
     print(res_block)

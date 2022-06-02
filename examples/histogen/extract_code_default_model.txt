@@ -5,3 +5,5 @@ ckpt_directory = './'
 ckpt_restart = 'checkpoint/vqvae_001.pt'
 lmdb_filename = 'lmdb_001'
 data_dir = '../../Data/Examples/histogen/svs_pngs/'
+
+

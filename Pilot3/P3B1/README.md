@@ -9,45 +9,38 @@
 ### Benchmark Specs
 
 #### Description of data
+* Data source: Annotated pathology reports
+* Input dimensions: 250,000-500,000 [characters], or 5,000-20,000 [bag of words], or 200-500 [bag of concepts]
+* Output dimensions: (i) b tumor sites, (ii) t tumor laterality, and (iii) g clinical grade of tumors
 
-- Data source: Annotated pathology reports
-- Input dimensions: 250,000-500,000 [characters], or 5,000-20,000 [bag of words], or 200-500 [bag of concepts]
-- Output dimensions: (i) b tumor sites, (ii) t tumor laterality, and (iii) g clinical grade of tumors
-
-- Sample size: O(1,000)
-- Notes on data balance and other issues: standard NLP pre-processing is required, including (but not limited to) stemming words, keywords, cleaning text, stop words, etc. Data balance is an issue since the number of positive examples vs. control is skewed
+* Sample size: O(1,000)
+* Notes on data balance and other issues: standard NLP pre-processing is required, including (but not limited to) stemming words, keywords, cleaning text, stop words, etc. Data balance is an issue since the number of positive examples vs. control is skewed
 
 #### Expected Outcomes
-
-- Classification
-- Output range or number of classes: Initially, 4 classes; can grow up to 32 classes, depending on number of tasks simultaneously trained.
+* Classification
+* Output range or number of classes: Initially, 4 classes; can grow up to 32 classes, depending on number of tasks simultaneously trained.
 
 #### Evaluation Metrics
-
-- Accuracy or loss function: Standard approaches such as F1-score, accuracy, ROC-AUC, etc. will be used.
-- Expected performance of a naïve method: Compare performance against (i) deep neural nets against single tasks, (ii) multi-task SVM based predictions, and (iii) random forest based methods.
+* Accuracy or loss function: Standard approaches such as F1-score, accuracy, ROC-AUC, etc. will be used.
+* Expected performance of a naïve method: Compare performance against (i) deep neural nets against single tasks, (ii) multi-task SVM based predictions, and (iii) random forest based methods.
 
 #### Description of the Network
-
-- Proposed network architecture: Deep neural net across individual tasks
-- Number of layers: 5-6 layers
+* Proposed network architecture: Deep neural net across individual tasks
+* Number of layers: 5-6 layers
 
 A graphical representation of the MTL-DNN is shown below:
 ![MTL-DNN Architecture](https://raw.githubusercontent.com/ECP-CANDLE/Benchmarks/master/Pilot3/P3B1/images/MTL1.png)
 
 ### Running the baseline implementation
-
 There are two broad options for running our MTL implementation. The first baseline option includes the basic training of an MTL-based deep neural net. The second implementation includes a standard 10-fold cross-validation loop and depends on the first baseline for building and training the MTL-based deep neural net.
 
 For the first baseline run, an example run is shown below:
-
 ```
 cd P3B1
 python MTL_run.py
 ```
 
 For the second baseline run, including the 10-fold cross-validation loop, the set up is shown below.
-
 ```
 cd P3B1
 python keras_p3b1_baseline.py
@@ -58,78 +51,76 @@ Note that the training and testing data files are provided as standard CSV files
 The original data from the pathology reports cannot be made available online. Hence, we have pre-processed the reports so that example training/testing sets can be generated. Contact yoonh@ornl.gov for more information for generating additional training and testing data. A generic data loader that generates training and testing sets will be provided in the near future.
 
 #### Example output
-
 For the first baseline run involving just the basic training process of a MTL deep neural network, the output is shown below:
-
 ```
 Using TensorFlow backend.
 ('Args:', Namespace(activation='relu', batch_size=10, dropout=0.1, individual_nnet_spec='1200,1200;1200,1200;1200,1200', learning_rate=0.01, n_epochs=10, output_files='result0_0.csv;result1_0.csv;result2_0.csv', shared_nnet_spec='1200', train_features='data/task0_0_train_feature.csv;data/task1_0_train_feature.csv;data/task2_0_train_feature.csv', train_truths='data/task0_0_train_label.csv;data/task1_0_train_label.csv;data/task2_0_train_label.csv', valid_features='data/task0_0_test_feature.csv;data/task1_0_test_feature.csv;data/task2_0_test_feature.csv', valid_truths='data/task0_0_test_label.csv;data/task1_0_test_label.csv;data/task2_0_test_label.csv', verbose=True))
 /Users/v33/anaconda2/envs/tensorflow/lib/python2.7/site-packages/Keras-2.0.1-py2.7.egg/keras/legacy/interfaces.py:86: UserWarning: Update your `Model` call to the Keras 2 API: `Model(outputs=[<tf.Tenso..., inputs=[<tf.Tenso...)`
   '` call to the Keras 2 API: ' + signature)
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #
+Layer (type)                 Output Shape              Param #   
 =================================================================
-input (InputLayer)           (None, 400)               0
+input (InputLayer)           (None, 400)               0         
 _________________________________________________________________
-shared_layer_0 (Dense)       (None, 1200)              481200
+shared_layer_0 (Dense)       (None, 1200)              481200    
 _________________________________________________________________
-dropout_1 (Dropout)          (None, 1200)              0
+dropout_1 (Dropout)          (None, 1200)              0         
 _________________________________________________________________
-indiv_layer_0_0 (Dense)      (None, 1200)              1441200
+indiv_layer_0_0 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-dropout_2 (Dropout)          (None, 1200)              0
+dropout_2 (Dropout)          (None, 1200)              0         
 _________________________________________________________________
-indiv_layer_0_1 (Dense)      (None, 1200)              1441200
+indiv_layer_0_1 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-dropout_3 (Dropout)          (None, 1200)              0
+dropout_3 (Dropout)          (None, 1200)              0         
 _________________________________________________________________
-out_0 (Dense)                (None, 13)                15613
+out_0 (Dense)                (None, 13)                15613     
 =================================================================
 Total params: 3,379,213.0
 Trainable params: 3,379,213.0
 Non-trainable params: 0.0
 _________________________________________________________________
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #
+Layer (type)                 Output Shape              Param #   
 =================================================================
-input (InputLayer)           (None, 400)               0
+input (InputLayer)           (None, 400)               0         
 _________________________________________________________________
-shared_layer_0 (Dense)       (None, 1200)              481200
+shared_layer_0 (Dense)       (None, 1200)              481200    
 _________________________________________________________________
-dropout_1 (Dropout)          (None, 1200)              0
+dropout_1 (Dropout)          (None, 1200)              0         
 _________________________________________________________________
-indiv_layer_1_0 (Dense)      (None, 1200)              1441200
+indiv_layer_1_0 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-dropout_4 (Dropout)          (None, 1200)              0
+dropout_4 (Dropout)          (None, 1200)              0         
 _________________________________________________________________
-indiv_layer_1_1 (Dense)      (None, 1200)              1441200
+indiv_layer_1_1 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-dropout_5 (Dropout)          (None, 1200)              0
+dropout_5 (Dropout)          (None, 1200)              0         
 _________________________________________________________________
-out_1 (Dense)                (None, 2)                 2402
+out_1 (Dense)                (None, 2)                 2402      
 =================================================================
 Total params: 3,366,002.0
 Trainable params: 3,366,002.0
 Non-trainable params: 0.0
 _________________________________________________________________
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #
+Layer (type)                 Output Shape              Param #   
 =================================================================
-input (InputLayer)           (None, 400)               0
+input (InputLayer)           (None, 400)               0         
 _________________________________________________________________
-shared_layer_0 (Dense)       (None, 1200)              481200
+shared_layer_0 (Dense)       (None, 1200)              481200    
 _________________________________________________________________
-dropout_1 (Dropout)          (None, 1200)              0
+dropout_1 (Dropout)          (None, 1200)              0         
 _________________________________________________________________
-indiv_layer_2_0 (Dense)      (None, 1200)              1441200
+indiv_layer_2_0 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-dropout_6 (Dropout)          (None, 1200)              0
+dropout_6 (Dropout)          (None, 1200)              0         
 _________________________________________________________________
-indiv_layer_2_1 (Dense)      (None, 1200)              1441200
+indiv_layer_2_1 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-dropout_7 (Dropout)          (None, 1200)              0
+dropout_7 (Dropout)          (None, 1200)              0         
 _________________________________________________________________
-out_2 (Dense)                (None, 4)                 4804
+out_2 (Dense)                (None, 4)                 4804      
 =================================================================
 Total params: 3,368,404.0
 Trainable params: 3,368,404.0
@@ -231,56 +222,55 @@ Epoch 1/1
 ```
 
 For the second baseline run involving the 10-fold cross-validation loop, the outputs are shown below:
-
 ```
 Using TensorFlow backend.
 
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #
+Layer (type)                 Output Shape              Param #   
 =================================================================
-input (InputLayer)           (None, 400)               0
+input (InputLayer)           (None, 400)               0         
 _________________________________________________________________
-shared_layer_0 (Dense)       (None, 1200)              481200
+shared_layer_0 (Dense)       (None, 1200)              481200    
 _________________________________________________________________
-indiv_layer_0_0 (Dense)      (None, 1200)              1441200
+indiv_layer_0_0 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-indiv_layer_0_1 (Dense)      (None, 1200)              1441200
+indiv_layer_0_1 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-out_0 (Dense)                (None, 13)                15613
+out_0 (Dense)                (None, 13)                15613     
 =================================================================
 Total params: 3,379,213.0
 Trainable params: 3,379,213.0
 Non-trainable params: 0.0
 _________________________________________________________________
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #
+Layer (type)                 Output Shape              Param #   
 =================================================================
-input (InputLayer)           (None, 400)               0
+input (InputLayer)           (None, 400)               0         
 _________________________________________________________________
-shared_layer_0 (Dense)       (None, 1200)              481200
+shared_layer_0 (Dense)       (None, 1200)              481200    
 _________________________________________________________________
-indiv_layer_1_0 (Dense)      (None, 1200)              1441200
+indiv_layer_1_0 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-indiv_layer_1_1 (Dense)      (None, 1200)              1441200
+indiv_layer_1_1 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-out_1 (Dense)                (None, 2)                 2402
+out_1 (Dense)                (None, 2)                 2402      
 =================================================================
 Total params: 3,366,002.0
 Trainable params: 3,366,002.0
 Non-trainable params: 0.0
 _________________________________________________________________
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #
+Layer (type)                 Output Shape              Param #   
 =================================================================
-input (InputLayer)           (None, 400)               0
+input (InputLayer)           (None, 400)               0         
 _________________________________________________________________
-shared_layer_0 (Dense)       (None, 1200)              481200
+shared_layer_0 (Dense)       (None, 1200)              481200    
 _________________________________________________________________
-indiv_layer_2_0 (Dense)      (None, 1200)              1441200
+indiv_layer_2_0 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-indiv_layer_2_1 (Dense)      (None, 1200)              1441200
+indiv_layer_2_1 (Dense)      (None, 1200)              1441200   
 _________________________________________________________________
-out_2 (Dense)                (None, 4)                 4804
+out_2 (Dense)                (None, 4)                 4804      
 =================================================================
 Total params: 3,368,404.0
 Trainable params: 3,368,404.0
@@ -380,9 +370,7 @@ Epoch 1/1
 ```
 
 ### Preliminary Performance
-
 The performance numbers are output after running the 10-fold cross-validation loop. The output produced includes the following:
-
 ```
 Task 1: Primary site - Macro F1 score 0.230512521335
 Task 1: Primary site - Micro F1 score 0.414141414141

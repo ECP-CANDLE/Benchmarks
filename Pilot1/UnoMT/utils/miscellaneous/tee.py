@@ -19,7 +19,7 @@ class Tee(object):
     file for logging purpose.
     """
 
-    def __init__(self, log_name, mode="a"):
+    def __init__(self, log_name, mode='a'):
 
         self.__stdout = sys.stdout
 

@@ -1,13 +1,14 @@
 import os
 import sys
-
 import candle
 import p3b5 as bmk
+
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch import optim
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
+
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -15,19 +16,8 @@ file_path = os.path.dirname(os.path.realpath(__file__))
 import darts
 
 
-def train(
-    trainloader,
-    validloader,
-    model,
-    architecture,
-    criterion,
-    optimizer,
-    lr,
-    args,
-    tasks,
-    device,
-    meter,
-):
+def train(trainloader, validloader, model, architecture,
+          criterion, optimizer, lr, args, tasks, device, meter):
 
     valid_iter = iter(trainloader)
 
@@ -49,11 +39,17 @@ def train(
 
         # 1. update alpha
         architecture.step(
-            data, target, x_search, target_search, lr, optimizer, unrolled=args.unrolled
+            data,
+            target,
+            x_search,
+            target_search,
+            lr,
+            optimizer,
+            unrolled=args.unrolled
         )
 
         logits = model(data)
-        loss = darts.multitask_loss(target, logits, criterion, reduce="mean")
+        loss = darts.multitask_loss(target, logits, criterion, reduce='mean')
 
         # 2. update weight
         optimizer.zero_grad()
@@ -66,7 +62,7 @@ def train(
         meter.update_batch_accuracy(prec1, batch_size)
 
         if step % args.log_interval == 0:
-            print(f"Step: {step} loss: {meter.loss_meter.avg:.4}")
+            print(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.save_path)
@@ -85,14 +81,14 @@ def infer(validloader, model, criterion, args, tasks, device, meter):
             batch_size = data.size(0)
 
             logits = model(data)
-            loss = darts.multitask_loss(target, logits, criterion, reduce="mean")
+            loss = darts.multitask_loss(target, logits, criterion, reduce='mean')
 
             prec1 = darts.multitask_accuracy_topk(logits, target)
             meter.update_batch_loss(loss.item(), batch_size)
             meter.update_batch_accuracy(prec1, batch_size)
 
             if step % args.log_interval == 0:
-                print(f">> Validation: {step} loss: {meter.loss_meter.avg:.4}")
+                print(f'>> Validation: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.save_path)
@@ -100,5 +96,5 @@ def infer(validloader, model, criterion, args, tasks, device, meter):
     return meter.loss_meter.avg
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

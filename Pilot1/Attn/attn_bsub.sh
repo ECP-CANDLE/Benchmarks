@@ -1,6 +1,6 @@
 #!/bin/bash
 #BSUB -W 12:00
-#BSUB -nnodes 160
+#BSUB -nnodes 160 
 #BSUB -P med106
 #BSUB -alloc_flags NVME
 #BSUB -J attn1

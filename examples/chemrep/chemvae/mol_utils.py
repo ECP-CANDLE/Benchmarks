@@ -1,11 +1,10 @@
-import logging
-import pickle as pkl
-
-import numpy as np
 import pandas as pd
+import numpy as np
+import pickle as pkl
 from rdkit.Chem import AllChem as Chem
+import logging
 
-logging.getLogger("autoencoder")
+logging.getLogger('autoencoder')
 logging.getLogger().setLevel(20)
 logging.getLogger().addHandler(logging.StreamHandler())
 
@@ -13,7 +12,6 @@ logging.getLogger().addHandler(logging.StreamHandler())
 # =================
 # text io functions
 # ==================
-
 
 def smiles_to_mol(smiles):
     try:
@@ -25,9 +23,7 @@ def smiles_to_mol(smiles):
 
 
 def verify_smiles(smile):
-    return (
-        (smile != "") and pd.notnull(smile) and (Chem.MolFromSmiles(smile) is not None)
-    )
+    return (smile != '') and pd.notnull(smile) and (Chem.MolFromSmiles(smile) is not None)
 
 
 def good_smiles(smile):
@@ -37,13 +33,13 @@ def good_smiles(smile):
         return None
 
 
-def pad_smile(string, max_len, padding="right"):
+def pad_smile(string, max_len, padding='right'):
     if len(string) <= max_len:
-        if padding == "right":
+        if padding == 'right':
             return string + " " * (max_len - len(string))
-        elif padding == "left":
+        elif padding == 'left':
             return " " * (max_len - len(string)) + string
-        elif padding == "none":
+        elif padding == 'none':
             return string
 
 
@@ -64,11 +60,10 @@ def filter_valid_smiles_return_invalid(strings, max_len):
 
 def smiles_to_hot(smiles, max_len, padding, char_indices, nchars):
     # added: filter illegal characters such as '.' from SMILES
-    smiles = ["".join([c for c in s if c in char_indices.keys()]) for s in smiles]
+    smiles = [''.join([c for c in s if c in char_indices.keys()]) for s in smiles]
 
-    smiles = [
-        pad_smile(i, max_len, padding) for i in smiles if pad_smile(i, max_len, padding)
-    ]
+    smiles = [pad_smile(i, max_len, padding)
+              for i in smiles if pad_smile(i, max_len, padding)]
 
     X = np.zeros((len(smiles), max_len, nchars), dtype=np.float32)
 
@@ -119,29 +114,29 @@ def thermal_argmax(prob_arr, temperature):
     prob_arr = np.exp(prob_arr) / np.sum(np.exp(prob_arr))
     print(prob_arr)
     if np.greater_equal(prob_arr.sum(), 1.0000000001):
-        logging.warn(
-            "Probabilities to sample add to more than 1, {}".format(prob_arr.sum())
-        )
-        prob_arr = prob_arr / (prob_arr.sum() + 0.0000000001)
+        logging.warn('Probabilities to sample add to more than 1, {}'.
+                     format(prob_arr.sum()))
+        prob_arr = prob_arr / (prob_arr.sum() + .0000000001)
     if np.greater_equal(prob_arr.sum(), 1.0000000001):
-        logging.warn("Probabilities to sample still add to more than 1")
+        logging.warn('Probabilities to sample still add to more than 1')
     return np.argmax(np.random.multinomial(1, prob_arr, 1))
 
 
 def load_smiles(smi_file, max_len=None, return_filtered=False):
-    if smi_file[-4:] == ".pkl":
-        with open(smi_file, "rb") as f:
+    if smi_file[-4:] == '.pkl':
+        with open(smi_file, 'rb') as f:
             smiles = pkl.load(f)
     else:  # assume file is a text file
-        with open(smi_file, "r") as f:
+        with open(smi_file, 'r') as f:
             smiles = f.readlines()
         smiles = [i.strip() for i in smiles]
 
     if max_len is not None:
         if return_filtered:
-            smiles, filtrate = filter_valid_smiles_return_invalid(smiles, max_len)
+            smiles, filtrate = filter_valid_smiles_return_invalid(
+                smiles, max_len)
             if len(filtrate) > 0:
-                print("Filtered {} smiles due to length".format(len(filtrate)))
+                print('Filtered {} smiles due to length'.format(len(filtrate)))
             return smiles, filtrate
 
         else:
@@ -149,19 +144,12 @@ def load_smiles(smi_file, max_len=None, return_filtered=False):
             smiles = filter_valid_length(smiles, max_len)
             diff_len = old_len - len(smiles)
             if diff_len != 0:
-                print("Filtered {} smiles due to length".format(diff_len))
+                print('Filtered {} smiles due to length'.format(diff_len))
 
     return smiles
 
 
-def load_smiles_and_data_df(
-    data_file,
-    max_len,
-    reg_tasks=None,
-    logit_tasks=None,
-    normalize_out=None,
-    dtype="float64",
-):
+def load_smiles_and_data_df(data_file, max_len, reg_tasks=None, logit_tasks=None, normalize_out=None, dtype='float64'):
     # reg_tasks : list of columns in df that correspond to regression tasks
     # logit_tasks : list of columns in df that correspond to logit tasks
 
@@ -178,17 +166,13 @@ def load_smiles_and_data_df(
     logit_data_df = df[logit_tasks]
     # Load regression tasks
     if len(reg_tasks) != 0 and normalize_out is not None:
-        df_norm = pd.DataFrame(reg_data_df.mean(axis=0), columns=["mean"])
-        df_norm["std"] = reg_data_df.std(axis=0)
-        reg_data_df = (reg_data_df - df_norm["mean"]) / df_norm["std"]
+        df_norm = pd.DataFrame(reg_data_df.mean(axis=0), columns=['mean'])
+        df_norm['std'] = reg_data_df.std(axis=0)
+        reg_data_df = (reg_data_df - df_norm['mean']) / df_norm['std']
         df_norm.to_csv(normalize_out)
 
     if len(logit_tasks) != 0 and len(reg_tasks) != 0:
-        return (
-            smiles,
-            np.vstack(reg_data_df.values).astype(dtype),
-            np.vstack(logit_data_df.values).astype(dtype),
-        )
+        return smiles, np.vstack(reg_data_df.values).astype(dtype), np.vstack(logit_data_df.values).astype(dtype)
     elif len(reg_tasks) != 0:
         return smiles, np.vstack(reg_data_df.values).astype(dtype)
     elif len(logit_tasks) != 0:
@@ -201,22 +185,22 @@ def smiles2one_hot_chars(smi_list, max_len):
     # get all the characters
     char_lists = [list(smi) for smi in smi_list]
     chars = list(set([char for sub_list in char_lists for char in sub_list]))
-    chars.append(" ")
+    chars.append(' ')
 
     return chars
 
 
 def make_charset(smi_file, char_file):
-    with open(smi_file, "r") as afile:
+    with open(smi_file, 'r') as afile:
         unique_chars = set(afile.read())
-    bad = ["\n", '"']
+    bad = ['\n', '"']
     unique_chars = [c for c in unique_chars if c not in bad]
-    unique_chars.append(" ")
-    print("found {} unique chars".format(len(unique_chars)))
-    astr = str(unique_chars).replace("'", '"')
+    unique_chars.append(' ')
+    print('found {} unique chars'.format(len(unique_chars)))
+    astr = str(unique_chars).replace("\'", "\"")
     print(astr)
 
-    with open(char_file, "w") as afile:
+    with open(char_file, 'w') as afile:
         afile.write(astr)
 
     return
@@ -225,7 +209,6 @@ def make_charset(smi_file, char_file):
 # =================
 # data parsing io functions
 # ==================
-
 
 def CheckSmiFeasible(smi):
     # See if you can make a smiles with mol object
@@ -257,7 +240,7 @@ def balanced_parentheses(input_string):
 
 
 def matched_ring(s):
-    return s.count("1") % 2 == 0 and s.count("2") % 2 == 0
+    return s.count('1') % 2 == 0 and s.count('2') % 2 == 0
 
 
 def fast_verify(s):
@@ -269,19 +252,13 @@ def get_molecule_smi(mol_obj):
 
 
 def canon_smiles(smi):
-    return Chem.MolToSmiles(
-        Chem.MolFromSmiles(smi), isomericSmiles=True, canonical=True
-    )
+    return Chem.MolToSmiles(Chem.MolFromSmiles(smi), isomericSmiles=True, canonical=True)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # print("please import me")
-    smiles, reg_dat, logit_dat = load_smiles_and_data_df(
-        "zinc/250k_rndm_zinc_drugs_clean_5.csv",
-        120,
-        ["logP", "qed", "SAS"],
-        ["NRingsGT6", "PAINS"],
-    )
+    smiles, reg_dat, logit_dat = load_smiles_and_data_df("zinc/250k_rndm_zinc_drugs_clean_5.csv", 120,
+                                                         ['logP', 'qed', 'SAS'], ['NRingsGT6', 'PAINS'])
     print(smiles[:5])
     print(reg_dat[:5, :])
     print(logit_dat[:5, :])

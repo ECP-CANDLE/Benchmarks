@@ -3,7 +3,7 @@
 #BSUB -nnodes 30
 #BSUB -P med106
 #BSUB -alloc_flags NVME
-#BSUB -J adrp
+#BSUB -J adrp 
 
 module load ibm-wml-ce/1.6.2-3
 conda activate /gpfs/alpine/world-shared/med106/sw/condaenv-200408
@@ -61,3 +61,4 @@ done
 
 # -n is number of resource sets to allocate
 # -a specifies the number of tasks to start per resource set
+

@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from darts.api import Model
-from darts.genotypes import PRIMITIVES, Genotype
-from darts.modules.classifier import MultitaskClassifier
 from darts.modules.conv import Cell
+from darts.modules.classifier import MultitaskClassifier
+from darts.genotypes import PRIMITIVES, Genotype
 
 
 class Hyperparameters:
@@ -18,9 +19,9 @@ class Hyperparameters:
 
 
 class ConvNetwork(Model):
-    """Collection of cells"""
+    """ Collection of cells """
 
-    def __init__(self, tasks, criterion, device="cpu", hyperparams=Hyperparameters()):
+    def __init__(self, tasks, criterion, device='cpu', hyperparams=Hyperparameters()):
         super(ConvNetwork, self).__init__()
         self.tasks = tasks
         self.criterion = criterion
@@ -37,10 +38,10 @@ class ConvNetwork(Model):
         self.stem = nn.Sequential(
             nn.Embedding(
                 num_embeddings=hyperparams.num_embeddings,
-                embedding_dim=hyperparams.embedding_dim,
+                embedding_dim=hyperparams.embedding_dim
             ),
             nn.Conv1d(hyperparams.embedding_dim, c_curr, 3, padding=1, bias=False),
-            nn.BatchNorm1d(c_curr),
+            nn.BatchNorm1d(c_curr)
         ).to(self.device)
 
         # c_curr means a factor of the output channels of current cell
@@ -66,7 +67,7 @@ class ConvNetwork(Model):
                 cp,
                 c_curr,
                 reduction,
-                reduction_prev,
+                reduction_prev
             ).to(self.device)
             # update reduction_prev
             reduction_prev = reduction
@@ -97,7 +98,7 @@ class ConvNetwork(Model):
         ]
 
     def new(self):
-        """Create a new model initialzed with current alpha parameters.
+        """ Create a new model initialzed with current alpha parameters.
 
         Weights are left untouched.
 
@@ -106,7 +107,10 @@ class ConvNetwork(Model):
         model : Network
             New model initialized with current alpha.
         """
-        model = ConvNetwork(self.tasks, self.criterion).to(self.device)
+        model = ConvNetwork(
+            self.tasks,
+            self.criterion
+        ).to(self.device)
 
         for x, y in zip(model.arch_parameters(), self.arch_parameters()):
             x.data.copy_(y.data)
@@ -158,8 +162,8 @@ class ConvNetwork(Model):
 
         return logits
 
-    def loss(self, data, target, reduce="mean"):
-        """Calculate a value of loss function"""
+    def loss(self, data, target, reduce='mean'):
+        """ Calculate a value of loss function """
         logits = self(data)
 
         for task, logit in logits.items():
@@ -180,7 +184,7 @@ class ConvNetwork(Model):
             elif reduce == "sum":
                 losses = total
             else:
-                raise ValueError("Reduced loss must use either `mean` or `sum`!")
+                raise ValueError('Reduced loss must use either `mean` or `sum`!')
 
         return losses
 
@@ -191,7 +195,6 @@ class ConvNetwork(Model):
         """
         :return:
         """
-
         def _parse(weights):
             """
             :param weights: [14, 8]
@@ -203,22 +206,15 @@ class ConvNetwork(Model):
             for i in range(self.num_nodes):  # for each node
                 end = start + n
                 W = weights[start:end].copy()  # [2, 8], [3, 8], ...
-                edges = sorted(
-                    range(i + 2),  # i+2 is the number of connection for node i
-                    key=lambda x: -max(
-                        W[x][k]  # by descending order
-                        for k in range(len(W[x]))  # get strongest ops
-                        if k != PRIMITIVES.index("none")
-                    ),
-                )[
-                    :2
-                ]  # only has two inputs
+                edges = sorted(range(i + 2),  # i+2 is the number of connection for node i
+                               key=lambda x: -max(W[x][k]  # by descending order
+                                                           for k in range(len(W[x]))  # get strongest ops
+                                                           if k != PRIMITIVES.index('none'))
+                               )[:2]  # only has two inputs
                 for j in edges:  # for every input nodes j of current node i
                     k_best = None
-                    for k in range(
-                        len(W[j])
-                    ):  # get strongest ops for current input j->i
-                        if k != PRIMITIVES.index("none"):
+                    for k in range(len(W[j])):  # get strongest ops for current input j->i
+                        if k != PRIMITIVES.index('none'):
                             if k_best is None or W[j][k] > W[j][k_best]:
                                 k_best = k
                     gene.append((PRIMITIVES[k_best], j))  # save ops and input node
@@ -231,33 +227,20 @@ class ConvNetwork(Model):
 
         concat = range(2 + self.num_nodes - self.channel_multiplier, self.num_nodes + 2)
         genotype = Genotype(
-            normal=gene_normal,
-            normal_concat=concat,
-            reduce=gene_reduce,
-            reduce_concat=concat,
+            normal=gene_normal, normal_concat=concat,
+            reduce=gene_reduce, reduce_concat=concat
         )
 
         return genotype
 
 
-def new(
-    c,
-    num_classes,
-    num_layers,
-    criterion,
-    device,
-    steps=4,
-    multiplier=4,
-    stem_multiplier=3,
-):
+def new(c, num_classes, num_layers, criterion, device, steps=4, multiplier=4, stem_multiplier=3):
     """
     create a new model and initialize it with current alpha parameters.
     However, its weights are left untouched.
     :return:
     """
-    model = ConvNetwork(
-        c, num_classes, num_layers, criterion, steps, multiplier, stem_multiplier
-    ).to(device)
+    model = ConvNetwork(c, num_classes, num_layers, criterion, steps, multiplier, stem_multiplier).to(device)
 
     for x, y in zip(model.arch_parameters(), model.arch_parameters()):
         x.data.copy_(y.data)

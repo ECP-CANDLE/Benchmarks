@@ -1,89 +1,69 @@
 from tensorflow.keras import backend as K
 
 abs_definitions = [
-    {
-        "name": "add_class",
-        "nargs": "+",
-        "type": int,
-        "help": "flag to add abstention (per task)",
-    },
-    {
-        "name": "alpha",
-        "nargs": "+",
-        "type": float,
-        "help": "abstention penalty coefficient (per task)",
-    },
-    {
-        "name": "min_acc",
-        "nargs": "+",
-        "type": float,
-        "help": "minimum accuracy required (per task)",
-    },
-    {
-        "name": "max_abs",
-        "nargs": "+",
-        "type": float,
-        "help": "maximum abstention fraction allowed (per task)",
-    },
-    {
-        "name": "alpha_scale_factor",
-        "nargs": "+",
-        "type": float,
-        "help": "scaling factor for modifying alpha (per task)",
-    },
-    {
-        "name": "init_abs_epoch",
-        "action": "store",
-        "type": int,
-        "help": "number of epochs to skip before modifying alpha",
-    },
-    {
-        "name": "n_iters",
-        "action": "store",
-        "type": int,
-        "help": "number of iterations to iterate alpha",
-    },
-    {
-        "name": "acc_gain",
-        "type": float,
-        "default": 5.0,
-        "help": "factor to weight accuracy when determining new alpha scale",
-    },
-    {
-        "name": "abs_gain",
-        "type": float,
-        "default": 1.0,
-        "help": "factor to weight abstention fraction when determining new alpha scale",
-    },
-    {
-        "name": "task_list",
-        "nargs": "+",
-        "type": int,
-        "help": "list of task indices to use",
-    },
-    {
-        "name": "task_names",
-        "nargs": "+",
-        "type": int,
-        "help": "list of names corresponding to each task to use",
-    },
-    {"name": "cf_noise", "type": str, "help": "input file with cf noise"},
+    {'name': 'add_class',
+     'nargs': '+',
+     'type': int,
+     'help': 'flag to add abstention (per task)'},
+    {'name': 'alpha',
+     'nargs': '+',
+     'type': float,
+     'help': 'abstention penalty coefficient (per task)'},
+    {'name': 'min_acc',
+     'nargs': '+',
+     'type': float,
+     'help': 'minimum accuracy required (per task)'},
+    {'name': 'max_abs',
+     'nargs': '+',
+     'type': float,
+     'help': 'maximum abstention fraction allowed (per task)'},
+    {'name': 'alpha_scale_factor',
+     'nargs': '+',
+     'type': float,
+     'help': 'scaling factor for modifying alpha (per task)'},
+    {'name': 'init_abs_epoch',
+     'action': 'store',
+     'type': int,
+     'help': 'number of epochs to skip before modifying alpha'},
+    {'name': 'n_iters',
+     'action': 'store',
+     'type': int,
+     'help': 'number of iterations to iterate alpha'},
+    {'name': 'acc_gain',
+     'type': float,
+     'default': 5.0,
+     'help': 'factor to weight accuracy when determining new alpha scale'},
+    {'name': 'abs_gain',
+     'type': float,
+     'default': 1.0,
+     'help': 'factor to weight abstention fraction when determining new alpha scale'},
+    {'name': 'task_list',
+     'nargs': '+',
+     'type': int,
+     'help': 'list of task indices to use'},
+    {'name': 'task_names',
+     'nargs': '+',
+     'type': int,
+     'help': 'list of names corresponding to each task to use'},
+    {'name': 'cf_noise',
+     'type': str,
+     'help': 'input file with cf noise'}
 ]
 
 
 def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add_index):
 
-    task_names = gParameters["task_names"]
-    task_list = gParameters["task_list"]
+    task_names = gParameters['task_names']
+    task_list = gParameters['task_list']
     # retrieve truth-pred pair
     avg_loss = 0.0
     ret = []
     ret_k = []
 
     # set abstaining classifier parameters
-    max_abs = gParameters["max_abs"]
-    min_acc = gParameters["min_acc"]
-    alpha_scale_factor = gParameters["alpha_scale_factor"]
+    max_abs = gParameters['max_abs']
+    min_acc = gParameters['min_acc']
+    alpha_scale_factor = gParameters['alpha_scale_factor']
 
     # print('labels_test', labels_test)
     # print('Add_index', add_index)
@@ -98,8 +78,8 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
     pred = model.predict(feature_test)
     # print('pred',pred.shape, pred)
 
-    abs_gain = gParameters["abs_gain"]
-    acc_gain = gParameters["acc_gain"]
+    abs_gain = gParameters['abs_gain']
+    acc_gain = gParameters['acc_gain']
 
     accs = []
     abst = []
@@ -116,13 +96,9 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
             # print('true_classes',true_classes.shape, true_classes)
             # print('labels',label_test.shape, label_test)
 
-            true = K.eval(K.sum(K.cast(K.equal(pred_classes, true_classes), "int64")))
-            false = K.eval(
-                K.sum(K.cast(K.not_equal(pred_classes, true_classes), "int64"))
-            )
-            abstain = K.eval(
-                K.sum(K.cast(K.equal(pred_classes, add_index[k] - 1), "int64"))
-            )
+            true = K.eval(K.sum(K.cast(K.equal(pred_classes, true_classes), 'int64')))
+            false = K.eval(K.sum(K.cast(K.not_equal(pred_classes, true_classes), 'int64')))
+            abstain = K.eval(K.sum(K.cast(K.equal(pred_classes, add_index[k] - 1), 'int64')))
 
             print(true, false, abstain)
 
@@ -136,7 +112,7 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
 
             scale_k = alpha_scale_factor[k]
             min_scale = scale_k
-            max_scale = 1.0 / scale_k
+            max_scale = 1. / scale_k
 
             acc_error = abs_acc - min_acc[k]
             acc_error = min(acc_error, 0.0)
@@ -148,12 +124,10 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
             new_scale = min(new_scale, max_scale)
             new_scale = max(new_scale, min_scale)
 
-            print("Scaling factor: ", new_scale)
+            print('Scaling factor: ', new_scale)
             K.set_value(alpha[k], new_scale * alpha_k)
 
-            print_abs_stats(
-                task_names[k], new_scale * alpha_k, true, false, abstain, max_abs[k]
-            )
+            print_abs_stats(task_names[k], new_scale * alpha_k, true, false, abstain, max_abs[k])
 
             ret_k.append(truth_test)
             ret_k.append(pred)
@@ -166,7 +140,7 @@ def adjust_alpha(gParameters, X_test, truths_test, labels_val, model, alpha, add
             accs.append(1.0)
             accs.append(0.0)
 
-    write_abs_stats(gParameters["output_dir"] + "abs_stats.csv", alpha, accs, abst)
+    write_abs_stats(gParameters['output_dir'] + 'abs_stats.csv', alpha, accs, abst)
 
     return ret, alpha
 
@@ -184,15 +158,20 @@ def loss_param(alpha, mask):
 
         abs_pred = K.mean(mask * (y_pred), axis=-1)
         # add some small value to prevent NaN when prediction is abstained
-        abs_pred = K.clip(abs_pred, K.epsilon(), 1.0 - K.epsilon())
-        cost = (1.0 - abs_pred) * base_cost - (alpha) * K.log(1.0 - abs_pred)
+        abs_pred = K.clip(abs_pred, K.epsilon(), 1. - K.epsilon())
+        cost = (1. - abs_pred) * base_cost - (alpha) * K.log(1. - abs_pred)
 
         return cost
-
     return loss
 
 
-def print_abs_stats(task_name, alpha, num_true, num_false, num_abstain, max_abs):
+def print_abs_stats(
+        task_name,
+        alpha,
+        num_true,
+        num_false,
+        num_abstain,
+        max_abs):
 
     # Compute interesting values
     total = num_true + num_false
@@ -202,29 +181,17 @@ def print_abs_stats(task_name, alpha, num_true, num_false, num_abstain, max_abs)
     if tot_pred > 0:
         abs_acc = num_true / tot_pred
 
-    print(
-        "        task,       alpha,     true,    false,  abstain,    total, tot_pred,   abs_frac,    max_abs,    abs_acc"
-    )
-    print(
-        "{:>12s}, {:10.5e}, {:8d}, {:8d}, {:8d}, {:8d}, {:8d}, {:10.5f}, {:10.5f}, {:10.5f}".format(
-            task_name,
-            alpha,
-            num_true,
-            num_false - num_abstain,
-            num_abstain,
-            total,
-            tot_pred,
-            abs_frac,
-            max_abs,
-            abs_acc,
-        )
-    )
+    print('        task,       alpha,     true,    false,  abstain,    total, tot_pred,   abs_frac,    max_abs,    abs_acc')
+    print('{:>12s}, {:10.5e}, {:8d}, {:8d}, {:8d}, {:8d}, {:8d}, {:10.5f}, {:10.5f}, {:10.5f}'
+          .format(task_name, alpha,
+                  num_true, num_false - num_abstain, num_abstain, total,
+                  tot_pred, abs_frac, max_abs, abs_acc))
 
 
 def write_abs_stats(stats_file, alphas, accs, abst):
 
     # Open file for appending
-    abs_file = open(stats_file, "a")
+    abs_file = open(stats_file, 'a')
 
     # we write all the results
     for k in range((alphas.shape[0])):

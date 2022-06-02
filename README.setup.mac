@@ -29,7 +29,7 @@ git clone https://github.com/ECP-Candle/benchmarks
 
 # Run the Pilot1 benchmarks
 pushd benchmarks/Pilot1/P1B1/
-python p1b1_baseline_keras2.py
+python p1b1_baseline_keras2.py 
 popd
 
 pushd benchmarks/Pilot1/P1B2/
@@ -56,4 +56,5 @@ popd
 
 pushd benchmarks/Pilot3/P3B2/
 python p3b2_baseline_keras2.py
-popd
+popd 
+

@@ -1,10 +1,13 @@
 import os
+import torch
 
 import numpy as np
 import pandas as pd
-import torch
+
 from darts.api import InMemoryDataset
-from darts.datasets.utils import download_url, makedir_exist_ok
+from darts.datasets.utils import (
+    download_url, makedir_exist_ok
+)
 
 
 class Uno(InMemoryDataset):
@@ -25,19 +28,17 @@ class Uno(InMemoryDataset):
         puts it in root directory. If dataset is already downloaded, it is not
         downloaded again.
     """
-
     urls = [
-        "http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc_1fold.uno.h5",
+        'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc_1fold.uno.h5',
     ]
 
-    training_data_file = "train_data.pt"
-    training_label_file = "train_labels.pt"
-    test_data_file = "test_data.pt"
-    test_label_file = "test_labels.pt"
+    training_data_file = 'train_data.pt'
+    training_label_file = 'train_labels.pt'
+    test_data_file = 'test_data.pt'
+    test_label_file = 'test_labels.pt'
 
-    def __init__(
-        self, root, partition, transform=None, target_transform=None, download=False
-    ):
+    def __init__(self, root, partition, transform=None,
+                 target_transform=None, download=False):
         self.root = os.path.expanduser(root)
         self.transform = transform
         self.target_transform = target_transform
@@ -46,15 +47,14 @@ class Uno(InMemoryDataset):
             self.download()
 
         if not self._check_exists():
-            raise RuntimeError(
-                "Dataset not found." + " You can use download=True to download it"
-            )
+            raise RuntimeError('Dataset not found.'
+                               + ' You can use download=True to download it')
 
         self.partition = partition
-        if self.partition == "train":
+        if self.partition == 'train':
             data_file = self.training_data_file
             label_file = self.training_label_file
-        elif self.partition == "test":
+        elif self.partition == 'test':
             data_file = self.test_data_file
             label_file = self.test_label_file
         else:
@@ -64,38 +64,36 @@ class Uno(InMemoryDataset):
         self.targets = torch.load(os.path.join(self.processed_folder, label_file))
 
     def __len__(self):
-        return len(self.data["gene_data"])
+        return len(self.data['gene_data'])
 
     def load_data(self):
         return self.data, self.targets
 
     def read_data(self, data_file, partition):
-        """Read in the H5 data"""
-        if partition == "train":
-            gene_data = "x_train_0"
-            drug_data = "x_train_1"
+        """ Read in the H5 data """
+        if partition == 'train':
+            gene_data = 'x_train_0'
+            drug_data = 'x_train_1'
         else:
-            gene_data = "x_val_0"
-            drug_data = "x_val_1"
+            gene_data = 'x_val_0'
+            drug_data = 'x_val_1'
 
         gene_data = torch.tensor(pd.read_hdf(data_file, gene_data).values)
         drug_data = torch.tensor(pd.read_hdf(data_file, drug_data).values)
-        data = {"gene_data": gene_data, "drug_data": drug_data}
+        data = {'gene_data': gene_data, 'drug_data': drug_data}
 
         return data
 
     def read_targets(self, data_file, partition):
         """Get dictionary of targets specified by user."""
-        if partition == "train":
-            label = "y_train"
+        if partition == 'train':
+            label = 'y_train'
         else:
-            label = "y_val"
+            label = 'y_val'
 
         tasks = {
-            "response": torch.tensor(
-                pd.read_hdf(data_file, label)["AUC"].apply(
-                    lambda x: 1 if x < 0.5 else 0
-                )
+            'response': torch.tensor(
+                pd.read_hdf(data_file, label)['AUC'].apply(lambda x: 1 if x < 0.5 else 0)
             )
         }
 
@@ -113,7 +111,7 @@ class Uno(InMemoryDataset):
         (document, target) : tuple
            where target is index of the target class.
         """
-        data = self.data["gene_data"][idx]
+        data = self.data['gene_data'][idx]
 
         if self.transform is not None:
             data = self.transform(data)
@@ -131,27 +129,21 @@ class Uno(InMemoryDataset):
 
     @property
     def raw_folder(self):
-        return os.path.join(self.root, self.__class__.__name__, "raw")
+        return os.path.join(self.root, self.__class__.__name__, 'raw')
 
     @property
     def processed_folder(self):
-        return os.path.join(self.root, self.__class__.__name__, "processed")
+        return os.path.join(self.root, self.__class__.__name__, 'processed')
 
     def _check_exists(self):
-        return (
-            os.path.exists(os.path.join(self.processed_folder, self.training_data_file))
-            and os.path.exists(
-                os.path.join(self.processed_folder, self.training_label_file)
-            )
-            and os.path.exists(os.path.join(self.processed_folder, self.test_data_file))
-            and os.path.exists(
-                os.path.join(self.processed_folder, self.test_label_file)
-            )
-        )
+        return os.path.exists(os.path.join(self.processed_folder, self.training_data_file)) and \
+            os.path.exists(os.path.join(self.processed_folder, self.training_label_file)) and \
+            os.path.exists(os.path.join(self.processed_folder, self.test_data_file)) and \
+            os.path.exists(os.path.join(self.processed_folder, self.test_label_file))
 
     @staticmethod
     def extract_array(path, remove_finished=False):
-        print("Extracting {}".format(path))
+        print('Extracting {}'.format(path))
         arry = np.load(path)
         if remove_finished:
             os.unlink(path)
@@ -167,29 +159,21 @@ class Uno(InMemoryDataset):
 
         # download files
         for url in self.urls:
-            filename = url.rpartition("/")[2]
+            filename = url.rpartition('/')[2]
             file_path = os.path.join(self.raw_folder, filename)
             download_url(url, root=self.raw_folder, filename=filename, md5=None)
             # self.extract_array(path=file_path, remove_finished=False)
 
         # process and save as numpy files
-        print("Processing...")
+        print('Processing...')
 
         training_set = (
-            self.read_data(
-                os.path.join(self.raw_folder, "top_21_auc_1fold.uno.h5"), "train"
-            ),
-            self.read_targets(
-                os.path.join(self.raw_folder, "top_21_auc_1fold.uno.h5"), "train"
-            ),
+            self.read_data(os.path.join(self.raw_folder, 'top_21_auc_1fold.uno.h5'), 'train'),
+            self.read_targets(os.path.join(self.raw_folder, 'top_21_auc_1fold.uno.h5'), 'train')
         )
         test_set = (
-            self.read_data(
-                os.path.join(self.raw_folder, "top_21_auc_1fold.uno.h5"), "test"
-            ),
-            self.read_targets(
-                os.path.join(self.raw_folder, "top_21_auc_1fold.uno.h5"), "test"
-            ),
+            self.read_data(os.path.join(self.raw_folder, 'top_21_auc_1fold.uno.h5'), 'test'),
+            self.read_targets(os.path.join(self.raw_folder, 'top_21_auc_1fold.uno.h5'), 'test')
         )
 
         # Save processed training data
@@ -204,12 +188,12 @@ class Uno(InMemoryDataset):
         test_label_path = os.path.join(self.processed_folder, self.test_label_file)
         torch.save(test_set[1], test_label_path)
 
-        print("Done!")
+        print('Done!')
 
     def __repr__(self):
-        fmt_str = "Dataset " + self.__class__.__name__ + "\n"
-        fmt_str += "    Number of datapoints: {}\n".format(self.__len__())
+        fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
+        fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())
         tmp = self.partition
-        fmt_str += "    Split: {}\n".format(tmp)
-        fmt_str += "    Root Location: {}\n".format(self.root)
+        fmt_str += '    Split: {}\n'.format(tmp)
+        fmt_str += '    Root Location: {}\n'.format(self.root)
         return fmt_str

@@ -9,3 +9,4 @@ if [ -f "save_default/infer_cell_ids" ]; then
 	  --weights_file save_default/saved.model.weights.h5 \
 	  --n_pred 10
 fi
+

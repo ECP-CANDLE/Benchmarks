@@ -1,15 +1,14 @@
 # Predicting AUC values for Top21 cancer types
 
 ## Data prep
-
 A static dataset is prebuilt and available at `http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc_1fold.uno.h5`.
 
 ```
 $ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/uno/top_21_auc_1fold.uno.h5
 ```
 
-## Training
 
+## Training
 ```
 python uno_baseline_keras2.py --config_file uno_auc_model.txt \
   --use_exported_data top_21_auc_1fold.uno.h5 --es True
@@ -110,10 +109,9 @@ Comparing y_true and y_pred:
    corr: 0.8800
 ```
 
+
 ## Inference
-
 The script `uno_infer.py` takes a couple of parameters for inferences. You are required to specify a datafile (the same dataset for training, `top_21_auc_1fold.uno.h5` in this case), model file, and trained weights. You can choose a partition as a inference input (training, validation, or all) and number of predictions for each data points (-n).
-
 ```
 $ python uno_infer.py --data top_21_auc_1fold.uno.h5 \
   --model_file top21_ref/model.json \
@@ -135,7 +133,6 @@ corr: 0.8688, 0.0004, 0.8679, 0.8696
 ```
 
 After the inference script completes, you should be able to find `uno_pred.all.tsv` and `uno_pred.tsv` files, which contains all predicted value and error, and aggregated statistics for each data point respectively. See below for example,
-
 ```
 $ head -n 4 uno_pred.all.tsv
 AUC	Sample	Drug1	PredictedAUC	AUCError

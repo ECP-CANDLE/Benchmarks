@@ -6,7 +6,11 @@
   "encoder_weights_file": "zinc_encoder.h5",
   "decoder_weights_file": "zinc_decoder.h5",
   "prop_pred_weights_file": "zinc_prop_pred.h5",
-  "reg_prop_tasks": ["qed", "SAS", "logP"],
+  "reg_prop_tasks": [
+    "qed",
+    "SAS",
+    "logP"
+  ],
   "test_idx_file": "test_idx.npy",
   "history_file": "history.csv",
   "checkpoint_path": "./",

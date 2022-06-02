@@ -1,8 +1,7 @@
 import os
-import random
-
-import numpy as np
 import torch
+import random
+import numpy as np
 
 
 class Seeds:
@@ -13,6 +12,7 @@ class Seeds:
 
 
 class SeedControl:
+
     def __init__(self, seeds=Seeds()):
         self.s = seeds
 
@@ -25,15 +25,15 @@ class SeedControl:
         self.set_seeds()
 
     def set_seeds(self):
-        os.environ["PYTHONHASHSEED"] = str(self.s.pythonhash)
+        os.environ['PYTHONHASHSEED'] = str(self.s.pythonhash)
         random.seed(self.s.pythonrand)
         np.random.seed(self.s.numpy)
         torch.random.manual_seed(self.s.torch)
 
     def get_seeds(self):
         return {
-            "PythonHash": self.s.pythonhash,
-            "PythonRand": self.s.pythonrand,
-            "Numpy": self.s.numpy,
-            "Torch": self.s.torch,
+            'PythonHash': self.s.pythonhash,
+            'PythonRand': self.s.pythonrand,
+            'Numpy': self.s.numpy,
+            'Torch': self.s.torch
         }

@@ -4,36 +4,49 @@ import os
 import sys
 
 import pandas as pd
+
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import backend as K
 from tensorflow.keras import layers
-from tensorflow.keras.preprocessing import sequence, text
+from tensorflow.keras.preprocessing import sequence
+from tensorflow.keras.preprocessing import text
+from tensorflow.keras import backend as K
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path2 = os.path.abspath(os.path.join(file_path, "..", "..", "common"))
+lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
 import candle
 
 additional_definitions = [
-    {"name": "embed_dim", "type": int, "help": "Embedding dimension for each token"},
-    {
-        "name": "ff_dim",
-        "type": int,
-        "help": "Hidden layer size in feed forward network inside transformer",
-    },
-    {"name": "maxlen", "type": int, "help": "Maximum sequence length"},
-    {"name": "num_heads", "type": int, "help": "Number of attention heads"},
-    {"name": "out_layer", "type": int, "help": "Size of output layer"},
-    {"name": "transformer_depth", "type": int, "help": "Number of transformer layers"},
-    {"name": "vocab_size", "type": int, "help": "Vocabulary size"},
+    {'name': 'embed_dim',
+     'type': int,
+     'help': 'Embedding dimension for each token'},
+    {'name': 'ff_dim',
+     'type': int,
+     'help': 'Hidden layer size in feed forward network inside transformer'},
+    {'name': 'maxlen',
+     'type': int,
+     'help': 'Maximum sequence length'},
+    {'name': 'num_heads',
+     'type': int,
+     'help': 'Number of attention heads'},
+    {'name': 'out_layer',
+     'type': int,
+     'help': 'Size of output layer'},
+    {'name': 'transformer_depth',
+     'type': int,
+     'help': 'Number of transformer layers'},
+    {'name': 'vocab_size',
+     'type': int,
+     'help': 'Vocabulary size'},
 ]
 
 required = []
 
 
 class BenchmarkST(candle.Benchmark):
+
     def set_locals(self):
         """Functionality to set variables specific for the benchmark
         - required: set of required parameters for the benchmark.
@@ -48,14 +61,12 @@ class BenchmarkST(candle.Benchmark):
 
 
 class TransformerBlock(layers.Layer):
+
     def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
         super(TransformerBlock, self).__init__()
         self.att = layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
         self.ffn = keras.Sequential(
-            [
-                layers.Dense(ff_dim, activation="relu"),
-                layers.Dense(embed_dim),
-            ]
+            [layers.Dense(ff_dim, activation="relu"), layers.Dense(embed_dim), ]
         )
         self.layernorm1 = layers.LayerNormalization(epsilon=1e-6)
         self.layernorm2 = layers.LayerNormalization(epsilon=1e-6)
@@ -70,12 +81,12 @@ class TransformerBlock(layers.Layer):
         ffn_output = self.dropout2(ffn_output, training=training)
         return self.layernorm2(out1 + ffn_output)
 
-
 # Implement embedding layer
 # Two seperate embedding layers, one for tokens, one for token index (positions).
 
 
 class TokenAndPositionEmbedding(layers.Layer):
+
     def __init__(self, maxlen, vocab_size, embed_dim):
         super(TokenAndPositionEmbedding, self).__init__()
         self.token_emb = layers.Embedding(input_dim=vocab_size, output_dim=embed_dim)
@@ -95,7 +106,7 @@ class TokenAndPositionEmbedding(layers.Layer):
 def r2(y_true, y_pred):
     SS_res = K.sum(K.square(y_true - y_pred))
     SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
-    return 1 - SS_res / (SS_tot + K.epsilon())
+    return (1 - SS_res / (SS_tot + K.epsilon()))
 
 
 def prep_text(texts, tokenizer, max_sequence_length):
@@ -106,20 +117,18 @@ def prep_text(texts, tokenizer, max_sequence_length):
 
 def load_data(params):
 
-    data_path_train = candle.fetch_file(
-        params["data_url"] + params["train_data"], "Pilot1"
-    )
-    data_path_val = candle.fetch_file(params["data_url"] + params["val_data"], "Pilot1")
+    data_path_train = candle.fetch_file(params['data_url'] + params['train_data'], 'Pilot1')
+    data_path_val = candle.fetch_file(params['data_url'] + params['val_data'], 'Pilot1')
 
-    vocab_size = params["vocab_size"]
-    maxlen = params["maxlen"]
+    vocab_size = params['vocab_size']
+    maxlen = params['maxlen']
 
     data_train = pd.read_csv(data_path_train)
     data_vali = pd.read_csv(data_path_val)
 
     data_train.head()
 
-    # Dataset has type and smiles as the two fields
+# Dataset has type and smiles as the two fields
 
     y_train = data_train["type"].values.reshape(-1, 1) * 1.0
     y_val = data_vali["type"].values.reshape(-1, 1) * 1.0
@@ -138,12 +147,12 @@ def load_data(params):
 
 def transformer_model(params):
 
-    embed_dim = params["embed_dim"]  # 128
-    ff_dim = params["ff_dim"]  # 128
-    maxlen = params["maxlen"]  # 250
-    num_heads = params["num_heads"]  # 16
-    vocab_size = params["vocab_size"]  # 40000
-    transformer_depth = params["transformer_depth"]  # 4
+    embed_dim = params['embed_dim']  # 128
+    ff_dim = params['ff_dim']  # 128
+    maxlen = params['maxlen']  # 250
+    num_heads = params['num_heads']  # 16
+    vocab_size = params['vocab_size']  # 40000
+    transformer_depth = params['transformer_depth']  # 4
 
     inputs = layers.Input(shape=(maxlen,))
     embedding_layer = TokenAndPositionEmbedding(maxlen, vocab_size, embed_dim)
@@ -154,15 +163,13 @@ def transformer_model(params):
 
     # = layers.GlobalAveragePooling1D()(x)  --- the original model used this but the accuracy was much lower
 
-    dropout = params["dropout"]  # 0.1
-    dense_layers = params["dense"]  # [1024, 256, 64, 16]
-    activation = params["activation"]  # 'relu'
-    out_layer = params["out_layer"]  # 2 for class, 1 for regress
-    out_act = params["out_activation"]  # 'softmax' for class, 'relu' for regress
+    dropout = params['dropout']  # 0.1
+    dense_layers = params['dense']  # [1024, 256, 64, 16]
+    activation = params['activation']  # 'relu'
+    out_layer = params['out_layer']  # 2 for class, 1 for regress
+    out_act = params['out_activation']  # 'softmax' for class, 'relu' for regress
 
-    x = layers.Reshape((1, 32000), input_shape=(250, 128,))(
-        x
-    )  # reshaping increases parameters but improves accuracy a lot
+    x = layers.Reshape((1, 32000), input_shape=(250, 128,))(x)  # reshaping increases parameters but improves accuracy a lot
     x = layers.Dropout(0.1)(x)
     for dense in dense_layers:
         x = layers.Dense(dense, activation=activation)(x)

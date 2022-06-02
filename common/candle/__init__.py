@@ -1,172 +1,154 @@
 from __future__ import absolute_import
 
-# import benchmark-dependent utils
-import sys
+# __version__ = '0.0.0'
 
 from benchmark_def import Benchmark
 
-# import from data_preprocessing_utils
-from data_preprocessing_utils import (
-    generate_cross_validation_partition,
-    quantile_normalization,
-)
-
 # import from data_utils
-from data_utils import (
-    discretize_array,
-    discretize_dataframe,
-    drop_impute_and_scale_dataframe,
-    load_csv_data,
-    load_Xy_data_noheader,
-    load_Xy_one_hot_data2,
-    lookup,
-)
-
-# feature selection
-from feature_selection_utils import (
-    select_decorrelated_features,
-    select_features_by_missing_values,
-    select_features_by_variation,
-)
+from data_utils import load_csv_data
+from data_utils import load_Xy_one_hot_data2
+from data_utils import load_Xy_data_noheader
+from data_utils import drop_impute_and_scale_dataframe
+from data_utils import discretize_dataframe
+from data_utils import discretize_array
+from data_utils import lookup
 
 # import from file_utils
 from file_utils import get_file
 
+# import from parsing_utils
+from parsing_utils import ArgumentStruct
+from parsing_utils import finalize_parameters
+from parsing_utils import check_flag_conflicts
+from parsing_utils import parse_from_dictlist
+
+# import from helper_utils
+from helper_utils import fetch_file
+from helper_utils import set_up_logger
+from helper_utils import verify_path
+from helper_utils import str2bool
+from helper_utils import keras_default_config
+
 # import from generic_utils
 from generic_utils import Progbar
 
-# import from helper_utils
-from helper_utils import (
-    fetch_file,
-    keras_default_config,
-    set_up_logger,
-    str2bool,
-    verify_path,
-)
+# import from viz_utils
+from viz_utils import plot_history
+from viz_utils import plot_scatter
+from viz_utils import plot_array
+from viz_utils import plot_density_observed_vs_predicted
+from viz_utils import plot_2d_density_sigma_vs_error
+from viz_utils import plot_histogram_error_per_sigma
+from viz_utils import plot_decile_predictions
+from viz_utils import plot_calibration_interpolation
+from viz_utils import plot_calibrated_std
+from viz_utils import plot_contamination
 
-# noise injection
-from noise_utils import (
-    add_cluster_noise,
-    add_column_noise,
-    add_gaussian_noise,
-    add_noise,
-    label_flip,
-    label_flip_correlated,
-)
-
-# P1-specific
-from P1_utils import (
-    combat_batch_effect_removal,
-    coxen_multi_drug_gene_selection,
-    coxen_single_drug_gene_selection,
-    generate_gene_set_data,
-)
-
-# import from parsing_utils
-from parsing_utils import (
-    ArgumentStruct,
-    check_flag_conflicts,
-    finalize_parameters,
-    parse_from_dictlist,
-)
-
-# import from profiling_utils
-from profiling_utils import start_profiling, stop_profiling
 
 # import from uq_utils
-from uq_utils import (
-    compute_empirical_calibration_interpolation,
-    compute_statistics_heteroscedastic,
-    compute_statistics_homoscedastic,
-    compute_statistics_homoscedastic_summary,
-    compute_statistics_quantile,
-    generate_index_distribution,
-    split_data_for_empirical_calibration,
-)
+from uq_utils import generate_index_distribution
+from uq_utils import compute_statistics_homoscedastic_summary
+from uq_utils import compute_statistics_homoscedastic
+from uq_utils import compute_statistics_heteroscedastic
+from uq_utils import compute_statistics_quantile
+from uq_utils import split_data_for_empirical_calibration
+from uq_utils import compute_empirical_calibration_interpolation
 
-# import from viz_utils
-from viz_utils import (
-    plot_2d_density_sigma_vs_error,
-    plot_array,
-    plot_calibrated_std,
-    plot_calibration_interpolation,
-    plot_contamination,
-    plot_decile_predictions,
-    plot_density_observed_vs_predicted,
-    plot_histogram_error_per_sigma,
-    plot_history,
-    plot_scatter,
-)
+# import from profiling_utils
+from profiling_utils import start_profiling
+from profiling_utils import stop_profiling
 
-# __version__ = '0.0.0'
+# import from data_preprocessing_utils
+from data_preprocessing_utils import quantile_normalization
+from data_preprocessing_utils import generate_cross_validation_partition
 
+# feature selection
+from feature_selection_utils import select_features_by_missing_values
+from feature_selection_utils import select_features_by_variation
+from feature_selection_utils import select_decorrelated_features
 
-if "tensorflow.keras" in sys.modules:
-    print("Importing candle utils for keras")
+# noise injection
+from noise_utils import label_flip
+from noise_utils import label_flip_correlated
+from noise_utils import add_gaussian_noise
+from noise_utils import add_column_noise
+from noise_utils import add_cluster_noise
+from noise_utils import add_noise
+
+# P1-specific
+from P1_utils import coxen_single_drug_gene_selection
+from P1_utils import coxen_multi_drug_gene_selection
+from P1_utils import generate_gene_set_data
+from P1_utils import combat_batch_effect_removal
+
+# import benchmark-dependent utils
+import sys
+if 'tensorflow.keras' in sys.modules:
+    print('Importing candle utils for keras')
     # import from keras_utils
     # from keras_utils import dense
     # from keras_utils import add_dense
-    from ckpt_keras_utils import CandleCheckpointCallback, MultiGPUCheckpoint, restart
-    from clr_keras_utils import CyclicLR, clr_callback, clr_set_args
-    from keras_utils import (
-        LoggingCallback,
-        PermanentDropout,
-        build_initializer,
-        build_optimizer,
-        get_function,
-        mae,
-        mse,
-        r2,
-        register_permanent_dropout,
-        set_parallelism_threads,
-        set_seed,
-    )
-    from solr_keras import (
-        CandleRemoteMonitor,
-        TerminateOnTimeOut,
-        compute_trainable_params,
-    )
-    from uq_keras_utils import (
-        AbstentionAdapt_Callback,
-        Contamination_Callback,
-        abstention_acc_class_i_metric,
-        abstention_acc_metric,
-        abstention_class_i_metric,
-        abstention_loss,
-        abstention_metric,
-        acc_class_i_metric,
-        add_index_to_output,
-        add_model_output,
-        contamination_loss,
-        heteroscedastic_loss,
-        mae_contamination_metric,
-        mae_heteroscedastic_metric,
-        meanS_heteroscedastic_metric,
-        modify_labels,
-        mse_contamination_metric,
-        mse_heteroscedastic_metric,
-        quantile_loss,
-        quantile_metric,
-        r2_contamination_metric,
-        r2_heteroscedastic_metric,
-        sparse_abstention_acc_metric,
-        sparse_abstention_loss,
-        triple_quantile_loss,
-    )
+    from keras_utils import build_initializer
+    from keras_utils import build_optimizer
+    from keras_utils import get_function
+    from keras_utils import set_seed
+    from keras_utils import set_parallelism_threads
+    from keras_utils import PermanentDropout
+    from keras_utils import register_permanent_dropout
+    from keras_utils import LoggingCallback
+    from ckpt_keras_utils import MultiGPUCheckpoint
+    from ckpt_keras_utils import CandleCheckpointCallback
+    from ckpt_keras_utils import restart
+    from keras_utils import r2
+    from keras_utils import mae
+    from keras_utils import mse
+
     from viz_utils import plot_metrics
 
-elif "torch" in sys.modules:
-    print("Importing candle utils for pytorch")
+    from solr_keras import CandleRemoteMonitor
+    from solr_keras import compute_trainable_params
+    from solr_keras import TerminateOnTimeOut
+
+    from uq_keras_utils import abstention_loss
+    from uq_keras_utils import sparse_abstention_loss
+    from uq_keras_utils import abstention_acc_metric
+    from uq_keras_utils import sparse_abstention_acc_metric
+    from uq_keras_utils import abstention_metric
+    from uq_keras_utils import acc_class_i_metric
+    from uq_keras_utils import abstention_acc_class_i_metric
+    from uq_keras_utils import abstention_class_i_metric
+    from uq_keras_utils import AbstentionAdapt_Callback
+    from uq_keras_utils import modify_labels
+    from uq_keras_utils import add_model_output
+    from uq_keras_utils import r2_heteroscedastic_metric
+    from uq_keras_utils import mae_heteroscedastic_metric
+    from uq_keras_utils import mse_heteroscedastic_metric
+    from uq_keras_utils import meanS_heteroscedastic_metric
+    from uq_keras_utils import heteroscedastic_loss
+    from uq_keras_utils import quantile_loss
+    from uq_keras_utils import triple_quantile_loss
+    from uq_keras_utils import quantile_metric
+    from uq_keras_utils import add_index_to_output
+    from uq_keras_utils import contamination_loss
+    from uq_keras_utils import Contamination_Callback
+    from uq_keras_utils import mse_contamination_metric
+    from uq_keras_utils import mae_contamination_metric
+    from uq_keras_utils import r2_contamination_metric
+
+    from clr_keras_utils import CyclicLR
+    from clr_keras_utils import clr_set_args
+    from clr_keras_utils import clr_callback
+
+elif 'torch' in sys.modules:
+    print('Importing candle utils for pytorch')
+    from pytorch_utils import set_seed
+    from pytorch_utils import build_optimizer
+    from pytorch_utils import build_activation
+    from pytorch_utils import get_function
+    from pytorch_utils import initialize
+    from pytorch_utils import xent
+    from pytorch_utils import mse
     from pytorch_utils import set_parallelism_threads  # for compatibility
-    from pytorch_utils import (
-        build_activation,
-        build_optimizer,
-        get_function,
-        initialize,
-        mse,
-        set_seed,
-        xent,
-    )
 
 else:
-    raise Exception("No backend has been specified.")
+    raise Exception('No backend has been specified.')

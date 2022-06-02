@@ -26,7 +26,5 @@ def basic_weight_init(module: nn.Module):
     Returns:
         None
     """
-    if type(module) in [
-        nn.Linear,
-    ]:
+    if type(module) in [nn.Linear, ]:
         nn.init.xavier_normal_(module.weight)

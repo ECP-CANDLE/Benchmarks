@@ -3,12 +3,13 @@ import io
 import cairosvg
 import numpy as np
 import torch
-from invert import Invert
 from PIL import Image
 from rdkit import Chem
 from rdkit.Chem import rdDepictor
 from rdkit.Chem.Draw import rdMolDraw2D
 from torchvision import transforms
+
+from invert import Invert
 
 
 class MoleLoader(torch.utils.data.Dataset):
@@ -16,14 +17,14 @@ class MoleLoader(torch.utils.data.Dataset):
         super(MoleLoader, self).__init__()
 
         size = df.shape[0]
-        self.df = df.iloc[: int(size // 8), :]
+        self.df = df.iloc[:int(size // 8), :]
 
-        self.end_char = "?"
+        self.end_char = '?'
 
     def __len__(self):
         return self.df.shape[0]
 
-    def make_image(self, mol, molSize=(256, 256), kekulize=True, mol_name=""):
+    def make_image(self, mol, molSize=(256, 256), kekulize=True, mol_name=''):
         mol = Chem.MolFromSmiles(mol)
         mc = Chem.Mol(mol.ToBinary())
         if kekulize:
@@ -38,21 +39,16 @@ class MoleLoader(torch.utils.data.Dataset):
         drawer.DrawMolecule(mc)
         drawer.FinishDrawing()
         svg = drawer.GetDrawingText()
-        image = Image.open(
-            io.BytesIO(
-                cairosvg.svg2png(
-                    bytestring=svg, parent_width=100, parent_height=100, scale=1
-                )
-            )
-        )
-        image.convert("RGB")
+        image = Image.open(io.BytesIO(cairosvg.svg2png(bytestring=svg, parent_width=100, parent_height=100,
+                                                       scale=1)))
+        image.convert('RGB')
         return Invert()(image)
 
     def get_vocab_len(self):
         return len(self.vocab)
 
     def generate_vocab(self):
-        s = set(" ")
+        s = set(' ')
         for i, row in self.df.iterrows():
             s = s.union(row.iloc[0])
         print(s)
@@ -74,15 +70,11 @@ class MoleLoader(torch.utils.data.Dataset):
         return map(charset.index, vec)
 
     def one_hot_encoded_fn(self, row):
-        return np.array(
-            map(lambda x: self.one_hot_array(x, self.vocab)),
-            self.one_hot_index(row, self.vocab),
-        )
+        return np.array(map(lambda x: self.one_hot_array(x, self.vocab)),
+                        self.one_hot_index(row, self.vocab))
 
     def apply_t(self, x):
-        x = x + list(
-            ("".join([char * (self.embedding_width - len(x)) for char in [" "]]))
-        )
+        x = x + list((''.join([char * (self.embedding_width - len(x)) for char in [' ']])))
         smi = self.one_hot_encoded_fn(x)
         return smi
 

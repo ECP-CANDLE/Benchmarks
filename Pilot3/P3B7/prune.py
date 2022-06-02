@@ -1,12 +1,12 @@
-import numpy
 import torch
+import numpy
+
 import torch.nn as nn
 import torch.nn.utils.prune as prune
+
 from torch.nn.utils.prune import (
-    BasePruningMethod,
-    _compute_nparams_toprune,
-    _validate_pruning_amount,
-    _validate_pruning_amount_init,
+    BasePruningMethod, _validate_pruning_amount_init,
+    _compute_nparams_toprune, _validate_pruning_amount
 )
 
 
@@ -68,9 +68,8 @@ class MinMaxPrune(BasePruningMethod):
             # Recur for left and right children
             for i in range(0, 2):
 
-                val = self.minimax(
-                    depth + 1, nodeIndex * 2 + i, False, values, alpha, beta
-                )
+                val = self.minimax(depth + 1, nodeIndex * 2 + i,
+                                   False, values, alpha, beta)
                 best = max(best, val)
                 alpha = max(alpha, best)
 
@@ -87,9 +86,8 @@ class MinMaxPrune(BasePruningMethod):
             # right children
             for i in range(0, 2):
 
-                val = self.minimax(
-                    depth + 1, nodeIndex * 2 + i, True, values, alpha, beta
-                )
+                val = self.minimax(depth + 1, nodeIndex * 2 + i,
+                                   True, values, alpha, beta)
                 best = min(best, val)
                 beta = min(beta, best)
 
@@ -187,11 +185,11 @@ def get_layers_to_prune(model: nn.Module):
     for name, module in model.named_modules():
         # prune amount % of connections in all 1D-conv layers
         if isinstance(module, torch.nn.Conv1d):
-            layers.append((module, "weight"))
+            layers.append((module, 'weight'))
         # prune amount/2 of connections in all linear layers
         elif isinstance(module, torch.nn.Linear):
-            layers.append((module, "weight"))
-            print(f"Pruning {module}")
+            layers.append((module, 'weight'))
+            print(f'Pruning {module}')
 
     return layers
 
@@ -208,10 +206,10 @@ def create_prune_masks(model: nn.Module):
     for name, module in model.named_modules():
         # prune 40% of connections in all 1D-conv layers
         if isinstance(module, torch.nn.Conv1d):
-            prune.l1_unstructured(module, name="weight", amount=0.4)
+            prune.l1_unstructured(module, name='weight', amount=0.4)
         # prune 20% of connections in all linear layers
         elif isinstance(module, torch.nn.Linear):
-            prune.l1_unstructured(module, name="weight", amount=0.2)
+            prune.l1_unstructured(module, name='weight', amount=0.2)
 
     return model
 
@@ -232,9 +230,9 @@ def remove_prune_masks(model: nn.Module):
     for name, module in model.named_modules():
         # prune 40% of connections in all 1D-conv layers
         if isinstance(module, torch.nn.Conv1d):
-            prune.remove(module, name="weight")
+            prune.remove(module, name='weight')
         # prune 20% of connections in all linear layers
         elif isinstance(module, torch.nn.Linear):
-            prune.remove(module, name="weight")
+            prune.remove(module, name='weight')
 
     return model

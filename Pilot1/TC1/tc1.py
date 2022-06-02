@@ -1,7 +1,7 @@
 from __future__ import print_function
 
-import logging
 import os
+import logging
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -10,38 +10,39 @@ import candle
 logger = logging.getLogger(__name__)
 
 additional_definitions = [
-    {
-        "name": "pool",
-        "nargs": "+",
-        "type": int,
-        "help": "network structure of shared layer",
-    },
-    {"name": "classes", "type": int, "default": 36},
+    {'name': 'pool',
+     'nargs': '+',
+     'type': int,
+     'help': 'network structure of shared layer'},
+    {'name': 'classes',
+     'type': int,
+     'default': 36}
 ]
 
 required = [
-    "data_url",
-    "train_data",
-    "test_data",
-    "model_name",
-    "conv",
-    "dense",
-    "activation",
-    "out_activation",
-    "loss",
-    "optimizer",
-    "feature_subsample",
-    "metrics",
-    "epochs",
-    "batch_size",
-    "dropout",
-    "classes",
-    "pool",
-    "output_dir",
+    'data_url',
+    'train_data',
+    'test_data',
+    'model_name',
+    'conv',
+    'dense',
+    'activation',
+    'out_activation',
+    'loss',
+    'optimizer',
+    'feature_subsample',
+    'metrics',
+    'epochs',
+    'batch_size',
+    'dropout',
+    'classes',
+    'pool',
+    'output_dir'
 ]
 
 
 class BenchmarkTC1(candle.Benchmark):
+
     def set_locals(self):
         """Functionality to set variables specific for the benchmark
         - required: set of required parameters for the benchmark.
@@ -57,19 +58,13 @@ class BenchmarkTC1(candle.Benchmark):
 
 def load_data(params):
 
-    train_path = candle.fetch_file(params["data_url"] + params["train_data"], "Pilot1")
-    test_path = candle.fetch_file(params["data_url"] + params["test_data"], "Pilot1")
+    train_path = candle.fetch_file(params['data_url'] + params['train_data'], 'Pilot1')
+    test_path = candle.fetch_file(params['data_url'] + params['test_data'], 'Pilot1')
 
-    if params["feature_subsample"] > 0:
-        usecols = list(range(params["feature_subsample"]))
+    if params['feature_subsample'] > 0:
+        usecols = list(range(params['feature_subsample']))
     else:
         usecols = None
 
-    return candle.load_Xy_data_noheader(
-        train_path,
-        test_path,
-        params["classes"],
-        usecols,
-        scaling="maxabs",
-        dtype=params["data_type"],
-    )
+    return candle.load_Xy_data_noheader(train_path, test_path, params['classes'], usecols,
+                                        scaling='maxabs', dtype=params['data_type'])

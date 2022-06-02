@@ -1,18 +1,16 @@
 # UnoMT in Pytorch
-
 Multi-tasking (drug response, cell line classification, etc.) Uno Implemented in PyTorch.
 https://github.com/xduan7/UnoPytorch
 
-## Todos
 
-- More labels for the network like drug labels;
-- Dataloader hanging problem when num_workers set to more than 0;
-- Better pre-processing for drug descriptor integer features;
-- Network regularization with weight decay and/or dropout;
-- Hyper-parameter searching;
+## Todos
+* More labels for the network like drug labels;
+* Dataloader hanging problem when num_workers set to more than 0;
+* Better pre-processing for drug descriptor integer features;
+* Network regularization with weight decay and/or dropout;
+* Hyper-parameter searching; 
 
 ## Prerequisites
-
 ```
 Python          3.6.4
 PyTorch         0.4.1
@@ -23,11 +21,11 @@ urllib3         1.23
 joblib          0.12.2
 ```
 
-The default network structure is shown below:
+
+The default network structure is shown below: 
 <img src="https://github.com/xduan7/UnoPytorch/blob/master/images/default_network.jpg" width="100%">
 
 An example of the program output for training on NCI60 and valdiation on all other data sources is shown below:
-
 ```
 python unoMT_baseline_pytorch.py --resp_val_start_epoch 2 --epochs 5
 Importing candle utils for pytorch
@@ -247,9 +245,9 @@ Epoch Running Time: 12.9 Seconds.
 Training Epoch   3:
 	Drug Weighted QED Regression Loss: 0.015868
 	Drug Response Regression Loss:  1123.27
-	Cell Line Classification:
-		Category Accuracy: 		99.01%;
-		Site Accuracy: 			94.11%;
+	Cell Line Classification: 
+		Category Accuracy: 		99.01%; 
+		Site Accuracy: 			94.11%; 
 		Type Accuracy: 			94.18%
 	Drug Target Family Classification Accuracy: 44.44%
 	Drug Weighted QED Regression
@@ -265,9 +263,9 @@ Epoch Running Time: 54.6 Seconds.
 Training Epoch   4:
 	Drug Weighted QED Regression Loss: 0.014096
 	Drug Response Regression Loss:   933.27
-	Cell Line Classification:
-		Category Accuracy: 		99.34%;
-		Site Accuracy: 			96.12%;
+	Cell Line Classification: 
+		Category Accuracy: 		99.34%; 
+		Site Accuracy: 			96.12%; 
 		Type Accuracy: 			96.18%
 	Drug Target Family Classification Accuracy: 44.44%
 	Drug Weighted QED Regression
@@ -283,9 +281,9 @@ Epoch Running Time: 54.9 Seconds.
 Training Epoch   5:
 	Drug Weighted QED Regression Loss: 0.013514
 	Drug Response Regression Loss:   846.06
-	Cell Line Classification:
-		Category Accuracy: 		99.38%;
-		Site Accuracy: 			95.89%;
+	Cell Line Classification: 
+		Category Accuracy: 		99.38%; 
+		Site Accuracy: 			95.89%; 
 		Type Accuracy: 			95.30%
 	Drug Target Family Classification Accuracy: 44.44%
 	Drug Weighted QED Regression
@@ -317,7 +315,7 @@ Overall Validation Results:
 		Cell Line Categories     Accuracy: 99.375%
 		Cell Line Sites          Accuracy: 95.888%
 		Cell Line Types          Accuracy: 95.296%
-		Drug Target Family 	 Accuracy: 44.444%
+		Drug Target Family 	 Accuracy: 44.444% 
 		Drug Weighted QED 	 R2 Score: +0.5034 (MSE = 0.017026, MAE = 0.106697)
 		NCI60  	 R2 Score: +0.7369 (MSE =   835.82, MAE =  21.33)
 		CTRP   	 R2 Score: +0.2513 (MSE =  2653.04, MAE =  37.98)
@@ -327,9 +325,8 @@ Overall Validation Results:
 ```
 
 For default hyper parameters, the transfer learning matrix results are shown below:
-
 <p align="center">
 	<img src="https://github.com/xduan7/UnoPytorch/blob/master/images/default_results.jpg" width="80%">
 </p>
 
-Note that the green cells represents R2 score of higher than 0.1, red cells are R2 scores lower than -0.1 and yellows are for all the values in between.
+Note that the green cells represents R2 score of higher than 0.1, red cells are R2 scores lower than -0.1 and yellows are for all the values in between. 

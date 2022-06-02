@@ -1,7 +1,7 @@
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 
 
 class CharRNN(nn.Module):
@@ -22,9 +22,7 @@ class CharRNN(nn.Module):
 
         x, _ = self.lstm(x)
 
-        x, lens = nn.utils.rnn.pad_packed_sequence(
-            x, padding_value=0, total_length=self.max_len
-        )
+        x, lens = nn.utils.rnn.pad_packed_sequence(x, padding_value=0, total_length=self.max_len)
         x = self.linear(x)
 
         if with_softmax:

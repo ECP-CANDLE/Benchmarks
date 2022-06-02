@@ -1,10 +1,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from darts.api import Model
-from darts.genotypes import LINEAR_PRIMITIVES, Genotype
-from darts.modules.classifier import MultitaskClassifier
 from darts.modules.linear.cell import Cell
+from darts.modules.classifier import MultitaskClassifier
+from darts.genotypes import LINEAR_PRIMITIVES, Genotype
 
 
 class Hyperparameters:
@@ -17,11 +18,9 @@ class Hyperparameters:
 
 
 class LinearNetwork(Model):
-    """Collection of cells"""
+    """ Collection of cells """
 
-    def __init__(
-        self, input_dim, tasks, criterion, device="cpu", hyperparams=Hyperparameters()
-    ):
+    def __init__(self, input_dim, tasks, criterion, device='cpu', hyperparams=Hyperparameters()):
         super(LinearNetwork, self).__init__()
         self.tasks = tasks
         self.criterion = criterion
@@ -36,7 +35,9 @@ class LinearNetwork(Model):
         c_curr = hyperparams.stem_channel_multiplier * self.c
 
         self.stem = nn.Sequential(
-            nn.Linear(input_dim, hyperparams.intermediate_dim),
+            nn.Linear(
+                input_dim, hyperparams.intermediate_dim
+            ),
         ).to(self.device)
 
         # c_curr means a factor of the output channels of current cell
@@ -61,7 +62,7 @@ class LinearNetwork(Model):
                 cp,
                 c_curr,
                 reduction,
-                reduction_prev,
+                reduction_prev
             ).to(self.device)
             # update reduction_prev
             reduction_prev = reduction
@@ -88,14 +89,14 @@ class LinearNetwork(Model):
         ]
 
     def fc_layers(self, cp, tasks):
-        """Create fully connnected layers for each task"""
+        """ Create fully connnected layers for each task """
         fc_layers = {}
         for task, dim in tasks.items():
             fc_layers[task] = nn.Linear(cp, dim).to(self.device)
         return fc_layers
 
     def new(self):
-        """Create a new model initialzed with current alpha parameters.
+        """ Create a new model initialzed with current alpha parameters.
 
         Weights are left untouched.
 
@@ -104,7 +105,10 @@ class LinearNetwork(Model):
         model : Network
             New model initialized with current alpha.
         """
-        model = LinearNetwork(self.tasks, self.criterion).to(self.device)
+        model = LinearNetwork(
+            self.tasks,
+            self.criterion
+        ).to(self.device)
 
         for x, y in zip(model.arch_parameters(), self.arch_parameters()):
             x.data.copy_(y.data)
@@ -131,8 +135,8 @@ class LinearNetwork(Model):
 
         return logits
 
-    def loss_value(self, x_data, y_true, y_pred, reduce="mean"):
-        """Calculate a value of loss function"""
+    def loss_value(self, x_data, y_true, y_pred, reduce='mean'):
+        """ Calculate a value of loss function """
         y_pred = self(x_data)
 
         losses = {}
@@ -158,7 +162,6 @@ class LinearNetwork(Model):
         """
         :return:
         """
-
         def _parse(weights):
             """
             :param weights: [14, 8]
@@ -170,27 +173,18 @@ class LinearNetwork(Model):
             for i in range(self.num_nodes):  # for each node
                 end = start + n
                 W = weights[start:end].copy()  # [2, 8], [3, 8], ...
-                edges = sorted(
-                    range(i + 2),  # i+2 is the number of connection for node i
-                    key=lambda x: -max(
-                        W[x][k]  # by descending order
-                        for k in range(len(W[x]))  # get strongest ops
-                        if k != LINEAR_PRIMITIVES.index("none")
-                    ),
-                )[
-                    :2
-                ]  # only has two inputs
+                edges = sorted(range(i + 2),  # i+2 is the number of connection for node i
+                               key=lambda x: -max(W[x][k]  # by descending order
+                                                           for k in range(len(W[x]))  # get strongest ops
+                                                           if k != LINEAR_PRIMITIVES.index('none'))
+                               )[:2]  # only has two inputs
                 for j in edges:  # for every input nodes j of current node i
                     k_best = None
-                    for k in range(
-                        len(W[j])
-                    ):  # get strongest ops for current input j->i
-                        if k != LINEAR_PRIMITIVES.index("none"):
+                    for k in range(len(W[j])):  # get strongest ops for current input j->i
+                        if k != LINEAR_PRIMITIVES.index('none'):
                             if k_best is None or W[j][k] > W[j][k_best]:
                                 k_best = k
-                    gene.append(
-                        (LINEAR_PRIMITIVES[k_best], j)
-                    )  # save ops and input node
+                    gene.append((LINEAR_PRIMITIVES[k_best], j))  # save ops and input node
                 start = end
                 n += 1
             return gene
@@ -200,10 +194,8 @@ class LinearNetwork(Model):
 
         concat = range(2 + self.num_nodes - self.channel_multiplier, self.num_nodes + 2)
         genotype = Genotype(
-            normal=gene_normal,
-            normal_concat=concat,
-            reduce=gene_reduce,
-            reduce_concat=concat,
+            normal=gene_normal, normal_concat=concat,
+            reduce=gene_reduce, reduce_concat=concat
         )
 
         return genotype

@@ -10,8 +10,7 @@ try:
     from sklearn.impute import SimpleImputer as Imputer
 except ImportError:
     from sklearn.preprocessing import Imputer
-
-from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -20,15 +19,15 @@ import candle
 global_cache = {}
 
 SEED = 2017
-P1B3_URL = "http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/"
-DATA_URL = "http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/"
+P1B3_URL = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P1B3/'
+DATA_URL = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/'
 
 
 def get_file(url):
-    return candle.fetch_file(url, "Pilot1")
+    return candle.fetch_file(url, 'Pilot1')
 
 
-def impute_and_scale(df, scaling="std", keepcols=None):
+def impute_and_scale(df, scaling='std', keepcols=None):
     """Impute missing values with mean and scale data included in pandas dataframe.
 
     Parameters
@@ -40,21 +39,21 @@ def impute_and_scale(df, scaling="std", keepcols=None):
     """
 
     if keepcols is None:
-        df = df.dropna(axis=1, how="all")
+        df = df.dropna(axis=1, how='all')
     else:
         df = df[keepcols].copy()
         all_na_cols = df.columns[df.isna().all()]
         df[all_na_cols] = 0
 
-    imputer = Imputer(strategy="mean")
+    imputer = Imputer(strategy='mean')
     mat = imputer.fit_transform(df)
 
-    if scaling is None or scaling.lower() == "none":
+    if scaling is None or scaling.lower() == 'none':
         return pd.DataFrame(mat, columns=df.columns)
 
-    if scaling == "maxabs":
+    if scaling == 'maxabs':
         scaler = MaxAbsScaler()
-    elif scaling == "minmax":
+    elif scaling == 'minmax':
         scaler = MinMaxScaler()
     else:
         scaler = StandardScaler()
@@ -66,9 +65,7 @@ def impute_and_scale(df, scaling="std", keepcols=None):
     return df
 
 
-def load_dose_response(
-    min_logconc=-4.0, max_logconc=-4.0, subsample=None, fraction=False
-):
+def load_dose_response(min_logconc=-4., max_logconc=-4., subsample=None, fraction=False):
     """Load cell line response to different drug compounds, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
@@ -84,58 +81,36 @@ def load_dose_response(
         divide growth percentage by 100
     """
 
-    path = get_file(P1B3_URL + "NCI60_dose_response_with_missing_z5_avg.csv")
+    path = get_file(P1B3_URL + 'NCI60_dose_response_with_missing_z5_avg.csv')
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(
-            path,
-            sep=",",
-            engine="c",
-            na_values=["na", "-", ""],
-            dtype={
-                "NSC": object,
-                "CELLNAME": str,
-                "LOG_CONCENTRATION": np.float32,
-                "GROWTH": np.float32,
-            },
-        )
+        df = pd.read_csv(path, sep=',', engine='c',
+                         na_values=['na', '-', ''],
+                         dtype={'NSC': object, 'CELLNAME': str, 'LOG_CONCENTRATION': np.float32, 'GROWTH': np.float32})
         global_cache[path] = df
 
-    df = df[
-        (df["LOG_CONCENTRATION"] >= min_logconc)
-        & (df["LOG_CONCENTRATION"] <= max_logconc)
-    ]
+    df = df[(df['LOG_CONCENTRATION'] >= min_logconc) & (df['LOG_CONCENTRATION'] <= max_logconc)]
 
-    df = df[["NSC", "CELLNAME", "GROWTH", "LOG_CONCENTRATION"]]
+    df = df[['NSC', 'CELLNAME', 'GROWTH', 'LOG_CONCENTRATION']]
 
-    if subsample and subsample == "naive_balancing":
-        df1 = df[df["GROWTH"] <= 0]
-        df2 = df[(df["GROWTH"] > 0) & (df["GROWTH"] < 50)].sample(
-            frac=0.7, random_state=SEED
-        )
-        df3 = df[(df["GROWTH"] >= 50) & (df["GROWTH"] <= 100)].sample(
-            frac=0.18, random_state=SEED
-        )
-        df4 = df[df["GROWTH"] > 100].sample(frac=0.01, random_state=SEED)
+    if subsample and subsample == 'naive_balancing':
+        df1 = df[df['GROWTH'] <= 0]
+        df2 = df[(df['GROWTH'] > 0) & (df['GROWTH'] < 50)].sample(frac=0.7, random_state=SEED)
+        df3 = df[(df['GROWTH'] >= 50) & (df['GROWTH'] <= 100)].sample(frac=0.18, random_state=SEED)
+        df4 = df[df['GROWTH'] > 100].sample(frac=0.01, random_state=SEED)
         df = pd.concat([df1, df2, df3, df4])
 
     if fraction:
-        df["GROWTH"] /= 100
+        df['GROWTH'] /= 100
 
-    df = df.set_index(["NSC"])
+    df = df.set_index(['NSC'])
 
     return df
 
 
-def load_combo_response(
-    response_url=None,
-    fraction=False,
-    use_combo_score=False,
-    use_mean_growth=False,
-    exclude_cells=[],
-    exclude_drugs=[],
-):
+def load_combo_response(response_url=None, fraction=False, use_combo_score=False, use_mean_growth=False,
+                        exclude_cells=[], exclude_drugs=[]):
     """Load cell line response to pairs of drugs, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
@@ -146,114 +121,70 @@ def load_combo_response(
     use_combo_score: bool (default False)
         return combination score in place of percent growth (stored in 'GROWTH' column)
     """
-    response_url = response_url or (DATA_URL + "ComboDrugGrowth_Nov2017.csv")
+    response_url = response_url or (DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
     path = get_file(response_url)
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(
-            path,
-            usecols=[
-                "CELLNAME",
-                "NSC1",
-                "CONC1",
-                "NSC2",
-                "CONC2",
-                "PERCENTGROWTH",
-                "VALID",
-                "SCORE",
-                "SCREENER",
-                "STUDY",
-            ],
-            na_values=["na", "-", ""],
-            dtype={
-                "NSC1": object,
-                "NSC2": object,
-                "CONC1": object,
-                "CONC2": object,
-                "PERCENTGROWTH": str,
-                "SCORE": str,
-            },
-            engine="c",
-            error_bad_lines=False,
-            warn_bad_lines=True,
-        )
+        df = pd.read_csv(path,
+                         usecols=['CELLNAME', 'NSC1', 'CONC1', 'NSC2', 'CONC2', 'PERCENTGROWTH', 'VALID', 'SCORE', 'SCREENER', 'STUDY'],
+                         na_values=['na', '-', ''],
+                         dtype={'NSC1': object, 'NSC2': object, 'CONC1': object, 'CONC2': object, 'PERCENTGROWTH': str, 'SCORE': str},
+                         engine='c', error_bad_lines=False, warn_bad_lines=True)
 
         global_cache[path] = df
 
-    df = df[df["VALID"] == "Y"]
+    df = df[df['VALID'] == 'Y']
 
-    df = df[["CELLNAME", "NSC1", "NSC2", "CONC1", "CONC2", "PERCENTGROWTH", "SCORE"]]
+    df = df[['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2', 'PERCENTGROWTH', 'SCORE']]
 
-    exclude_cells = [x.split(".")[-1] for x in exclude_cells]
-    exclude_drugs = [x.split(".")[-1] for x in exclude_drugs]
-    df = df[
-        ~df["CELLNAME"].isin(exclude_cells)
-        & ~df["NSC1"].isin(exclude_drugs)
-        & ~df["NSC2"].isin(exclude_drugs)
-    ]
+    exclude_cells = [x.split('.')[-1] for x in exclude_cells]
+    exclude_drugs = [x.split('.')[-1] for x in exclude_drugs]
+    df = df[~df['CELLNAME'].isin(exclude_cells) & ~df['NSC1'].isin(exclude_drugs) & ~df['NSC2'].isin(exclude_drugs)]
 
-    df["PERCENTGROWTH"] = df["PERCENTGROWTH"].astype(np.float32)
-    df["SCORE"] = df["SCORE"].astype(np.float32)
-    df["NSC2"] = df["NSC2"].fillna(df["NSC1"])
-    df["CONC2"] = df["CONC2"].fillna(df["CONC1"])
-    df["SCORE"] = df["SCORE"].fillna(0)
+    df['PERCENTGROWTH'] = df['PERCENTGROWTH'].astype(np.float32)
+    df['SCORE'] = df['SCORE'].astype(np.float32)
+    df['NSC2'] = df['NSC2'].fillna(df['NSC1'])
+    df['CONC2'] = df['CONC2'].fillna(df['CONC1'])
+    df['SCORE'] = df['SCORE'].fillna(0)
 
-    cellmap_path = get_file(DATA_URL + "NCI60_CELLNAME_to_Combo.txt")
-    df_cellmap = pd.read_csv(cellmap_path, sep="\t")
-    df_cellmap.set_index("Name", inplace=True)
-    cellmap = df_cellmap[["CELLNAME"]].to_dict()["CELLNAME"]
+    cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.txt')
+    df_cellmap = pd.read_csv(cellmap_path, sep='\t')
+    df_cellmap.set_index('Name', inplace=True)
+    cellmap = df_cellmap[['CELLNAME']].to_dict()['CELLNAME']
 
-    df["CELLNAME"] = df["CELLNAME"].map(lambda x: cellmap[x])
+    df['CELLNAME'] = df['CELLNAME'].map(lambda x: cellmap[x])
 
-    df_mean_min = df.groupby(["CELLNAME", "NSC1", "NSC2", "CONC1", "CONC2"]).mean()
-    df_mean_min = df_mean_min.groupby(["CELLNAME", "NSC1", "NSC2"]).min()
-    df_mean_min = df_mean_min.add_suffix(
-        "_MIN"
-    ).reset_index()  # add PERCENTGROWTH_MIN by flattening the hierarchical index
+    df_mean_min = df.groupby(['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2']).mean()
+    df_mean_min = df_mean_min.groupby(['CELLNAME', 'NSC1', 'NSC2']).min()
+    df_mean_min = df_mean_min.add_suffix('_MIN').reset_index()  # add PERCENTGROWTH_MIN by flattening the hierarchical index
     df_min = df_mean_min
 
     # df_min = df.groupby(['CELLNAME', 'NSC1', 'NSC2']).min()
     # df_min = df_min.add_suffix('_MIN').reset_index()  # add PERCENTGROWTH_MIN by flattening the hierarchical index
 
-    df = df.drop(["CONC1", "CONC2"], axis=1)
-    df_max = df.groupby(["CELLNAME", "NSC1", "NSC2"]).max()
-    df_max = df_max.add_suffix(
-        "_MAX"
-    ).reset_index()  # add SCORE_MAX by flattening the hierarchical index
+    df = df.drop(['CONC1', 'CONC2'], axis=1)
+    df_max = df.groupby(['CELLNAME', 'NSC1', 'NSC2']).max()
+    df_max = df_max.add_suffix('_MAX').reset_index()  # add SCORE_MAX by flattening the hierarchical index
 
     df_avg = df.copy()
-    df_avg["PERCENTGROWTH"] = df_avg["PERCENTGROWTH"].apply(
-        lambda x: 100 if x > 100 else 50 + x / 2 if x < 0 else 50 + x / 2
-    )
-    df_avg = df.groupby(["CELLNAME", "NSC1", "NSC2"]).mean()
-    df_avg = df_avg.add_suffix("_AVG").reset_index()
+    df_avg['PERCENTGROWTH'] = df_avg['PERCENTGROWTH'].apply(lambda x: 100 if x > 100 else 50 + x / 2 if x < 0 else 50 + x / 2)
+    df_avg = df.groupby(['CELLNAME', 'NSC1', 'NSC2']).mean()
+    df_avg = df_avg.add_suffix('_AVG').reset_index()
 
     if use_combo_score:
-        df = df_max.rename(columns={"SCORE_MAX": "GROWTH"}).drop(
-            "PERCENTGROWTH_MAX", axis=1
-        )
+        df = df_max.rename(columns={'SCORE_MAX': 'GROWTH'}).drop('PERCENTGROWTH_MAX', axis=1)
     elif use_mean_growth:
-        df = df_avg.rename(columns={"PERCENTGROWTH_AVG": "GROWTH"}).drop(
-            "SCORE_AVG", axis=1
-        )
+        df = df_avg.rename(columns={'PERCENTGROWTH_AVG': 'GROWTH'}).drop('SCORE_AVG', axis=1)
     else:
-        df = df_min.rename(columns={"PERCENTGROWTH_MIN": "GROWTH"}).drop(
-            "SCORE_MIN", axis=1
-        )
+        df = df_min.rename(columns={'PERCENTGROWTH_MIN': 'GROWTH'}).drop('SCORE_MIN', axis=1)
 
     if fraction:
-        df["GROWTH"] /= 100
+        df['GROWTH'] /= 100
 
     return df
 
 
-def load_combo_dose_response(
-    response_url=None,
-    fraction=False,
-    use_combo_score=False,
-    exclude_cells=[],
-    exclude_drugs=[],
-):
+def load_combo_dose_response(response_url=None, fraction=False, use_combo_score=False, exclude_cells=[], exclude_drugs=[]):
     """Load cell line response to pairs of drugs, sub-select response for a specific
         drug log concentration range and return a pandas dataframe.
 
@@ -264,71 +195,44 @@ def load_combo_dose_response(
     use_combo_score: bool (default False)
         return combination score in place of percent growth (stored in 'GROWTH' column)
     """
-    response_url = response_url or (DATA_URL + "ComboDrugGrowth_Nov2017.csv")
+    response_url = response_url or (DATA_URL + 'ComboDrugGrowth_Nov2017.csv')
     path = get_file(response_url)
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(
-            path,
-            usecols=[
-                "CELLNAME",
-                "NSC1",
-                "CONC1",
-                "NSC2",
-                "CONC2",
-                "PERCENTGROWTH",
-                "VALID",
-                "SCORE",
-                "SCREENER",
-                "STUDY",
-            ],
-            na_values=["na", "-", ""],
-            dtype={
-                "NSC1": object,
-                "NSC2": object,
-                "CONC1": object,
-                "CONC2": object,
-                "PERCENTGROWTH": str,
-                "SCORE": str,
-            },
-            engine="c",
-            error_bad_lines=False,
-            warn_bad_lines=True,
-        )
+        df = pd.read_csv(path,
+                         usecols=['CELLNAME', 'NSC1', 'CONC1', 'NSC2', 'CONC2', 'PERCENTGROWTH', 'VALID', 'SCORE', 'SCREENER', 'STUDY'],
+                         na_values=['na', '-', ''],
+                         dtype={'NSC1': object, 'NSC2': object, 'CONC1': object, 'CONC2': object, 'PERCENTGROWTH': str, 'SCORE': str},
+                         engine='c', error_bad_lines=False, warn_bad_lines=True,
+                         )
         global_cache[path] = df
 
-    df = df[df["VALID"] == "Y"]
+    df = df[df['VALID'] == 'Y']
 
-    df = df[["CELLNAME", "NSC1", "NSC2", "CONC1", "CONC2", "PERCENTGROWTH", "SCORE"]]
+    df = df[['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2', 'PERCENTGROWTH', 'SCORE']]
 
-    exclude_cells = [x.split(".")[-1] for x in exclude_cells]
-    exclude_drugs = [x.split(".")[-1] for x in exclude_drugs]
-    df = df[
-        ~df["CELLNAME"].isin(exclude_cells)
-        & ~df["NSC1"].isin(exclude_drugs)
-        & ~df["NSC2"].isin(exclude_drugs)
-    ]
+    exclude_cells = [x.split('.')[-1] for x in exclude_cells]
+    exclude_drugs = [x.split('.')[-1] for x in exclude_drugs]
+    df = df[~df['CELLNAME'].isin(exclude_cells) & ~df['NSC1'].isin(exclude_drugs) & ~df['NSC2'].isin(exclude_drugs)]
 
-    df["PERCENTGROWTH"] = df["PERCENTGROWTH"].astype(np.float32)
-    df["SCORE"] = df["SCORE"].astype(np.float32)
-    df["NSC2"] = df["NSC2"].fillna(df["NSC1"])
-    df["CONC2"] = df["CONC2"].fillna(df["CONC1"])
-    df["SCORE"] = df["SCORE"].fillna(0)
+    df['PERCENTGROWTH'] = df['PERCENTGROWTH'].astype(np.float32)
+    df['SCORE'] = df['SCORE'].astype(np.float32)
+    df['NSC2'] = df['NSC2'].fillna(df['NSC1'])
+    df['CONC2'] = df['CONC2'].fillna(df['CONC1'])
+    df['SCORE'] = df['SCORE'].fillna(0)
 
-    cellmap_path = get_file(DATA_URL + "NCI60_CELLNAME_to_Combo.txt")
-    df_cellmap = pd.read_csv(cellmap_path, sep="\t")
-    df_cellmap.set_index("Name", inplace=True)
-    cellmap = df_cellmap[["CELLNAME"]].to_dict()["CELLNAME"]
+    cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.txt')
+    df_cellmap = pd.read_csv(cellmap_path, sep='\t')
+    df_cellmap.set_index('Name', inplace=True)
+    cellmap = df_cellmap[['CELLNAME']].to_dict()['CELLNAME']
 
-    df["CELLNAME"] = df["CELLNAME"].map(lambda x: cellmap[x])
+    df['CELLNAME'] = df['CELLNAME'].map(lambda x: cellmap[x])
 
-    df_mean = df.groupby(["CELLNAME", "NSC1", "NSC2", "CONC1", "CONC2"]).mean()
+    df_mean = df.groupby(['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2']).mean()
     df_mean = df_mean.reset_index()
-    df_mean["CONC1"] = -np.log10(df_mean["CONC1"].astype(np.float32))
-    df_mean["CONC2"] = -np.log10(df_mean["CONC2"].astype(np.float32))
-    df = df_mean.rename(
-        columns={"PERCENTGROWTH": "GROWTH", "CONC1": "pCONC1", "CONC2": "pCONC2"}
-    )
+    df_mean['CONC1'] = -np.log10(df_mean['CONC1'].astype(np.float32))
+    df_mean['CONC2'] = -np.log10(df_mean['CONC2'].astype(np.float32))
+    df = df_mean.rename(columns={'PERCENTGROWTH': 'GROWTH', 'CONC1': 'pCONC1', 'CONC2': 'pCONC2'})
 
     # df_mean_min = df.groupby(['CELLNAME', 'NSC1', 'NSC2', 'CONC1', 'CONC2']).mean()
     # df_mean_min = df_mean_min.groupby(['CELLNAME', 'NSC1', 'NSC2']).min()
@@ -348,45 +252,40 @@ def load_combo_dose_response(
     #     df = df_min.rename(columns={'PERCENTGROWTH_MIN': 'GROWTH'}).drop('SCORE_MIN', axis=1)
 
     if fraction:
-        df["GROWTH"] /= 100
+        df['GROWTH'] /= 100
 
     return df
 
 
-def load_drug_set_descriptors(
-    drug_set="ALMANAC", ncols=None, scaling="std", add_prefix=True
-):
-    if drug_set == "ALMANAC":
-        path = get_file(DATA_URL + "ALMANAC_drug_descriptors_dragon7.txt")
-    elif drug_set == "GDSC":
-        path = get_file(DATA_URL + "GDSC_PubChemCID_drug_descriptors_dragon7")
-    elif drug_set == "NCI_IOA_AOA":
-        path = get_file(DATA_URL + "NCI_IOA_AOA_drug_descriptors_dragon7")
-    elif drug_set == "RTS":
-        path = get_file(DATA_URL + "RTS_drug_descriptors_dragon7")
-    elif drug_set == "pan":
-        path = get_file(DATA_URL + "pan_drugs_dragon7_descriptors.tsv")
+def load_drug_set_descriptors(drug_set='ALMANAC', ncols=None, scaling='std', add_prefix=True):
+    if drug_set == 'ALMANAC':
+        path = get_file(DATA_URL + 'ALMANAC_drug_descriptors_dragon7.txt')
+    elif drug_set == 'GDSC':
+        path = get_file(DATA_URL + 'GDSC_PubChemCID_drug_descriptors_dragon7')
+    elif drug_set == 'NCI_IOA_AOA':
+        path = get_file(DATA_URL + 'NCI_IOA_AOA_drug_descriptors_dragon7')
+    elif drug_set == 'RTS':
+        path = get_file(DATA_URL + 'RTS_drug_descriptors_dragon7')
+    elif drug_set == 'pan':
+        path = get_file(DATA_URL + 'pan_drugs_dragon7_descriptors.tsv')
     else:
-        raise Exception("Drug set {} not supported!".format(drug_set))
+        raise Exception('Drug set {} not supported!'.format(drug_set))
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(
-            path,
-            sep="\t",
-            engine="c",
-            na_values=["na", "-", ""],
-        )
+        df = pd.read_csv(path, sep='\t', engine='c',
+                         na_values=['na', '-', ''],
+                         )
         global_cache[path] = df
 
     # df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
-    df1 = pd.DataFrame(df.loc[:, "NAME"])
+    df1 = pd.DataFrame(df.loc[:, 'NAME'])
     # df1['NAME'] = df1['NAME'].map(lambda x: x[4:])
-    df1.rename(columns={"NAME": "Drug"}, inplace=True)
+    df1.rename(columns={'NAME': 'Drug'}, inplace=True)
 
-    df2 = df.drop("NAME", axis=1)
+    df2 = df.drop('NAME', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("dragon7.")
+        df2 = df2.add_prefix('dragon7.')
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -405,7 +304,7 @@ def load_drug_set_descriptors(
     return df_dg
 
 
-def load_drug_descriptors_new(ncols=None, scaling="std", add_prefix=True):
+def load_drug_descriptors_new(ncols=None, scaling='std', add_prefix=True):
     """Load drug descriptor data, sub-select columns of drugs descriptors
         randomly if specificed, impute and scale the selected data, and return a
         pandas dataframe.
@@ -420,26 +319,23 @@ def load_drug_descriptors_new(ncols=None, scaling="std", add_prefix=True):
         add feature namespace prefix
     """
 
-    path = get_file(DATA_URL + "ALMANAC_drug_descriptors_dragon7.txt")
+    path = get_file(DATA_URL + 'ALMANAC_drug_descriptors_dragon7.txt')
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(
-            path,
-            sep="\t",
-            engine="c",
-            na_values=["na", "-", ""],
-        )
+        df = pd.read_csv(path, sep='\t', engine='c',
+                         na_values=['na', '-', ''],
+                         )
         global_cache[path] = df
 
     # df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
-    df1 = pd.DataFrame(df.loc[:, "NAME"])
+    df1 = pd.DataFrame(df.loc[:, 'NAME'])
     # df1['NAME'] = df1['NAME'].map(lambda x: x[4:])
-    df1.rename(columns={"NAME": "Drug"}, inplace=True)
+    df1.rename(columns={'NAME': 'Drug'}, inplace=True)
 
-    df2 = df.drop("NAME", axis=1)
+    df2 = df.drop('NAME', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("dragon7.")
+        df2 = df2.add_prefix('dragon7.')
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -454,7 +350,7 @@ def load_drug_descriptors_new(ncols=None, scaling="std", add_prefix=True):
     return df_dg
 
 
-def load_drug_descriptors(ncols=None, scaling="std", add_prefix=True):
+def load_drug_descriptors(ncols=None, scaling='std', add_prefix=True):
     """Load drug descriptor data, sub-select columns of drugs descriptors
         randomly if specificed, impute and scale the selected data, and return a
         pandas dataframe.
@@ -470,26 +366,23 @@ def load_drug_descriptors(ncols=None, scaling="std", add_prefix=True):
     """
 
     # path = get_file(DATA_URL + 'ALMANAC_drug_descriptors_dragon7.txt')
-    path = get_file(DATA_URL + "pan_drugs_dragon7_descriptors.tsv")
+    path = get_file(DATA_URL + 'pan_drugs_dragon7_descriptors.tsv')
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(
-            path,
-            sep="\t",
-            engine="c",
-            na_values=["na", "-", ""],
-        )
+        df = pd.read_csv(path, sep='\t', engine='c',
+                         na_values=['na', '-', ''],
+                         )
         global_cache[path] = df
 
     # df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
-    df1 = pd.DataFrame(df.loc[:, "NAME"])
-    df1["NAME"] = df1["NAME"].map(lambda x: x[4:])
-    df1.rename(columns={"NAME": "NSC"}, inplace=True)
+    df1 = pd.DataFrame(df.loc[:, 'NAME'])
+    df1['NAME'] = df1['NAME'].map(lambda x: x[4:])
+    df1.rename(columns={'NAME': 'NSC'}, inplace=True)
 
-    df2 = df.drop("NAME", axis=1)
+    df2 = df.drop('NAME', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("dragon7.")
+        df2 = df2.add_prefix('dragon7.')
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -504,7 +397,7 @@ def load_drug_descriptors(ncols=None, scaling="std", add_prefix=True):
     return df_dg
 
 
-def load_drug_descriptors_old(ncols=None, scaling="std", add_prefix=True):
+def load_drug_descriptors_old(ncols=None, scaling='std', add_prefix=True):
     """Load drug descriptor data, sub-select columns of drugs descriptors
         randomly if specificed, impute and scale the selected data, and return a
         pandas dataframe.
@@ -519,21 +412,21 @@ def load_drug_descriptors_old(ncols=None, scaling="std", add_prefix=True):
         add feature namespace prefix
     """
 
-    path = get_file(P1B3_URL + "descriptors.2D-NSC.5dose.filtered.txt")
+    path = get_file(P1B3_URL + 'descriptors.2D-NSC.5dose.filtered.txt')
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(
-            path, sep="\t", engine="c", na_values=["na", "-", ""], dtype=np.float32
-        )
+        df = pd.read_csv(path, sep='\t', engine='c',
+                         na_values=['na', '-', ''],
+                         dtype=np.float32)
         global_cache[path] = df
 
-    df1 = pd.DataFrame(df.loc[:, "NAME"].astype(int).astype(str))
-    df1.rename(columns={"NAME": "NSC"}, inplace=True)
+    df1 = pd.DataFrame(df.loc[:, 'NAME'].astype(int).astype(str))
+    df1.rename(columns={'NAME': 'NSC'}, inplace=True)
 
-    df2 = df.drop("NAME", axis=1)
+    df2 = df.drop('NAME', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("dragon7.")
+        df2 = df2.add_prefix('dragon7.')
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -549,46 +442,39 @@ def load_drug_descriptors_old(ncols=None, scaling="std", add_prefix=True):
 
 
 def load_drug_smiles():
-    path = get_file(DATA_URL + "ChemStructures_Consistent.smiles")
+    path = get_file(DATA_URL + 'ChemStructures_Consistent.smiles')
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(path, sep="\t", engine="c", dtype={"nsc_id": object})
-        df = df.rename(columns={"nsc_id": "NSC"})
+        df = pd.read_csv(path, sep='\t', engine='c', dtype={'nsc_id': object})
+        df = df.rename(columns={'nsc_id': 'NSC'})
         global_cache[path] = df
 
     return df
 
 
-def load_sample_rnaseq(
-    ncols=None,
-    scaling="std",
-    add_prefix=True,
-    use_landmark_genes=False,
-    preprocess_rnaseq=None,
-    sample_set="NCI60",
-):
+def load_sample_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False, preprocess_rnaseq=None, sample_set='NCI60'):
     if use_landmark_genes:
-        filename = "combined_rnaseq_data_lincs1000"
+        filename = 'combined_rnaseq_data_lincs1000'
     else:
-        filename = "combined_rnaseq_data"
+        filename = 'combined_rnaseq_data'
 
-    if preprocess_rnaseq and preprocess_rnaseq != "none":
+    if preprocess_rnaseq and preprocess_rnaseq != 'none':
         scaling = None
-        filename += "_" + preprocess_rnaseq  # 'source_scale' or 'combat'
+        filename += ('_' + preprocess_rnaseq)  # 'source_scale' or 'combat'
 
     path = get_file(DATA_URL + filename)
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(path, sep="\t", engine="c")
+        df = pd.read_csv(path, sep='\t', engine='c')
         global_cache[path] = df
 
-    if sample_set == "RTS":
-        df_ids = pd.read_table(get_file(DATA_URL + "RTS_PDM_samples"))
-        df = df.merge(df_ids, on="Sample").reset_index(drop=True)
+    if sample_set == 'RTS':
+        df_ids = pd.read_table(get_file(DATA_URL + 'RTS_PDM_samples'))
+        df = df.merge(df_ids, on='Sample').reset_index(drop=True)
     else:
-        df = df[df["Sample"].str.startswith(sample_set)].reset_index(drop=True)
+        df = df[df['Sample'].str.startswith(sample_set)].reset_index(drop=True)
 
     # cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.new.txt')
     # df_cellmap = pd.read_csv(cellmap_path, sep='\t')
@@ -598,11 +484,11 @@ def load_sample_rnaseq(
 
     # df = df.rename(columns={'Sample': 'CELLNAME'})
 
-    df1 = df["Sample"]
+    df1 = df['Sample']
 
-    df2 = df.drop("Sample", axis=1)
+    df2 = df.drop('Sample', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("rnaseq.")
+        df2 = df2.add_prefix('rnaseq.')
 
     total = df.shape[1]
     if ncols and ncols < total:
@@ -616,38 +502,32 @@ def load_sample_rnaseq(
     return df
 
 
-def load_cell_expression_rnaseq(
-    ncols=None,
-    scaling="std",
-    add_prefix=True,
-    use_landmark_genes=False,
-    preprocess_rnaseq=None,
-):
+def load_cell_expression_rnaseq(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False, preprocess_rnaseq=None):
     if use_landmark_genes:
-        filename = "combined_rnaseq_data_lincs1000"
+        filename = 'combined_rnaseq_data_lincs1000'
     else:
-        filename = "combined_rnaseq_data"
+        filename = 'combined_rnaseq_data'
 
-    if preprocess_rnaseq and preprocess_rnaseq != "none":
+    if preprocess_rnaseq and preprocess_rnaseq != 'none':
         scaling = None
-        filename += "_" + preprocess_rnaseq  # 'source_scale' or 'combat'
+        filename += ('_' + preprocess_rnaseq)  # 'source_scale' or 'combat'
 
     path = get_file(DATA_URL + filename)
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(path, sep="\t", engine="c")
+        df = pd.read_csv(path, sep='\t', engine='c')
         global_cache[path] = df
 
-    df = df[df["Sample"].str.startswith("NCI60")].reset_index(drop=True)
+    df = df[df['Sample'].str.startswith('NCI60')].reset_index(drop=True)
 
-    cellmap_path = get_file(DATA_URL + "NCI60_CELLNAME_to_Combo.new.txt")
-    df_cellmap = pd.read_csv(cellmap_path, sep="\t")
-    df_cellmap.set_index("NCI60.ID", inplace=True)
-    cellmap = df_cellmap[["CELLNAME"]].to_dict()["CELLNAME"]
+    cellmap_path = get_file(DATA_URL + 'NCI60_CELLNAME_to_Combo.new.txt')
+    df_cellmap = pd.read_csv(cellmap_path, sep='\t')
+    df_cellmap.set_index('NCI60.ID', inplace=True)
+    cellmap = df_cellmap[['CELLNAME']].to_dict()['CELLNAME']
 
-    df = df.rename(columns={"Sample": "CELLNAME"})
-    df["CELLNAME"] = df["CELLNAME"].map(lambda x: cellmap[x])
+    df = df.rename(columns={'Sample': 'CELLNAME'})
+    df['CELLNAME'] = df['CELLNAME'].map(lambda x: cellmap[x])
 
     # if use_landmark_genes:
     #     lincs_path = get_file(DATA_URL + 'lincs1000.tsv')
@@ -655,12 +535,12 @@ def load_cell_expression_rnaseq(
     #     cols = sorted([x for x in df_l1000['symbol'] if x in df.columns])
     #     df = df[['CELLNAME'] + cols]
 
-    df1 = df["CELLNAME"]
-    df1 = df1.map(lambda x: x.replace(":", "."))
+    df1 = df['CELLNAME']
+    df1 = df1.map(lambda x: x.replace(':', '.'))
 
-    df2 = df.drop("CELLNAME", axis=1)
+    df2 = df.drop('CELLNAME', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("rnaseq.")
+        df2 = df2.add_prefix('rnaseq.')
 
     total = df.shape[1]
     if ncols and ncols < total:
@@ -674,9 +554,7 @@ def load_cell_expression_rnaseq(
     return df
 
 
-def load_cell_expression_u133p2(
-    ncols=None, scaling="std", add_prefix=True, use_landmark_genes=False
-):
+def load_cell_expression_u133p2(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False):
     """Load U133_Plus2 cell line expression data prepared by Judith,
         sub-select columns of gene expression randomly if specificed,
         scale the selected data and return a pandas dataframe.
@@ -692,25 +570,25 @@ def load_cell_expression_u133p2(
     use_landmark_genes: True or False
         only use LINCS landmark genes (L1000)
     """
-    path = get_file(DATA_URL + "GSE32474_U133Plus2_GCRMA_gene_median.txt")
+    path = get_file(DATA_URL + 'GSE32474_U133Plus2_GCRMA_gene_median.txt')
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(path, sep="\t", engine="c")
+        df = pd.read_csv(path, sep='\t', engine='c')
         global_cache[path] = df
 
     if use_landmark_genes:
-        lincs_path = get_file(DATA_URL + "lincs1000.tsv")
-        df_l1000 = pd.read_csv(lincs_path, sep="\t")
-        cols = sorted([x for x in df_l1000["symbol"] if x in df.columns])
-        df = df[["CELLNAME"] + cols]
+        lincs_path = get_file(DATA_URL + 'lincs1000.tsv')
+        df_l1000 = pd.read_csv(lincs_path, sep='\t')
+        cols = sorted([x for x in df_l1000['symbol'] if x in df.columns])
+        df = df[['CELLNAME'] + cols]
 
-    df1 = df["CELLNAME"]
-    df1 = df1.map(lambda x: x.replace(":", "."))
+    df1 = df['CELLNAME']
+    df1 = df1.map(lambda x: x.replace(':', '.'))
 
-    df2 = df.drop("CELLNAME", axis=1)
+    df2 = df.drop('CELLNAME', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("expr.")
+        df2 = df2.add_prefix('expr.')
 
     total = df.shape[1]
     if ncols and ncols < total:
@@ -724,9 +602,7 @@ def load_cell_expression_u133p2(
     return df
 
 
-def load_cell_expression_5platform(
-    ncols=None, scaling="std", add_prefix=True, use_landmark_genes=False
-):
+def load_cell_expression_5platform(ncols=None, scaling='std', add_prefix=True, use_landmark_genes=False):
     """Load 5-platform averaged cell line expression data, sub-select
         columns of gene expression randomly if specificed, scale the
         selected data and return a pandas dataframe.
@@ -743,27 +619,26 @@ def load_cell_expression_5platform(
         only use LINCS1000 landmark genes
     """
 
-    path = get_file(
-        P1B3_URL + "RNA_5_Platform_Gene_Transcript_Averaged_intensities.transposed.txt"
-    )
+    path = get_file(P1B3_URL + 'RNA_5_Platform_Gene_Transcript_Averaged_intensities.transposed.txt')
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(path, sep="\t", engine="c", na_values=["na", "-", ""])
+        df = pd.read_csv(path, sep='\t', engine='c',
+                         na_values=['na', '-', ''])
         global_cache[path] = df
 
     if use_landmark_genes:
-        lincs_path = get_file(DATA_URL + "lincs1000.tsv")
-        df_l1000 = pd.read_csv(lincs_path, sep="\t")
-        cols = sorted([x for x in df_l1000["symbol"] if x in df.columns])
-        df = df[["CellLine"] + cols]
+        lincs_path = get_file(DATA_URL + 'lincs1000.tsv')
+        df_l1000 = pd.read_csv(lincs_path, sep='\t')
+        cols = sorted([x for x in df_l1000['symbol'] if x in df.columns])
+        df = df[['CellLine'] + cols]
 
-    df1 = df["CellLine"]
-    df1.name = "CELLNAME"
+    df1 = df['CellLine']
+    df1.name = 'CELLNAME'
 
-    df2 = df.drop("CellLine", axis=1)
+    df2 = df.drop('CellLine', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("expr_5p.")
+        df2 = df2.add_prefix('expr_5p.')
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -777,7 +652,7 @@ def load_cell_expression_5platform(
     return df
 
 
-def load_cell_mirna(ncols=None, scaling="std", add_prefix=True):
+def load_cell_mirna(ncols=None, scaling='std', add_prefix=True):
     """Load cell line microRNA data, sub-select columns randomly if
         specificed, scale the selected data and return a pandas
         dataframe.
@@ -791,19 +666,20 @@ def load_cell_mirna(ncols=None, scaling="std", add_prefix=True):
     add_prefix: True or False
         add feature namespace prefix
     """
-    path = get_file(P1B3_URL + "RNA__microRNA_OSU_V3_chip_log2.transposed.txt")
+    path = get_file(P1B3_URL + 'RNA__microRNA_OSU_V3_chip_log2.transposed.txt')
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(path, sep="\t", engine="c", na_values=["na", "-", ""])
+        df = pd.read_csv(path, sep='\t', engine='c',
+                         na_values=['na', '-', ''])
         global_cache[path] = df
 
-    df1 = df["CellLine"]
-    df1.name = "CELLNAME"
+    df1 = df['CellLine']
+    df1.name = 'CELLNAME'
 
-    df2 = df.drop("CellLine", axis=1)
+    df2 = df.drop('CellLine', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("mRNA.")
+        df2 = df2.add_prefix('mRNA.')
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -817,7 +693,7 @@ def load_cell_mirna(ncols=None, scaling="std", add_prefix=True):
     return df
 
 
-def load_cell_proteome(ncols=None, scaling="std", add_prefix=True):
+def load_cell_proteome(ncols=None, scaling='std', add_prefix=True):
     """Load cell line microRNA data, sub-select columns randomly if
         specificed, scale the selected data and return a pandas
         dataframe.
@@ -832,27 +708,27 @@ def load_cell_proteome(ncols=None, scaling="std", add_prefix=True):
         add feature namespace prefix
     """
 
-    path1 = get_file(P1B3_URL + "nci60_proteome_log2.transposed.tsv")
-    path2 = get_file(P1B3_URL + "nci60_kinome_log2.transposed.tsv")
+    path1 = get_file(P1B3_URL + 'nci60_proteome_log2.transposed.tsv')
+    path2 = get_file(P1B3_URL + 'nci60_kinome_log2.transposed.tsv')
 
     df = global_cache.get(path1)
     if df is None:
-        df = pd.read_csv(path1, sep="\t", engine="c")
+        df = pd.read_csv(path1, sep='\t', engine='c')
         global_cache[path1] = df
 
     df_k = global_cache.get(path2)
     if df_k is None:
-        df_k = pd.read_csv(path2, sep="\t", engine="c")
+        df_k = pd.read_csv(path2, sep='\t', engine='c')
         global_cache[path2] = df_k
 
-    df = df.set_index("CellLine")
-    df_k = df_k.set_index("CellLine")
+    df = df.set_index('CellLine')
+    df_k = df_k.set_index('CellLine')
 
     if add_prefix:
-        df = df.add_prefix("prot.")
-        df_k = df_k.add_prefix("kino.")
+        df = df.add_prefix('prot.')
+        df_k = df_k.add_prefix('kino.')
     else:
-        df_k = df_k.add_suffix(".K")
+        df_k = df_k.add_suffix('.K')
 
     df = df.merge(df_k, left_index=True, right_index=True)
 
@@ -868,13 +744,13 @@ def load_cell_proteome(ncols=None, scaling="std", add_prefix=True):
     df = df.astype(np.float32)
 
     df.index = index
-    df.index.names = ["CELLNAME"]
+    df.index.names = ['CELLNAME']
     df = df.reset_index()
 
     return df
 
 
-def load_drug_autoencoded_AG(ncols=None, scaling="std", add_prefix=True):
+def load_drug_autoencoded_AG(ncols=None, scaling='std', add_prefix=True):
     """Load drug latent representation from Aspuru-Guzik's variational
     autoencoder, sub-select columns of drugs randomly if specificed,
     impute and scale the selected data, and return a pandas dataframe
@@ -888,17 +764,17 @@ def load_drug_autoencoded_AG(ncols=None, scaling="std", add_prefix=True):
     add_prefix: True or False
         add feature namespace prefix
     """
-    path = get_file(P1B3_URL + "Aspuru-Guzik_NSC_latent_representation_292D.csv")
+    path = get_file(P1B3_URL + 'Aspuru-Guzik_NSC_latent_representation_292D.csv')
 
     df = global_cache.get(path)
     if df is None:
-        df = pd.read_csv(path, engine="c", dtype=np.float32)
+        df = pd.read_csv(path, engine='c', dtype=np.float32)
         global_cache[path] = df
 
-    df1 = pd.DataFrame(df.loc[:, "NSC"].astype(int).astype(str))
-    df2 = df.drop("NSC", axis=1)
+    df1 = pd.DataFrame(df.loc[:, 'NSC'].astype(int).astype(str))
+    df2 = df.drop('NSC', axis=1)
     if add_prefix:
-        df2 = df2.add_prefix("smiles_latent_AG.")
+        df2 = df2.add_prefix('smiles_latent_AG.')
 
     total = df2.shape[1]
     if ncols and ncols < total:
@@ -915,33 +791,24 @@ def load_drug_autoencoded_AG(ncols=None, scaling="std", add_prefix=True):
 
 def all_cells():
     df = load_dose_response()
-    return df["CELLNAME"].drop_duplicates().tolist()
+    return df['CELLNAME'].drop_duplicates().tolist()
 
 
 def all_drugs():
     df = load_dose_response()
-    return df["NSC"].drop_duplicates().tolist()
+    return df['NSC'].drop_duplicates().tolist()
 
 
 def drugs_in_set(set_name):
-    path = get_file(DATA_URL + "NCI60_drug_sets.tsv")
-    df = pd.read_csv(path, sep="\t", engine="c")
-    drugs = df[df["Drug_Set"] == set_name].iloc[0][1].split(",")
+    path = get_file(DATA_URL + 'NCI60_drug_sets.tsv')
+    df = pd.read_csv(path, sep='\t', engine='c')
+    drugs = df[df['Drug_Set'] == set_name].iloc[0][1].split(',')
     return drugs
 
 
-def load_by_cell_data(
-    cell="BR:MCF7",
-    drug_features=["descriptors"],
-    shuffle=True,
-    min_logconc=-5.0,
-    max_logconc=-4.0,
-    subsample="naive_balancing",
-    feature_subsample=None,
-    scaling="std",
-    scramble=False,
-    verbose=True,
-):
+def load_by_cell_data(cell='BR:MCF7', drug_features=['descriptors'], shuffle=True,
+                      min_logconc=-5., max_logconc=-4., subsample='naive_balancing',
+                      feature_subsample=None, scaling='std', scramble=False, verbose=True):
 
     """Load dataframe for by cellline models
 
@@ -967,67 +834,47 @@ def load_by_cell_data(
         if True balance dose response data with crude subsampling
     """
 
-    if "all" in drug_features:
-        drug_features = ["descriptors", "latent"]
+    if 'all' in drug_features:
+        drug_features = ['descriptors', 'latent']
 
-    df_resp = load_dose_response(
-        subsample=subsample,
-        min_logconc=min_logconc,
-        max_logconc=max_logconc,
-        fraction=True,
-    )
+    df_resp = load_dose_response(subsample=subsample, min_logconc=min_logconc, max_logconc=max_logconc, fraction=True)
 
-    df = df_resp[df_resp["CELLNAME"] == cell].reset_index()
-    df = df[["NSC", "GROWTH", "LOG_CONCENTRATION"]]
-    df = df.rename(columns={"LOG_CONCENTRATION": "LCONC"})
+    df = df_resp[df_resp['CELLNAME'] == cell].reset_index()
+    df = df[['NSC', 'GROWTH', 'LOG_CONCENTRATION']]
+    df = df.rename(columns={'LOG_CONCENTRATION': 'LCONC'})
 
     input_dims = collections.OrderedDict()
-    input_dims["log_conc"] = 1
+    input_dims['log_conc'] = 1
 
     for fea in drug_features:
-        if fea == "descriptors":
+        if fea == 'descriptors':
             df_desc = load_drug_descriptors(ncols=feature_subsample, scaling=scaling)
-            df = df.merge(df_desc, on="NSC")
-            input_dims["drug_descriptors"] = df_desc.shape[1] - 1
-        elif fea == "latent":
+            df = df.merge(df_desc, on='NSC')
+            input_dims['drug_descriptors'] = df_desc.shape[1] - 1
+        elif fea == 'latent':
             df_ag = load_drug_autoencoded_AG(ncols=feature_subsample, scaling=scaling)
-            df = df.merge(df_ag, on="NSC")
-            input_dims["smiles_latent_AG"] = df_ag.shape[1] - 1
-        elif fea == "noise":
-            df_drug_ids = df[["NSC"]].drop_duplicates()
+            df = df.merge(df_ag, on='NSC')
+            input_dims['smiles_latent_AG'] = df_ag.shape[1] - 1
+        elif fea == 'noise':
+            df_drug_ids = df[['NSC']].drop_duplicates()
             noise = np.random.normal(size=(df_drug_ids.shape[0], 500))
-            df_rand = pd.DataFrame(
-                noise,
-                index=df_drug_ids["NSC"],
-                columns=["RAND-{:03d}".format(x) for x in range(500)],
-            )
-            df = df.merge(df_rand, on="NSC")
-            input_dims["drug_noise"] = df_rand.shape[1] - 1
+            df_rand = pd.DataFrame(noise, index=df_drug_ids['NSC'],
+                                   columns=['RAND-{:03d}'.format(x) for x in range(500)])
+            df = df.merge(df_rand, on='NSC')
+            input_dims['drug_noise'] = df_rand.shape[1] - 1
 
-    df = df.set_index("NSC")
+    df = df.set_index('NSC')
 
     if df.shape[0] and verbose:
-        print("Loaded {} rows and {} columns".format(df.shape[0], df.shape[1]))
-        print(
-            "Input features:",
-            ", ".join(["{}: {}".format(k, v) for k, v in input_dims.items()]),
-        )
+        print('Loaded {} rows and {} columns'.format(df.shape[0], df.shape[1]))
+        print('Input features:', ', '.join(['{}: {}'.format(k, v) for k, v in input_dims.items()]))
 
     return df
 
 
-def load_by_drug_data(
-    drug="1",
-    cell_features=["expression"],
-    shuffle=True,
-    use_gi50=False,
-    logconc=-4.0,
-    subsample="naive_balancing",
-    feature_subsample=None,
-    scaling="std",
-    scramble=False,
-    verbose=True,
-):
+def load_by_drug_data(drug='1', cell_features=['expression'], shuffle=True,
+                      use_gi50=False, logconc=-4., subsample='naive_balancing',
+                      feature_subsample=None, scaling='std', scramble=False, verbose=True):
 
     """Load dataframe for by drug models
 
@@ -1055,48 +902,39 @@ def load_by_drug_data(
         if True randomly shuffle dose response data as a control
     """
 
-    if "all" in cell_features:
-        cell_features = ["expression", "mirna", "proteome"]
+    if 'all' in cell_features:
+        cell_features = ['expression', 'mirna', 'proteome']
 
-    df_resp = load_dose_response(
-        subsample=subsample, min_logconc=logconc, max_logconc=logconc, fraction=True
-    )
+    df_resp = load_dose_response(subsample=subsample, min_logconc=logconc, max_logconc=logconc, fraction=True)
     df_resp = df_resp.reset_index()
 
-    df = df_resp[df_resp["NSC"] == drug]
-    df = df[["CELLNAME", "GROWTH"]]
+    df = df_resp[df_resp['NSC'] == drug]
+    df = df[['CELLNAME', 'GROWTH']]
 
     input_dims = collections.OrderedDict()
 
     for fea in cell_features:
-        if fea == "expression" or fea == "expression_u133p2":
-            df_expr_u133p2 = load_cell_expression_u133p2(
-                ncols=feature_subsample, scaling=scaling
-            )
-            df = df.merge(df_expr_u133p2, on="CELLNAME")
-            input_dims["expression_u133p2"] = df_expr_u133p2.shape[1] - 1
-        elif fea == "expression_5platform":
-            df_expr_5p = load_cell_expression_5platform(
-                ncols=feature_subsample, scaling=scaling
-            )
-            df = df.merge(df_expr_5p, on="CELLNAME")
-            input_dims["expression_5platform"] = df_expr_5p.shape[1] - 1
-        elif fea == "mirna":
+        if fea == 'expression' or fea == 'expression_u133p2':
+            df_expr_u133p2 = load_cell_expression_u133p2(ncols=feature_subsample, scaling=scaling)
+            df = df.merge(df_expr_u133p2, on='CELLNAME')
+            input_dims['expression_u133p2'] = df_expr_u133p2.shape[1] - 1
+        elif fea == 'expression_5platform':
+            df_expr_5p = load_cell_expression_5platform(ncols=feature_subsample, scaling=scaling)
+            df = df.merge(df_expr_5p, on='CELLNAME')
+            input_dims['expression_5platform'] = df_expr_5p.shape[1] - 1
+        elif fea == 'mirna':
             df_mirna = load_cell_mirna(ncols=feature_subsample, scaling=scaling)
-            df = df.merge(df_mirna, on="CELLNAME")
-            input_dims["microRNA"] = df_mirna.shape[1] - 1
-        elif fea == "proteome":
+            df = df.merge(df_mirna, on='CELLNAME')
+            input_dims['microRNA'] = df_mirna.shape[1] - 1
+        elif fea == 'proteome':
             df_prot = load_cell_proteome(ncols=feature_subsample, scaling=scaling)
-            df = df.merge(df_prot, on="CELLNAME")
-            input_dims["proteome"] = df_prot.shape[1] - 1
+            df = df.merge(df_prot, on='CELLNAME')
+            input_dims['proteome'] = df_prot.shape[1] - 1
 
-    df = df.set_index("CELLNAME")
+    df = df.set_index('CELLNAME')
 
     if df.shape[0] and verbose:
-        print("Loaded {} rows and {} columns".format(df.shape[0], df.shape[1]))
-        print(
-            "Input features:",
-            ", ".join(["{}: {}".format(k, v) for k, v in input_dims.items()]),
-        )
+        print('Loaded {} rows and {} columns'.format(df.shape[0], df.shape[1]))
+        print('Input features:', ', '.join(['{}: {}'.format(k, v) for k, v in input_dims.items()]))
 
     return df

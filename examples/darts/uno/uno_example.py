@@ -1,13 +1,14 @@
 import logging
 import sys
 
-import candle
-import darts
-import example_setup as bmk
 import torch
 import torch.nn as nn
 from torch import optim
 from torch.utils.data import DataLoader
+
+import example_setup as bmk
+import darts
+import candle
 
 # logging.basicConfig(sys.stdout, level=logging.INFO)
 # Set up the logger to go to stdout instead of stderr
@@ -17,14 +18,14 @@ logger.addHandler(logging.StreamHandler(sys.stdout))
 
 
 def initialize_parameters():
-    """Initialize the parameters for the Uno example"""
+    """ Initialize the parameters for the Uno example """
 
     uno_example = bmk.UnoExample(
         bmk.file_path,
-        "default_model.txt",
-        "pytorch",
-        prog="uno_example",
-        desc="Differentiable Architecture Search - Uno example",
+        'default_model.txt',
+        'pytorch',
+        prog='uno_example',
+        desc='Differentiable Architecture Search - Uno example',
     )
 
     # Initialize parameters
@@ -39,8 +40,8 @@ def run(params):
     device = torch.device("cuda" if args.cuda else "cpu")
     darts.banner(device=device)
 
-    train_data = darts.Uno("./data", "train", download=True)
-    valid_data = darts.Uno("./data", "test")
+    train_data = darts.Uno('./data', 'train', download=True)
+    valid_data = darts.Uno('./data', 'test')
 
     trainloader = DataLoader(train_data, batch_size=args.batch_size)
     validloader = DataLoader(valid_data, batch_size=args.batch_size)
@@ -48,7 +49,7 @@ def run(params):
     criterion = nn.CrossEntropyLoss().to(device)
 
     tasks = {
-        "response": 2,
+        'response': 2,
     }
 
     model = darts.LinearNetwork(
@@ -61,25 +62,27 @@ def run(params):
         model.parameters(),
         args.learning_rate,
         momentum=args.momentum,
-        weight_decay=args.weight_decay,
+        weight_decay=args.weight_decay
     )
 
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, float(args.epochs), eta_min=args.learning_rate_min
+        optimizer,
+        float(args.epochs),
+        eta_min=args.learning_rate_min
     )
 
-    train_meter = darts.EpochMeter(tasks, "train")
-    valid_meter = darts.EpochMeter(tasks, "valid")
+    train_meter = darts.EpochMeter(tasks, 'train')
+    valid_meter = darts.EpochMeter(tasks, 'valid')
 
     genotype_store = darts.GenotypeStorage(root=args.save_path)
 
     for epoch in range(args.epochs):
 
         lr = scheduler.get_lr()[0]
-        logger.info(f"\nEpoch: {epoch} lr: {lr}")
+        logger.info(f'\nEpoch: {epoch} lr: {lr}')
 
         genotype = model.genotype()
-        logger.info(f"Genotype: {genotype}\n")
+        logger.info(f'Genotype: {genotype}\n')
 
         train(
             trainloader,
@@ -93,26 +96,24 @@ def run(params):
             train_meter,
             genotype,
             genotype_store,
-            device,
+            device
         )
 
         validate(validloader, model, criterion, args, tasks, valid_meter, device)
 
 
-def train(
-    trainloader,
-    model,
-    architecture,
-    criterion,
-    optimizer,
-    scheduler,
-    args,
-    tasks,
-    meter,
-    genotype,
-    genotype_store,
-    device,
-):
+def train(trainloader,
+          model,
+          architecture,
+          criterion,
+          optimizer,
+          scheduler,
+          args,
+          tasks,
+          meter,
+          genotype,
+          genotype_store,
+          device):
 
     valid_iter = iter(trainloader)
     min_accuracy = 0.0
@@ -132,11 +133,17 @@ def train(
 
         # 1. update alpha
         architecture.step(
-            data, target, x_search, target_search, lr, optimizer, unrolled=False
+            data,
+            target,
+            x_search,
+            target_search,
+            lr,
+            optimizer,
+            unrolled=False
         )
 
         logits = model(data)
-        loss = darts.multitask_loss(target, logits, criterion, reduce="mean")
+        loss = darts.multitask_loss(target, logits, criterion, reduce='mean')
 
         # 2. update weight
         optimizer.zero_grad()
@@ -149,13 +156,13 @@ def train(
         meter.update_batch_loss(loss.item(), batch_size)
         meter.update_batch_accuracy(prec1, batch_size)
 
-        accuracy_avg = meter.acc_meter.get_avg_accuracy("response")
+        accuracy_avg = meter.acc_meter.get_avg_accuracy('response')
         if accuracy_avg > min_accuracy:
             genotype_store.save_genotype(genotype)
             min_accuracy = accuracy_avg
 
         if step % args.log_interval == 0:
-            logger.info(f"Step: {step} loss: {meter.loss_meter.avg:.4}")
+            logger.info(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.save_path)
@@ -172,14 +179,14 @@ def validate(validloader, model, criterion, args, tasks, meter, device):
             batch_size = data.size(0)
 
             logits = model(data)
-            loss = darts.multitask_loss(target, logits, criterion, reduce="mean")
+            loss = darts.multitask_loss(target, logits, criterion, reduce='mean')
 
             prec1 = darts.multitask_accuracy_topk(logits, target, topk=(1,))
             meter.update_batch_loss(loss.item(), batch_size)
             meter.update_batch_accuracy(prec1, batch_size)
 
             if step % args.log_interval == 0:
-                logger.info(f">> Validation: {step} loss: {meter.loss_meter.avg:.4}")
+                logger.info(f'>> Validation: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.save_path)
@@ -190,5 +197,5 @@ def main():
     run(params)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

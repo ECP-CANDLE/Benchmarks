@@ -1,11 +1,10 @@
 import argparse
+import cairosvg
 import io
 import os
-
-import cairosvg
-
 # import numpy as np
 import pandas as pd
+
 from PIL import Image, ImageOps
 from rdkit import Chem
 from rdkit.Chem import rdDepictor  # , RDConfig
@@ -13,12 +12,10 @@ from rdkit.Chem.Draw import rdMolDraw2D
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Encode SMILES to images")
-    parser.add_argument(
-        "-f", "--filename", help="name of tab-delimited file for the list of SMILES"
-    )
-    parser.add_argument("-o", "--out", help="output file name")
-    parser.add_argument("--colname", default="SMILES", help="column name for SMILES")
+    parser = argparse.ArgumentParser(description='Encode SMILES to images')
+    parser.add_argument('-f', '--filename', help="name of tab-delimited file for the list of SMILES")
+    parser.add_argument('-o', '--out', help="output file name")
+    parser.add_argument('--colname', default='SMILES', help="column name for SMILES")
     return parser.parse_args()
 
 
@@ -34,16 +31,16 @@ class Invert(object):
         Returns:
             PIL Image: Inverted image.
         """
-        if img.mode == "RGBA":
+        if img.mode == 'RGBA':
             r, g, b, a = img.split()
-            rgb = Image.merge("RGB", (r, g, b))
+            rgb = Image.merge('RGB', (r, g, b))
             inv = ImageOps.invert(rgb)
             r, g, b = inv.split()
-            inv = Image.merge("RGBA", (r, g, b, a))
-        elif img.mode == "LA":
+            inv = Image.merge('RGBA', (r, g, b, a))
+        elif img.mode == 'LA':
             l, a = img.split()
             l = ImageOps.invert(l)
-            inv = Image.merge("LA", (l, a))
+            inv = Image.merge('LA', (l, a))
         else:
             inv = ImageOps.invert(img)
         return inv
@@ -58,12 +55,10 @@ class Invert(object):
         return self.invert(img)
 
     def __repr__(self):
-        return self.__class__.__name__ + "()"
+        return self.__class__.__name__ + '()'
 
 
-def smiles_to_image(
-    mol, molSize=(512, 512), kekulize=True, mol_name="", mol_computed=False, invert=True
-):
+def smiles_to_image(mol, molSize=(512, 512), kekulize=True, mol_name='', mol_computed=False, invert=True):
     if not mol_computed:
         mol = Chem.MolFromSmiles(mol)
     mc = Chem.Mol(mol.ToBinary())
@@ -78,25 +73,19 @@ def smiles_to_image(
     drawer.DrawMolecule(mc)
     drawer.FinishDrawing()
     svg = drawer.GetDrawingText()
-    image = Image.open(
-        io.BytesIO(
-            cairosvg.svg2png(
-                bytestring=svg, parent_width=100, parent_height=100, scale=1
-            )
-        )
-    )
-    image.convert("RGB")
+    image = Image.open(io.BytesIO(cairosvg.svg2png(bytestring=svg, parent_width=100, parent_height=100, scale=1)))
+    image.convert('RGB')
     return Invert()(image) if invert else image
 
 
 args = parse_args()
-out = args.out or args.filename + ".images"
+out = args.out or args.filename + '.images'
 os.makedirs(out, exist_ok=True)
-print(f"Saving to {out}/\n")
+print(f'Saving to {out}/\n')
 
-df = pd.read_csv(args.filename, sep="\t")
+df = pd.read_csv(args.filename, sep='\t')
 drugs = df[args.colname]
 for index, smile in enumerate(drugs):
-    print(f"{index}.png  <= ", "SMILE:", smile)
+    print(f'{index}.png  <= ', 'SMILE:', smile)
     img = smiles_to_image(smile)
-    img.save(f"{out}/{index}.png")
+    img.save(f'{out}/{index}.png')

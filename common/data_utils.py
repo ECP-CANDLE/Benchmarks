@@ -12,29 +12,30 @@ try:
     from sklearn.impute import SimpleImputer as Imputer
 except ImportError:
     from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
-from default_utils import DEFAULT_DATATYPE, DEFAULT_SEED
-from sklearn.preprocessing import MaxAbsScaler, MinMaxScaler, StandardScaler
+from default_utils import DEFAULT_SEED
+from default_utils import DEFAULT_DATATYPE
 
 
 # TAKEN from tensorflow
 def to_categorical(y, num_classes=None):
     """Converts a class vector (integers) to binary class matrix.
-    E.g. for use with categorical_crossentropy.
-    Parameters
-    ----------
-    y: numpy array
-        class vector to be converted into a matrix
-        (integers from 0 to num_classes).
-    num_classes: int
-        total number of classes.
-    Returns
-    -------
-    categorical: numpy array
-        A binary matrix representation of the input. The classes axis is placed
-        last.
+        E.g. for use with categorical_crossentropy.
+        Parameters
+        ----------
+        y: numpy array
+            class vector to be converted into a matrix
+            (integers from 0 to num_classes).
+        num_classes: int
+            total number of classes.
+        Returns
+        -------
+        categorical: numpy array
+            A binary matrix representation of the input. The classes axis is placed
+            last.
     """
-    y = np.array(y, dtype="int")
+    y = np.array(y, dtype='int')
     input_shape = y.shape
     if input_shape and input_shape[-1] == 1 and len(input_shape) > 1:
         input_shape = tuple(input_shape[:-1])
@@ -50,24 +51,24 @@ def to_categorical(y, num_classes=None):
 
 
 def convert_to_class(y_one_hot, dtype=int):
-    """Converts a one-hot class encoding (array with as many positions as total
-    classes, with 1 in the corresponding class position, 0 in the other positions),
-    or soft-max class encoding (array with as many positions as total
-    classes, whose largest valued position is used as class membership)
-    to an integer class encoding.
+    """ Converts a one-hot class encoding (array with as many positions as total
+        classes, with 1 in the corresponding class position, 0 in the other positions),
+        or soft-max class encoding (array with as many positions as total
+        classes, whose largest valued position is used as class membership)
+        to an integer class encoding.
 
-    Parameters
-    ----------
-    y_one_hot : numpy array
-        Input array with one-hot or soft-max class encoding.
-    dtype : data type
-        Data type to use for the output numpy array.
-        (Default: int, integer data is used to represent the
-        class membership).
+        Parameters
+        ----------
+        y_one_hot : numpy array
+            Input array with one-hot or soft-max class encoding.
+        dtype : data type
+            Data type to use for the output numpy array.
+            (Default: int, integer data is used to represent the
+            class membership).
 
-    Return
-    ----------
-    Returns a numpy array with an integer class encoding.
+        Return
+        ----------
+        Returns a numpy array with an integer class encoding.
     """
 
     # maxi = lambda a: a.argmax()
@@ -104,14 +105,14 @@ def scale_array(mat, scaling=None):
         array unmodified.
     """
 
-    if scaling is None or scaling.lower() == "none":
+    if scaling is None or scaling.lower() == 'none':
         return mat
 
     # Scaling data
-    if scaling == "maxabs":
+    if scaling == 'maxabs':
         # Scaling to [-1, 1]
         scaler = MaxAbsScaler(copy=False)
-    elif scaling == "minmax":
+    elif scaling == 'minmax':
         # Scaling to [0,1]
         scaler = MinMaxScaler(copy=False)
     else:
@@ -147,13 +148,13 @@ def impute_and_scale_array(mat, scaling=None):
     # imputer = SimpleImputer(strategy='mean', copy=False)
     # Next line is from conditional import. axis=0 is default
     # in old version so it is not necessary.
-    imputer = Imputer(strategy="mean", copy=False)
+    imputer = Imputer(strategy='mean', copy=False)
     imputer.fit_transform(mat)
 
     return scale_array(mat, scaling)
 
 
-def drop_impute_and_scale_dataframe(df, scaling="std", imputing="mean", dropna="all"):
+def drop_impute_and_scale_dataframe(df, scaling='std', imputing='mean', dropna='all'):
     """Impute missing values with mean and scale data included in pandas dataframe.
 
     Parameters
@@ -188,7 +189,7 @@ def drop_impute_and_scale_dataframe(df, scaling="std", imputing="mean", dropna="
         empty_cols = df.columns[df.notnull().sum() == 0]
         df[empty_cols] = 0
 
-    if imputing is None or imputing.lower() == "none":
+    if imputing is None or imputing.lower() == 'none':
         mat = df.values
     else:
         # imputer = Imputer(strategy=imputing, axis=0)
@@ -198,12 +199,12 @@ def drop_impute_and_scale_dataframe(df, scaling="std", imputing="mean", dropna="
         imputer = Imputer(strategy=imputing)
         mat = imputer.fit_transform(df.values)
 
-    if scaling is None or scaling.lower() == "none":
+    if scaling is None or scaling.lower() == 'none':
         return pd.DataFrame(mat, columns=df.columns)
 
-    if scaling == "maxabs":
+    if scaling == 'maxabs':
         scaler = MaxAbsScaler()
-    elif scaling == "minmax":
+    elif scaling == 'minmax':
         scaler = MinMaxScaler()
     else:
         scaler = StandardScaler()
@@ -271,7 +272,7 @@ def discretize_array(y, bins=5):
     return classes
 
 
-def lookup(df, query, ret, keys, match="match"):
+def lookup(df, query, ret, keys, match='match'):
     """Dataframe lookup.
 
     Parameters
@@ -297,24 +298,17 @@ def lookup(df, query, ret, keys, match="match"):
 
     mask = pd.Series(False, index=range(df.shape[0]))
     for key in keys:
-        if match == "contains":
+        if match == 'contains':
             mask |= df[key].str.contains(query.upper(), case=False)
         else:
-            mask |= df[key].str.upper() == query.upper()
+            mask |= (df[key].str.upper() == query.upper())
 
     return list(set(df[mask][ret].values.flatten().tolist()))
 
 
-def load_X_data(
-    train_file,
-    test_file,
-    drop_cols=None,
-    n_cols=None,
-    shuffle=False,
-    scaling=None,
-    dtype=DEFAULT_DATATYPE,
-    seed=DEFAULT_SEED,
-):
+def load_X_data(train_file, test_file,
+                drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
     """ Load training and testing unlabeleled data from the files specified
         and construct corresponding training and testing pandas DataFrames.
         Columns to load can be selected or dropped. Order of rows
@@ -366,8 +360,8 @@ def load_X_data(
     # compensates for the columns to drop if there is a feature subselection
     usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
 
-    df_train = pd.read_csv(train_file, engine="c", usecols=usecols)
-    df_test = pd.read_csv(test_file, engine="c", usecols=usecols)
+    df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
+    df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
 
     # Drop specified columns
     if drop_cols is not None:
@@ -387,86 +381,78 @@ def load_X_data(
     if scaling is not None:
         mat = scale_array(mat, scaling)
 
-    X_train = mat[: X_train.shape[0], :]
-    X_test = mat[X_train.shape[0] :, :]
+    X_train = mat[:X_train.shape[0], :]
+    X_test = mat[X_train.shape[0]:, :]
 
     return X_train, X_test
 
 
-def load_X_data2(
-    train_file,
-    test_file,
-    drop_cols=None,
-    n_cols=None,
-    shuffle=False,
-    scaling=None,
-    validation_split=0.1,
-    dtype=DEFAULT_DATATYPE,
-    seed=DEFAULT_SEED,
-):
-    """Load training and testing unlabeleled data from the files specified.
-    Further split trainig data into training and validation partitions,
-    and construct corresponding training, validation and testing pandas DataFrames.
-    Columns to load can be selected or dropped. Order of rows
-    can be shuffled. Data can be rescaled.
-    Training and testing partitions (coming from the respective files)
-    are preserved, but training is split into training and validation partitions.
-    This function assumes that the files contain a header with column names.
+def load_X_data2(train_file, test_file,
+                 drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                 validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+    """ Load training and testing unlabeleled data from the files specified.
+        Further split trainig data into training and validation partitions,
+        and construct corresponding training, validation and testing pandas DataFrames.
+        Columns to load can be selected or dropped. Order of rows
+        can be shuffled. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved, but training is split into training and validation partitions.
+        This function assumes that the files contain a header with column names.
 
-    Parameters
-    ----------
-    train_file : filename
-        Name of the file to load the training data.
-    test_file : filename
-        Name of the file to load the testing data.
-    drop_cols : list
-        List of column names to drop from the files being loaded.
-        (Default: None, all the columns are used).
-    n_cols : integer
-        Number of columns to load from the files.
-        (Default: None, all the columns are used).
-    shuffle : boolean
-        Boolean flag to indicate row shuffling. If True the rows are
-        re-ordered, if False the order in which rows are read is
-        preserved.
-        (Default: False, no permutation of the loading row order).
-    scaling : string
-        String describing type of scaling to apply.
-        Options recognized: 'maxabs', 'minmax', 'std'.
-        'maxabs' : scales data to range [-1 to 1].
-        'minmax' : scales data to range [-1 to 1].
-        'std'    : scales data to normal variable with mean 0 and standard deviation 1.
-        (Default: None, no scaling).
-    validation_split : float
-        Fraction of training data to set aside for validation.
-        (Default: 0.1, ten percent of the training data is
-        used for the validation partition).
-    dtype : data type
-        Data type to use for the output pandas DataFrames.
-        (Default: DEFAULT_DATATYPE defined in default_utils).
-    seed : int
-        Value to intialize or re-seed the generator.
-        (Default: DEFAULT_SEED defined in default_utils).
+        Parameters
+        ----------
+        train_file : filename
+            Name of the file to load the training data.
+        test_file : filename
+            Name of the file to load the testing data.
+        drop_cols : list
+            List of column names to drop from the files being loaded.
+            (Default: None, all the columns are used).
+        n_cols : integer
+            Number of columns to load from the files.
+            (Default: None, all the columns are used).
+        shuffle : boolean
+            Boolean flag to indicate row shuffling. If True the rows are
+            re-ordered, if False the order in which rows are read is
+            preserved.
+            (Default: False, no permutation of the loading row order).
+        scaling : string
+            String describing type of scaling to apply.
+            Options recognized: 'maxabs', 'minmax', 'std'.
+            'maxabs' : scales data to range [-1 to 1].
+            'minmax' : scales data to range [-1 to 1].
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
+            (Default: None, no scaling).
+        validation_split : float
+            Fraction of training data to set aside for validation.
+            (Default: 0.1, ten percent of the training data is
+            used for the validation partition).
+        dtype : data type
+            Data type to use for the output pandas DataFrames.
+            (Default: DEFAULT_DATATYPE defined in default_utils).
+        seed : int
+            Value to intialize or re-seed the generator.
+            (Default: DEFAULT_SEED defined in default_utils).
 
 
-    Return
-    ----------
-    X_train : pandas DataFrame
-        Data for training loaded in a pandas DataFrame and
-        pre-processed as specified.
-    X_val : pandas DataFrame
-        Data for validation loaded in a pandas DataFrame and
-        pre-processed as specified.
-    X_test : pandas DataFrame
-        Data for testing loaded in a pandas DataFrame and
-        pre-processed as specified.
+        Return
+        ----------
+        X_train : pandas DataFrame
+            Data for training loaded in a pandas DataFrame and
+            pre-processed as specified.
+        X_val : pandas DataFrame
+            Data for validation loaded in a pandas DataFrame and
+            pre-processed as specified.
+        X_test : pandas DataFrame
+            Data for testing loaded in a pandas DataFrame and
+            pre-processed as specified.
     """
 
     # compensates for the columns to drop if there is a feature subselection
     usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
 
-    df_train = pd.read_csv(train_file, engine="c", usecols=usecols)
-    df_test = pd.read_csv(test_file, engine="c", usecols=usecols)
+    df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
+    df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
 
     # Drop specified columns
     if drop_cols is not None:
@@ -496,76 +482,68 @@ def load_X_data2(
     return X_train, X_val, X_test
 
 
-def load_Xy_one_hot_data(
-    train_file,
-    test_file,
-    class_col=None,
-    drop_cols=None,
-    n_cols=None,
-    shuffle=False,
-    scaling=None,
-    dtype=DEFAULT_DATATYPE,
-    seed=DEFAULT_SEED,
-):
-    """Load training and testing data from the files specified, with a column indicated to use as label.
-    Construct corresponding training and testing pandas DataFrames,
-    separated into data (i.e. features) and labels. Labels to output are one-hot encoded (categorical).
-    Columns to load can be selected or dropped. Order of rows
-    can be shuffled. Data can be rescaled.
-    Training and testing partitions (coming from the respective files)
-    are preserved.
-    This function assumes that the files contain a header with column names.
+def load_Xy_one_hot_data(train_file, test_file,
+                         class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                         dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+    """ Load training and testing data from the files specified, with a column indicated to use as label.
+        Construct corresponding training and testing pandas DataFrames,
+        separated into data (i.e. features) and labels. Labels to output are one-hot encoded (categorical).
+        Columns to load can be selected or dropped. Order of rows
+        can be shuffled. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved.
+        This function assumes that the files contain a header with column names.
 
-    Parameters
-    ----------
-    train_file : filename
-        Name of the file to load the training data.
-    test_file : filename
-        Name of the file to load the testing data.
-    class_col : integer
-        Index of the column to use as the label.
-        (Default: None, this would cause the function to fail, a label
-        has to be indicated at calling).
-    drop_cols : list
-        List of column names to drop from the files being loaded.
-        (Default: None, all the columns are used).
-    n_cols : integer
-        Number of columns to load from the files.
-        (Default: None, all the columns are used).
-    shuffle : boolean
-        Boolean flag to indicate row shuffling. If True the rows are
-        re-ordered, if False the order in which rows are read is
-        preserved.
-        (Default: False, no permutation of the loading row order).
-    scaling : string
-        String describing type of scaling to apply.
-        Options recognized: 'maxabs', 'minmax', 'std'.
-        'maxabs' : scales data to range [-1 to 1].
-        'minmax' : scales data to range [-1 to 1].
-        'std'    : scales data to normal variable with mean 0 and standard deviation 1.
-        (Default: None, no scaling).
-    dtype : data type
-        Data type to use for the output pandas DataFrames.
-        (Default: DEFAULT_DATATYPE defined in default_utils).
-    seed : int
-        Value to intialize or re-seed the generator.
-        (Default: DEFAULT_SEED defined in default_utils).
+        Parameters
+        ----------
+        train_file : filename
+            Name of the file to load the training data.
+        test_file : filename
+            Name of the file to load the testing data.
+        class_col : integer
+            Index of the column to use as the label.
+            (Default: None, this would cause the function to fail, a label
+            has to be indicated at calling).
+        drop_cols : list
+            List of column names to drop from the files being loaded.
+            (Default: None, all the columns are used).
+        n_cols : integer
+            Number of columns to load from the files.
+            (Default: None, all the columns are used).
+        shuffle : boolean
+            Boolean flag to indicate row shuffling. If True the rows are
+            re-ordered, if False the order in which rows are read is
+            preserved.
+            (Default: False, no permutation of the loading row order).
+        scaling : string
+            String describing type of scaling to apply.
+            Options recognized: 'maxabs', 'minmax', 'std'.
+            'maxabs' : scales data to range [-1 to 1].
+            'minmax' : scales data to range [-1 to 1].
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
+            (Default: None, no scaling).
+        dtype : data type
+            Data type to use for the output pandas DataFrames.
+            (Default: DEFAULT_DATATYPE defined in default_utils).
+        seed : int
+            Value to intialize or re-seed the generator.
+            (Default: DEFAULT_SEED defined in default_utils).
 
 
-    Return
-    ----------
-    X_train : pandas DataFrame
-        Data features for training loaded in a pandas DataFrame and
-        pre-processed as specified.
-    y_train : pandas DataFrame
-        Data labels for training loaded in a pandas DataFrame.
-        One-hot encoding (categorical) is used.
-    X_test : pandas DataFrame
-        Data features for testing loaded in a pandas DataFrame and
-        pre-processed as specified.
-    y_test : pandas DataFrame
-        Data labels for testing loaded in a pandas DataFrame.
-        One-hot encoding (categorical) is used.
+        Return
+        ----------
+        X_train : pandas DataFrame
+            Data features for training loaded in a pandas DataFrame and
+            pre-processed as specified.
+        y_train : pandas DataFrame
+            Data labels for training loaded in a pandas DataFrame.
+            One-hot encoding (categorical) is used.
+        X_test : pandas DataFrame
+            Data features for testing loaded in a pandas DataFrame and
+            pre-processed as specified.
+        y_test : pandas DataFrame
+            Data labels for testing loaded in a pandas DataFrame.
+            One-hot encoding (categorical) is used.
     """
 
     assert class_col is not None
@@ -573,8 +551,8 @@ def load_Xy_one_hot_data(
     # compensates for the columns to drop if there is a feature subselection
     usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
 
-    df_train = pd.read_csv(train_file, engine="c", usecols=usecols)
-    df_test = pd.read_csv(test_file, engine="c", usecols=usecols)
+    df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
+    df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
 
     if shuffle:
         df_train = df_train.sample(frac=1, random_state=seed)
@@ -602,94 +580,85 @@ def load_Xy_one_hot_data(
     if scaling is not None:
         mat = scale_array(mat, scaling)
     # Recover training and testing splits after scaling
-    X_train = mat[: X_train.shape[0], :]
-    X_test = mat[X_train.shape[0] :, :]
+    X_train = mat[:X_train.shape[0], :]
+    X_test = mat[X_train.shape[0]:, :]
 
     return (X_train, y_train), (X_test, y_test)
 
 
-def load_Xy_one_hot_data2(
-    train_file,
-    test_file,
-    class_col=None,
-    drop_cols=None,
-    n_cols=None,
-    shuffle=False,
-    scaling=None,
-    validation_split=0.1,
-    dtype=DEFAULT_DATATYPE,
-    seed=DEFAULT_SEED,
-):
-    """Load training and testing data from the files specified, with a column indicated to use as label.
-    Further split trainig data into training and validation partitions,
-    and construct corresponding training, validation and testing pandas DataFrames,
-    separated into data (i.e. features) and labels. Labels to output are one-hot encoded (categorical).
-    Columns to load can be selected or dropped. Order of rows
-    can be shuffled. Data can be rescaled.
-    Training and testing partitions (coming from the respective files)
-    are preserved, but training is split into training and validation partitions.
-    This function assumes that the files contain a header with column names.
+def load_Xy_one_hot_data2(train_file, test_file,
+                          class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                          validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+    """ Load training and testing data from the files specified, with a column indicated to use as label.
+        Further split trainig data into training and validation partitions,
+        and construct corresponding training, validation and testing pandas DataFrames,
+        separated into data (i.e. features) and labels. Labels to output are one-hot encoded (categorical).
+        Columns to load can be selected or dropped. Order of rows
+        can be shuffled. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved, but training is split into training and validation partitions.
+        This function assumes that the files contain a header with column names.
 
-    Parameters
-    ----------
-    train_file : filename
-        Name of the file to load the training data.
-    test_file : filename
-        Name of the file to load the testing data.
-    class_col : integer
-        Index of the column to use as the label.
-        (Default: None, this would cause the function to fail, a label
-        has to be indicated at calling).
-    drop_cols : list
-        List of column names to drop from the files being loaded.
-        (Default: None, all the columns are used).
-    n_cols : integer
-        Number of columns to load from the files.
-        (Default: None, all the columns are used).
-    shuffle : boolean
-        Boolean flag to indicate row shuffling. If True the rows are
-        re-ordered, if False the order in which rows are loaded is
-        preserved.
-        (Default: False, no permutation of the loading row order).
-    scaling : string
-        String describing type of scaling to apply.
-        Options recognized: 'maxabs', 'minmax', 'std'.
-        'maxabs' : scales data to range [-1 to 1].
-        'minmax' : scales data to range [-1 to 1].
-        'std'    : scales data to normal variable with mean 0 and standard deviation 1.
-        (Default: None, no scaling).
-    validation_split : float
-        Fraction of training data to set aside for validation.
-        (Default: 0.1, ten percent of the training data is
-        used for the validation partition).
-    dtype : data type
-        Data type to use for the output pandas DataFrames.
-        (Default: DEFAULT_DATATYPE defined in default_utils).
-    seed : int
-        Value to intialize or re-seed the generator.
-        (Default: DEFAULT_SEED defined in default_utils).
+        Parameters
+        ----------
+        train_file : filename
+            Name of the file to load the training data.
+        test_file : filename
+            Name of the file to load the testing data.
+        class_col : integer
+            Index of the column to use as the label.
+            (Default: None, this would cause the function to fail, a label
+            has to be indicated at calling).
+        drop_cols : list
+            List of column names to drop from the files being loaded.
+            (Default: None, all the columns are used).
+        n_cols : integer
+            Number of columns to load from the files.
+            (Default: None, all the columns are used).
+        shuffle : boolean
+            Boolean flag to indicate row shuffling. If True the rows are
+            re-ordered, if False the order in which rows are loaded is
+            preserved.
+            (Default: False, no permutation of the loading row order).
+        scaling : string
+            String describing type of scaling to apply.
+            Options recognized: 'maxabs', 'minmax', 'std'.
+            'maxabs' : scales data to range [-1 to 1].
+            'minmax' : scales data to range [-1 to 1].
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
+            (Default: None, no scaling).
+        validation_split : float
+            Fraction of training data to set aside for validation.
+            (Default: 0.1, ten percent of the training data is
+            used for the validation partition).
+        dtype : data type
+            Data type to use for the output pandas DataFrames.
+            (Default: DEFAULT_DATATYPE defined in default_utils).
+        seed : int
+            Value to intialize or re-seed the generator.
+            (Default: DEFAULT_SEED defined in default_utils).
 
 
-    Return
-    ----------
-    X_train : pandas DataFrame
-        Data features for training loaded in a pandas DataFrame and
-        pre-processed as specified.
-    y_train : pandas DataFrame
-        Data labels for training loaded in a pandas DataFrame.
-        One-hot encoding (categorical) is used.
-    X_val : pandas DataFrame
-        Data features for validation loaded in a pandas DataFrame and
-        pre-processed as specified.
-    y_val : pandas DataFrame
-        Data labels for validation loaded in a pandas DataFrame.
-        One-hot encoding (categorical) is used.
-    X_test : pandas DataFrame
-        Data features for testing loaded in a pandas DataFrame and
-        pre-processed as specified.
-    y_test : pandas DataFrame
-        Data labels for testing loaded in a pandas DataFrame.
-        One-hot encoding (categorical) is used.
+        Return
+        ----------
+        X_train : pandas DataFrame
+            Data features for training loaded in a pandas DataFrame and
+            pre-processed as specified.
+        y_train : pandas DataFrame
+            Data labels for training loaded in a pandas DataFrame.
+            One-hot encoding (categorical) is used.
+        X_val : pandas DataFrame
+            Data features for validation loaded in a pandas DataFrame and
+            pre-processed as specified.
+        y_val : pandas DataFrame
+            Data labels for validation loaded in a pandas DataFrame.
+            One-hot encoding (categorical) is used.
+        X_test : pandas DataFrame
+            Data features for testing loaded in a pandas DataFrame and
+            pre-processed as specified.
+        y_test : pandas DataFrame
+            Data labels for testing loaded in a pandas DataFrame.
+            One-hot encoding (categorical) is used.
     """
 
     assert class_col is not None
@@ -697,8 +666,8 @@ def load_Xy_one_hot_data2(
     # compensates for the columns to drop if there is a feature subselection
     usecols = list(range(n_cols + len(drop_cols))) if n_cols else None
 
-    df_train = pd.read_csv(train_file, engine="c", usecols=usecols)
-    df_test = pd.read_csv(test_file, engine="c", usecols=usecols)
+    df_train = pd.read_csv(train_file, engine='c', usecols=usecols)
+    df_test = pd.read_csv(test_file, engine='c', usecols=usecols)
 
     if shuffle:
         df_train = df_train.sample(frac=1, random_state=seed)
@@ -735,107 +704,84 @@ def load_Xy_one_hot_data2(
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 
-def load_Xy_data2(
-    train_file,
-    test_file,
-    class_col=None,
-    drop_cols=None,
-    n_cols=None,
-    shuffle=False,
-    scaling=None,
-    validation_split=0.1,
-    dtype=DEFAULT_DATATYPE,
-    seed=DEFAULT_SEED,
-):
-    """Load training and testing data from the files specified, with a column indicated to use as label.
-    Further split trainig data into training and validation partitions,
-    and construct corresponding training, validation and testing pandas DataFrames,
-    separated into data (i.e. features) and labels.
-    Labels to output can be integer labels (for classification) or
-    continuous labels (for regression).
-    Columns to load can be selected or dropped. Order of rows
-    can be shuffled. Data can be rescaled.
-    Training and testing partitions (coming from the respective files)
-    are preserved, but training is split into training and validation partitions.
-    This function assumes that the files contain a header with column names.
+def load_Xy_data2(train_file, test_file, class_col=None, drop_cols=None, n_cols=None, shuffle=False, scaling=None,
+                  validation_split=0.1, dtype=DEFAULT_DATATYPE, seed=DEFAULT_SEED):
+    """ Load training and testing data from the files specified, with a column indicated to use as label.
+        Further split trainig data into training and validation partitions,
+        and construct corresponding training, validation and testing pandas DataFrames,
+        separated into data (i.e. features) and labels.
+        Labels to output can be integer labels (for classification) or
+        continuous labels (for regression).
+        Columns to load can be selected or dropped. Order of rows
+        can be shuffled. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved, but training is split into training and validation partitions.
+        This function assumes that the files contain a header with column names.
 
-    Parameters
-    ----------
-    train_file : filename
-        Name of the file to load the training data.
-    test_file : filename
-        Name of the file to load the testing data.
-    class_col : integer
-        Index of the column to use as the label.
-        (Default: None, this would cause the function to fail, a label
-        has to be indicated at calling).
-    drop_cols : list
-        List of column names to drop from the files being loaded.
-        (Default: None, all the columns are used).
-    n_cols : integer
-        Number of columns to load from the files.
-        (Default: None, all the columns are used).
-    shuffle : boolean
-        Boolean flag to indicate row shuffling. If True the rows are
-        re-ordered, if False the order in which rows are loaded is
-        preserved.
-        (Default: False, no permutation of the loading row order).
-    scaling : string
-        String describing type of scaling to apply.
-        Options recognized: 'maxabs', 'minmax', 'std'.
-        'maxabs' : scales data to range [-1 to 1].
-        'minmax' : scales data to range [-1 to 1].
-        'std'    : scales data to normal variable with mean 0 and standard deviation 1.
-        (Default: None, no scaling).
-    validation_split : float
-        Fraction of training data to set aside for validation.
-        (Default: 0.1, ten percent of the training data is
-        used for the validation partition).
-    dtype : data type
-        Data type to use for the output pandas DataFrames.
-        (Default: DEFAULT_DATATYPE defined in default_utils).
-    seed : int
-        Value to intialize or re-seed the generator.
-        (Default: DEFAULT_SEED defined in default_utils).
+        Parameters
+        ----------
+        train_file : filename
+            Name of the file to load the training data.
+        test_file : filename
+            Name of the file to load the testing data.
+        class_col : integer
+            Index of the column to use as the label.
+            (Default: None, this would cause the function to fail, a label
+            has to be indicated at calling).
+        drop_cols : list
+            List of column names to drop from the files being loaded.
+            (Default: None, all the columns are used).
+        n_cols : integer
+            Number of columns to load from the files.
+            (Default: None, all the columns are used).
+        shuffle : boolean
+            Boolean flag to indicate row shuffling. If True the rows are
+            re-ordered, if False the order in which rows are loaded is
+            preserved.
+            (Default: False, no permutation of the loading row order).
+        scaling : string
+            String describing type of scaling to apply.
+            Options recognized: 'maxabs', 'minmax', 'std'.
+            'maxabs' : scales data to range [-1 to 1].
+            'minmax' : scales data to range [-1 to 1].
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
+            (Default: None, no scaling).
+        validation_split : float
+            Fraction of training data to set aside for validation.
+            (Default: 0.1, ten percent of the training data is
+            used for the validation partition).
+        dtype : data type
+            Data type to use for the output pandas DataFrames.
+            (Default: DEFAULT_DATATYPE defined in default_utils).
+        seed : int
+            Value to intialize or re-seed the generator.
+            (Default: DEFAULT_SEED defined in default_utils).
 
 
-    Return
-    ----------
-    X_train : pandas DataFrame
-        Data features for training loaded in a pandas DataFrame and
-        pre-processed as specified.
-    y_train : pandas DataFrame
-        Data labels for training loaded in a pandas DataFrame.
-    X_val : pandas DataFrame
-        Data features for validation loaded in a pandas DataFrame and
-        pre-processed as specified.
-    y_val : pandas DataFrame
-        Data labels for validation loaded in a pandas DataFrame.
-    X_test : pandas DataFrame
-        Data features for testing loaded in a pandas DataFrame and
-        pre-processed as specified.
-    y_test : pandas DataFrame
-        Data labels for testing loaded in a pandas DataFrame.
+        Return
+        ----------
+        X_train : pandas DataFrame
+            Data features for training loaded in a pandas DataFrame and
+            pre-processed as specified.
+        y_train : pandas DataFrame
+            Data labels for training loaded in a pandas DataFrame.
+        X_val : pandas DataFrame
+            Data features for validation loaded in a pandas DataFrame and
+            pre-processed as specified.
+        y_val : pandas DataFrame
+            Data labels for validation loaded in a pandas DataFrame.
+        X_test : pandas DataFrame
+            Data features for testing loaded in a pandas DataFrame and
+            pre-processed as specified.
+        y_test : pandas DataFrame
+            Data labels for testing loaded in a pandas DataFrame.
     """
 
     assert class_col is not None
 
-    (
-        (X_train, y_train_oh),
-        (X_val, y_val_oh),
-        (X_test, y_test_oh),
-    ) = load_Xy_one_hot_data2(
-        train_file,
-        test_file,
-        class_col,
-        drop_cols,
-        n_cols,
-        shuffle,
-        scaling,
-        validation_split,
-        dtype,
-        seed,
-    )
+    (X_train, y_train_oh), (X_val, y_val_oh), (X_test, y_test_oh) = load_Xy_one_hot_data2(train_file, test_file,
+                                                                                          class_col, drop_cols, n_cols, shuffle, scaling,
+                                                                                          validation_split, dtype, seed)
 
     y_train = convert_to_class(y_train_oh)
     y_val = convert_to_class(y_val_oh)
@@ -844,72 +790,66 @@ def load_Xy_data2(
     return (X_train, y_train), (X_val, y_val), (X_test, y_test)
 
 
-def load_Xy_data_noheader(
-    train_file, test_file, classes, usecols=None, scaling=None, dtype=DEFAULT_DATATYPE
-):
-    """Load training and testing data from the files specified, with the first column to use as label.
-    Construct corresponding training and testing pandas DataFrames,
-    separated into data (i.e. features) and labels.
-    Labels to output are one-hot encoded (categorical).
-    Columns to load can be selected. Data can be rescaled.
-    Training and testing partitions (coming from the respective files)
-    are preserved.
-    This function assumes that the files do not contain a header.
+def load_Xy_data_noheader(train_file, test_file, classes, usecols=None, scaling=None, dtype=DEFAULT_DATATYPE):
+    """ Load training and testing data from the files specified, with the first column to use as label.
+        Construct corresponding training and testing pandas DataFrames,
+        separated into data (i.e. features) and labels.
+        Labels to output are one-hot encoded (categorical).
+        Columns to load can be selected. Data can be rescaled.
+        Training and testing partitions (coming from the respective files)
+        are preserved.
+        This function assumes that the files do not contain a header.
 
-    Parameters
-    ----------
-    train_file : filename
-        Name of the file to load the training data.
-    test_file : filename
-        Name of the file to load the testing data.
-    classes : integer
-        Number of total classes to consider when
-        building the categorical (one-hot) label encoding.
-    usecols : list
-        List of column indices to load from the files.
-        (Default: None, all the columns are used).
-    scaling : string
-        String describing type of scaling to apply.
-        Options recognized: 'maxabs', 'minmax', 'std'.
-        'maxabs' : scales data to range [-1 to 1].
-        'minmax' : scales data to range [-1 to 1].
-        'std'    : scales data to normal variable with mean 0 and standard deviation 1.
-        (Default: None, no scaling).
-    dtype : data type
-        Data type to use for the output pandas DataFrames.
-        (Default: DEFAULT_DATATYPE defined in default_utils).
+        Parameters
+        ----------
+        train_file : filename
+            Name of the file to load the training data.
+        test_file : filename
+            Name of the file to load the testing data.
+        classes : integer
+            Number of total classes to consider when
+            building the categorical (one-hot) label encoding.
+        usecols : list
+            List of column indices to load from the files.
+            (Default: None, all the columns are used).
+        scaling : string
+            String describing type of scaling to apply.
+            Options recognized: 'maxabs', 'minmax', 'std'.
+            'maxabs' : scales data to range [-1 to 1].
+            'minmax' : scales data to range [-1 to 1].
+            'std'    : scales data to normal variable with mean 0 and standard deviation 1.
+            (Default: None, no scaling).
+        dtype : data type
+            Data type to use for the output pandas DataFrames.
+            (Default: DEFAULT_DATATYPE defined in default_utils).
 
-    Return
-    ----------
-    X_train : pandas DataFrame
-        Data features for training loaded in a pandas DataFrame and
-        pre-processed as specified.
-    Y_train : pandas DataFrame
-        Data labels for training loaded in a pandas DataFrame.
-        One-hot encoding (categorical) is used.
-    X_test : pandas DataFrame
-        Data features for testing loaded in a pandas DataFrame and
-        pre-processed as specified.
-    Y_test : pandas DataFrame
-        Data labels for testing loaded in a pandas DataFrame.
-        One-hot encoding (categorical) is used.
+        Return
+        ----------
+        X_train : pandas DataFrame
+            Data features for training loaded in a pandas DataFrame and
+            pre-processed as specified.
+        Y_train : pandas DataFrame
+            Data labels for training loaded in a pandas DataFrame.
+            One-hot encoding (categorical) is used.
+        X_test : pandas DataFrame
+            Data features for testing loaded in a pandas DataFrame and
+            pre-processed as specified.
+        Y_test : pandas DataFrame
+            Data labels for testing loaded in a pandas DataFrame.
+            One-hot encoding (categorical) is used.
     """
-    print("Loading data...")
-    df_train = (pd.read_csv(train_file, header=None, usecols=usecols).values).astype(
-        dtype
-    )
-    df_test = (pd.read_csv(test_file, header=None, usecols=usecols).values).astype(
-        dtype
-    )
-    print("done")
+    print('Loading data...')
+    df_train = (pd.read_csv(train_file, header=None, usecols=usecols).values).astype(dtype)
+    df_test = (pd.read_csv(test_file, header=None, usecols=usecols).values).astype(dtype)
+    print('done')
 
-    print("df_train shape:", df_train.shape)
-    print("df_test shape:", df_test.shape)
+    print('df_train shape:', df_train.shape)
+    print('df_test shape:', df_test.shape)
 
     seqlen = df_train.shape[1]
 
-    df_y_train = df_train[:, 0].astype("int")
-    df_y_test = df_test[:, 0].astype("int")
+    df_y_train = df_train[:, 0].astype('int')
+    df_y_test = df_test[:, 0].astype('int')
 
     Y_train = to_categorical(df_y_train, classes)
     Y_test = to_categorical(df_y_test, classes)
@@ -917,8 +857,8 @@ def load_Xy_data_noheader(
     df_x_train = df_train[:, 1:seqlen].astype(dtype)
     df_x_test = df_test[:, 1:seqlen].astype(dtype)
 
-    #        X_train = df_x_train.as_matrix()
-    #        X_test = df_x_test.as_matrix()
+#        X_train = df_x_train.as_matrix()
+#        X_test = df_x_test.as_matrix()
 
     X_train = df_x_train
     X_test = df_x_test
@@ -928,31 +868,18 @@ def load_Xy_data_noheader(
     if scaling is not None:
         mat = scale_array(mat, scaling)
 
-    X_train = mat[: X_train.shape[0], :]
-    X_test = mat[X_train.shape[0] :, :]
+    X_train = mat[:X_train.shape[0], :]
+    X_test = mat[X_train.shape[0]:, :]
 
     return X_train, Y_train, X_test, Y_test
 
 
-def load_csv_data(
-    train_path,
-    test_path=None,
-    sep=",",
-    nrows=None,
-    x_cols=None,
-    y_cols=None,
-    drop_cols=None,
-    onehot_cols=None,
-    n_cols=None,
-    random_cols=False,
-    shuffle=False,
-    scaling=None,
-    dtype=None,
-    validation_split=None,
-    return_dataframe=True,
-    return_header=False,
-    seed=DEFAULT_SEED,
-):
+def load_csv_data(train_path, test_path=None, sep=',', nrows=None,
+                  x_cols=None, y_cols=None, drop_cols=None,
+                  onehot_cols=None, n_cols=None, random_cols=False,
+                  shuffle=False, scaling=None, dtype=None,
+                  validation_split=None, return_dataframe=True,
+                  return_header=False, seed=DEFAULT_SEED):
 
     """ Load data from the files specified.
         Columns corresponding to data features and labels can be specified. A one-hot
@@ -1042,7 +969,7 @@ def load_csv_data(
         usecols = None
         y_names = None
     else:
-        df_cols = pd.read_csv(train_path, engine="c", sep=sep, nrows=0)
+        df_cols = pd.read_csv(train_path, engine='c', sep=sep, nrows=0)
         df_x_cols = df_cols.copy()
         # drop columns by name or index
         if y_cols is not None:
@@ -1059,9 +986,7 @@ def load_csv_data(
         nx = df_x_cols.shape[1]
         if n_cols and n_cols < nx:
             if random_cols:
-                indexes = sorted(
-                    np.random.choice(list(range(nx)), n_cols, replace=False)
-                )
+                indexes = sorted(np.random.choice(list(range(nx)), n_cols, replace=False))
             else:
                 indexes = list(range(n_cols))
             x_names = list(df_x_cols[indexes])
@@ -1079,13 +1004,9 @@ def load_csv_data(
             y_names = list(df_cols[y_cols])
             usecols = y_names + x_names
 
-    df_train = pd.read_csv(
-        train_path, engine="c", sep=sep, nrows=nrows, usecols=usecols
-    )
+    df_train = pd.read_csv(train_path, engine='c', sep=sep, nrows=nrows, usecols=usecols)
     if test_path:
-        df_test = pd.read_csv(
-            test_path, engine="c", sep=sep, nrows=nrows, usecols=usecols
-        )
+        df_test = pd.read_csv(test_path, engine='c', sep=sep, nrows=nrows, usecols=usecols)
     else:
         df_test = df_train[0:0].copy()
 
@@ -1106,11 +1027,11 @@ def load_csv_data(
     if onehot_cols is not None:
         for col in onehot_cols:
             if col in y_names:
-                df_dummy = pd.get_dummies(df_y[col], prefix=col, prefix_sep=":")
+                df_dummy = pd.get_dummies(df_y[col], prefix=col, prefix_sep=':')
                 df_y = pd.concat([df_dummy, df_y.drop(col, axis=1)], axis=1)
                 # print(df_dummy.columns)
             else:
-                df_dummy = pd.get_dummies(df_x[col], prefix=col, prefix_sep=":")
+                df_dummy = pd.get_dummies(df_x[col], prefix=col, prefix_sep=':')
                 df_x = pd.concat([df_dummy, df_x.drop(col, axis=1)], axis=1)
 
     if scaling is not None:

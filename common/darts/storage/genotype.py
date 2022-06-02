@@ -1,12 +1,12 @@
-import json
 import os
+import json
 from typing import List
 
 from darts.genotypes import Genotype
 
 
 class GenotypeStorage:
-    """Disk storage for Genotypes
+    """ Disk storage for Genotypes
 
     Args:
         root: rooth path to save genotype
@@ -15,8 +15,8 @@ class GenotypeStorage:
     def __init__(self, root: str):
         self.root = root
 
-    def save_genotype(self, genotype: Genotype, filename="genotype.json") -> None:
-        """Save a genotype to disk
+    def save_genotype(self, genotype: Genotype, filename='genotype.json') -> None:
+        """ Save a genotype to disk
 
         Args:
             genotype: genotype to be saved
@@ -25,11 +25,11 @@ class GenotypeStorage:
         genotype = self._replace_range(genotype)
         os.makedirs(self.root, exist_ok=True)
         path = os.path.join(self.root, filename)
-        with open(path, "w") as outfile:
+        with open(path, 'w') as outfile:
             json.dump(genotype, outfile)
 
-    def load_genotype(self, filename="genotype.json") -> Genotype:
-        """Load a genotype from disk
+    def load_genotype(self, filename='genotype.json') -> Genotype:
+        """ Load a genotype from disk
 
         Args:
             filename: name of the save file
@@ -38,14 +38,14 @@ class GenotypeStorage:
             the genotype
         """
         path = os.path.join(self.root, filename)
-        with open(path, "r") as infile:
+        with open(path, 'r') as infile:
             saved = json.load(infile)
 
         genotype = self._convert_serialized(saved)
         return genotype
 
     def _replace_range(self, genotype: Genotype) -> Genotype:
-        """Replace the range values with lists
+        """ Replace the range values with lists
 
         Python's `range` is not serializable as json objects.
         We convert the genotype's ranges to lists first.
@@ -61,7 +61,7 @@ class GenotypeStorage:
         return genotype
 
     def _convert_serialized(self, save: list) -> Genotype:
-        """Convert json serialized form to Genotype
+        """ Convert json serialized form to Genotype
 
         Args:
             save: serialized form of the the genotype
@@ -77,7 +77,7 @@ class GenotypeStorage:
         return Genotype(normal, normal_concat, reduce, reduce_concat)
 
     def _convert_to_tuple(self, block: list) -> List[tuple]:
-        """Convert list to list of tuples
+        """ Convert list to list of tuples
 
         Used when converting part of a serialized form of
         the genotype

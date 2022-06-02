@@ -7,57 +7,75 @@ import torch
 import torch.nn.functional as F
 import torch.nn.utils.rnn
 import torch.utils.data
+
 from model.model import CharRNN
-from model.vocab import END_CHAR, START_CHAR, get_vocab_from_file
+from model.vocab import START_CHAR, END_CHAR
+from model.vocab import get_vocab_from_file
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, ".."))
+lib_path = os.path.abspath(os.path.join(file_path, '..'))
 sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, "..", "..", "common"))
+lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path2)
 
 
 import candle
 
 additional_definitions = [
-    {"name": "logdir", "type": str, "default": "./", "help": "place to store things."},
-    {
-        "name": "output",
-        "type": str,
-        "default": "./",
-        "help": "place to store output smiles",
-    },
-    {"name": "model", "type": str, "default": "autosave.model.pt", "help": ""},
-    {"name": "temperature", "type": float, "default": 1.0, "help": "temperature"},
-    {"name": "maxlen", "type": int, "default": 318, "help": ""},
-    {"name": "input", "type": str, "default": None, "help": "Data from vocab folder"},
-    {"name": "nsamples", "type": int, "default": 1, "help": "number samples to test"},
-    {
-        "name": "vr",
-        "type": candle.str2bool,
-        "default": False,
-        "help": "validate, uses rdkit",
-    },
-    {
-        "name": "vb",
-        "type": candle.str2bool,
-        "default": False,
-        "help": "validate, uses openababel",
-    },
-    {"name": "use_gpus", "type": candle.str2bool, "default": False, "help": ""},
+    {'name': 'logdir',
+        'type': str,
+        'default': './',
+        'help': 'place to store things.'},
+    {'name': 'output',
+        'type': str,
+        'default': './',
+        'help': 'place to store output smiles'},
+    {'name': 'model',
+        'type': str,
+        'default': 'autosave.model.pt',
+        'help': ''},
+    {'name': 'temperature',
+        'type': float,
+        'default': 1.0,
+        'help': 'temperature'},
+    {'name': 'maxlen',
+        'type': int,
+        'default': 318,
+        'help': ''},
+    {'name': 'input',
+        'type': str,
+        'default': None,
+        'help': 'Data from vocab folder'},
+    {'name': 'nsamples',
+        'type': int,
+        'default': 1,
+        'help': 'number samples to test'},
+    {'name': 'vr',
+        'type': candle.str2bool,
+        'default': False,
+        'help': 'validate, uses rdkit'},
+    {'name': 'vb',
+        'type': candle.str2bool,
+        'default': False,
+        'help': 'validate, uses openababel'},
+    {'name': 'use_gpus',
+        'type': candle.str2bool,
+        'default': False,
+        'help': ''},
 ]
 
 required = [
-    "batch_size",
-    "logdir",
-    "output",
-    "input",
-    "nsamples",
-    "model",
+    'batch_size',
+    'logdir',
+    'output',
+    'input',
+    'nsamples',
+    'model',
 ]
 
 
 class InferBk(candle.Benchmark):
+
     def set_locals(self):
         """Functionality to set variables specific for the benchmark
         - required: set of required parameters for the benchmark.
@@ -71,16 +89,12 @@ class InferBk(candle.Benchmark):
             self.additional_definitions = additional_definitions
 
 
-def initialize_parameters(default_model="infer_rnngen_default_model.txt"):
+def initialize_parameters(default_model='infer_rnngen_default_model.txt'):
 
     # Build benchmark object
-    sample = InferBk(
-        file_path,
-        default_model,
-        "pytorch",
-        prog="infer_rnngen_baseline",
-        desc="rnngen infer - Examples",
-    )
+    sample = InferBk(file_path, default_model, 'pytorch',
+                     prog='infer_rnngen_baseline',
+                     desc='rnngen infer - Examples')
 
     print("Created sample benchmark")
 
@@ -93,8 +107,8 @@ def initialize_parameters(default_model="infer_rnngen_default_model.txt"):
 
 def count_valid_samples(smiles, rdkit=True):
     if rdkit:
-        from rdkit import Chem, RDLogger
-
+        from rdkit import Chem
+        from rdkit import RDLogger
         lg = RDLogger.logger()
 
         lg.setLevel(RDLogger.CRITICAL)
@@ -105,7 +119,6 @@ def count_valid_samples(smiles, rdkit=True):
                 return Chem.MolToSmiles(mol)
             except Exception:
                 return None
-
     else:
         import pybel
 
@@ -135,13 +148,7 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
 
         c_0 = torch.zeros((4, batch_size, 256)).to(device)
         h_0 = torch.zeros((4, batch_size, 256)).to(device)
-        x = (
-            torch.tensor(c2i(START_CHAR))
-            .unsqueeze(0)
-            .unsqueeze(0)
-            .repeat((max_len, batch_size))
-            .to(device)
-        )
+        x = torch.tensor(c2i(START_CHAR)).unsqueeze(0).unsqueeze(0).repeat((max_len, batch_size)).to(device)
 
         eos_mask = torch.zeros(batch_size, dtype=torch.bool).to(device)
         end_pads = torch.tensor([max_len - 1]).repeat(batch_size).to(device)
@@ -160,35 +167,33 @@ def sample(model, i2c, c2i, device, temp=1, batch_size=10, max_len=150):
 
         new_x = []
         for i in range(x.size(1)):
-            new_x.append(x[: end_pads[i], i].cpu())
+            new_x.append(x[:end_pads[i], i].cpu())
         return ["".join(map(i2c, list(i_x.cpu().flatten().numpy()))) for i_x in new_x]
 
 
 def run(params):
 
-    print(
-        "Note: This script is very picky. Please check device output to see where this is running. "
-    )
+    print("Note: This script is very picky. Please check device output to see where this is running. ")
     args = candle.ArgumentStruct(**params)
 
     data_url = args.data_url
 
-    if args.model == "ft_goodperforming_model.pt":
-        file = "pilot1/ft_goodperforming_model.pt"
-    elif args.model == "ft_poorperforming_model.pt":
-        file = "pilot1/ft_poorperforming_model.pt"
+    if args.model == 'ft_goodperforming_model.pt':
+        file = 'pilot1/ft_goodperforming_model.pt'
+    elif args.model == 'ft_poorperforming_model.pt':
+        file = 'pilot1/ft_poorperforming_model.pt'
     else:  # Corresponding to args.model == 'autosave.model.pt':
-        file = "mosesrun/autosave.model.pt"
+        file = 'mosesrun/autosave.model.pt'
 
-    print("Recovering trained model")
-    trained = candle.fetch_file(data_url + file, subdir="examples/rnngen")
+    print('Recovering trained model')
+    trained = candle.fetch_file(data_url + file, subdir='examples/rnngen')
 
     # Configure GPU
     if args.use_gpus and torch.cuda.is_available():
-        device = "cuda"
+        device = 'cuda'
     else:
-        device = "cpu"
-    print("Using device:", device)
+        device = 'cpu'
+    print('Using device:', device)
 
     print("loading data.")
     vocab, c2i, i2c, _, _ = get_vocab_from_file(args.input + "/vocab.txt")
@@ -198,8 +203,8 @@ def run(params):
 
     print("Loading trained model.")
     pt = torch.load(trained, map_location=device)
-    model.load_state_dict(pt["state_dict"])
-    optimizer.load_state_dict(pt["optim_state_dict"])
+    model.load_state_dict(pt['state_dict'])
+    optimizer.load_state_dict(pt['optim_state_dict'])
 
     print("Applying to loaded data")
     total_sampled = 0
@@ -211,15 +216,7 @@ def run(params):
     batch_size = args.batch_size
 
     for epoch in range(int(args.nsamples / batch_size)):
-        samples = sample(
-            model,
-            i2c,
-            c2i,
-            device,
-            batch_size=batch_size,
-            max_len=args.maxlen,
-            temp=args.temperature,
-        )
+        samples = sample(model, i2c, c2i, device, batch_size=batch_size, max_len=args.maxlen, temp=args.temperature)
         samples = list(map(lambda x: x[1:-1], samples))
         total_sampled += len(samples)
         if args.vr or args.vb:
@@ -238,7 +235,7 @@ def run(params):
     #         f.write('\n')
 
     df = pd.DataFrame()
-    df["smiles"] = smiles
+    df['smiles'] = smiles
     df.to_csv(args.output, index=False, header=True)
 
     print("output smiles to", args.output)
@@ -254,5 +251,5 @@ def main():
     run(params)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

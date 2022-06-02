@@ -1,17 +1,17 @@
 import torch
 import torch.nn as nn
+
 from darts.api import Model
 from darts.genotypes import LINEAR_PRIMITIVES
 from darts.modules.operations.linear import OPS
 
 
 class MixedLayer(Model):
-    """A mixture of 8 unit types
+    """ A mixture of 8 unit types
 
     We use weights to aggregate these outputs while training.
     and softmax to select the strongest edges while inference.
     """
-
     def __init__(self, c, stride):
         super(MixedLayer, self).__init__()
         self.reset(c, stride)
@@ -22,7 +22,7 @@ class MixedLayer(Model):
         for primitive in LINEAR_PRIMITIVES:
             layer = OPS[primitive](c, stride, False)
 
-            if "pool" in primitive:
+            if 'pool' in primitive:
                 layer = nn.Sequential(layer, nn.BatchNorm1d(c, affine=False))
 
             self.layers.append(layer)

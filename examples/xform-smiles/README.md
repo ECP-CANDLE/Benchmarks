@@ -1,13 +1,13 @@
 CANDLE benchmark versions are now available.
 
-The original examples are retained and can be run as noted below.
+The original examples are retained and can be run as noted below. 
 
-The CANDLE versions make use of the common network design in smiles_transformer.py, and implement the
-models in `sct_baseline_keras.py` and `srt_baseline_keras.py`, for classification and regression, respectively.
-All the relevant arguments are contained in the respective default model files,
+The CANDLE versions make use of the common network design in smiles_transformer.py, and implement the 
+models in `sct_baseline_keras.py` and `srt_baseline_keras.py`, for classification and regression, respectively. 
+All the relevant arguments are contained in the respective default model files, 
 `class_default_model.txt` and `regress_default_model.txt`.
 They can be invoked with `python sct_baseline_keras.py` and all variables can be overwritten from the command line.
-The datasets will be automatically downloaded and stored in the `../../Data/Pilot1 directory`.
+The datasets will be automatically downloaded and stored in the `../../Data/Pilot1 directory`. 
 
 Running the original versions:
 
@@ -15,7 +15,7 @@ The datasets
 
 Classification problem.
 
-CHEMBL -- 1.5M training examples.. for Lipinski (1/0) (Lipinski criteria for drug likeness) validation 100K samples non-overlapping
+CHEMBL -- 1.5M training examples.. for Lipinski (1/0)  (Lipinski criteria for drug likeness)  validation 100K samples non-overlapping
 
 Classification validation accuracy is about 91% after 10-20 epochs
 
@@ -28,7 +28,8 @@ Regression problem achieves R^2 about .95 after ~20 epochs.
 
 See the log files for trace.
 
-We save the best validation loss in the \*.h5 dumps.
+We save the best validation loss in the *.h5 dumps.
+
 
 To run the models
 
@@ -37,6 +38,8 @@ To run the models
 or
 
 `CUDA_VISIBLE_DEVICES=0 python smiles_regress_transformer.py --in_train chm.weight.trn.csv --in_vali chm.weight.val.csv --ep 25`
+
+
 
 Regression output should look something like
 
@@ -143,3 +146,4 @@ Epoch 25/25
 
 Epoch 00025: val_loss did not improve from 800.85254
 ```
+

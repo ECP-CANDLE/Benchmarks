@@ -1,27 +1,32 @@
-import logging
-
-import candle
-import darts
-import example_setup as bmk
 import torch
 import torch.nn as nn
-from operations import OPS, Stem
 from torch import optim
 from torchvision import datasets, transforms
+
+import logging
+
+import example_setup as bmk
+import darts
+import candle
+
+from operations import (
+    Stem, OPS
+)
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("darts_advanced")
 
 
 def initialize_parameters():
-    """Initialize the parameters for the Advanced example"""
+    """ Initialize the parameters for the Advanced example """
 
     uno_example = bmk.AdvancedExample(
         bmk.file_path,
-        "default_model.txt",
-        "pytorch",
-        prog="advanced_example",
-        desc="Differentiable Architecture Search - Advanced example",
+        'default_model.txt',
+        'pytorch',
+        prog='advanced_example',
+        desc='Differentiable Architecture Search - Advanced example',
     )
 
     # Initialize parameters
@@ -38,32 +43,24 @@ def run(params):
 
     trainloader = torch.utils.data.DataLoader(
         datasets.MNIST(
-            "./data",
-            train=True,
-            download=True,
-            transform=transforms.Compose(
-                [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-            ),
-        ),
-        batch_size=args.batch_size,
-        shuffle=True,
-    )
+            './data', train=True, download=True,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])),
+        batch_size=args.batch_size, shuffle=True)
 
     validloader = torch.utils.data.DataLoader(
         datasets.MNIST(
-            "./data",
-            train=False,
-            download=True,
-            transform=transforms.Compose(
-                [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
-            ),
-        ),
-        batch_size=args.batch_size,
-        shuffle=True,
-    )
+            './data', train=False, download=True,
+            transform=transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])),
+        batch_size=args.batch_size, shuffle=True)
 
     tasks = {
-        "digits": 10,
+        'digits': 10,
     }
 
     criterion = nn.CrossEntropyLoss().to(device)
@@ -71,13 +68,8 @@ def run(params):
     stem = Stem(cell_dim=100)
 
     model = darts.Network(
-        stem,
-        cell_dim=100,
-        classifier_dim=676,
-        ops=OPS,
-        tasks=tasks,
-        criterion=criterion,
-        device=device,
+        stem, cell_dim=100, classifier_dim=676,
+        ops=OPS, tasks=tasks, criterion=criterion, device=device
     ).to(device)
 
     architecture = darts.Architecture(model, args, device=device)
@@ -86,23 +78,25 @@ def run(params):
         model.parameters(),
         args.learning_rate,
         momentum=args.momentum,
-        weight_decay=args.weight_decay,
+        weight_decay=args.weight_decay
     )
 
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, float(args.epochs), eta_min=args.learning_rate_min
+        optimizer,
+        float(args.epochs),
+        eta_min=args.learning_rate_min
     )
 
-    train_meter = darts.EpochMeter(tasks, "train")
-    valid_meter = darts.EpochMeter(tasks, "valid")
+    train_meter = darts.EpochMeter(tasks, 'train')
+    valid_meter = darts.EpochMeter(tasks, 'valid')
 
     for epoch in range(args.epochs):
 
         lr = scheduler.get_lr()[0]
-        logger.info(f"\nEpoch: {epoch} lr: {lr}")
+        logger.info(f'\nEpoch: {epoch} lr: {lr}')
 
         genotype = model.genotype()
-        logger.info(f"Genotype: {genotype}\n")
+        logger.info(f'Genotype: {genotype}\n')
 
         train(
             trainloader,
@@ -114,24 +108,22 @@ def run(params):
             args,
             tasks,
             train_meter,
-            device,
+            device
         )
 
         validate(validloader, model, criterion, args, tasks, valid_meter, device)
 
 
-def train(
-    trainloader,
-    model,
-    architecture,
-    criterion,
-    optimizer,
-    scheduler,
-    args,
-    tasks,
-    meter,
-    device,
-):
+def train(trainloader,
+          model,
+          architecture,
+          criterion,
+          optimizer,
+          scheduler,
+          args,
+          tasks,
+          meter,
+          device):
 
     valid_iter = iter(trainloader)
 
@@ -151,11 +143,17 @@ def train(
 
         # 1. update alpha
         architecture.step(
-            data, target, x_search, target_search, lr, optimizer, unrolled=False
+            data,
+            target,
+            x_search,
+            target_search,
+            lr,
+            optimizer,
+            unrolled=False
         )
 
         logits = model(data)
-        loss = darts.multitask_loss(target, logits, criterion, reduce="mean")
+        loss = darts.multitask_loss(target, logits, criterion, reduce='mean')
 
         # 2. update weight
         optimizer.zero_grad()
@@ -169,7 +167,7 @@ def train(
         meter.update_batch_accuracy(prec1, batch_size)
 
         if step % args.log_interval == 0:
-            logger.info(f"Step: {step} loss: {meter.loss_meter.avg:.4}")
+            logger.info(f'Step: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.save_path)
@@ -187,27 +185,27 @@ def validate(validloader, model, criterion, args, tasks, meter, device):
             batch_size = data.size(0)
 
             logits = model(data)
-            loss = darts.multitask_loss(target, logits, criterion, reduce="mean")
+            loss = darts.multitask_loss(target, logits, criterion, reduce='mean')
 
             prec1 = darts.multitask_accuracy_topk(logits, target, topk=(1,))
             meter.update_batch_loss(loss.item(), batch_size)
             meter.update_batch_accuracy(prec1, batch_size)
 
             if step % args.log_interval == 0:
-                logger.info(f">> Validation: {step} loss: {meter.loss_meter.avg:.4}")
+                logger.info(f'>> Validation: {step} loss: {meter.loss_meter.avg:.4}')
 
     meter.update_epoch()
     meter.save(args.save_path)
 
 
 def _wrap_target(target):
-    """Wrap the MNIST target in a dictionary
+    """ Wrap the MNIST target in a dictionary
 
     The multitask classifier of DARTS expects a
     dictionary of target tasks. Here we simply wrap
     MNIST's target in a dictionary.
     """
-    return {"digits": target}
+    return {'digits': target}
 
 
 def main():
@@ -215,5 +213,5 @@ def main():
     run(params)
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

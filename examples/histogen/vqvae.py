@@ -1,7 +1,9 @@
-import distributed as dist_fn
 import torch
 from torch import nn
 from torch.nn import functional as F
+
+import distributed as dist_fn
+
 
 # Copyright 2018 The Sonnet Authors. All Rights Reserved.
 #

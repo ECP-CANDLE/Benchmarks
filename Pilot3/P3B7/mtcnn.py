@@ -1,9 +1,9 @@
-from dataclasses import dataclass
-from typing import Dict
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+from typing import Dict
+from dataclasses import dataclass
 
 
 @dataclass
@@ -18,7 +18,7 @@ class Hparams:
 
 
 class Conv1dPool(nn.Module):
-    """Conv1d => AdaptiveMaxPool1d => Relu"""
+    """ Conv1d => AdaptiveMaxPool1d => Relu """
 
     def __init__(self, embedding_dim: int, n_filters: int, kernel_size: int):
         super(Conv1dPool, self).__init__()
@@ -26,8 +26,8 @@ class Conv1dPool(nn.Module):
         self._weight_init()
 
     def _weight_init(self):
-        """Initialize the convolution weights"""
-        gain = nn.init.calculate_gain("relu")
+        """ Initialize the convolution weights """
+        gain = nn.init.calculate_gain('relu')
         nn.init.xavier_uniform_(self.conv.weight, gain)
 
     def forward(self, x):
@@ -38,7 +38,7 @@ class Conv1dPool(nn.Module):
 
 
 class MultitaskClassifier(nn.Module):
-    """Multi-task Classifier
+    """ Multi-task Classifier
     Args:
         input_dim: input dimension for each of the linear layers
         tasks: dictionary of tasks and their respective number of classes
@@ -49,10 +49,13 @@ class MultitaskClassifier(nn.Module):
         self.tasks = tasks
 
         for task, num_classes in tasks.items():
-            self.add_module(task, nn.Linear(input_dim, num_classes))
+            self.add_module(
+                task,
+                nn.Linear(input_dim, num_classes)
+            )
 
     def num_classes(self, task):
-        """Get number of classes for a task."""
+        """ Get number of classes for a task. """
         return self.tasks[task]
 
     def forward(self, x):
@@ -64,7 +67,7 @@ class MultitaskClassifier(nn.Module):
 
 
 class MTCNN(nn.Module):
-    """Multi-task CNN a la Yoon Kim
+    """ Multi-task CNN a la Yoon Kim
     Args:
         tasks: dictionary of tasks and their respective number of classes.
                This is used by the MultitaskClassifier.
@@ -82,18 +85,18 @@ class MTCNN(nn.Module):
         self._weight_init()
 
     def _weight_init(self):
-        """Initialize the network weights"""
+        """ Initialize the network weights """
         self._embed_init()
 
     def _embed_init(self, initrange=0.05):
-        """Initialize the embedding weights"""
+        """ Initialize the embedding weights """
         nn.init.uniform_(self.embed.weight, -initrange, initrange)
 
     def _filter_sum(self):
         return self.hparams.n_filters * 3
 
     def loss_value(self, y_pred, y_true, reduce="sum"):
-        """Compute the cross entropy loss"""
+        """ Compute the cross entropy loss """
         losses = {}
 
         for key, value in y_true.items():

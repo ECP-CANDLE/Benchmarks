@@ -1,6 +1,6 @@
 # MNIST Example
 
-This example demonstrate how to convert keras code into CANDLE compliant.
+This example demonstrate how to convert keras code into CANDLE compliant. 
 Please refer [tutorial](https://ecp-candle.github.io/Candle/html/tutorials/writing_candle_code.html) for more detail.
 
 Here is the list of files,
@@ -10,6 +10,7 @@ Here is the list of files,
 - mnist_cnn_candle.py: mnist_cnn.py converted in CANDLE compliant mode
 - mnist_mlp_candle.py: mnist_mlp.py converted in CANDLE compliant mode
 - mnist_params.txt: model parameters are stored in a file for reproduciblity
+
 
 ```
 $ python mnist_cnn_candle.py -e 3

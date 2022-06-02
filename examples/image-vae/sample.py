@@ -3,32 +3,27 @@ import logging
 
 import numpy as np
 import torch
-from model import GeneralVae, PictureDecoder, PictureEncoder
 from sklearn.linear_model import LinearRegression
 from torchvision.utils import save_image
 
-logger = logging.getLogger("cairosvg")
+from model import GeneralVae, PictureDecoder, PictureEncoder
+
+logger = logging.getLogger('cairosvg')
 logger.setLevel(logging.CRITICAL)
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description="PyTorch ImageNet Training")
-    parser.add_argument(
-        "-b", default=64, type=int, help="mini-batch size per process (default: 256)"
-    )
-    parser.add_argument("-o", help="output files path", default="samples/")
-    parser.add_argument(
-        "--checkpoint", required=True, type=str, help="saved model to sample from"
-    )
-    parser.add_argument("-n", type=int, default=64, help="number of samples to draw")
-    parser.add_argument(
-        "--image", action="store_true", help="save images instead of numpy array"
-    )
+    parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
+    parser.add_argument('-b', default=64, type=int, help='mini-batch size per process (default: 256)')
+    parser.add_argument('-o', help='output files path', default='samples/')
+    parser.add_argument('--checkpoint', required=True, type=str, help='saved model to sample from')
+    parser.add_argument('-n', type=int, default=64, help='number of samples to draw')
+    parser.add_argument('--image', action='store_true', help='save images instead of numpy array')
 
     return parser.parse_args()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     args = get_args()
 
     starting_epoch = 1
@@ -48,13 +43,11 @@ if __name__ == "__main__":
 
     checkpoint = None
     if args.checkpoint is not None:
-        checkpoint = torch.load(args.checkpoint, map_location="cpu")
-        print(
-            f"Loading Checkpoint ({args.checkpoint}). Starting at epoch: {checkpoint['epoch'] + 1}."
-        )
-        starting_epoch = checkpoint["epoch"] + 1
-        encoder.load_state_dict(checkpoint["encoder_state_dict"])
-        decoder.load_state_dict(checkpoint["decoder_state_dict"])
+        checkpoint = torch.load(args.checkpoint, map_location='cpu')
+        print(f"Loading Checkpoint ({args.checkpoint}). Starting at epoch: {checkpoint['epoch'] + 1}.")
+        starting_epoch = checkpoint['epoch'] + 1
+        encoder.load_state_dict(checkpoint['encoder_state_dict'])
+        decoder.load_state_dict(checkpoint['decoder_state_dict'])
 
     encoder = encoder.to(device)
     decoder = decoder.to(device)
@@ -70,8 +63,7 @@ if __name__ == "__main__":
 
     times = int(args.n / args.b)
     print(
-        f"Using batch size {args.b} and sampling {times} times for a total of {args.b * times} samples drawn. Saving {'images' if args.image else 'numpy array'}"
-    )
+        f"Using batch size {args.b} and sampling {times} times for a total of {args.b * times} samples drawn. Saving {'images' if args.image else 'numpy array'}")
     samples = []
     for i in range(times):
         with torch.no_grad():
@@ -79,10 +71,8 @@ if __name__ == "__main__":
             sample = model.decode(sample).cpu()
 
             if args.image:
-                save_image(
-                    sample.view(args.b, 3, 256, 256),
-                    args.o + "sample_" + str(i) + ".png",
-                )
+                save_image(sample.view(args.b, 3, 256, 256),
+                           args.o + 'sample_' + str(i) + '.png')
             else:
                 samples.append(sample.view(args.b, 3, 256, 256).cpu().numpy())
 

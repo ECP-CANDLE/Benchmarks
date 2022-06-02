@@ -1,56 +1,54 @@
-import argparse
-
-import horovod.torch as hvd
-import numpy as np
 import torch
+import argparse
+# import candle
+# import p3b6 as bmk
+
+import numpy as np
+import horovod.torch as hvd
+
 import torch.nn as nn
-from bert import HiBERT
-from random_data import MimicDatasetSynthetic
-from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
-# import candle
-# import p3b6 as bmk
+from sklearn.metrics import f1_score
+
+from bert import HiBERT
+from random_data import MimicDatasetSynthetic
 
 
 hvd.init()
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Bert Mimic Synth")
-    parser.add_argument("--batch_size", type=int, default=10, help="batch size")
-    parser.add_argument("--num_epochs", type=int, default=10, help="Adam learning rate")
-    parser.add_argument(
-        "--learning_rate", type=float, default=1e-3, help="Adam learning rate"
-    )
-    parser.add_argument("--eps", type=float, default=1e-7, help="Adam epsilon")
-    parser.add_argument(
-        "--num_train_samples",
-        type=int,
-        default=10000,
-        help="Number of training samples",
-    )
-    parser.add_argument(
-        "--num_valid_samples", type=int, default=10000, help="Number of valid samples"
-    )
-    parser.add_argument(
-        "--num_test_samples", type=int, default=10000, help="Number of test samples"
-    )
-    parser.add_argument("--num_classes", type=int, default=10, help="Number of clases")
-    parser.add_argument("--weight_decay", type=float, default=0.0, help="weight decay")
-    parser.add_argument(
-        "--device", type=str, default="cuda", help="path to the model weights"
-    )
-    parser.add_argument(
-        "--pretrained_weights_path", type=str, help="path to the model weights"
-    )
+    parser = argparse.ArgumentParser(description='Bert Mimic Synth')
+    parser.add_argument('--batch_size', type=int, default=10,
+                        help='batch size')
+    parser.add_argument('--num_epochs', type=int, default=10,
+                        help='Adam learning rate')
+    parser.add_argument('--learning_rate', type=float, default=1e-3,
+                        help='Adam learning rate')
+    parser.add_argument('--eps', type=float, default=1e-7,
+                        help='Adam epsilon')
+    parser.add_argument('--num_train_samples', type=int, default=10000,
+                        help='Number of training samples')
+    parser.add_argument('--num_valid_samples', type=int, default=10000,
+                        help='Number of valid samples')
+    parser.add_argument('--num_test_samples', type=int, default=10000,
+                        help='Number of test samples')
+    parser.add_argument('--num_classes', type=int, default=10,
+                        help='Number of clases')
+    parser.add_argument('--weight_decay', type=float, default=0.0,
+                        help='weight decay')
+    parser.add_argument('--device', type=str, default='cuda',
+                        help='path to the model weights')
+    parser.add_argument('--pretrained_weights_path', type=str,
+                        help='path to the model weights')
 
     return parser.parse_args()
 
 
 def initialize_parameters():
-    """Initialize the parameters for the P3B5 benchmark"""
+    """ Initialize the parameters for the P3B5 benchmark """
 
     p3b5_bench = bmk.BenchmarkP3B5(
         bmk.file_path,
@@ -65,7 +63,7 @@ def initialize_parameters():
 
 
 def load_data(args):
-    """Initialize random data
+    """ Initialize random data
 
     Args:
         gParameters: parameters from candle
@@ -86,7 +84,7 @@ def load_data(args):
 
 
 def create_data_loaders(args):
-    """Initialize data loaders
+    """ Initialize data loaders
 
     Args:
         gParameters: parameters from candle
@@ -128,7 +126,9 @@ def train(dataloader, sampler, model, optimizer, criterion, args, epoch):
         logits = model(input_ids, input_mask, segment_ids)
         labels = batch["label"].to(args.device)
 
-        loss = criterion(logits.view(-1, args.num_classes), labels)
+        loss = criterion(
+            logits.view(-1, args.num_classes), labels
+        )
 
         loss.backward()
         optimizer.step()

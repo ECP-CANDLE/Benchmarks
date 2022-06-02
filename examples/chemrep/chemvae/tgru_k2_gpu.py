@@ -1,4 +1,4 @@
-"""
+'''
 A GRU layer capable of teacher forcing at train time, and sampling from a softmax at test time.
 
 # Example of use:
@@ -60,12 +60,13 @@ self.implementation ==2 : gpu
 self.implementation ==1 : mem
 self.implementation ==0 : cpu
 
-"""
-import numpy as np
+'''
+from tensorflow.keras.layers import GRU
 from tensorflow.keras import backend as K
-from tensorflow.keras.layers import GRU, InputSpec
+from tensorflow.keras.layers import InputSpec
+import numpy as np
 
-if K.backend() == "tensorflow":
+if K.backend() == 'tensorflow':
     from .sampled_rnn_tf import sampled_rnn
 else:
 
@@ -76,9 +77,9 @@ class TerminalGRU(GRU):
     # Heavily adapted from GRU in recurrent.py
     # Implements professor forcing
 
-    def __init__(
-        self, units, temperature=1.0, rnd_seed=None, recurrent_dropout=0.0, **kwargs
-    ):
+    def __init__(self, units,
+                 temperature=1., rnd_seed=None, recurrent_dropout=0.0,
+                 **kwargs):
         # @param: temperature - sampling temperature
         # Annealing will be handled in the callbacks
         super(TerminalGRU, self).__init__(units, **kwargs)
@@ -87,8 +88,9 @@ class TerminalGRU(GRU):
         self.rnd_seed = rnd_seed
         self.uses_learning_phase = True
         self.supports_masking = False
-        self.recurrent_dropout = min(1.0, max(0.0, recurrent_dropout))
-        self.input_spec = [InputSpec(ndim=3), InputSpec(ndim=3)]
+        self.recurrent_dropout = min(1., max(0., recurrent_dropout))
+        self.input_spec = [InputSpec(ndim=3),
+                           InputSpec(ndim=3)]
 
     def build(self, input_shape):
         # all of this is copied from GRU, except for one part commented below
@@ -97,61 +99,52 @@ class TerminalGRU(GRU):
 
         batch_size = input_shape[0] if self.stateful else None
         self.input_dim = input_shape[2]
-        self.input_spec = [
-            InputSpec(shape=(batch_size, None, self.input_dim)),
-            InputSpec(shape=(batch_size, None, self.units)),
-        ]
+        self.input_spec = [InputSpec(shape=(batch_size, None, self.input_dim)),
+                           InputSpec(shape=(batch_size, None, self.units))]
         self.state_spec = InputSpec(shape=(batch_size, self.units))
 
         self.states = [None]
         if self.stateful:
             self.reset_states()
 
-        self.kernel = self.add_weight(
-            (self.input_dim, self.units * 3),
-            name="kernel",
-            initializer=self.kernel_initializer,
-            regularizer=self.kernel_regularizer,
-            constraint=self.kernel_constraint,
-        )
+        self.kernel = self.add_weight((self.input_dim, self.units * 3),
+                                      name='kernel',
+                                      initializer=self.kernel_initializer,
+                                      regularizer=self.kernel_regularizer,
+                                      constraint=self.kernel_constraint)
 
         # adding an extra recurrent weight here, change from GRU layer:
         # this last recurrent weight applied to true sequence input from prev. timestep,
         #   or sampled output from prev. time step.
         self.recurrent_kernel = self.add_weight(
             (self.units, self.units * 4),
-            name="recurrent_kernel",
+            name='recurrent_kernel',
             initializer=self.recurrent_initializer,
             regularizer=self.recurrent_regularizer,
-            constraint=self.recurrent_constraint,
-        )
+            constraint=self.recurrent_constraint)
 
         if self.use_bias:
-            self.bias = self.add_weight(
-                (self.units * 4,),
-                name="bias",
-                initializer="zero",
-                regularizer=self.bias_regularizer,
-                constraint=self.bias_constraint,
-            )
+            self.bias = self.add_weight((self.units * 4,),
+                                        name='bias',
+                                        initializer='zero',
+                                        regularizer=self.bias_regularizer,
+                                        constraint=self.bias_constraint)
         else:
             self.bias = None
 
-        self.kernel_z = self.kernel[:, : self.units]
-        self.recurrent_kernel_z = self.recurrent_kernel[:, : self.units]
-        self.kernel_r = self.kernel[:, self.units : self.units * 2]
-        self.recurrent_kernel_r = self.recurrent_kernel[:, self.units : self.units * 2]
-        self.kernel_h = self.kernel[:, self.units * 2 :]
-        self.recurrent_kernel_h = self.recurrent_kernel[
-            :, self.units * 2 : self.units * 3
-        ]
-        self.recurrent_kernel_y = self.recurrent_kernel[:, self.units * 3 :]
+        self.kernel_z = self.kernel[:, :self.units]
+        self.recurrent_kernel_z = self.recurrent_kernel[:, :self.units]
+        self.kernel_r = self.kernel[:, self.units: self.units * 2]
+        self.recurrent_kernel_r = self.recurrent_kernel[:, self.units: self.units * 2]
+        self.kernel_h = self.kernel[:, self.units * 2:]
+        self.recurrent_kernel_h = self.recurrent_kernel[:, self.units * 2:self.units * 3]
+        self.recurrent_kernel_y = self.recurrent_kernel[:, self.units * 3:]
 
         if self.use_bias:
-            self.bias_z = self.bias[: self.units]
-            self.bias_r = self.bias[self.units : self.units * 2]
-            self.bias_h = self.bias[self.units * 2 : self.units * 3]
-            self.bias_h = self.bias[self.units * 3 :]
+            self.bias_z = self.bias[:self.units]
+            self.bias_r = self.bias[self.units: self.units * 2]
+            self.bias_h = self.bias[self.units * 2: self.units * 3]
+            self.bias_h = self.bias[self.units * 3:]
         else:
             self.bias_z = None
             self.bias_r = None
@@ -166,9 +159,7 @@ class TerminalGRU(GRU):
         reducer = reducer / K.exp(reducer)
 
         initial_state = K.dot(initial_state, reducer)  # (samples, output_dim)
-        initial_states = [
-            K.stack([initial_state, initial_state]) for _ in range(len(self.states))
-        ]
+        initial_states = [K.stack([initial_state, initial_state]) for _ in range(len(self.states))]
         return initial_states
 
     def compute_mask(self, input, mask):
@@ -178,25 +169,24 @@ class TerminalGRU(GRU):
 
     def get_constants(self, inputs, training=None):
         constants = []
-        if 0.0 < self.recurrent_dropout < 1.0:
+        if 0. < self.recurrent_dropout < 1.:
             ones = K.ones_like(K.reshape(inputs[:, 0, 0], (-1, 1)))
             ones = K.tile(ones, (1, self.units))
 
             def dropped_inputs():
                 return K.dropout(ones, self.recurrent_dropout)
 
-            rec_dp_mask = [
-                K.in_train_phase(dropped_inputs, ones, training=training)
-                for _ in range(3)
-            ]
+            rec_dp_mask = [K.in_train_phase(dropped_inputs,
+                                            ones,
+                                            training=training) for _ in range(3)]
             constants.append(rec_dp_mask)
         else:
-            constants.append([K.cast_to_floatx(1.0) for _ in range(3)])
+            constants.append([K.cast_to_floatx(1.) for _ in range(3)])
         return constants
 
     def call(self, inputs, mask=None):
         if type(inputs) is not list or len(inputs) != 2:
-            raise Exception("terminal gru runs on list of length 2")
+            raise Exception('terminal gru runs on list of length 2')
 
         X = inputs[0]
         true_seq = inputs[1]
@@ -222,16 +212,14 @@ class TerminalGRU(GRU):
         zeros = K.zeros_like(true_seq[:1, :, :])
 
         # add a column of zeros, remove last element
-        true_seq = K.concatenate(
-            [zeros, true_seq[: K.int_shape(true_seq)[0] - 1, :, :]], axis=0
-        )
+        true_seq = K.concatenate([zeros, true_seq[:K.int_shape(true_seq)[0] - 1, :, :]], axis=0)
         shifted_raw_inputs = K.permute_dimensions(true_seq, axes)
 
         # concatenate to have same dimension as preprocessed inputs 3xoutput_dim
         # only for self.implementation = 0?
-        shifted_raw_inputs = K.concatenate(
-            [shifted_raw_inputs, shifted_raw_inputs, shifted_raw_inputs], axis=2
-        )
+        shifted_raw_inputs = K.concatenate([shifted_raw_inputs,
+                                            shifted_raw_inputs,
+                                            shifted_raw_inputs], axis=2)
 
         all_inputs = K.stack([preprocessed_input, shifted_raw_inputs])
         num_dim = K.ndim(all_inputs)
@@ -245,16 +233,14 @@ class TerminalGRU(GRU):
 
         all_inputs = K.in_train_phase(all_inputs, test_phase_all_inputs)
 
-        last_output, outputs, states = sampled_rnn(
-            self.step,
-            all_inputs,
-            initial_states,
-            self.units,
-            self.rnd_seed,
-            go_backwards=self.go_backwards,
-            rec_dp_constants=recurrent_dropout_constants,
-            mask=None,
-        )
+        last_output, outputs, states = sampled_rnn(self.step,
+                                                   all_inputs,
+                                                   initial_states,
+                                                   self.units,
+                                                   self.rnd_seed,
+                                                   go_backwards=self.go_backwards,
+                                                   rec_dp_constants=recurrent_dropout_constants,
+                                                   mask=None)
 
         if self.return_sequences:
             return outputs
@@ -274,11 +260,9 @@ class TerminalGRU(GRU):
             return (input_shapes[1][0], input_shapes[1][1])
 
     def get_config(self):
-        config = {
-            "units": self.units,
-            "temperature": self.temperature,
-            "rnd_seed": self.rnd_seed,
-        }
+        config = {'units': self.units,
+                  'temperature': self.temperature,
+                  'rnd_seed': self.rnd_seed}
         base_config = super(TerminalGRU, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -287,13 +271,9 @@ class TerminalGRU(GRU):
         # Creates a cdf vector and compares against a randomly generated vector
         # Requires a pre-generated rand_matrix (i.e. generated outside step function)
 
-        sampled_output = output / K.sum(
-            output, axis=-1, keepdims=True
-        )  # (batch_size, self.units)
+        sampled_output = output / K.sum(output, axis=-1, keepdims=True)  # (batch_size, self.units)
         mod_sampled_output = sampled_output / K.exp(self.temperature)
-        norm_exp_sampled_output = mod_sampled_output / K.sum(
-            mod_sampled_output, axis=-1, keepdims=True
-        )
+        norm_exp_sampled_output = mod_sampled_output / K.sum(mod_sampled_output, axis=-1, keepdims=True)
 
         cdf_vector = K.cumsum(norm_exp_sampled_output, axis=-1)
         cdf_minus_vector = cdf_vector - norm_exp_sampled_output
@@ -301,18 +281,14 @@ class TerminalGRU(GRU):
         rand_matrix = K.stack([rand_matrix], axis=0)
         rand_matrix = K.stack([rand_matrix], axis=2)
 
-        compared_greater_output = K.cast(
-            K.greater(cdf_vector, rand_matrix), dtype="float32"
-        )
-        compared_lesser_output = K.cast(
-            K.less(cdf_minus_vector, rand_matrix), dtype="float32"
-        )
+        compared_greater_output = K.cast(K.greater(cdf_vector, rand_matrix), dtype='float32')
+        compared_lesser_output = K.cast(K.less(cdf_minus_vector, rand_matrix), dtype='float32')
 
         final_output = compared_greater_output * compared_lesser_output
         return final_output
 
     def step(self, h, states):
-        """
+        '''
         receives inputs for a time step
         @inp : h - [previous_layer_input, true_input_for_previous_timestep] at train time
                or  [previous_layer_input, zeros] at test time
@@ -326,18 +302,18 @@ class TerminalGRU(GRU):
         @return: output - raw output, unsampled
         @return: final_output - output that has been sampled in test case
 
-        """
+        '''
 
         ################
         # Parsing the states vector
         ################
-        initial_states = states["initial_states"]
-        random_cutoff_vec = states["random_cutoff_prob"]
+        initial_states = states['initial_states']
+        random_cutoff_vec = states['random_cutoff_prob']
 
         if self.recurrent_dropout > 0:
-            rec_dp_mask = states["rec_dp_mask"]
+            rec_dp_mask = states['rec_dp_mask']
         else:
-            rec_dp_mask = np.array([1.0, 1.0, 1.0, 1.0], dtype="float32")
+            rec_dp_mask = np.array([1., 1., 1., 1.], dtype='float32')
 
         h_tm1 = initial_states[0][:1, :, :]
 
@@ -348,34 +324,28 @@ class TerminalGRU(GRU):
             h = K.permute_dimensions(h, axes)
 
             prev_layer_input = h[0:1, :, :]
-            true_input = h[1:, :, : self.units]
+            true_input = h[1:, :, :self.units]
 
             # this should correspond  to true input
             prev_sampled_output = true_input
 
             if self.implementation == 0:
-                x_z = prev_layer_input[0, :, : self.units]
-                x_r = prev_layer_input[0, :, self.units : 2 * self.units]
-                x_h = prev_layer_input[0, :, 2 * self.units :]
+                x_z = prev_layer_input[0, :, :self.units]
+                x_r = prev_layer_input[0, :, self.units: 2 * self.units]
+                x_h = prev_layer_input[0, :, 2 * self.units:]
             else:
-                raise ValueError(
-                    "Implementation type " + self.implementation + " is invalid"
-                )
+                raise ValueError('Implementation type ' + self.implementation + ' is invalid')
 
-            z = self.recurrent_activation(
-                x_z + K.dot(h_tm1 * rec_dp_mask[0], self.recurrent_kernel_z)
-            )
-            r = self.recurrent_activation(
-                x_r + K.dot(h_tm1 * rec_dp_mask[1], self.recurrent_kernel_r)
-            )
+            z = self.recurrent_activation(x_z + K.dot(h_tm1 * rec_dp_mask[0],
+                                                      self.recurrent_kernel_z))
+            r = self.recurrent_activation(x_r + K.dot(h_tm1 * rec_dp_mask[1],
+                                                      self.recurrent_kernel_r))
 
-            hh = self.activation(
-                x_h
-                + K.dot(r * h_tm1 * rec_dp_mask[2], self.recurrent_kernel_h)
-                + K.dot(r * prev_sampled_output, self.recurrent_kernel_y)
-            )
+            hh = self.activation(x_h
+                                 + K.dot(r * h_tm1 * rec_dp_mask[2], self.recurrent_kernel_h)
+                                 + K.dot(r * prev_sampled_output, self.recurrent_kernel_y))
 
-            output = z * h_tm1 + (1.0 - z) * hh
+            output = z * h_tm1 + (1. - z) * hh
 
             return K.stack([output, output])
 
@@ -392,32 +362,27 @@ class TerminalGRU(GRU):
             prev_layer_input = h[0:1, :, :]
 
             if self.implementation == 0:
-                x_z = prev_layer_input[0, :, : self.units]
-                x_r = prev_layer_input[0, :, self.units : 2 * self.units]
-                x_h = prev_layer_input[0, :, 2 * self.units :]
+                x_z = prev_layer_input[0, :, :self.units]
+                x_r = prev_layer_input[0, :, self.units: 2 * self.units]
+                x_h = prev_layer_input[0, :, 2 * self.units:]
 
-            z = self.recurrent_activation(
-                x_z + K.dot(h_tm1 * rec_dp_mask[0], self.recurrent_kernel_z)
-            )
-            r = self.recurrent_activation(
-                x_r + K.dot(h_tm1 * rec_dp_mask[1], self.recurrent_kernel_r)
-            )
+            z = self.recurrent_activation(x_z + K.dot(h_tm1 * rec_dp_mask[0],
+                                                      self.recurrent_kernel_z))
+            r = self.recurrent_activation(x_r + K.dot(h_tm1 * rec_dp_mask[1],
+                                                      self.recurrent_kernel_r))
 
-            hh = self.activation(
-                x_h
-                + K.dot(r * h_tm1 * rec_dp_mask[2], self.recurrent_kernel_h)
-                + K.dot(r * prev_sampled_output, self.recurrent_kernel_y)
-            )
+            hh = self.activation(x_h
+                                 + K.dot(r * h_tm1 * rec_dp_mask[2], self.recurrent_kernel_h)
+                                 + K.dot(r * prev_sampled_output, self.recurrent_kernel_y))
 
-            output = z * h_tm1 + (1.0 - z) * hh
+            output = z * h_tm1 + (1. - z) * hh
 
             final_output = self.output_sampling(output, random_cutoff_vec)
 
             return K.stack([output, final_output])
 
-        output_2d_tensor = K.in_train_phase(
-            teacher_forced(h, states), free_running(h, states)
-        )
+        output_2d_tensor = K.in_train_phase(teacher_forced(h, states),
+                                            free_running(h, states))
 
         output_2d_tensor = K.squeeze(output_2d_tensor, 1)
 

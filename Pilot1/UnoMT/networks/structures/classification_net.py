@@ -13,15 +13,15 @@ from networks.initialization.weight_init import basic_weight_init
 
 
 class ClfNet(nn.Module):
-    def __init__(
-        self,
-        encoder: nn.Module,
-        input_dim: int,
-        condition_dim: int,
-        layer_dim: int,
-        num_layers: int,
-        num_classes: int,
-    ):
+
+    def __init__(self,
+                 encoder: nn.Module,
+                 input_dim: int,
+
+                 condition_dim: int,
+                 layer_dim: int,
+                 num_layers: int,
+                 num_classes: int):
 
         super(ClfNet, self).__init__()
 
@@ -33,14 +33,15 @@ class ClfNet(nn.Module):
 
         for i in range(num_layers):
 
-            self.__clf_net.add_module("dense_%d" % i, nn.Linear(prev_dim, layer_dim))
+            self.__clf_net.add_module('dense_%d' % i,
+                                      nn.Linear(prev_dim, layer_dim))
             prev_dim = layer_dim
-            self.__clf_net.add_module("relu_%d" % i, nn.ReLU())
+            self.__clf_net.add_module('relu_%d' % i, nn.ReLU())
 
-        self.__clf_net.add_module(
-            "dense_%d" % num_layers, nn.Linear(prev_dim, num_classes)
-        )
-        self.__clf_net.add_module("logsoftmax_%d" % num_layers, nn.LogSoftmax(dim=1))
+        self.__clf_net.add_module('dense_%d' % num_layers,
+                                  nn.Linear(prev_dim, num_classes))
+        self.__clf_net.add_module('logsoftmax_%d' % num_layers,
+                                  nn.LogSoftmax(dim=1))
 
         # Weight Initialization ###############################################
         self.__clf_net.apply(basic_weight_init)
@@ -49,6 +50,5 @@ class ClfNet(nn.Module):
         if conditions is None:
             return self.__clf_net(self.__encoder(samples))
         else:
-            return self.__clf_net(
-                torch.cat((self.__encoder(samples), conditions), dim=1)
-            )
+            return self.__clf_net(torch.cat((self.__encoder(samples),
+                                             conditions), dim=1))

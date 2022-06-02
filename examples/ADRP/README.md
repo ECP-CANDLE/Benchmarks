@@ -94,27 +94,27 @@ Instructions for updating:
 If using Keras pass *_constraint arguments to layers.
 Model: "model_1"
 _________________________________________________________________
-Layer (type)                 Output Shape              Param #
+Layer (type)                 Output Shape              Param #   
 =================================================================
-input_1 (InputLayer)         (None, 1613)              0
+input_1 (InputLayer)         (None, 1613)              0         
 _________________________________________________________________
-dense_1 (Dense)              (None, 250)               403500
+dense_1 (Dense)              (None, 250)               403500    
 _________________________________________________________________
-dropout_1 (Dropout)          (None, 250)               0
+dropout_1 (Dropout)          (None, 250)               0         
 _________________________________________________________________
-dense_2 (Dense)              (None, 125)               31375
+dense_2 (Dense)              (None, 125)               31375     
 _________________________________________________________________
-dropout_2 (Dropout)          (None, 125)               0
+dropout_2 (Dropout)          (None, 125)               0         
 _________________________________________________________________
-dense_3 (Dense)              (None, 60)                7560
+dense_3 (Dense)              (None, 60)                7560      
 _________________________________________________________________
-dropout_3 (Dropout)          (None, 60)                0
+dropout_3 (Dropout)          (None, 60)                0         
 _________________________________________________________________
-dense_4 (Dense)              (None, 30)                1830
+dense_4 (Dense)              (None, 30)                1830      
 _________________________________________________________________
-dropout_4 (Dropout)          (None, 30)                0
+dropout_4 (Dropout)          (None, 30)                0         
 _________________________________________________________________
-dense_5 (Dense)              (None, 1)                 31
+dense_5 (Dense)              (None, 1)                 31        
 =================================================================
 Total params: 444,296
 Trainable params: 444,296

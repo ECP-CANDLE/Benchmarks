@@ -1,17 +1,17 @@
-import os
-import shutil
-import time
+from scipy.stats import spearmanr, rankdata
+from scipy.spatial.distance import pdist, squareform
 
-import _pickle as cp
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
-from scipy.spatial.distance import pdist, squareform
-from scipy.stats import rankdata, spearmanr
+import shutil
+import time
+import _pickle as cp
 
 
 def min_max_transform(data):
-    """
+    '''
     This function does a linear transformation of each feature, so that the minimum and maximum values of a
     feature are 0 and 1, respectively.
 
@@ -19,7 +19,7 @@ def min_max_transform(data):
     data: an input data array with a size of [n_sample, n_feature]
     Return:
     norm_data: the data array after transformation
-    """
+    '''
 
     norm_data = np.empty(data.shape)
     norm_data.fill(np.nan)
@@ -33,8 +33,8 @@ def min_max_transform(data):
     return norm_data
 
 
-def generate_feature_distance_ranking(data, method="Pearson"):
-    """
+def generate_feature_distance_ranking(data, method='Pearson'):
+    '''
     This function generates ranking of distances/dissimilarities between features for tabular data.
 
     Input:
@@ -46,20 +46,18 @@ def generate_feature_distance_ranking(data, method="Pearson"):
     Return:
     ranking: symmetric ranking matrix based on dissimilarity
     corr: matrix of distances between features
-    """
+    '''
 
     num = data.shape[1]
-    if method == "Pearson":
+    if method == 'Pearson':
         corr = np.corrcoef(np.transpose(data))
-    elif method == "Spearman":
+    elif method == 'Spearman':
         corr = spearmanr(data).correlation
-    elif method == "Euclidean":
-        corr = squareform(pdist(np.transpose(data), metric="euclidean"))
+    elif method == 'Euclidean':
+        corr = squareform(pdist(np.transpose(data), metric='euclidean'))
         corr = np.max(corr) - corr
         corr = corr / np.max(corr)
-    elif (
-        method == "set"
-    ):  # This is the new set operation to calculate similarity. It does not tolerate all-zero features.
+    elif method == 'set':  # This is the new set operation to calculate similarity. It does not tolerate all-zero features.
         corr1 = np.dot(np.transpose(data), data)
         corr2 = data.shape[0] - np.dot(np.transpose(1 - data), 1 - data)
         corr = corr1 / corr2
@@ -76,8 +74,8 @@ def generate_feature_distance_ranking(data, method="Pearson"):
     return ranking, corr
 
 
-def generate_matrix_distance_ranking(num_r, num_c, method="Euclidean"):
-    """
+def generate_matrix_distance_ranking(num_r, num_c, method='Euclidean'):
+    '''
     This function calculates the ranking of distances between all pairs of entries in a matrix of size num_r by num_c.
 
     Input:
@@ -89,34 +87,26 @@ def generate_matrix_distance_ranking(num_r, num_c, method="Euclidean"):
     coordinate: num_r * num_c by 2 matrix giving the coordinates of elements in the matrix.
     ranking: a num_r * num_c by num_r * num_c matrix giving the ranking of pair-wise distance.
 
-    """
+    '''
 
     # generate the coordinates of elements in a matrix
     for r in range(num_r):
         if r == 0:
             coordinate = np.transpose(np.vstack((np.zeros(num_c), range(num_c))))
         else:
-            coordinate = np.vstack(
-                (
-                    coordinate,
-                    np.transpose(np.vstack((np.ones(num_c) * r, range(num_c)))),
-                )
-            )
+            coordinate = np.vstack((coordinate, np.transpose(np.vstack((np.ones(num_c) * r, range(num_c))))))
 
     # calculate the closeness of the elements
     num = num_r * num_c
     cord_dist = np.zeros((num, num))
-    if method == "Euclidean":
+    if method == 'Euclidean':
         for i in range(num):
-            cord_dist[i, :] = np.sqrt(
-                np.square(coordinate[i, 0] * np.ones(num) - coordinate[:, 0])
-                + np.square(coordinate[i, 1] * np.ones(num) - coordinate[:, 1])
-            )
-    elif method == "Manhattan":
+            cord_dist[i, :] = np.sqrt(np.square(coordinate[i, 0] * np.ones(num) - coordinate[:, 0])
+                                      + np.square(coordinate[i, 1] * np.ones(num) - coordinate[:, 1]))
+    elif method == 'Manhattan':
         for i in range(num):
-            cord_dist[i, :] = np.abs(
-                coordinate[i, 0] * np.ones(num) - coordinate[:, 0]
-            ) + np.abs(coordinate[i, 1] * np.ones(num) - coordinate[:, 1])
+            cord_dist[i, :] = np.abs(coordinate[i, 0] * np.ones(num) - coordinate[:, 0]) + \
+                np.abs(coordinate[i, 1] * np.ones(num) - coordinate[:, 1])
 
     # generate the ranking based on distance
     tril_id = np.tril_indices(num, k=-1)
@@ -129,18 +119,9 @@ def generate_matrix_distance_ranking(num_r, num_c, method="Euclidean"):
     return (coordinate[:, 0], coordinate[:, 1]), ranking
 
 
-def IGTD_absolute_error(
-    source,
-    target,
-    max_step=1000,
-    switch_t=0,
-    val_step=50,
-    min_gain=0.00001,
-    random_state=1,
-    save_folder=None,
-    file_name="",
-):
-    """
+def IGTD_absolute_error(source, target, max_step=1000, switch_t=0, val_step=50, min_gain=0.00001, random_state=1,
+                        save_folder=None, file_name=''):
+    '''
     This function switches the order of rows (columns) in the source ranking matrix to make it similar to the target
     ranking matrix. In each step, the algorithm randomly picks a row that has not been switched with others for
     the longest time and checks all possible switch of this row, and selects the switch that reduces the
@@ -163,7 +144,7 @@ def IGTD_absolute_error(
     index_record: indices to rearrange the rows(columns) in source obtained the optimization process
     err_record: error obtained in the optimization process
     run_time: the time at which each step is completed in the optimization process
-    """
+    '''
 
     np.random.RandomState(seed=random_state)
     if os.path.exists(save_folder):
@@ -182,9 +163,8 @@ def IGTD_absolute_error(
     err_v = np.empty(num)
     err_v.fill(np.nan)
     for i in range(num):
-        err_v[i] = np.sum(np.abs(source[i, 0:i] - target[i, 0:i])) + np.sum(
-            np.abs(source[(i + 1) :, i] - target[(i + 1) :, i])
-        )
+        err_v[i] = np.sum(np.abs(source[i, 0:i] - target[i, 0:i])) + \
+            np.sum(np.abs(source[(i + 1):, i] - target[(i + 1):, i]))
 
     step_record = -np.ones(num)
     err_record = [np.sum(abs(source[tril_id] - target[tril_id]))]
@@ -212,18 +192,14 @@ def IGTD_absolute_error(
 
             err_ori = err_v[i] + err_v[j] - np.abs(source[j, i] - target[j, i])
 
-            err_i = (
-                np.sum(np.abs(source[j, :i] - target[i, :i]))
-                + np.sum(np.abs(source[(i + 1) : j, j] - target[(i + 1) : j, i]))
-                + np.sum(np.abs(source[(j + 1) :, j] - target[(j + 1) :, i]))
-                + np.abs(source[i, j] - target[j, i])
-            )
-            err_j = (
-                np.sum(np.abs(source[i, :i] - target[j, :i]))
-                + np.sum(np.abs(source[i, (i + 1) : j] - target[j, (i + 1) : j]))
-                + np.sum(np.abs(source[(j + 1) :, i] - target[(j + 1) :, j]))
-                + np.abs(source[i, j] - target[j, i])
-            )
+            err_i = np.sum(np.abs(source[j, :i] - target[i, :i])) + \
+                np.sum(np.abs(source[(i + 1):j, j] - target[(i + 1):j, i])) + \
+                np.sum(np.abs(source[(j + 1):, j] - target[(j + 1):, i])) + \
+                np.abs(source[i, j] - target[j, i])
+            err_j = np.sum(np.abs(source[i, :i] - target[j, :i])) + \
+                np.sum(np.abs(source[i, (i + 1):j] - target[j, (i + 1):j])) + \
+                np.sum(np.abs(source[(j + 1):, i] - target[(j + 1):, j])) + \
+                np.abs(source[i, j] - target[j, i])
             err_test = err_i + err_j - np.abs(source[i, j] - target[j, i])
 
             delta[jj] = err_test - err_ori
@@ -242,47 +218,25 @@ def IGTD_absolute_error(
                 j = ii
             for k in range(num):
                 if k < i:
-                    err_v[k] = (
-                        err_v[k]
-                        - np.abs(source[i, k] - target[i, k])
-                        - np.abs(source[j, k] - target[j, k])
-                        + np.abs(source[j, k] - target[i, k])
-                        + np.abs(source[i, k] - target[j, k])
-                    )
+                    err_v[k] = err_v[k] - np.abs(source[i, k] - target[i, k]) - \
+                        np.abs(source[j, k] - target[j, k]) + np.abs(source[j, k] - target[i, k]) + \
+                        np.abs(source[i, k] - target[j, k])
                 elif k == i:
-                    err_v[k] = (
-                        np.sum(np.abs(source[j, :i] - target[i, :i]))
-                        + np.sum(
-                            np.abs(source[(i + 1) : j, j] - target[(i + 1) : j, i])
-                        )
-                        + np.sum(np.abs(source[(j + 1) :, j] - target[(j + 1) :, i]))
-                        + np.abs(source[i, j] - target[j, i])
-                    )
+                    err_v[k] = np.sum(np.abs(source[j, :i] - target[i, :i])) + \
+                        np.sum(np.abs(source[(i + 1):j, j] - target[(i + 1):j, i])) + \
+                        np.sum(np.abs(source[(j + 1):, j] - target[(j + 1):, i])) + np.abs(source[i, j] - target[j, i])
                 elif k < j:
-                    err_v[k] = (
-                        err_v[k]
-                        - np.abs(source[k, i] - target[k, i])
-                        - np.abs(source[j, k] - target[j, k])
-                        + np.abs(source[k, j] - target[k, i])
-                        + np.abs(source[i, k] - target[j, k])
-                    )
+                    err_v[k] = err_v[k] - np.abs(source[k, i] - target[k, i]) - \
+                        np.abs(source[j, k] - target[j, k]) + \
+                        np.abs(source[k, j] - target[k, i]) + np.abs(source[i, k] - target[j, k])
                 elif k == j:
-                    err_v[k] = (
-                        np.sum(np.abs(source[i, :i] - target[j, :i]))
-                        + np.sum(
-                            np.abs(source[i, (i + 1) : j] - target[j, (i + 1) : j])
-                        )
-                        + np.sum(np.abs(source[(j + 1) :, i] - target[(j + 1) :, j]))
-                        + np.abs(source[i, j] - target[j, i])
-                    )
+                    err_v[k] = np.sum(np.abs(source[i, :i] - target[j, :i])) + \
+                        np.sum(np.abs(source[i, (i + 1):j] - target[j, (i + 1):j])) + \
+                        np.sum(np.abs(source[(j + 1):, i] - target[(j + 1):, j])) + np.abs(source[i, j] - target[j, i])
                 else:
-                    err_v[k] = (
-                        err_v[k]
-                        - np.abs(source[k, i] - target[k, i])
-                        - np.abs(source[k, j] - target[k, j])
-                        + np.abs(source[k, j] - target[k, i])
-                        + np.abs(source[k, i] - target[k, j])
-                    )
+                    err_v[k] = err_v[k] - np.abs(source[k, i] - target[k, i]) - \
+                        np.abs(source[k, j] - target[k, j]) + \
+                        np.abs(source[k, j] - target[k, i]) + np.abs(source[k, i] - target[k, j])
 
             # switch rows i and j
             ii_v = source[ii, :].copy()
@@ -311,68 +265,34 @@ def IGTD_absolute_error(
             step_record[ii] = s
 
         err_record.append(err)
-        print("Step " + str(s) + " err: " + str(err))
+        print('Step ' + str(s) + ' err: ' + str(err))
         index_record[s + 1, :] = index.copy()
         run_time.append(time.time() - t1)
 
         if s > val_step:
-            if (
-                np.sum(
-                    (err_record[-val_step - 1] - np.array(err_record[(-val_step):]))
-                    / err_record[-val_step - 1]
-                    >= min_gain
-                )
-                == 0
-            ):
+            if np.sum((err_record[-val_step - 1]
+                      - np.array(err_record[(-val_step):])) / err_record[-val_step - 1] >= min_gain) == 0:
                 break
 
         pre_err = err
 
-    index_record = index_record[: len(err_record), :].astype(np.int)
+    index_record = index_record[:len(err_record), :].astype(np.int)
     if save_folder is not None:
-        pd.DataFrame(index_record).to_csv(
-            save_folder + "/" + file_name + "_index.txt",
-            header=False,
-            index=False,
-            sep="\t",
-            line_terminator="\r\n",
-        )
-        pd.DataFrame(
-            np.transpose(np.vstack((err_record, np.array(range(s + 2))))),
-            columns=["error", "steps"],
-        ).to_csv(
-            save_folder + "/" + file_name + "_error_and_step.txt",
-            header=True,
-            index=False,
-            sep="\t",
-            line_terminator="\r\n",
-        )
-        pd.DataFrame(
-            np.transpose(np.vstack((err_record, run_time))),
-            columns=["error", "run_time"],
-        ).to_csv(
-            save_folder + "/" + file_name + "_error_and_time.txt",
-            header=True,
-            index=False,
-            sep="\t",
-            line_terminator="\r\n",
-        )
+        pd.DataFrame(index_record).to_csv(save_folder + '/' + file_name + '_index.txt',
+                                          header=False, index=False, sep='\t', line_terminator='\r\n')
+        pd.DataFrame(np.transpose(np.vstack((err_record, np.array(range(s + 2))))),
+                     columns=['error', 'steps']).to_csv(save_folder + '/' + file_name + '_error_and_step.txt',
+                                                        header=True, index=False, sep='\t', line_terminator='\r\n')
+        pd.DataFrame(np.transpose(np.vstack((err_record, run_time))), columns=['error', 'run_time']).to_csv(
+            save_folder + '/' + file_name + '_error_and_time.txt', header=True, index=False, sep='\t',
+            line_terminator='\r\n')
 
     return index_record, err_record, run_time
 
 
-def IGTD_square_error(
-    source,
-    target,
-    max_step=1000,
-    switch_t=0,
-    val_step=50,
-    min_gain=0.00001,
-    random_state=1,
-    save_folder=None,
-    file_name="",
-):
-    """
+def IGTD_square_error(source, target, max_step=1000, switch_t=0, val_step=50, min_gain=0.00001, random_state=1,
+                      save_folder=None, file_name=''):
+    '''
     This function switches the order of rows (columns) in the source ranking matrix to make it similar to the target
     ranking matrix. In each step, the algorithm randomly picks a row that has not been switched with others for
     the longest time and checks all possible switch of this row, and selects the switch that reduces the
@@ -395,7 +315,7 @@ def IGTD_square_error(
     index_record: ordering index to rearrange the rows(columns) in 'source' in the optimization process
     err_record: the error history in the optimization process
     run_time: the time at which each step is finished in the optimization process
-    """
+    '''
 
     np.random.RandomState(seed=random_state)
     if os.path.exists(save_folder):
@@ -414,9 +334,8 @@ def IGTD_square_error(
     err_v = np.empty(num)
     err_v.fill(np.nan)
     for i in range(num):
-        err_v[i] = np.sum(np.square(source[i, 0:i] - target[i, 0:i])) + np.sum(
-            np.square(source[(i + 1) :, i] - target[(i + 1) :, i])
-        )
+        err_v[i] = np.sum(np.square(source[i, 0:i] - target[i, 0:i])) + \
+            np.sum(np.square(source[(i + 1):, i] - target[(i + 1):, i]))
 
     step_record = -np.ones(num)
     err_record = [np.sum(np.square(source[tril_id] - target[tril_id]))]
@@ -444,18 +363,14 @@ def IGTD_square_error(
 
             err_ori = err_v[i] + err_v[j] - np.square(source[j, i] - target[j, i])
 
-            err_i = (
-                np.sum(np.square(source[j, :i] - target[i, :i]))
-                + np.sum(np.square(source[(i + 1) : j, j] - target[(i + 1) : j, i]))
-                + np.sum(np.square(source[(j + 1) :, j] - target[(j + 1) :, i]))
-                + np.square(source[i, j] - target[j, i])
-            )
-            err_j = (
-                np.sum(np.square(source[i, :i] - target[j, :i]))
-                + np.sum(np.square(source[i, (i + 1) : j] - target[j, (i + 1) : j]))
-                + np.sum(np.square(source[(j + 1) :, i] - target[(j + 1) :, j]))
-                + np.square(source[i, j] - target[j, i])
-            )
+            err_i = np.sum(np.square(source[j, :i] - target[i, :i])) + \
+                np.sum(np.square(source[(i + 1):j, j] - target[(i + 1):j, i])) + \
+                np.sum(np.square(source[(j + 1):, j] - target[(j + 1):, i])) + \
+                np.square(source[i, j] - target[j, i])
+            err_j = np.sum(np.square(source[i, :i] - target[j, :i])) + \
+                np.sum(np.square(source[i, (i + 1):j] - target[j, (i + 1):j])) + \
+                np.sum(np.square(source[(j + 1):, i] - target[(j + 1):, j])) + \
+                np.square(source[i, j] - target[j, i])
             err_test = err_i + err_j - np.square(source[i, j] - target[j, i])
 
             delta[jj] = err_test - err_ori
@@ -474,47 +389,26 @@ def IGTD_square_error(
                 j = ii
             for k in range(num):
                 if k < i:
-                    err_v[k] = (
-                        err_v[k]
-                        - np.square(source[i, k] - target[i, k])
-                        - np.square(source[j, k] - target[j, k])
-                        + np.square(source[j, k] - target[i, k])
-                        + np.square(source[i, k] - target[j, k])
-                    )
+                    err_v[k] = err_v[k] - np.square(source[i, k] - target[i, k]) - \
+                        np.square(source[j, k] - target[j, k]) + \
+                        np.square(source[j, k] - target[i, k]) + np.square(source[i, k] - target[j, k])
                 elif k == i:
-                    err_v[k] = (
-                        np.sum(np.square(source[j, :i] - target[i, :i]))
-                        + np.sum(
-                            np.square(source[(i + 1) : j, j] - target[(i + 1) : j, i])
-                        )
-                        + np.sum(np.square(source[(j + 1) :, j] - target[(j + 1) :, i]))
-                        + np.square(source[i, j] - target[j, i])
-                    )
+                    err_v[k] = np.sum(np.square(source[j, :i] - target[i, :i])) + \
+                        np.sum(np.square(source[(i + 1):j, j] - target[(i + 1):j, i])) + \
+                        np.sum(np.square(source[(j + 1):, j] - target[(j + 1):, i])) + \
+                        np.square(source[i, j] - target[j, i])
                 elif k < j:
-                    err_v[k] = (
-                        err_v[k]
-                        - np.square(source[k, i] - target[k, i])
-                        - np.square(source[j, k] - target[j, k])
-                        + np.square(source[k, j] - target[k, i])
-                        + np.square(source[i, k] - target[j, k])
-                    )
+                    err_v[k] = err_v[k] - np.square(source[k, i] - target[k, i]) - \
+                        np.square(source[j, k] - target[j, k]) + \
+                        np.square(source[k, j] - target[k, i]) + np.square(source[i, k] - target[j, k])
                 elif k == j:
-                    err_v[k] = (
-                        np.sum(np.square(source[i, :i] - target[j, :i]))
-                        + np.sum(
-                            np.square(source[i, (i + 1) : j] - target[j, (i + 1) : j])
-                        )
-                        + np.sum(np.square(source[(j + 1) :, i] - target[(j + 1) :, j]))
-                        + np.square(source[i, j] - target[j, i])
-                    )
+                    err_v[k] = np.sum(np.square(source[i, :i] - target[j, :i])) + \
+                        np.sum(np.square(source[i, (i + 1):j] - target[j, (i + 1):j])) + \
+                        np.sum(np.square(source[(j + 1):, i] - target[(j + 1):, j])) + np.square(source[i, j] - target[j, i])
                 else:
-                    err_v[k] = (
-                        err_v[k]
-                        - np.square(source[k, i] - target[k, i])
-                        - np.square(source[k, j] - target[k, j])
-                        + np.square(source[k, j] - target[k, i])
-                        + np.square(source[k, i] - target[k, j])
-                    )
+                    err_v[k] = err_v[k] - np.square(source[k, i] - target[k, i]) - \
+                        np.square(source[k, j] - target[k, j]) + \
+                        np.square(source[k, j] - target[k, i]) + np.square(source[k, i] - target[k, j])
 
             # switch rows i and j
             ii_v = source[ii, :].copy()
@@ -543,104 +437,53 @@ def IGTD_square_error(
             step_record[ii] = s
 
         err_record.append(err)
-        print("Step " + str(s) + " err: " + str(err))
+        print('Step ' + str(s) + ' err: ' + str(err))
         index_record[s + 1, :] = index.copy()
         run_time.append(time.time() - t1)
 
         if s > val_step:
-            if (
-                np.sum(
-                    (err_record[-val_step - 1] - np.array(err_record[(-val_step):]))
-                    / err_record[-val_step - 1]
-                    >= min_gain
-                )
-                == 0
-            ):
+            if np.sum((err_record[-val_step - 1] - np.array(err_record[(-val_step):])) / err_record[-val_step - 1] >= min_gain) == 0:
                 break
 
         pre_err = err
 
-    index_record = index_record[: len(err_record), :].astype(np.int)
+    index_record = index_record[:len(err_record), :].astype(np.int)
     if save_folder is not None:
-        pd.DataFrame(index_record).to_csv(
-            save_folder + "/" + file_name + "_index.txt",
-            header=False,
-            index=False,
-            sep="\t",
-            line_terminator="\r\n",
-        )
-        pd.DataFrame(
-            np.transpose(np.vstack((err_record, np.array(range(s + 2))))),
-            columns=["error", "steps"],
-        ).to_csv(
-            save_folder + "/" + file_name + "_error_and_step.txt",
-            header=True,
-            index=False,
-            sep="\t",
-            line_terminator="\r\n",
-        )
-        pd.DataFrame(
-            np.transpose(np.vstack((err_record, run_time))),
-            columns=["error", "run_time"],
-        ).to_csv(
-            save_folder + "/" + file_name + "_error_and_time.txt",
-            header=True,
-            index=False,
-            sep="\t",
-            line_terminator="\r\n",
-        )
+        pd.DataFrame(index_record).to_csv(save_folder + '/' + file_name + '_index.txt', header=False,
+                                          index=False, sep='\t', line_terminator='\r\n')
+        pd.DataFrame(np.transpose(np.vstack((err_record, np.array(range(s + 2))))),
+                     columns=['error', 'steps']).to_csv(save_folder + '/' + file_name + '_error_and_step.txt',
+                                                        header=True, index=False, sep='\t',
+                                                        line_terminator='\r\n')
+        pd.DataFrame(np.transpose(np.vstack((err_record, run_time))), columns=['error', 'run_time']).to_csv(
+            save_folder + '/' + file_name + '_error_and_time.txt', header=True, index=False, sep='\t',
+            line_terminator='\r\n')
 
     return index_record, err_record, run_time
 
 
-def IGTD(
-    source,
-    target,
-    err_measure="abs",
-    max_step=1000,
-    switch_t=0,
-    val_step=50,
-    min_gain=0.00001,
-    random_state=1,
-    save_folder=None,
-    file_name="",
-):
-    """
+def IGTD(source, target, err_measure='abs', max_step=1000, switch_t=0, val_step=50, min_gain=0.00001, random_state=1,
+         save_folder=None, file_name=''):
+    '''
     This is just a wrapper function that wraps the two search functions using different error measures.
-    """
+    '''
 
-    if err_measure == "abs":
-        index_record, err_record, run_time = IGTD_absolute_error(
-            source=source,
-            target=target,
-            max_step=max_step,
-            switch_t=switch_t,
-            val_step=val_step,
-            min_gain=min_gain,
-            random_state=random_state,
-            save_folder=save_folder,
-            file_name=file_name,
-        )
-    if err_measure == "squared":
-        index_record, err_record, run_time = IGTD_square_error(
-            source=source,
-            target=target,
-            max_step=max_step,
-            switch_t=switch_t,
-            val_step=val_step,
-            min_gain=min_gain,
-            random_state=random_state,
-            save_folder=save_folder,
-            file_name=file_name,
-        )
+    if err_measure == 'abs':
+        index_record, err_record, run_time = \
+            IGTD_absolute_error(source=source, target=target, max_step=max_step, switch_t=switch_t,
+                                val_step=val_step, min_gain=min_gain, random_state=random_state,
+                                save_folder=save_folder, file_name=file_name)
+    if err_measure == 'squared':
+        index_record, err_record, run_time = \
+            IGTD_square_error(source=source, target=target, max_step=max_step, switch_t=switch_t,
+                              val_step=val_step, min_gain=min_gain, random_state=random_state,
+                              save_folder=save_folder, file_name=file_name)
 
     return index_record, err_record, run_time
 
 
-def generate_image_data(
-    data, index, num_row, num_column, coord, image_folder=None, file_name=""
-):
-    """
+def generate_image_data(data, index, num_row, num_column, coord, image_folder=None, file_name=''):
+    '''
     This function generates the data in image format according to rearrangement indices. It saves the data
     sample-by-sample in both txt files and image files
 
@@ -658,7 +501,7 @@ def generate_image_data(
     image_data: the generated data, a 3D numpy array. The third dimension is across samples. The range of values
         is [0, 255]. Small values actually indicate high values in the original data.
     samples: the names of indices of the samples
-    """
+    '''
 
     if isinstance(data, pd.DataFrame):
         samples = data.index.map(np.str)
@@ -674,9 +517,7 @@ def generate_image_data(
     data_2 = data_2[:, index]
     max_v = np.max(data_2)
     min_v = np.min(data_2)
-    data_2 = (
-        255 - (data_2 - min_v) / (max_v - min_v) * 255
-    )  # So that black means high value
+    data_2 = 255 - (data_2 - min_v) / (max_v - min_v) * 255  # So that black means high value
 
     image_data = np.empty((num_row, num_column, data_2.shape[0]))
     image_data.fill(np.nan)
@@ -687,40 +528,21 @@ def generate_image_data(
         image_data[:, :, i] = data_i
         if image_folder is not None:
             fig = plt.figure()
-            plt.imshow(data_i, cmap="gray", vmin=0, vmax=255)
-            plt.axis("scaled")
-            plt.savefig(
-                fname=image_folder + "/" + file_name + "_" + samples[i] + "_image.png",
-                bbox_inches="tight",
-                pad_inches=0,
-            )
+            plt.imshow(data_i, cmap='gray', vmin=0, vmax=255)
+            plt.axis('scaled')
+            plt.savefig(fname=image_folder + '/' + file_name + '_' + samples[i] + '_image.png', bbox_inches='tight',
+                        pad_inches=0)
             plt.close(fig)
 
-            pd.DataFrame(image_data[:, :, i], index=None, columns=None).to_csv(
-                image_folder + "/" + file_name + "_" + samples[i] + "_data.txt",
-                header=None,
-                index=None,
-                sep="\t",
-                line_terminator="\r\n",
-            )
+            pd.DataFrame(image_data[:, :, i], index=None,
+                         columns=None).to_csv(image_folder + '/' + file_name + '_' + samples[i] + '_data.txt', header=None, index=None, sep='\t', line_terminator='\r\n')
 
     return image_data, samples
 
 
-def table_to_image(
-    norm_d,
-    scale,
-    fea_dist_method,
-    image_dist_method,
-    save_image_size,
-    max_step,
-    val_step,
-    normDir,
-    error,
-    switch_t=0,
-    min_gain=0.00001,
-):
-    """
+def table_to_image(norm_d, scale, fea_dist_method, image_dist_method, save_image_size, max_step, val_step, normDir,
+                   error, switch_t=0, min_gain=0.00001):
+    '''
     This function converts tabular data into images using the IGTD algorithm.
 
     Input:
@@ -765,95 +587,59 @@ def table_to_image(
     7.  optimized_feature_ranking.png shows the feature distance ranking matrix after optimization.
     8.  data folder includes two image data files for each sample. The txt file is the image data in matrix format.
         The png file shows the visualization of image data.
-    """
+    '''
 
     if os.path.exists(normDir):
         shutil.rmtree(normDir)
     os.mkdir(normDir)
 
-    ranking_feature, corr = generate_feature_distance_ranking(
-        data=norm_d, method=fea_dist_method
-    )
+    ranking_feature, corr = generate_feature_distance_ranking(data=norm_d, method=fea_dist_method)
     fig = plt.figure(figsize=(save_image_size, save_image_size))
-    plt.imshow(
-        np.max(ranking_feature) - ranking_feature, cmap="gray", interpolation="nearest"
-    )
-    plt.savefig(
-        fname=normDir + "/original_feature_ranking.png",
-        bbox_inches="tight",
-        pad_inches=0,
-    )
+    plt.imshow(np.max(ranking_feature) - ranking_feature, cmap='gray', interpolation='nearest')
+    plt.savefig(fname=normDir + '/original_feature_ranking.png', bbox_inches='tight', pad_inches=0)
     plt.close(fig)
 
-    coordinate, ranking_image = generate_matrix_distance_ranking(
-        num_r=scale[0], num_c=scale[1], method=image_dist_method
-    )
+    coordinate, ranking_image = generate_matrix_distance_ranking(num_r=scale[0], num_c=scale[1],
+                                                                 method=image_dist_method)
     fig = plt.figure(figsize=(save_image_size, save_image_size))
-    plt.imshow(
-        np.max(ranking_image) - ranking_image, cmap="gray", interpolation="nearest"
-    )
-    plt.savefig(fname=normDir + "/image_ranking.png", bbox_inches="tight", pad_inches=0)
+    plt.imshow(np.max(ranking_image) - ranking_image, cmap='gray', interpolation='nearest')
+    plt.savefig(fname=normDir + '/image_ranking.png', bbox_inches='tight', pad_inches=0)
     plt.close(fig)
 
-    index, err, time = IGTD(
-        source=ranking_feature,
-        target=ranking_image,
-        err_measure=error,
-        max_step=max_step,
-        switch_t=switch_t,
-        val_step=val_step,
-        min_gain=min_gain,
-        random_state=1,
-        save_folder=normDir + "/" + error,
-        file_name="",
-    )
+    index, err, time = IGTD(source=ranking_feature, target=ranking_image, err_measure=error,
+                            max_step=max_step, switch_t=switch_t, val_step=val_step,
+                            min_gain=min_gain, random_state=1,
+                            save_folder=normDir + '/' + error, file_name='')
 
     fig = plt.figure()
     plt.plot(time, err)
-    plt.savefig(
-        fname=normDir + "/error_and_runtime.png", bbox_inches="tight", pad_inches=0
-    )
+    plt.savefig(fname=normDir + '/error_and_runtime.png', bbox_inches='tight', pad_inches=0)
     plt.close(fig)
     fig = plt.figure()
     plt.plot(range(len(err)), err)
-    plt.savefig(
-        fname=normDir + "/error_and_iteration.png", bbox_inches="tight", pad_inches=0
-    )
+    plt.savefig(fname=normDir + '/error_and_iteration.png', bbox_inches='tight', pad_inches=0)
     plt.close(fig)
     min_id = np.argmin(err)
     ranking_feature_random = ranking_feature[index[min_id, :], :]
     ranking_feature_random = ranking_feature_random[:, index[min_id, :]]
 
     fig = plt.figure(figsize=(save_image_size, save_image_size))
-    plt.imshow(
-        np.max(ranking_feature_random) - ranking_feature_random,
-        cmap="gray",
-        interpolation="nearest",
-    )
-    plt.savefig(
-        fname=normDir + "/optimized_feature_ranking.png",
-        bbox_inches="tight",
-        pad_inches=0,
-    )
+    plt.imshow(np.max(ranking_feature_random) - ranking_feature_random, cmap='gray',
+               interpolation='nearest')
+    plt.savefig(fname=normDir + '/optimized_feature_ranking.png', bbox_inches='tight', pad_inches=0)
     plt.close(fig)
 
-    data, samples = generate_image_data(
-        data=norm_d,
-        index=index[min_id, :],
-        num_row=scale[0],
-        num_column=scale[1],
-        coord=coordinate,
-        image_folder=normDir + "/data",
-        file_name="",
-    )
+    data, samples = generate_image_data(data=norm_d, index=index[min_id, :], num_row=scale[0],
+                                        num_column=scale[1], coord=coordinate,
+                                        image_folder=normDir + '/data', file_name='')
 
-    output = open(normDir + "/Results.pkl", "wb")
+    output = open(normDir + '/Results.pkl', 'wb')
     cp.dump(norm_d, output)
     cp.dump(data, output)
     cp.dump(samples, output)
     output.close()
 
-    output = open(normDir + "/Results_Auxiliary.pkl", "wb")
+    output = open(normDir + '/Results_Auxiliary.pkl', 'wb')
     cp.dump(ranking_feature, output)
     cp.dump(ranking_image, output)
     cp.dump(coordinate, output)

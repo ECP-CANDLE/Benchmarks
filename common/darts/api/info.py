@@ -1,33 +1,28 @@
 import typing
 from collections.abc import abc
 
+import torch
 import numpy as np
 import pandas as pd
-import torch
 
 
 class TrainingHistory:
+
     def __init__(self):
         self.data = []
 
     def add(self, epoch_result):
-        """Add a datapoint to the history"""
+        """ Add a datapoint to the history """
         self.data.append(epoch_result)
 
     def frame(self):
-        return pd.DataFrame(self.data).set_index("epoch_index")
+        return pd.DataFrame(self.data).set_index('epoch_index')
 
 
 class TrainingInfo(abc.MutableMapping):
-    """Information that needs to persist through training"""
+    """ Information that needs to persist through training """
 
-    def __init__(
-        self,
-        start_epoch_index=0,
-        run_name: typing.Optional[str] = None,
-        metrics=None,
-        callbacks=None,
-    ):
+    def __init__(self, start_epoch_index=0, run_name: typing.Optional[str] = None, metrics=None, callbacks=None):
         self.data_dict = {}  # optional information
 
         self.run_name = run_name
@@ -41,12 +36,12 @@ class TrainingInfo(abc.MutableMapping):
             callback.on_initialization(self)
 
     def on_train_begin(self):
-        """Start the training process - always used, even in restarts"""
+        """ Start the training process - always used, even in restarts """
         for callback in self.callbacks:
             callback.on_train_begin(self)
 
     def on_train_end(self):
-        """Finalize training process"""
+        """ Finalize training process """
         for callback in self.callbacks:
             callback.on_train_end(self)
 
@@ -70,7 +65,7 @@ class TrainingInfo(abc.MutableMapping):
 
 
 class EpochResultAccumulator(abc.MutableMapping):
-    """Result of a single epoch of training"""
+    """ Result of a single epoch of training """
 
     def __init__(self, global_epoch_idx, metrics):
         self.metrics = metrics

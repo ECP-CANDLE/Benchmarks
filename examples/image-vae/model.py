@@ -1,20 +1,21 @@
 import math
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from ResNet import BasicBlock, Bottleneck, ResNet
 from torch.autograd import Variable
 
+from ResNet import ResNet, BasicBlock, Bottleneck
+
 model_urls = {
-    "resnet18": "https://download.pytorch.org/models/resnet18-5c106cde.pth",
-    "resnet34": "https://download.pytorch.org/models/resnet34-333f7ec4.pth",
-    "resnet50": "https://download.pytorch.org/models/resnet50-19c8e357.pth",
-    "resnet101": "https://download.pytorch.org/models/resnet101-5d3b4d8f.pth",
-    "resnet152": "https://download.pytorch.org/models/resnet152-b121ed2d.pth",
+    'resnet18': 'https://download.pytorch.org/models/resnet18-5c106cde.pth',
+    'resnet34': 'https://download.pytorch.org/models/resnet34-333f7ec4.pth',
+    'resnet50': 'https://download.pytorch.org/models/resnet50-19c8e357.pth',
+    'resnet101': 'https://download.pytorch.org/models/resnet101-5d3b4d8f.pth',
+    'resnet152': 'https://download.pytorch.org/models/resnet152-b121ed2d.pth',
 }
 
-from extra_uts import concat_elu, down_shift, right_shift
+from extra_uts import right_shift, down_shift, concat_elu
+
 from utils import MS_SSIM
 
 
@@ -66,7 +67,7 @@ class customLoss(nn.Module):
 class nin(nn.Module):
     def __init__(self, dim_in, dim_out):
         super(nin, self).__init__()
-        self.lin_a = nn.Linear(dim_in, dim_out)
+        self.lin_a = (nn.Linear(dim_in, dim_out))
         self.dim_out = dim_out
 
     def forward(self, x):
@@ -83,33 +84,22 @@ class nin(nn.Module):
 
 
 class down_shifted_conv2d(nn.Module):
-    def __init__(
-        self,
-        num_filters_in,
-        num_filters_out,
-        filter_size=(2, 3),
-        stride=(1, 1),
-        shift_output_down=False,
-        norm="weight_norm",
-    ):
+    def __init__(self, num_filters_in, num_filters_out, filter_size=(2, 3), stride=(1, 1),
+                 shift_output_down=False, norm='weight_norm'):
         super(down_shifted_conv2d, self).__init__()
 
-        assert norm in [None, "batch_norm", "weight_norm"]
+        assert norm in [None, 'batch_norm', 'weight_norm']
         self.conv = nn.Conv2d(num_filters_in, num_filters_out, filter_size, stride)
         self.shift_output_down = shift_output_down
         self.norm = norm
-        self.pad = nn.ZeroPad2d(
-            (
-                int((filter_size[1] - 1) / 2),  # pad left
-                int((filter_size[1] - 1) / 2),  # pad right
-                filter_size[0] - 1,  # pad top
-                0,
-            )
-        )  # pad down
+        self.pad = nn.ZeroPad2d((int((filter_size[1] - 1) / 2),  # pad left
+                                 int((filter_size[1] - 1) / 2),  # pad right
+                                 filter_size[0] - 1,  # pad top
+                                 0))  # pad down
 
-        if norm == "weight_norm":
+        if norm == 'weight_norm':
             self.conv == wn(self.conv)
-        elif norm == "batch_norm":
+        elif norm == 'batch_norm':
             self.bn = nn.BatchNorm2d(num_filters_out)
 
         if shift_output_down:
@@ -118,59 +108,39 @@ class down_shifted_conv2d(nn.Module):
     def forward(self, x):
         x = self.pad(x)
         x = self.conv(x)
-        x = self.bn(x) if self.norm == "batch_norm" else x
+        x = self.bn(x) if self.norm == 'batch_norm' else x
         return self.down_shift(x) if self.shift_output_down else x
 
 
 class down_shifted_deconv2d(nn.Module):
-    def __init__(
-        self, num_filters_in, num_filters_out, filter_size=(2, 3), stride=(1, 1)
-    ):
+    def __init__(self, num_filters_in, num_filters_out, filter_size=(2, 3), stride=(1, 1)):
         super(down_shifted_deconv2d, self).__init__()
-        self.deconv = wn(
-            nn.ConvTranspose2d(
-                num_filters_in, num_filters_out, filter_size, stride, output_padding=1
-            )
-        )
+        self.deconv = wn(nn.ConvTranspose2d(num_filters_in, num_filters_out, filter_size, stride,
+                                            output_padding=1))
         self.filter_size = filter_size
         self.stride = stride
 
     def forward(self, x):
         x = self.deconv(x)
         xs = [int(y) for y in x.size()]
-        return x[
-            :,
-            :,
-            : (xs[2] - self.filter_size[0] + 1),
-            int((self.filter_size[1] - 1) / 2) : (
-                xs[3] - int((self.filter_size[1] - 1) / 2)
-            ),
-        ]
+        return x[:, :, :(xs[2] - self.filter_size[0] + 1),
+                 int((self.filter_size[1] - 1) / 2):(xs[3] - int((self.filter_size[1] - 1) / 2))]
 
 
 class down_right_shifted_conv2d(nn.Module):
-    def __init__(
-        self,
-        num_filters_in,
-        num_filters_out,
-        filter_size=(2, 2),
-        stride=(1, 1),
-        shift_output_right=False,
-        norm="weight_norm",
-    ):
+    def __init__(self, num_filters_in, num_filters_out, filter_size=(2, 2), stride=(1, 1),
+                 shift_output_right=False, norm='weight_norm'):
         super(down_right_shifted_conv2d, self).__init__()
 
-        assert norm in [None, "batch_norm", "weight_norm"]
+        assert norm in [None, 'batch_norm', 'weight_norm']
         self.pad = nn.ZeroPad2d((filter_size[1] - 1, 0, filter_size[0] - 1, 0))
-        self.conv = nn.Conv2d(
-            num_filters_in, num_filters_out, filter_size, stride=stride
-        )
+        self.conv = nn.Conv2d(num_filters_in, num_filters_out, filter_size, stride=stride)
         self.shift_output_right = shift_output_right
         self.norm = norm
 
-        if norm == "weight_norm":
+        if norm == 'weight_norm':
             self.conv == wn(self.conv)
-        elif norm == "batch_norm":
+        elif norm == 'batch_norm':
             self.bn = nn.BatchNorm2d(num_filters_out)
 
         if shift_output_right:
@@ -179,49 +149,35 @@ class down_right_shifted_conv2d(nn.Module):
     def forward(self, x):
         x = self.pad(x)
         x = self.conv(x)
-        x = self.bn(x) if self.norm == "batch_norm" else x
+        x = self.bn(x) if self.norm == 'batch_norm' else x
         return self.right_shift(x) if self.shift_output_right else x
 
 
 class down_right_shifted_deconv2d(nn.Module):
-    def __init__(
-        self,
-        num_filters_in,
-        num_filters_out,
-        filter_size=(2, 2),
-        stride=(1, 1),
-        shift_output_right=False,
-    ):
+    def __init__(self, num_filters_in, num_filters_out, filter_size=(2, 2), stride=(1, 1),
+                 shift_output_right=False):
         super(down_right_shifted_deconv2d, self).__init__()
-        self.deconv = wn(
-            nn.ConvTranspose2d(
-                num_filters_in, num_filters_out, filter_size, stride, output_padding=1
-            )
-        )
+        self.deconv = wn(nn.ConvTranspose2d(num_filters_in, num_filters_out, filter_size,
+                                            stride, output_padding=1))
         self.filter_size = filter_size
         self.stride = stride
 
     def forward(self, x):
         x = self.deconv(x)
         xs = [int(y) for y in x.size()]
-        x = x[
-            :,
-            :,
-            : (xs[2] - self.filter_size[0] + 1) :,
-            : (xs[3] - self.filter_size[1] + 1),
-        ]
+        x = x[:, :, :(xs[2] - self.filter_size[0] + 1):, :(xs[3] - self.filter_size[1] + 1)]
         return x
 
 
-# skip connection parameter : 0 = no skip connection
-#                             1 = skip connection where skip input size === input size
-#                             2 = skip connection where skip input size === 2 * input size
+'''
+skip connection parameter : 0 = no skip connection
+                            1 = skip connection where skip input size === input size
+                            2 = skip connection where skip input size === 2 * input size
+'''
 
 
 class gated_resnet(nn.Module):
-    def __init__(
-        self, num_filters, conv_op, nonlinearity=concat_elu, skip_connection=0
-    ):
+    def __init__(self, num_filters, conv_op, nonlinearity=concat_elu, skip_connection=0):
         super(gated_resnet, self).__init__()
         self.skip_connection = skip_connection
         self.nonlinearity = nonlinearity
@@ -250,30 +206,14 @@ class PixelCNNLayer_up(nn.Module):
         super(PixelCNNLayer_up, self).__init__()
         self.nr_resnet = nr_resnet
         # stream from pixels above
-        self.u_stream = nn.ModuleList(
-            [
-                gated_resnet(
-                    nr_filters,
-                    down_shifted_conv2d,
-                    resnet_nonlinearity,
-                    skip_connection=0,
-                )
-                for _ in range(nr_resnet)
-            ]
-        )
+        self.u_stream = nn.ModuleList([gated_resnet(nr_filters, down_shifted_conv2d,
+                                                    resnet_nonlinearity, skip_connection=0)
+                                       for _ in range(nr_resnet)])
 
         # stream from pixels above and to thes left
-        self.ul_stream = nn.ModuleList(
-            [
-                gated_resnet(
-                    nr_filters,
-                    down_right_shifted_conv2d,
-                    resnet_nonlinearity,
-                    skip_connection=1,
-                )
-                for _ in range(nr_resnet)
-            ]
-        )
+        self.ul_stream = nn.ModuleList([gated_resnet(nr_filters, down_right_shifted_conv2d,
+                                                     resnet_nonlinearity, skip_connection=1)
+                                        for _ in range(nr_resnet)])
 
     def forward(self, u, ul):
         u_list, ul_list = [], []
@@ -292,30 +232,14 @@ class PixelCNNLayer_down(nn.Module):
         super(PixelCNNLayer_down, self).__init__()
         self.nr_resnet = nr_resnet
         # stream from pixels above
-        self.u_stream = nn.ModuleList(
-            [
-                gated_resnet(
-                    nr_filters,
-                    down_shifted_conv2d,
-                    resnet_nonlinearity,
-                    skip_connection=1,
-                )
-                for _ in range(nr_resnet)
-            ]
-        )
+        self.u_stream = nn.ModuleList([gated_resnet(nr_filters, down_shifted_conv2d,
+                                                    resnet_nonlinearity, skip_connection=1)
+                                       for _ in range(nr_resnet)])
 
         # stream from pixels above and to thes left
-        self.ul_stream = nn.ModuleList(
-            [
-                gated_resnet(
-                    nr_filters,
-                    down_right_shifted_conv2d,
-                    resnet_nonlinearity,
-                    skip_connection=2,
-                )
-                for _ in range(nr_resnet)
-            ]
-        )
+        self.ul_stream = nn.ModuleList([gated_resnet(nr_filters, down_right_shifted_conv2d,
+                                                     resnet_nonlinearity, skip_connection=2)
+                                        for _ in range(nr_resnet)])
 
     def forward(self, u, ul, u_list, ul_list):
         for i in range(self.nr_resnet):
@@ -326,21 +250,13 @@ class PixelCNNLayer_down(nn.Module):
 
 
 class PixelCNN(nn.Module):
-    def __init__(
-        self,
-        nr_resnet=5,
-        nr_filters=10,
-        nr_logistic_mix=6,
-        resnet_nonlinearity="concat_elu",
-        input_channels=3,
-    ):
+    def __init__(self, nr_resnet=5, nr_filters=10, nr_logistic_mix=6,
+                 resnet_nonlinearity='concat_elu', input_channels=3):
         super(PixelCNN, self).__init__()
-        if resnet_nonlinearity == "concat_elu":
+        if resnet_nonlinearity == 'concat_elu':
             self.resnet_nonlinearity = lambda x: concat_elu(x)
         else:
-            raise Exception(
-                "right now only concat elu is supported as resnet nonlinearity."
-            )
+            raise Exception('right now only concat elu is supported as resnet nonlinearity.')
 
         self.nr_filters = nr_filters
         self.input_channels = input_channels
@@ -349,70 +265,33 @@ class PixelCNN(nn.Module):
         self.down_shift_pad = nn.ZeroPad2d((0, 0, 1, 0))
 
         down_nr_resnet = [nr_resnet] + [nr_resnet + 1] * 2
-        self.down_layers = nn.ModuleList(
-            [
-                PixelCNNLayer_down(
-                    down_nr_resnet[i], nr_filters, self.resnet_nonlinearity
-                )
-                for i in range(3)
-            ]
-        )
+        self.down_layers = nn.ModuleList([PixelCNNLayer_down(down_nr_resnet[i], nr_filters,
+                                                             self.resnet_nonlinearity) for i in range(3)])
 
-        self.up_layers = nn.ModuleList(
-            [
-                PixelCNNLayer_up(nr_resnet, nr_filters, self.resnet_nonlinearity)
-                for _ in range(3)
-            ]
-        )
+        self.up_layers = nn.ModuleList([PixelCNNLayer_up(nr_resnet, nr_filters,
+                                                         self.resnet_nonlinearity) for _ in range(3)])
 
-        self.downsize_u_stream = nn.ModuleList(
-            [
-                down_shifted_conv2d(nr_filters, nr_filters, stride=(2, 2))
-                for _ in range(2)
-            ]
-        )
+        self.downsize_u_stream = nn.ModuleList([down_shifted_conv2d(nr_filters, nr_filters,
+                                                                    stride=(2, 2)) for _ in range(2)])
 
-        self.downsize_ul_stream = nn.ModuleList(
-            [
-                down_right_shifted_conv2d(nr_filters, nr_filters, stride=(2, 2))
-                for _ in range(2)
-            ]
-        )
+        self.downsize_ul_stream = nn.ModuleList([down_right_shifted_conv2d(nr_filters,
+                                                                           nr_filters, stride=(2, 2)) for _ in
+                                                 range(2)])
 
-        self.upsize_u_stream = nn.ModuleList(
-            [
-                down_shifted_deconv2d(nr_filters, nr_filters, stride=(2, 2))
-                for _ in range(2)
-            ]
-        )
+        self.upsize_u_stream = nn.ModuleList([down_shifted_deconv2d(nr_filters, nr_filters,
+                                                                    stride=(2, 2)) for _ in range(2)])
 
-        self.upsize_ul_stream = nn.ModuleList(
-            [
-                down_right_shifted_deconv2d(nr_filters, nr_filters, stride=(2, 2))
-                for _ in range(2)
-            ]
-        )
+        self.upsize_ul_stream = nn.ModuleList([down_right_shifted_deconv2d(nr_filters,
+                                                                           nr_filters, stride=(2, 2)) for _ in
+                                               range(2)])
 
-        self.u_init = down_shifted_conv2d(
-            input_channels + 1, nr_filters, filter_size=(2, 3), shift_output_down=True
-        )
+        self.u_init = down_shifted_conv2d(input_channels + 1, nr_filters, filter_size=(2, 3),
+                                          shift_output_down=True)
 
-        self.ul_init = nn.ModuleList(
-            [
-                down_shifted_conv2d(
-                    input_channels + 1,
-                    nr_filters,
-                    filter_size=(1, 3),
-                    shift_output_down=True,
-                ),
-                down_right_shifted_conv2d(
-                    input_channels + 1,
-                    nr_filters,
-                    filter_size=(2, 1),
-                    shift_output_right=True,
-                ),
-            ]
-        )
+        self.ul_init = nn.ModuleList([down_shifted_conv2d(input_channels + 1, nr_filters,
+                                                          filter_size=(1, 3), shift_output_down=True),
+                                      down_right_shifted_conv2d(input_channels + 1, nr_filters,
+                                                                filter_size=(2, 1), shift_output_right=True)])
 
         num_mix = 3 if self.input_channels == 1 else 10
         self.nin_out = nin(nr_filters, num_mix * nr_logistic_mix)
@@ -483,17 +362,13 @@ class TimeDistributed(nn.Module):
             return self.module(x)
 
         # Squash samples and timesteps into a single axis
-        x_reshape = x.contiguous().view(
-            -1, x.size(-1)
-        )  # (samples * timesteps, input_size)
+        x_reshape = x.contiguous().view(-1, x.size(-1))  # (samples * timesteps, input_size)
 
         y = self.module(x_reshape)
 
         # We have to reshape Y
         if self.batch_first:
-            y = y.contiguous().view(
-                x.size(0), -1, y.size(-1)
-            )  # (samples, timesteps, output_size)
+            y = y.contiguous().view(x.size(0), -1, y.size(-1))  # (samples, timesteps, output_size)
         else:
             y = y.view(-1, x.size(1), y.size(-1))  # (timesteps, samples, output_size)
 
@@ -501,6 +376,7 @@ class TimeDistributed(nn.Module):
 
 
 class Repeat(nn.Module):
+
     def __init__(self, rep):
         super(Repeat, self).__init__()
 
@@ -516,6 +392,7 @@ class Repeat(nn.Module):
 
 
 class Flatten(nn.Module):
+
     def forward(self, x):
         size = x.size()  # read in N, C, H, W
         return x.view(size[0], -1)
@@ -595,44 +472,20 @@ class SeparableConv3(nn.Module):
         self.channels = 3
 
         self.ch1 = nn.Sequential(
-            nn.Conv2d(
-                in_channels=1,
-                out_channels=1,
-                kernel_size=kernel_size,
-                stride=stride,
-                padding=padding,
-                bias=bias,
-            ),
-            nn.ReLU(),
-        )
+            nn.Conv2d(in_channels=1, out_channels=1, kernel_size=kernel_size, stride=stride, padding=padding,
+                      bias=bias), nn.ReLU())
         self.ch2 = nn.Sequential(
-            nn.Conv2d(
-                in_channels=1,
-                out_channels=1,
-                kernel_size=kernel_size,
-                stride=stride,
-                padding=padding,
-                bias=bias,
-            ),
-            nn.ReLU(),
-        )
+            nn.Conv2d(in_channels=1, out_channels=1, kernel_size=kernel_size, stride=stride, padding=padding,
+                      bias=bias), nn.ReLU())
         self.ch3 = nn.Sequential(
-            nn.Conv2d(
-                in_channels=1,
-                out_channels=1,
-                kernel_size=kernel_size,
-                stride=stride,
-                padding=padding,
-                bias=bias,
-            ),
-            nn.ReLU(),
-        )
+            nn.Conv2d(in_channels=1, out_channels=1, kernel_size=kernel_size, stride=stride, padding=padding,
+                      bias=bias), nn.ReLU())
 
     def forward(self, x):
-        return torch.cat(
-            (self.ch1(x[:, 0, ...]), self.ch2(x[:, 1, ...]), self.ch3(x[:, 2, ...])),
-            dim=1,
-        )
+        return torch.cat((self.ch1(x[:, 0, ...]),
+                          self.ch2(x[:, 1, ...]),
+                          self.ch3(x[:, 2, ...])),
+                         dim=1)
 
 
 class PictureEncoder(nn.Module):
@@ -640,24 +493,12 @@ class PictureEncoder(nn.Module):
         super(PictureEncoder, self).__init__()
         self.rep_size = rep_size
 
-        self.encoder = ResNet(
-            BasicBlock, [2, 3, 2, 3], num_classes=rep_size, in_classes=1
-        )
-        self.encoder_color = ResNet(
-            BasicBlock, [2, 3, 2, 3], num_classes=rep_size, in_classes=3
-        )
-        self.lc1 = nn.Sequential(
-            nn.Linear(rep_size, rep_size),
-            nn.LeakyReLU(),
-            nn.Linear(rep_size, rep_size),
-            nn.LeakyReLU(),
-        )
-        self.lc2 = nn.Sequential(
-            nn.Linear(rep_size, rep_size),
-            nn.LeakyReLU(),
-            nn.Linear(rep_size, rep_size),
-            nn.LeakyReLU(),
-        )
+        self.encoder = ResNet(BasicBlock, [2, 3, 2, 3], num_classes=rep_size, in_classes=1)
+        self.encoder_color = ResNet(BasicBlock, [2, 3, 2, 3], num_classes=rep_size, in_classes=3)
+        self.lc1 = nn.Sequential(nn.Linear(rep_size, rep_size), nn.LeakyReLU(), nn.Linear(rep_size, rep_size),
+                                 nn.LeakyReLU())
+        self.lc2 = nn.Sequential(nn.Linear(rep_size, rep_size), nn.LeakyReLU(), nn.Linear(rep_size, rep_size),
+                                 nn.LeakyReLU())
 
         self.sigmoid = nn.Sigmoid()
 
@@ -674,23 +515,19 @@ class PictureEncoder(nn.Module):
 
 def conv3x3T(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return nn.ConvTranspose2d(
-        in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False
-    )
+    return nn.ConvTranspose2d(in_planes, out_planes, kernel_size=3, stride=stride,
+                              padding=1, bias=False)
 
 
 def conv4x4T(in_planes, out_planes, stride=1):
     """3x3 convolution with padding"""
-    return nn.ConvTranspose2d(
-        in_planes, out_planes, kernel_size=4, stride=stride, padding=1, bias=False
-    )
+    return nn.ConvTranspose2d(in_planes, out_planes, kernel_size=4, stride=stride,
+                              padding=1, bias=False)
 
 
 def conv1x1T(in_planes, out_planes, stride=1):
     """1x1 convolution"""
-    return nn.ConvTranspose2d(
-        in_planes, out_planes, kernel_size=1, stride=stride, bias=False
-    )
+    return nn.ConvTranspose2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
 
 class TransposeBlock(nn.Module):
@@ -739,7 +576,6 @@ class TransposeBlock(nn.Module):
 
 # Dense Net
 
-
 class ListModule(nn.Module):
     def __init__(self, *args):
         super(ListModule, self).__init__()
@@ -750,7 +586,7 @@ class ListModule(nn.Module):
 
     def __getitem__(self, idx):
         if idx < 0 or idx >= len(self._modules):
-            raise IndexError("index {} is out of range".format(idx))
+            raise IndexError('index {} is out of range'.format(idx))
         it = iter(self._modules.values())
         for i in range(idx):
             next(it)
@@ -831,47 +667,23 @@ class BindingAffModel(nn.Module):
             nn.Linear(64, 64),
             nn.ReLU(),
             nn.Linear(64, 1),
-            nn.ReLU(),
+            nn.ReLU()
         )
 
     def forward(self, x):
         batch_size = x.shape[0]
-        out = self.attention(
-            x.view(-1, 1, self.rep_size),
-            x.view(-1, 1, self.rep_size),
-            x.view(-1, 1, self.rep_size),
-        )
+        out = self.attention(x.view(-1, 1, self.rep_size), x.view(-1, 1, self.rep_size), x.view(-1, 1, self.rep_size))
         return self.model(out.view(batch_size, -1))
 
 
 class TranposeConvBlock(nn.Module):
-    def __init__(
-        self,
-        in_plane,
-        out_plane,
-        padding=(0, 0),
-        stride=(0, 0),
-        kernel_size=(0, 0),
-        dropout=None,
-    ):
+    def __init__(self, in_plane, out_plane, padding=(0, 0), stride=(0, 0), kernel_size=(0, 0), dropout=None):
         super(TranposeConvBlock, self).__init__()
 
-        self.conv1 = nn.ConvTranspose2d(
-            in_plane,
-            out_plane,
-            kernel_size=kernel_size[0],
-            padding=padding[0],
-            stride=stride[0],
-            bias=False,
-        )
-        self.conv2 = nn.ConvTranspose2d(
-            out_plane,
-            out_plane,
-            kernel_size=kernel_size[1],
-            padding=padding[1],
-            stride=stride[1],
-            bias=False,
-        )
+        self.conv1 = nn.ConvTranspose2d(in_plane, out_plane, kernel_size=kernel_size[0], padding=padding[0],
+                                        stride=stride[0], bias=False)
+        self.conv2 = nn.ConvTranspose2d(out_plane, out_plane, kernel_size=kernel_size[1], padding=padding[1],
+                                        stride=stride[1], bias=False)
         # self.conv3 = nn.ConvTranspose2d(out_plane, out_plane, kernel_size=kernel_size[1], padding=padding[1], stride=stride[1], bias=False)
         self.bn1 = nn.BatchNorm2d(out_plane)
         self.bn2 = nn.BatchNorm2d(out_plane)
@@ -893,45 +705,21 @@ class PictureDecoder(nn.Module):
         self.fc4 = nn.Linear(rep_size * 3, rep_size * 6)
 
         # Decoder
-        self.preconv = nn.ConvTranspose2d(
-            12, 6, kernel_size=3, stride=1, padding=0, bias=False
-        )
-        self.conv15 = nn.ConvTranspose2d(
-            6, 6, kernel_size=2, stride=1, padding=0, bias=False
-        )
-        self.conv15_ = nn.ConvTranspose2d(
-            6, 6, kernel_size=3, stride=1, padding=0, bias=False
-        )
+        self.preconv = nn.ConvTranspose2d(12, 6, kernel_size=3, stride=1, padding=0, bias=False)
+        self.conv15 = nn.ConvTranspose2d(6, 6, kernel_size=2, stride=1, padding=0, bias=False)
+        self.conv15_ = nn.ConvTranspose2d(6, 6, kernel_size=3, stride=1, padding=0, bias=False)
         self.bn15 = nn.BatchNorm2d(6)
-        self.conv16 = nn.ConvTranspose2d(
-            6, 6, kernel_size=3, stride=2, padding=0, bias=False
-        )
-        self.conv16_ = nn.ConvTranspose2d(
-            6, 4, kernel_size=3, stride=1, padding=0, bias=False
-        )
+        self.conv16 = nn.ConvTranspose2d(6, 6, kernel_size=3, stride=2, padding=0, bias=False)
+        self.conv16_ = nn.ConvTranspose2d(6, 4, kernel_size=3, stride=1, padding=0, bias=False)
         self.bn16 = nn.BatchNorm2d(4)
-        self.conv20 = nn.ConvTranspose2d(
-            4, 4, kernel_size=4, stride=2, padding=0, bias=False
-        )
-        self.conv20_ = nn.ConvTranspose2d(
-            4, 4, kernel_size=4, stride=1, padding=0, bias=False
-        )
-        self.conv17 = nn.ConvTranspose2d(
-            4, 4, kernel_size=4, stride=2, padding=0, bias=False
-        )
-        self.conv17_ = nn.ConvTranspose2d(
-            4, 4, kernel_size=20, stride=1, padding=0, bias=False
-        )
+        self.conv20 = nn.ConvTranspose2d(4, 4, kernel_size=4, stride=2, padding=0, bias=False)
+        self.conv20_ = nn.ConvTranspose2d(4, 4, kernel_size=4, stride=1, padding=0, bias=False)
+        self.conv17 = nn.ConvTranspose2d(4, 4, kernel_size=4, stride=2, padding=0, bias=False)
+        self.conv17_ = nn.ConvTranspose2d(4, 4, kernel_size=20, stride=1, padding=0, bias=False)
         self.bn21 = nn.BatchNorm2d(4)
-        self.conv18 = nn.ConvTranspose2d(
-            4, 4, kernel_size=12, stride=1, padding=0, bias=False
-        )
-        self.conv18_ = nn.ConvTranspose2d(
-            4, 3, kernel_size=20, stride=1, padding=0, bias=False
-        )
-        self.conv19 = nn.ConvTranspose2d(
-            3, 3, kernel_size=16, stride=1, padding=0, bias=False
-        )
+        self.conv18 = nn.ConvTranspose2d(4, 4, kernel_size=12, stride=1, padding=0, bias=False)
+        self.conv18_ = nn.ConvTranspose2d(4, 3, kernel_size=20, stride=1, padding=0, bias=False)
+        self.conv19 = nn.ConvTranspose2d(3, 3, kernel_size=16, stride=1, padding=0, bias=False)
         self.convlast = nn.Conv2d(3, 3, kernel_size=3, stride=1, padding=1, bias=False)
         self.relu = nn.LeakyReLU()
         self.sigmoid = nn.Sigmoid()
@@ -1041,7 +829,8 @@ class GeneralVaeBinding(nn.Module):
 
 
 class Lambda(nn.Module):
-    def __init__(self, i=1000, o=500, scale=1e-2):
+
+    def __init__(self, i=1000, o=500, scale=1E-2):
         super(Lambda, self).__init__()
 
         self.scale = scale
@@ -1049,23 +838,17 @@ class Lambda(nn.Module):
     def forward(self, x):
         self.mu = self.z_mean(x)
         self.log_v = self.z_log_var(x)
-        eps = self.scale * Variable(torch.randn(*self.log_v.size())).type_as(self.log_v)
-        return self.mu + torch.exp(self.log_v / 2.0) * eps
+        eps = self.scale * Variable(torch.randn(*self.log_v.size())
+                                    ).type_as(self.log_v)
+        return self.mu + torch.exp(self.log_v / 2.) * eps
 
 
 class ComboVAE(nn.Module):
-    def __init__(
-        self,
-        encoder_model_1,
-        encoder_model_2,
-        decoder_model_1,
-        decoder_model_2,
-        rep_size=500,
-    ):
+    def __init__(self, encoder_model_1, encoder_model_2, decoder_model_1, decoder_model_2, rep_size=500):
         super(ComboVAE, self).__init__()
         self.rep_size = rep_size
 
-        self.scale = 1e-2
+        self.scale = 1E-2
         self.encoder1 = encoder_model_1
         self.encoder2 = encoder_model_2
         self.decoder1 = decoder_model_1
@@ -1101,7 +884,6 @@ class ComboVAE(nn.Module):
 
         y_1, y_2 = self.decode(z)
         return y_1, y_2, mu, logvar
-
 
 # class SELU(nn.Module):
 #
@@ -1177,12 +959,9 @@ class ComboVAE(nn.Module):
 
 
 class SELU(nn.Module):
-    def __init__(
-        self,
-        alpha=1.6732632423543772848170429916717,
-        scale=1.0507009873554804934193349852946,
-        inplace=False,
-    ):
+
+    def __init__(self, alpha=1.6732632423543772848170429916717,
+                 scale=1.0507009873554804934193349852946, inplace=False):
         super(SELU, self).__init__()
 
         self.scale = scale
@@ -1192,18 +971,18 @@ class SELU(nn.Module):
         return self.scale * self.elu(x)
 
 
-def ConvSELU(i, o, kernel_size=3, padding=0, p=0.0):
-    model = [
-        nn.Conv1d(i, o, kernel_size=kernel_size, padding=padding),
-        SELU(inplace=True),
-    ]
-    if p > 0.0:
+def ConvSELU(i, o, kernel_size=3, padding=0, p=0.):
+    model = [nn.Conv1d(i, o, kernel_size=kernel_size, padding=padding),
+             SELU(inplace=True)
+             ]
+    if p > 0.:
         model += [nn.Dropout(p)]
     return nn.Sequential(*model)
 
 
 class Lambda(nn.Module):
-    def __init__(self, i=435, o=292, scale=1e-2):
+
+    def __init__(self, i=435, o=292, scale=1E-2):
         super(Lambda, self).__init__()
 
         self.scale = scale
@@ -1227,6 +1006,7 @@ class Lambda(nn.Module):
 
 
 class MolEncoder(nn.Module):
+
     def __init__(self, i=60, o=500, c=27):
         super(MolEncoder, self).__init__()
 
@@ -1235,9 +1015,8 @@ class MolEncoder(nn.Module):
         self.conv_1 = ConvSELU(i, 9, kernel_size=9)
         self.conv_2 = ConvSELU(9, 9, kernel_size=9)
         self.conv_3 = ConvSELU(9, 10, kernel_size=11)
-        self.dense_1 = nn.Sequential(
-            nn.Linear((c - 29 + 3) * 10, 435), SELU(inplace=True)
-        )
+        self.dense_1 = nn.Sequential(nn.Linear((c - 29 + 3) * 10, 435),
+                                     SELU(inplace=True))
 
         # self.lmbd = Lambda(435, o)
         self.z_mean = nn.Linear(435, o)
@@ -1257,14 +1036,13 @@ class MolEncoder(nn.Module):
 
         bce = nn.BCELoss(size_average=True)
         xent_loss = self.i * bce(x_decoded_mean, x.detach())
-        kl_loss = -0.5 * torch.mean(
-            1.0 + z_log_var - z_mean**2.0 - torch.exp(z_log_var)
-        )
+        kl_loss = -0.5 * torch.mean(1. + z_log_var - z_mean ** 2. - torch.exp(z_log_var))
 
         return kl_loss + xent_loss
 
 
 class DenseMolEncoder(nn.Module):
+
     def __init__(self, i=60, o=500, c=27):
         super(DenseMolEncoder, self).__init__()
 
@@ -1274,18 +1052,15 @@ class DenseMolEncoder(nn.Module):
         self.conv_2 = ConvSELU(9, 9, kernel_size=9)
         self.conv_3 = ConvSELU(9, 10, kernel_size=11)
 
-        self.dense_0 = nn.Sequential(
-            Flatten(),
-            nn.Linear(60 * 27, 500),
-            SELU(inplace=True),
-            nn.Linear(500, 500),
-            SELU(inplace=True),
-            nn.Linear(500, 500),
-            SELU(inplace=True),
-        )
-        self.dense_1 = nn.Sequential(
-            nn.Linear((c - 29 + 3) * 10, 500), SELU(inplace=True)
-        )
+        self.dense_0 = nn.Sequential(Flatten(),
+                                     nn.Linear(60 * 27, 500),
+                                     SELU(inplace=True),
+                                     nn.Linear(500, 500),
+                                     SELU(inplace=True),
+                                     nn.Linear(500, 500),
+                                     SELU(inplace=True))
+        self.dense_1 = nn.Sequential(nn.Linear((c - 29 + 3) * 10, 500),
+                                     SELU(inplace=True))
 
         self.z_mean = nn.Linear(500, o)
         self.z_log_var = nn.Linear(500, o)
@@ -1304,23 +1079,23 @@ class DenseMolEncoder(nn.Module):
 
         bce = nn.BCELoss(size_average=True)
         xent_loss = self.i * bce(x_decoded_mean, x.detach())
-        kl_loss = -0.5 * torch.mean(
-            1.0 + z_log_var - z_mean**2.0 - torch.exp(z_log_var)
-        )
+        kl_loss = -0.5 * torch.mean(1. + z_log_var - z_mean ** 2. - torch.exp(z_log_var))
 
         return kl_loss + xent_loss
 
 
 class MolDecoder(nn.Module):
+
     def __init__(self, i=500, o=60, c=27):
         super(MolDecoder, self).__init__()
 
-        self.latent_input = nn.Sequential(nn.Linear(i, i), SELU(inplace=True))
+        self.latent_input = nn.Sequential(nn.Linear(i, i),
+                                          SELU(inplace=True))
         self.repeat_vector = Repeat(o)
         self.gru = nn.GRU(i, 501, 3, batch_first=True)
-        self.decoded_mean = TimeDistributed(
-            nn.Sequential(nn.Linear(501, c), nn.Softmax())
-        )
+        self.decoded_mean = TimeDistributed(nn.Sequential(nn.Linear(501, c),
+                                                          nn.Softmax())
+                                            )
 
     def forward(self, x):
         out = self.latent_input(x)
@@ -1330,32 +1105,18 @@ class MolDecoder(nn.Module):
 
 
 class ZSpaceTransform(nn.Module):
-    def __init__(
-        self,
-        i=500,
-        o=60,
-    ):
+    def __init__(self, i=500, o=60, ):
         super(ZSpaceTransform, self).__init__()
 
-        self.mu = nn.Sequential(
-            nn.Linear(i, i),
-            SELU(inplace=True),
-            nn.Linear(i, i),
-            SELU(inplace=True),
-            nn.Linear(i, i),
-            SELU(inplace=True),
-            nn.Linear(i, i),
-        )
+        self.mu = nn.Sequential(nn.Linear(i, i),
+                                SELU(inplace=True),
+                                nn.Linear(i, i), SELU(inplace=True),
+                                nn.Linear(i, i), SELU(inplace=True), nn.Linear(i, i))
 
-        self.logvar = nn.Sequential(
-            nn.Linear(i, i),
-            SELU(inplace=True),
-            nn.Linear(i, i),
-            SELU(inplace=True),
-            nn.Linear(i, i),
-            SELU(inplace=True),
-            nn.Linear(i, i),
-        )
+        self.logvar = nn.Sequential(nn.Linear(i, i),
+                                    SELU(inplace=True),
+                                    nn.Linear(i, i), SELU(inplace=True),
+                                    nn.Linear(i, i), SELU(inplace=True), nn.Linear(i, i))
 
     def forward(self, mu, log):
         mu = self.mu(mu)
@@ -1364,6 +1125,7 @@ class ZSpaceTransform(nn.Module):
 
 
 class TestVAE(nn.Module):
+
     def __init__(self, encoder, transformer, decoder):
         super(TestVAE, self).__init__()
         self.encoder = encoder
@@ -1399,14 +1161,13 @@ class TestVAE(nn.Module):
         bce = nn.MSELoss(reduction="sum")
 
         xent_loss = bce(x_decoded_mean, x.detach())
-        kl_loss = -0.5 * torch.mean(
-            1.0 + z_log_var - z_mean**2.0 - torch.exp(z_log_var)
-        )
+        kl_loss = -0.5 * torch.mean(1. + z_log_var - z_mean ** 2. - torch.exp(z_log_var))
 
         return kl_loss + xent_loss
 
 
 class AutoModel(nn.Module):
+
     def __init__(self, encoder, decoder):
         super(AutoModel, self).__init__()
         self.encoder = ResNet(Bottleneck, [3, 4, 23, 3], num_classes=500)

@@ -1,10 +1,12 @@
 import torch
 import torch.nn as nn
+
 from darts.api import Model
 from darts.modules.linear.mixed_layer import MixedLayer
 
 
 class Cell(Model):
+
     def __init__(self, num_nodes, multiplier, cpp, cp, c, reduction, reduction_prev):
         """
         :param steps: 4, number of layers inside a cell
@@ -53,4 +55,4 @@ class Cell(Model):
             offset += len(states)
 
         # concat along dim=channel
-        return torch.cat(states[-self.multiplier :], dim=1)
+        return torch.cat(states[-self.multiplier:], dim=1)
