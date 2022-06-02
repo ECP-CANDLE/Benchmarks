@@ -29,7 +29,6 @@ The code is from a PyTorch implementation of VQ-VAE-2:
 
 [Implementation of Generating Diverse High-Fidelity Images with VQ-VAE-2 in PyTorch](https://github.com/rosinality/vq-vae-2-pytorch)
 
-
 ## Training data
 
 An example training data set of 81,378 histology images can be downloaded here:
@@ -40,9 +39,9 @@ wget http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/svs_p
 
 ## Requisite
 
-* Python >= 3.6
-* PyTorch >= 1.1
-* lmdb (for storing extracted codes)
+- Python >= 3.6
+- PyTorch >= 1.1
+- lmdb (for storing extracted codes)
 
 ## Training
 

@@ -9,21 +9,26 @@
 ### Benchmark Specs Requirements
 
 #### Description of the Data
-* See Pilot2 Readme for description
+
+- See Pilot2 Readme for description
 
 #### Expected Outcomes
-* Reconstructed MD simulation state
-* Output range: automatically learned features that discriminate the data set
+
+- Reconstructed MD simulation state
+- Output range: automatically learned features that discriminate the data set
 
 #### Evaluation Metrics
-* Accuracy or loss function: L2 reconstruction error
-* Expected performance of a naive method: N/A
+
+- Accuracy or loss function: L2 reconstruction error
+- Expected performance of a naive method: N/A
 
 #### Description of the Network
-* Proposed network architecture: stacked fully-connected autoencoder
-* Number of layers: 5-8
+
+- Proposed network architecture: stacked fully-connected autoencoder
+- Number of layers: 5-8
 
 ### Running the baseline implementation
+
 ```
 cd Pilot2/2B1
 python p2b1_baseline_keras1.py
@@ -32,9 +37,10 @@ python p2b1_baseline_keras1.py
 The training and test data files will be downloaded the first time this is run and will be cached for future runs.
 
 ### Scaling Options
-* ```--case=FULL``` Design autoencoder for data frame with coordinates for all beads
-* ```--case=CENTER``` Design autoencoder for data frame with coordinates of the center-of-mass
-* ```--case=CENTERZ``` Design autoencoder for data frame with z-coordiate of the center-of-mass
+
+- `--case=FULL` Design autoencoder for data frame with coordinates for all beads
+- `--case=CENTER` Design autoencoder for data frame with coordinates of the center-of-mass
+- `--case=CENTERZ` Design autoencoder for data frame with z-coordiate of the center-of-mass
 
 ### Expected Output
 

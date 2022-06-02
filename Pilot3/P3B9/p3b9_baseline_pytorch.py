@@ -1,25 +1,28 @@
-import torch
-import p3b9 as bmk
 import candle
-
-from transformers import (
-    BertTokenizer, BertConfig, BertForMaskedLM, DataCollatorForLanguageModeling, Trainer, TrainingArguments, HfArgumentParser
-)
-
+import p3b9 as bmk
+import torch
 import webdataset as wd
+from transformers import (
+    BertConfig,
+    BertForMaskedLM,
+    BertTokenizer,
+    DataCollatorForLanguageModeling,
+    HfArgumentParser,
+    Trainer,
+    TrainingArguments,
+)
 
 
 class truncate(object):
-
     def __init__(self, max_len):
         self.max_len = max_len
 
     def __call__(self, doc):
-        return doc[:self.max_len]
+        return doc[: self.max_len]
 
 
 def initialize_parameters():
-    """ Initialize the parameters for the P3B5 benchmark """
+    """Initialize the parameters for the P3B5 benchmark"""
 
     p3b9_bench = bmk.BenchmarkP3B9(
         bmk.file_path,
@@ -40,13 +43,13 @@ def run(args):
     # but slightly different names between CANDLE
     # and hf parsers are copied from CANDLE keyword
     # to expected hf keyword)
-    args['seed'] = args['rng_seed']
-    if 'train_bool' in args.keys():
-        args['do_train'] = args['train_bool']
-    if 'eval_bool' in args.keys():
-        args['do_eval'] = args['eval_bool']
-    if 'epochs' in args.keys():
-        args['num_train_epochs'] = args['epochs']
+    args["seed"] = args["rng_seed"]
+    if "train_bool" in args.keys():
+        args["do_train"] = args["train_bool"]
+    if "eval_bool" in args.keys():
+        args["do_eval"] = args["eval_bool"]
+    if "epochs" in args.keys():
+        args["num_train_epochs"] = args["epochs"]
 
     parser = HfArgumentParser((TrainingArguments))
     training_args = parser.parse_dict(args)[0]
@@ -57,10 +60,14 @@ def run(args):
 
     trunc = truncate(args.max_len)
 
-    print('total data len per gpu:', args.data_len_gpu)
-    dataset = wd.Dataset(args.dataset,
-                         length=args.data_len_gpu,
-                         shuffle=True).decode('torch').rename(input_ids='pth').map_dict(input_ids=trunc).shuffle(1000)
+    print("total data len per gpu:", args.data_len_gpu)
+    dataset = (
+        wd.Dataset(args.dataset, length=args.data_len_gpu, shuffle=True)
+        .decode("torch")
+        .rename(input_ids="pth")
+        .map_dict(input_ids=trunc)
+        .shuffle(1000)
+    )
     tokenizer = BertTokenizer.from_pretrained(args.name_pretrained_tokenizer)
 
     data_collator = DataCollatorForLanguageModeling(
@@ -86,7 +93,7 @@ def run(args):
         model=model,
         args=training_args,
         data_collator=data_collator,
-        train_dataset=dataset
+        train_dataset=dataset,
     )
 
     trainer.train()

@@ -6,26 +6,30 @@
 
 **Expected outcome**: Build a DNN that can classify sparse data.
 
-### Benchmark Specs Requirements 
+### Benchmark Specs Requirements
 
 #### Description of the Data
-* Data source: SNP data from GDC MAF files
-* Input dimensions: 28,205 (aggregated variation impact by gene from 2.7 million unique SNPs)
-* Output dimensions: 10 class probabilities (9 most abundant cancer types in GDC + 1 “others”)
-* Sample size: 4,000 (3000 training + 1000 test)
-* Notes on data balance and other issues: data balance achieved via undersampling; “others” category drawn from all remaining lower-abundance cancer types in GDC
+
+- Data source: SNP data from GDC MAF files
+- Input dimensions: 28,205 (aggregated variation impact by gene from 2.7 million unique SNPs)
+- Output dimensions: 10 class probabilities (9 most abundant cancer types in GDC + 1 “others”)
+- Sample size: 4,000 (3000 training + 1000 test)
+- Notes on data balance and other issues: data balance achieved via undersampling; “others” category drawn from all remaining lower-abundance cancer types in GDC
 
 #### Expected Outcomes
-* Classification
-* Output range or number of classes: 10
+
+- Classification
+- Output range or number of classes: 10
 
 #### Evaluation Metrics
-* Accuracy or loss function: Standard approaches such as F1-score, accuracy, ROC-AUC, cross entropy, etc. 
-* Expected performance of a naïve method: linear regression or ensemble methods without feature selection
+
+- Accuracy or loss function: Standard approaches such as F1-score, accuracy, ROC-AUC, cross entropy, etc.
+- Expected performance of a naïve method: linear regression or ensemble methods without feature selection
 
 #### Description of the Network
-* Proposed network architecture: MLP with regularization
-* Number of layers: ~5 layers
+
+- Proposed network architecture: MLP with regularization
+- Number of layers: ~5 layers
 
 ### Running the baseline implementation
 
@@ -33,6 +37,7 @@
 cd Pilot1/P1B2
 python p1b2_baseline_keras2.py
 ```
+
 The training and test data files will be downloaded the first time this is run and will be cached for future runs.
 
 #### Example output
@@ -115,4 +120,3 @@ accurately.
 cd Pilot1/P1B2
 python p1b2_xgboost.py
 ```
-

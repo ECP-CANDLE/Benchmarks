@@ -24,10 +24,11 @@ class DataFrameDataset(data.Dataset):
     """
 
     def __init__(
-            self,
-            dataframe: pd.DataFrame,
-            ram_dtype: type = np.float16,
-            out_dtype: type = np.float32, ):
+        self,
+        dataframe: pd.DataFrame,
+        ram_dtype: type = np.float16,
+        out_dtype: type = np.float32,
+    ):
         """dataset = DataFrameDataset(dataframe)
 
         This function initializes a dataset from given dataframe. Upon init,

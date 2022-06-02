@@ -11,7 +11,7 @@
 NODES=$(cat ${LSB_DJOB_HOSTFILE} | sort | uniq | grep -v login | grep -v batch | wc -l)
 
 module load gcc
-module load open-ce 
+module load open-ce
 module unload darshan
 
 MED106="/gpfs/alpine/proj-shared/med106"
