@@ -10,14 +10,15 @@
 import collections
 
 import torch.nn as nn
-from torch.optim import Adam, RMSprop, SGD
+from torch.optim import SGD, Adam, RMSprop
 
 
 def get_optimizer(
-        opt_type: str,
-        networks: nn.Module or iter,
-        learning_rate: float,
-        l2_regularization: float):
+    opt_type: str,
+    networks: nn.Module or iter,
+    learning_rate: float,
+    l2_regularization: float,
+):
 
     if isinstance(networks, collections.Iterable):
         params = []
@@ -28,19 +29,15 @@ def get_optimizer(
     else:
         params = networks.parameters()
 
-    if opt_type.lower() == 'adam':
-        optimizer = Adam(params,
-                         lr=learning_rate,
-                         amsgrad=True,
-                         weight_decay=l2_regularization)
-    elif opt_type.lower() == 'rmsprop':
-        optimizer = RMSprop(params,
-                            lr=learning_rate,
-                            weight_decay=l2_regularization)
+    if opt_type.lower() == "adam":
+        optimizer = Adam(
+            params, lr=learning_rate, amsgrad=True, weight_decay=l2_regularization
+        )
+    elif opt_type.lower() == "rmsprop":
+        optimizer = RMSprop(params, lr=learning_rate, weight_decay=l2_regularization)
     else:
-        optimizer = SGD(params,
-                        lr=learning_rate,
-                        momentum=0.9,
-                        weight_decay=l2_regularization)
+        optimizer = SGD(
+            params, lr=learning_rate, momentum=0.9, weight_decay=l2_regularization
+        )
 
     return optimizer

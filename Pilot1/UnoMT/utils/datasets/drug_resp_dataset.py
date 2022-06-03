@@ -9,16 +9,17 @@
 """
 
 import logging
+
 import numpy as np
 import torch.utils.data as data
 from sklearn.model_selection import train_test_split
-
-from utils.data_processing.cell_line_dataframes import get_rna_seq_df, \
-    get_cl_meta_df
+from utils.data_processing.cell_line_dataframes import get_cl_meta_df, get_rna_seq_df
 from utils.data_processing.drug_dataframes import get_drug_feature_df
 from utils.data_processing.label_encoding import get_label_dict
-from utils.data_processing.response_dataframes import get_drug_resp_df, \
-    get_drug_anlys_df
+from utils.data_processing.response_dataframes import (
+    get_drug_anlys_df,
+    get_drug_resp_df,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,30 +48,28 @@ class DrugRespDataset(data.Dataset):
     """
 
     def __init__(
-            self,
-            data_root: str,
-            data_src: str,
-            training: bool,
-            rand_state: int = 0,
-            summary: bool = True,
-
-            # Data type settings (for storage and data loading)
-            int_dtype: type = np.int8,
-            float_dtype: type = np.float16,
-            output_dtype: type = np.float32,
-
-            # Pre-processing settings
-            grth_scaling: str = 'none',
-            dscptr_scaling: str = 'std',
-            rnaseq_scaling: str = 'std',
-            dscptr_nan_threshold: float = 0.0,
-
-            # Partitioning (train/validation) and data usage settings
-            rnaseq_feature_usage: str = 'source_scale',
-            drug_feature_usage: str = 'both',
-            validation_ratio: float = 0.2,
-            disjoint_drugs: bool = True,
-            disjoint_cells: bool = True, ):
+        self,
+        data_root: str,
+        data_src: str,
+        training: bool,
+        rand_state: int = 0,
+        summary: bool = True,
+        # Data type settings (for storage and data loading)
+        int_dtype: type = np.int8,
+        float_dtype: type = np.float16,
+        output_dtype: type = np.float32,
+        # Pre-processing settings
+        grth_scaling: str = "none",
+        dscptr_scaling: str = "std",
+        rnaseq_scaling: str = "std",
+        dscptr_nan_threshold: float = 0.0,
+        # Partitioning (train/validation) and data usage settings
+        rnaseq_feature_usage: str = "source_scale",
+        drug_feature_usage: str = "both",
+        validation_ratio: float = 0.2,
+        disjoint_drugs: bool = True,
+        disjoint_cells: bool = True,
+    ):
         """dataset = DrugRespDataset('./data/', 'NCI60', True)
 
         Construct a new drug response dataset based on the parameters
@@ -131,14 +130,14 @@ class DrugRespDataset(data.Dataset):
         self.__output_dtype = output_dtype
 
         # Feature scaling
-        if grth_scaling is None or grth_scaling == '':
-            grth_scaling = 'none'
+        if grth_scaling is None or grth_scaling == "":
+            grth_scaling = "none"
         grth_scaling = grth_scaling.lower()
-        if dscptr_scaling is None or dscptr_scaling == '':
-            dscptr_scaling = 'none'
+        if dscptr_scaling is None or dscptr_scaling == "":
+            dscptr_scaling = "none"
         dscptr_scaling = dscptr_scaling
-        if rnaseq_scaling is None or rnaseq_scaling == '':
-            rnaseq_scaling = 'none'
+        if rnaseq_scaling is None or rnaseq_scaling == "":
+            rnaseq_scaling = "none"
         rnaseq_scaling = rnaseq_scaling
 
         self.__validation_ratio = validation_ratio
@@ -150,7 +149,8 @@ class DrugRespDataset(data.Dataset):
             data_root=data_root,
             grth_scaling=grth_scaling,
             int_dtype=int_dtype,
-            float_dtype=float_dtype)
+            float_dtype=float_dtype,
+        )
 
         self.__drug_feature_df = get_drug_feature_df(
             data_root=data_root,
@@ -158,20 +158,22 @@ class DrugRespDataset(data.Dataset):
             dscptr_scaling=dscptr_scaling,
             dscptr_nan_thresh=dscptr_nan_threshold,
             int_dtype=int_dtype,
-            float_dtype=float_dtype)
+            float_dtype=float_dtype,
+        )
 
         self.__rnaseq_df = get_rna_seq_df(
             data_root=data_root,
             rnaseq_feature_usage=rnaseq_feature_usage,
             rnaseq_scaling=rnaseq_scaling,
-            float_dtype=float_dtype)
+            float_dtype=float_dtype,
+        )
 
         # Train/validation split ##############################################
         self.__split_drug_resp()
 
         # Public attributes ###################################################
-        self.drugs = self.__drug_resp_df['DRUG_ID'].unique().tolist()
-        self.cells = self.__drug_resp_df['CELLNAME'].unique().tolist()
+        self.drugs = self.__drug_resp_df["DRUG_ID"].unique().tolist()
+        self.cells = self.__drug_resp_df["CELLNAME"].unique().tolist()
         self.num_records = len(self.__drug_resp_df)
         self.drug_feature_dim = self.__drug_feature_df.shape[1]
         self.rnaseq_dim = self.__rnaseq_df.shape[1]
@@ -179,10 +181,12 @@ class DrugRespDataset(data.Dataset):
         # Converting dataframes to arrays and dict for rapid access ###########
         self.__drug_resp_array = self.__drug_resp_df.values
         # The following conversion will upcast dtypes
-        self.__drug_feature_dict = {idx: row.values for idx, row in
-                                    self.__drug_feature_df.iterrows()}
-        self.__rnaseq_dict = {idx: row.values for idx, row in
-                              self.__rnaseq_df.iterrows()}
+        self.__drug_feature_dict = {
+            idx: row.values for idx, row in self.__drug_feature_df.iterrows()
+        }
+        self.__rnaseq_dict = {
+            idx: row.values for idx, row in self.__rnaseq_df.iterrows()
+        }
 
         # Dataframes are not needed any more
         self.__drug_resp_df = None
@@ -191,16 +195,22 @@ class DrugRespDataset(data.Dataset):
 
         # Dataset summary #####################################################
         if summary:
-            print('=' * 80)
-            print(('Training' if self.training else 'Validation')
-                  + ' Drug Response Dataset Summary (Data Source: %6s):'
-                  % self.data_source)
-            print('\t%i Drug Response Records .' % len(self.__drug_resp_array))
-            print('\t%i Unique Drugs (feature dim: %4i).'
-                  % (len(self.drugs), self.drug_feature_dim))
-            print('\t%i Unique Cell Lines (feature dim: %4i).'
-                  % (len(self.cells), self.rnaseq_dim))
-            print('=' * 80)
+            print("=" * 80)
+            print(
+                ("Training" if self.training else "Validation")
+                + " Drug Response Dataset Summary (Data Source: %6s):"
+                % self.data_source
+            )
+            print("\t%i Drug Response Records ." % len(self.__drug_resp_array))
+            print(
+                "\t%i Unique Drugs (feature dim: %4i)."
+                % (len(self.drugs), self.drug_feature_dim)
+            )
+            print(
+                "\t%i Unique Cell Lines (feature dim: %4i)."
+                % (len(self.cells), self.rnaseq_dim)
+            )
+            print("=" * 80)
 
     def __len__(self):
         return self.num_records
@@ -253,39 +263,45 @@ class DrugRespDataset(data.Dataset):
 
         # Encode the data source and take the data from target source only
         # Note that source could be 'NCI60', 'GDSC', etc. and 'all'
-        if self.data_source.lower() != 'all':
+        if self.data_source.lower() != "all":
 
-            logger.debug('Specifying data source %s ... ' % self.data_source)
+            logger.debug("Specifying data source %s ... " % self.data_source)
 
-            data_src_dict = get_label_dict(data_root=self.__data_root,
-                                           dict_name='data_src_dict.txt')
+            data_src_dict = get_label_dict(
+                data_root=self.__data_root, dict_name="data_src_dict.txt"
+            )
             encoded_data_src = data_src_dict[self.data_source]
 
             # Reduce/trim the drug response dataframe
             self.__drug_resp_df = self.__drug_resp_df.loc[
-                self.__drug_resp_df['SOURCE'] == encoded_data_src]
+                self.__drug_resp_df["SOURCE"] == encoded_data_src
+            ]
 
         # Make sure that all three dataframes share the same drugs/cells
-        logger.debug('Trimming dataframes on common cell lines and drugs ... ')
+        logger.debug("Trimming dataframes on common cell lines and drugs ... ")
 
-        cell_set = set(self.__drug_resp_df['CELLNAME'].unique()) \
-            & set(self.__rnaseq_df.index.values)
-        drug_set = set(self.__drug_resp_df['DRUG_ID'].unique()) \
-            & set(self.__drug_feature_df.index.values)
+        cell_set = set(self.__drug_resp_df["CELLNAME"].unique()) & set(
+            self.__rnaseq_df.index.values
+        )
+        drug_set = set(self.__drug_resp_df["DRUG_ID"].unique()) & set(
+            self.__drug_feature_df.index.values
+        )
 
         self.__drug_resp_df = self.__drug_resp_df.loc[
-            (self.__drug_resp_df['CELLNAME'].isin(cell_set))
-            & (self.__drug_resp_df['DRUG_ID'].isin(drug_set))]
+            (self.__drug_resp_df["CELLNAME"].isin(cell_set))
+            & (self.__drug_resp_df["DRUG_ID"].isin(drug_set))
+        ]
 
-        self.__rnaseq_df = self.__rnaseq_df[
-            self.__rnaseq_df.index.isin(cell_set)]
+        self.__rnaseq_df = self.__rnaseq_df[self.__rnaseq_df.index.isin(cell_set)]
         self.__drug_feature_df = self.__drug_feature_df[
-            self.__drug_feature_df.index.isin(drug_set)]
+            self.__drug_feature_df.index.isin(drug_set)
+        ]
 
-        logger.debug('There are %i drugs and %i cell lines, with %i response '
-                     'records after trimming.'
-                     % (len(drug_set), len(cell_set),
-                        len(self.__drug_resp_df)))
+        logger.debug(
+            "There are %i drugs and %i cell lines, with %i response "
+            "records after trimming."
+            % (len(drug_set), len(cell_set), len(self.__drug_resp_df))
+        )
         return
 
     def __split_drug_resp(self):
@@ -322,165 +338,192 @@ class DrugRespDataset(data.Dataset):
         self.__trim_dataframes()
 
         # Get lists of all drugs & cells corresponding from data source
-        cell_list = self.__drug_resp_df['CELLNAME'].unique().tolist()
-        drug_list = self.__drug_resp_df['DRUG_ID'].unique().tolist()
+        cell_list = self.__drug_resp_df["CELLNAME"].unique().tolist()
+        drug_list = self.__drug_resp_df["DRUG_ID"].unique().tolist()
 
         # Create an array to store all drugs' analysis results
-        drug_anlys_dict = {idx: row.values for idx, row in
-                           get_drug_anlys_df(self.__data_root).iterrows()}
+        drug_anlys_dict = {
+            idx: row.values
+            for idx, row in get_drug_anlys_df(self.__data_root).iterrows()
+        }
         drug_anlys_array = np.array([drug_anlys_dict[d] for d in drug_list])
 
         # Create a list to store all cell lines types
-        cell_type_dict = {idx: row.values for idx, row in
-                          get_cl_meta_df(self.__data_root)
-                          [['type']].iterrows()}
+        cell_type_dict = {
+            idx: row.values
+            for idx, row in get_cl_meta_df(self.__data_root)[["type"]].iterrows()
+        }
         cell_type_list = [cell_type_dict[c] for c in cell_list]
 
         # Change validation size when both features are disjoint in splitting
         # Note that theoretically should use validation_ratio ** 0.5,
         # but 0.7 simply works better in most cases.
         if self.__disjoint_cells and self.__disjoint_drugs:
-            adjusted_val_ratio = self.__validation_ratio ** 0.7
+            adjusted_val_ratio = self.__validation_ratio**0.7
         else:
             adjusted_val_ratio = self.__validation_ratio
 
         split_kwargs = {
-            'test_size': adjusted_val_ratio,
-            'random_state': self.__rand_state,
-            'shuffle': True, }
+            "test_size": adjusted_val_ratio,
+            "random_state": self.__rand_state,
+            "shuffle": True,
+        }
 
         # Try to split the cells stratified on type list
         try:
-            training_cell_list, validation_cell_list = \
-                train_test_split(cell_list, **split_kwargs,
-                                 stratify=cell_type_list)
+            training_cell_list, validation_cell_list = train_test_split(
+                cell_list, **split_kwargs, stratify=cell_type_list
+            )
         except ValueError:
-            logger.warning('Failed to split %s cells in stratified '
-                           'way. Splitting randomly ...' % self.data_source)
-            training_cell_list, validation_cell_list = \
-                train_test_split(cell_list, **split_kwargs)
+            logger.warning(
+                "Failed to split %s cells in stratified "
+                "way. Splitting randomly ..." % self.data_source
+            )
+            training_cell_list, validation_cell_list = train_test_split(
+                cell_list, **split_kwargs
+            )
 
         # Try to split the drugs stratified on the drug analysis results
         try:
-            training_drug_list, validation_drug_list = \
-                train_test_split(drug_list, **split_kwargs,
-                                 stratify=drug_anlys_array)
+            training_drug_list, validation_drug_list = train_test_split(
+                drug_list, **split_kwargs, stratify=drug_anlys_array
+            )
         except ValueError:
-            logger.warning('Failed to split %s drugs stratified on growth '
-                           'and correlation. Splitting solely on avg growth'
-                           ' ...' % self.data_source)
+            logger.warning(
+                "Failed to split %s drugs stratified on growth "
+                "and correlation. Splitting solely on avg growth"
+                " ..." % self.data_source
+            )
 
             try:
-                training_drug_list, validation_drug_list = \
-                    train_test_split(drug_list, **split_kwargs,
-                                     stratify=drug_anlys_array[:, 0])
+                training_drug_list, validation_drug_list = train_test_split(
+                    drug_list, **split_kwargs, stratify=drug_anlys_array[:, 0]
+                )
             except ValueError:
-                logger.warning('Failed to split %s drugs on avg growth. '
-                               'Splitting solely on avg correlation ...'
-                               % self.data_source)
+                logger.warning(
+                    "Failed to split %s drugs on avg growth. "
+                    "Splitting solely on avg correlation ..." % self.data_source
+                )
 
                 try:
-                    training_drug_list, validation_drug_list = \
-                        train_test_split(drug_list, **split_kwargs,
-                                         stratify=drug_anlys_array[:, 1])
+                    training_drug_list, validation_drug_list = train_test_split(
+                        drug_list, **split_kwargs, stratify=drug_anlys_array[:, 1]
+                    )
                 except ValueError:
-                    logger.warning('Failed to split %s drugs on avg '
-                                   'correlation. Splitting randomly ...'
-                                   % self.data_source)
-                    training_drug_list, validation_drug_list = \
-                        train_test_split(drug_list, **split_kwargs)
+                    logger.warning(
+                        "Failed to split %s drugs on avg "
+                        "correlation. Splitting randomly ..." % self.data_source
+                    )
+                    training_drug_list, validation_drug_list = train_test_split(
+                        drug_list, **split_kwargs
+                    )
 
         # Split data based on disjoint cell/drug strategy
         if self.__disjoint_cells and self.__disjoint_drugs:
 
             training_drug_resp_df = self.__drug_resp_df.loc[
-                (self.__drug_resp_df['CELLNAME'].isin(training_cell_list))
-                & (self.__drug_resp_df['DRUG_ID'].isin(training_drug_list))]
+                (self.__drug_resp_df["CELLNAME"].isin(training_cell_list))
+                & (self.__drug_resp_df["DRUG_ID"].isin(training_drug_list))
+            ]
 
             validation_drug_resp_df = self.__drug_resp_df.loc[
-                (self.__drug_resp_df['CELLNAME'].isin(validation_cell_list))
-                & (self.__drug_resp_df['DRUG_ID'].isin(validation_drug_list))]
+                (self.__drug_resp_df["CELLNAME"].isin(validation_cell_list))
+                & (self.__drug_resp_df["DRUG_ID"].isin(validation_drug_list))
+            ]
 
         elif self.__disjoint_cells and (not self.__disjoint_drugs):
 
             training_drug_resp_df = self.__drug_resp_df.loc[
-                self.__drug_resp_df['CELLNAME'].isin(training_cell_list)]
+                self.__drug_resp_df["CELLNAME"].isin(training_cell_list)
+            ]
 
             validation_drug_resp_df = self.__drug_resp_df.loc[
-                self.__drug_resp_df['CELLNAME'].isin(validation_cell_list)]
+                self.__drug_resp_df["CELLNAME"].isin(validation_cell_list)
+            ]
 
         elif (not self.__disjoint_cells) and self.__disjoint_drugs:
 
             training_drug_resp_df = self.__drug_resp_df.loc[
-                self.__drug_resp_df['DRUG_ID'].isin(training_drug_list)]
+                self.__drug_resp_df["DRUG_ID"].isin(training_drug_list)
+            ]
 
             validation_drug_resp_df = self.__drug_resp_df.loc[
-                self.__drug_resp_df['DRUG_ID'].isin(validation_drug_list)]
+                self.__drug_resp_df["DRUG_ID"].isin(validation_drug_list)
+            ]
 
         else:
-            training_drug_resp_df, validation_drug_resp_df = \
-                train_test_split(self.__drug_resp_df,
-                                 test_size=self.__validation_ratio,
-                                 random_state=self.__rand_state,
-                                 shuffle=False)
+            training_drug_resp_df, validation_drug_resp_df = train_test_split(
+                self.__drug_resp_df,
+                test_size=self.__validation_ratio,
+                random_state=self.__rand_state,
+                shuffle=False,
+            )
 
         # Make sure that if not disjoint, the training/validation set should
         #  share the same drugs/cells
         if not self.__disjoint_cells:
             # Make sure that cell lines are common
-            common_cells = set(training_drug_resp_df['CELLNAME'].unique()) & \
-                set(validation_drug_resp_df['CELLNAME'].unique())
+            common_cells = set(training_drug_resp_df["CELLNAME"].unique()) & set(
+                validation_drug_resp_df["CELLNAME"].unique()
+            )
 
             training_drug_resp_df = training_drug_resp_df.loc[
-                training_drug_resp_df['CELLNAME'].isin(common_cells)]
+                training_drug_resp_df["CELLNAME"].isin(common_cells)
+            ]
             validation_drug_resp_df = validation_drug_resp_df.loc[
-                validation_drug_resp_df['CELLNAME'].isin(common_cells)]
+                validation_drug_resp_df["CELLNAME"].isin(common_cells)
+            ]
 
         if not self.__disjoint_drugs:
             # Make sure that drugs are common
-            common_drugs = set(training_drug_resp_df['DRUG_ID'].unique()) & \
-                set(validation_drug_resp_df['DRUG_ID'].unique())
+            common_drugs = set(training_drug_resp_df["DRUG_ID"].unique()) & set(
+                validation_drug_resp_df["DRUG_ID"].unique()
+            )
 
             training_drug_resp_df = training_drug_resp_df.loc[
-                training_drug_resp_df['DRUG_ID'].isin(common_drugs)]
+                training_drug_resp_df["DRUG_ID"].isin(common_drugs)
+            ]
             validation_drug_resp_df = validation_drug_resp_df.loc[
-                validation_drug_resp_df['DRUG_ID'].isin(common_drugs)]
+                validation_drug_resp_df["DRUG_ID"].isin(common_drugs)
+            ]
 
         # Check if the validation ratio is in a reasonable range
-        validation_ratio = len(validation_drug_resp_df) \
-            / (len(training_drug_resp_df) + len(validation_drug_resp_df))
-        if (validation_ratio < self.__validation_ratio * 0.8) \
-                or (validation_ratio > self.__validation_ratio * 1.2):
-            logger.warning('Bad validation ratio: %.3f' %
-                           validation_ratio)
+        validation_ratio = len(validation_drug_resp_df) / (
+            len(training_drug_resp_df) + len(validation_drug_resp_df)
+        )
+        if (validation_ratio < self.__validation_ratio * 0.8) or (
+            validation_ratio > self.__validation_ratio * 1.2
+        ):
+            logger.warning("Bad validation ratio: %.3f" % validation_ratio)
 
         # Keep only training_drug_resp_df or validation_drug_resp_df
-        self.__drug_resp_df = training_drug_resp_df if self.training \
-            else validation_drug_resp_df
+        self.__drug_resp_df = (
+            training_drug_resp_df if self.training else validation_drug_resp_df
+        )
 
 
 # Test segment for drug response dataset
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG)
 
-    for src in ['NCI60', 'CTRP', 'GDSC', 'CCLE', 'gCSI']:
+    for src in ["NCI60", "CTRP", "GDSC", "CCLE", "gCSI"]:
 
         kwarg = {
-            'data_root': '../../data/',
-            'summary': False,
-            'rand_state': 0, }
+            "data_root": "../../data/",
+            "summary": False,
+            "rand_state": 0,
+        }
 
-        trn_set = DrugRespDataset(
-            data_src=src,
-            training=True,
-            **kwarg)
+        trn_set = DrugRespDataset(data_src=src, training=True, **kwarg)
 
-        val_set = DrugRespDataset(
-            data_src=src,
-            training=False,
-            **kwarg)
+        val_set = DrugRespDataset(data_src=src, training=False, **kwarg)
 
-        print('There are %i drugs and %i cell lines in %s.'
-              % ((len(trn_set.drugs) + len(val_set.drugs)),
-                 (len(trn_set.cells) + len(val_set.cells)), src))
+        print(
+            "There are %i drugs and %i cell lines in %s."
+            % (
+                (len(trn_set.drugs) + len(val_set.drugs)),
+                (len(trn_set.cells) + len(val_set.cells)),
+                src,
+            )
+        )

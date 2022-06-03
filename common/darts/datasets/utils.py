@@ -1,7 +1,8 @@
+import errno
+import hashlib
 import os
 import os.path
-import hashlib
-import errno
+
 from tqdm import tqdm
 
 
@@ -21,9 +22,9 @@ def check_integrity(fpath, md5=None):
     if not os.path.isfile(fpath):
         return False
     md5o = hashlib.md5()
-    with open(fpath, 'rb') as f:
+    with open(fpath, "rb") as f:
         # read in 1MB chunks
-        for chunk in iter(lambda: f.read(1024 * 1024), b''):
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
             md5o.update(chunk)
     md5c = md5o.hexdigest()
     if md5c != md5:
@@ -54,22 +55,24 @@ def download_url(url, root, filename, md5):
 
     # downloads file
     if os.path.isfile(fpath) and check_integrity(fpath, md5):
-        print('Using downloaded and verified file: ' + fpath)
+        print("Using downloaded and verified file: " + fpath)
     else:
         try:
-            print('Downloading ' + url + ' to ' + fpath)
+            print("Downloading " + url + " to " + fpath)
             urllib.request.urlretrieve(
-                url, fpath,
-                reporthook=gen_bar_updater(tqdm(unit='B', unit_scale=True))
+                url, fpath, reporthook=gen_bar_updater(tqdm(unit="B", unit_scale=True))
             )
         except Exception:
-            if url[:5] == 'https':
-                url = url.replace('https:', 'http:')
-                print('Failed download. Trying https -> http instead.'
-                      ' Downloading ' + url + ' to ' + fpath)
+            if url[:5] == "https":
+                url = url.replace("https:", "http:")
+                print(
+                    "Failed download. Trying https -> http instead."
+                    " Downloading " + url + " to " + fpath
+                )
                 urllib.request.urlretrieve(
-                    url, fpath,
-                    reporthook=gen_bar_updater(tqdm(unit='B', unit_scale=True))
+                    url,
+                    fpath,
+                    reporthook=gen_bar_updater(tqdm(unit="B", unit_scale=True)),
                 )
 
 
@@ -83,10 +86,7 @@ def list_dir(root, prefix=False):
     """
     root = os.path.expanduser(root)
     directories = list(
-        filter(
-            lambda p: os.path.isdir(os.path.join(root, p)),
-            os.listdir(root)
-        )
+        filter(lambda p: os.path.isdir(os.path.join(root, p)), os.listdir(root))
     )
 
     if prefix is True:
@@ -109,7 +109,7 @@ def list_files(root, suffix, prefix=False):
     files = list(
         filter(
             lambda p: os.path.isfile(os.path.join(root, p)) and p.endswith(suffix),
-            os.listdir(root)
+            os.listdir(root),
         )
     )
 

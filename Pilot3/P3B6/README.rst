@@ -1,5 +1,5 @@
 =========
-P3B6 BERT 
+P3B6 BERT
 =========
 
 ``Note:`` this is currently under active development.

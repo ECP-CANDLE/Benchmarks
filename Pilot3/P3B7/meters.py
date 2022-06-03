@@ -1,5 +1,4 @@
 class AccuracyMeter:
-
     def __init__(self, tasks, dataloader):
         self.tasks = tasks
         self.loader = dataloader
@@ -17,7 +16,7 @@ class AccuracyMeter:
 
     def update_accuracy(self):
         for task, correct in self.correct.items():
-            acc = 100. * correct / len(self.loader.dataset)
+            acc = 100.0 * correct / len(self.loader.dataset)
             self.accuracies[task] = acc
 
     def get_accuracy(self):
@@ -25,4 +24,4 @@ class AccuracyMeter:
 
     def print_task_accuracies(self):
         for task, acc in self.accuracies.items():
-            print(f'\t{task}: {acc}')
+            print(f"\t{task}: {acc}")

@@ -1,14 +1,14 @@
 import os
-import pandas as pd
 
-from darts.meters.average import AverageMeter
+import pandas as pd
 from darts.meters.accuracy import MultitaskAccuracyMeter
+from darts.meters.average import AverageMeter
 
 
 class EpochMeter:
-    """ Track epoch loss and accuracy """
+    """Track epoch loss and accuracy"""
 
-    def __init__(self, tasks, name='train'):
+    def __init__(self, tasks, name="train"):
         self.name = name
         self.loss_meter = AverageMeter(name)
         self.acc_meter = MultitaskAccuracyMeter(tasks)
@@ -31,10 +31,10 @@ class EpochMeter:
 
     def dataframe(self):
         results = self.acc
-        results['loss'] = self.loss
+        results["loss"] = self.loss
         return pd.DataFrame(results)
 
     def save(self, path):
         os.makedirs(path, exist_ok=True)
-        path = os.path.join(path, f'{self.name}_epoch_results')
+        path = os.path.join(path, f"{self.name}_epoch_results")
         self.dataframe().to_csv(path, index=False)

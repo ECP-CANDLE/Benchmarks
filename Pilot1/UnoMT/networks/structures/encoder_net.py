@@ -12,13 +12,14 @@ from networks.initialization.weight_init import basic_weight_init
 
 
 class EncNet(nn.Module):
-
-    def __init__(self,
-                 input_dim: int,
-                 layer_dim: int,
-                 num_layers: int,
-                 latent_dim: int,
-                 autoencoder: bool = True):
+    def __init__(
+        self,
+        input_dim: int,
+        layer_dim: int,
+        num_layers: int,
+        latent_dim: int,
+        autoencoder: bool = True,
+    ):
 
         super(EncNet, self).__init__()
 
@@ -29,13 +30,13 @@ class EncNet(nn.Module):
 
         for i in range(num_layers):
 
-            self.encoder.add_module('dense_%d' % i,
-                                    nn.Linear(prev_dim, layer_dim))
+            self.encoder.add_module("dense_%d" % i, nn.Linear(prev_dim, layer_dim))
             prev_dim = layer_dim
-            self.encoder.add_module('relu_%d' % i, nn.ReLU())
+            self.encoder.add_module("relu_%d" % i, nn.ReLU())
 
-        self.encoder.add_module('dense_%d' % num_layers,
-                                nn.Linear(prev_dim, latent_dim))
+        self.encoder.add_module(
+            "dense_%d" % num_layers, nn.Linear(prev_dim, latent_dim)
+        )
 
         # self.encoder.add_module('activation', nn.Tanh())
 
@@ -47,13 +48,13 @@ class EncNet(nn.Module):
             prev_dim = latent_dim
 
             for i in range(num_layers):
-                self.decoder.add_module('dense_%d' % i,
-                                        nn.Linear(prev_dim, layer_dim))
+                self.decoder.add_module("dense_%d" % i, nn.Linear(prev_dim, layer_dim))
                 prev_dim = layer_dim
-                self.decoder.add_module('relu_%d' % i, nn.ReLU())
+                self.decoder.add_module("relu_%d" % i, nn.ReLU())
 
-            self.decoder.add_module('dense_%d' % num_layers,
-                                    nn.Linear(prev_dim, input_dim))
+            self.decoder.add_module(
+                "dense_%d" % num_layers, nn.Linear(prev_dim, input_dim)
+            )
 
         else:
             self.decoder = None
@@ -71,13 +72,14 @@ class EncNet(nn.Module):
             return self.decoder(self.encoder(samples))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     ent = EncNet(
         input_dim=100,
         layer_dim=200,
         latent_dim=20,
         num_layers=2,
-        autoencoder=True,)
+        autoencoder=True,
+    )
 
     print(ent)

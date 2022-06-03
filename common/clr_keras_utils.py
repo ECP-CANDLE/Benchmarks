@@ -1,10 +1,10 @@
-from tensorflow.keras.callbacks import Callback
-from tensorflow.keras import backend as K
 import numpy as np
+from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import Callback
 
 
 def clr_check_args(args):
-    req_keys = ['clr_mode', 'clr_base_lr', 'clr_max_lr', 'clr_gamma']
+    req_keys = ["clr_mode", "clr_base_lr", "clr_max_lr", "clr_gamma"]
     keys_present = True
     for key in req_keys:
         if key not in args.keys():
@@ -13,15 +13,19 @@ def clr_check_args(args):
 
 
 def clr_set_args(args):
-    req_keys = ['clr_mode', 'clr_base_lr', 'clr_max_lr', 'clr_gamma']
-    exclusive_keys = ['warmup_lr', 'reduce_lr']
+    req_keys = ["clr_mode", "clr_base_lr", "clr_max_lr", "clr_gamma"]
+    exclusive_keys = ["warmup_lr", "reduce_lr"]
     keys_present = True
     for key in req_keys:
         if key not in args.keys():
             keys_present = False
-    if keys_present and args['clr_mode'] is not None:
-        clr_keras_kwargs = {'mode': args['clr_mode'], 'base_lr': args['clr_base_lr'],
-                            'max_lr': args['clr_max_lr'], 'gamma': args['clr_gamma']}
+    if keys_present and args["clr_mode"] is not None:
+        clr_keras_kwargs = {
+            "mode": args["clr_mode"],
+            "base_lr": args["clr_base_lr"],
+            "max_lr": args["clr_max_lr"],
+            "gamma": args["clr_gamma"],
+        }
         for ex_key in exclusive_keys:
             if ex_key in args.keys():
                 if args[ex_key] is True:
@@ -29,20 +33,21 @@ def clr_set_args(args):
                     args[ex_key] = False
     else:
         print("Incomplete CLR specification: will run without")
-        clr_keras_kwargs = {'mode': None, 'base_lr': 0.1,
-                            'max_lr': 0.1, 'gamma': 0.1}
+        clr_keras_kwargs = {"mode": None, "base_lr": 0.1, "max_lr": 0.1, "gamma": 0.1}
     return clr_keras_kwargs
 
 
 def clr_callback(mode=None, base_lr=1e-4, max_lr=1e-3, gamma=0.999994):
-    """ Creates keras callback for cyclical learning rate. """
+    """Creates keras callback for cyclical learning rate."""
 
-    if mode == 'trng1':
-        clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, mode='triangular')
-    elif mode == 'trng2':
-        clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, mode='triangular2')
-    elif mode == 'exp':
-        clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, mode='exp_range', gamma=gamma)  # 0.99994; 0.99999994; 0.999994
+    if mode == "trng1":
+        clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, mode="triangular")
+    elif mode == "trng2":
+        clr = CyclicLR(base_lr=base_lr, max_lr=max_lr, mode="triangular2")
+    elif mode == "exp":
+        clr = CyclicLR(
+            base_lr=base_lr, max_lr=max_lr, mode="exp_range", gamma=gamma
+        )  # 0.99994; 0.99999994; 0.999994
     return clr
 
 
@@ -114,46 +119,46 @@ class CyclicLR(Callback):
     """
 
     def __init__(
-            self,
-            base_lr=0.001,
-            max_lr=0.006,
-            step_size=2000.,
-            mode='triangular',
-            gamma=1.,
-            scale_fn=None,
-            scale_mode='cycle'):
+        self,
+        base_lr=0.001,
+        max_lr=0.006,
+        step_size=2000.0,
+        mode="triangular",
+        gamma=1.0,
+        scale_fn=None,
+        scale_mode="cycle",
+    ):
         super(CyclicLR, self).__init__()
 
-        if mode not in ['triangular', 'triangular2',
-                        'exp_range']:
-            raise KeyError("mode must be one of 'triangular', "
-                           "'triangular2', or 'exp_range'")
+        if mode not in ["triangular", "triangular2", "exp_range"]:
+            raise KeyError(
+                "mode must be one of 'triangular', " "'triangular2', or 'exp_range'"
+            )
         self.base_lr = base_lr
         self.max_lr = max_lr
         self.step_size = step_size
         self.mode = mode
         self.gamma = gamma
         if scale_fn is None:
-            if self.mode == 'triangular':
-                self.scale_fn = lambda x: 1.
-                self.scale_mode = 'cycle'
-            elif self.mode == 'triangular2':
-                self.scale_fn = lambda x: 1 / (2.**(x - 1))
-                self.scale_mode = 'cycle'
-            elif self.mode == 'exp_range':
-                self.scale_fn = lambda x: gamma ** x
-                self.scale_mode = 'iterations'
+            if self.mode == "triangular":
+                self.scale_fn = lambda x: 1.0
+                self.scale_mode = "cycle"
+            elif self.mode == "triangular2":
+                self.scale_fn = lambda x: 1 / (2.0 ** (x - 1))
+                self.scale_mode = "cycle"
+            elif self.mode == "exp_range":
+                self.scale_fn = lambda x: gamma**x
+                self.scale_mode = "iterations"
         else:
             self.scale_fn = scale_fn
             self.scale_mode = scale_mode
-        self.clr_iterations = 0.
-        self.trn_iterations = 0.
+        self.clr_iterations = 0.0
+        self.trn_iterations = 0.0
         self.history = {}
 
         self._reset()
 
-    def _reset(self, new_base_lr=None, new_max_lr=None,
-               new_step_size=None):
+    def _reset(self, new_base_lr=None, new_max_lr=None, new_step_size=None):
         """Resets cycle iterations.
         Optional boundary/step size adjustment.
         """
@@ -163,17 +168,19 @@ class CyclicLR(Callback):
             self.max_lr = new_max_lr
         if new_step_size is not None:
             self.step_size = new_step_size
-        self.clr_iterations = 0.
+        self.clr_iterations = 0.0
 
     def clr(self):
         cycle = np.floor(1 + self.clr_iterations / (2 * self.step_size))
         x = np.abs(self.clr_iterations / self.step_size - 2 * cycle + 1)
-        if self.scale_mode == 'cycle':
-            return self.base_lr + (self.max_lr - self.base_lr) * \
-                np.maximum(0, (1 - x)) * self.scale_fn(cycle)
+        if self.scale_mode == "cycle":
+            return self.base_lr + (self.max_lr - self.base_lr) * np.maximum(
+                0, (1 - x)
+            ) * self.scale_fn(cycle)
         else:
-            return self.base_lr + (self.max_lr - self.base_lr) * \
-                np.maximum(0, (1 - x)) * self.scale_fn(self.clr_iterations)
+            return self.base_lr + (self.max_lr - self.base_lr) * np.maximum(
+                0, (1 - x)
+            ) * self.scale_fn(self.clr_iterations)
 
     def on_train_begin(self, logs={}):
         logs = logs or {}
@@ -190,15 +197,12 @@ class CyclicLR(Callback):
         self.clr_iterations += 1
         K.set_value(self.model.optimizer.lr, self.clr())
 
-        self.history.setdefault(
-            'lr', []).append(
-            K.get_value(
-                self.model.optimizer.lr))
-        self.history.setdefault('iterations', []).append(self.trn_iterations)
+        self.history.setdefault("lr", []).append(K.get_value(self.model.optimizer.lr))
+        self.history.setdefault("iterations", []).append(self.trn_iterations)
 
         for k, v in logs.items():
             self.history.setdefault(k, []).append(v)
 
     def on_epoch_end(self, epoch, logs=None):
         logs = logs or {}
-        logs['lr'] = K.get_value(self.model.optimizer.lr)
+        logs["lr"] = K.get_value(self.model.optimizer.lr)

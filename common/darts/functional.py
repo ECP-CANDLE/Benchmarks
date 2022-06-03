@@ -2,7 +2,7 @@ import torch
 
 
 def flatten(tensor):
-    """ Flatten a tensor.
+    """Flatten a tensor.
 
     Parameters
     ----------
@@ -25,8 +25,8 @@ def flatten(tensor):
     return torch.cat([x.view(-1) for x in tensor])
 
 
-def multitask_loss(target, logits, criterion, reduce='mean'):
-    """ Compute multitask loss """
+def multitask_loss(target, logits, criterion, reduce="mean"):
+    """Compute multitask loss"""
     losses = {}
     for task, label in target.items():
         losses[task] = criterion(logits[task], label)
@@ -41,13 +41,16 @@ def multitask_loss(target, logits, criterion, reduce='mean'):
         elif reduce == "sum":
             losses = total
         else:
-            raise ValueError('Reduced loss must use either `mean` or `sum`!')
+            raise ValueError("Reduced loss must use either `mean` or `sum`!")
 
     return losses
 
 
-def accuracy(target: torch.tensor, output: torch.tensor,):
-    """ Computes accuracy
+def accuracy(
+    target: torch.tensor,
+    output: torch.tensor,
+):
+    """Computes accuracy
 
     Args:
         output: logits of the model
@@ -60,7 +63,7 @@ def accuracy(target: torch.tensor, output: torch.tensor,):
 
 
 def multitask_accuracy(target, output):
-    """ Compute the accuracy for multitask problems """
+    """Compute the accuracy for multitask problems"""
     accuracies = {}
     for key, value in target.items():
         accuracies[key] = accuracy(target[key], output[key])
