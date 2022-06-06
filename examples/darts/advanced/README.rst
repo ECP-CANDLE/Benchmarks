@@ -2,16 +2,16 @@
 DARTS Advanced
 ==============
 
-In this example we will take a look at how to define our own primitives to be handled by DARTS. If 
-you have not read the `Uno example`_, I would recommend taking a look at that first. There we showed 
-how we can use the built in primitives to DARTS. As reference, you can also look to see how those 
-built it primitives are defined in `darts.modules.operations.linear.py`_ and 
+In this example we will take a look at how to define our own primitives to be handled by DARTS. If
+you have not read the `Uno example`_, I would recommend taking a look at that first. There we showed
+how we can use the built in primitives to DARTS. As reference, you can also look to see how those
+built it primitives are defined in `darts.modules.operations.linear.py`_ and
 `darts.modules.operations.conv.py`_.
 
 In order to define custom networks to be handled by DARTS, you need to define a few things:
 
 1. **Network Stem**: This is an *nn.Module* that takes in your input data, processes it in some way,
-   and feeds its features of size *cell_dim* to your remaining network primitives. The parameter 
+   and feeds its features of size *cell_dim* to your remaining network primitives. The parameter
    *cell_dim* must be the input size for all of your primitives. Since DARTS can compose your primitives
    in *any* order, the input and output dimension of all of your primitives must be of size *cell_dim*.
 
@@ -25,7 +25,7 @@ In order to define custom networks to be handled by DARTS, you need to define a 
 Defining our Components
 -----------------------
 
-Let's take a look at the various pieces that we need to define. All of these components can be found in 
+Let's take a look at the various pieces that we need to define. All of these components can be found in
 `operations.py`_.
 
 Network Stem
@@ -61,13 +61,13 @@ Primitives
 ----------
 
 DARTS primitives are Pytorch *nn.Modules*. For this example, we have defined three primitives: *ConvBlock*,
-*DilConv*, and the *Identity* (a skip layer). It is important to remember DARTS will try many different 
-orderings of these primitives between *nodes*. Therefore, the imput and output dimensions of each of these 
-primitives must be of size *cell_dim*. 
+*DilConv*, and the *Identity* (a skip layer). It is important to remember DARTS will try many different
+orderings of these primitives between *nodes*. Therefore, the imput and output dimensions of each of these
+primitives must be of size *cell_dim*.
 
-It is also important to know that DARTS expects the *Identity* function to be included in the primitives. 
+It is also important to know that DARTS expects the *Identity* function to be included in the primitives.
 This is so that DARTS can account for varying depths of neural networks. Since at each node, DARTS must choose
-one primitive (choosing meaning taking the softmax over the primitives), having the no-op *Identity* means 
+one primitive (choosing meaning taking the softmax over the primitives), having the no-op *Identity* means
 that we can optimize over the depth of the network. It would be possible to define a 100 layer network and
 have the output *Genotype* be only a few layers deep. If we were to not include the *Identity*, every layer
 would be some transformation of the previous layer's features, and we could run the risk of overparameterizing
@@ -77,8 +77,8 @@ A Constructor for our Primitives
 --------------------------------
 
 Since DARTS does not control what primitives you define, we need to provide it with a constructor for those
-primitives. By convention, this is handled by a dictionary of lambda functions called *OPS*. The keys of this 
-dictionary are the names of our primitives, and the values of the dictionary are lambda functions that 
+primitives. By convention, this is handled by a dictionary of lambda functions called *OPS*. The keys of this
+dictionary are the names of our primitives, and the values of the dictionary are lambda functions that
 construct those primitives. Let's take a look at the example's *OPS*:
 
 .. code-block:: python
@@ -90,14 +90,14 @@ construct those primitives. Let's take a look at the example's *OPS*:
         'dil_conv': lambda c, stride, affine: DilConv(c, c, 3, stride, 2, 2, affine=affine)
     }
 
-As mentioned, the keys of *OPS* are the names we give to each of our primitives. These keys will be 
-what DARTS uses when defining *Genotypes*. Note that the the lambda functions take three parameters: 
+As mentioned, the keys of *OPS* are the names we give to each of our primitives. These keys will be
+what DARTS uses when defining *Genotypes*. Note that the the lambda functions take three parameters:
 1. *c*, the number of channels (or features) of the layer; 2. *stride*, the stride for convolutions; and
-3. *affine* whether to use affine transforms in batch normalization. These parameters are the default 
+3. *affine* whether to use affine transforms in batch normalization. These parameters are the default
 implementation of DARTS, and must be present. Any other hyperparameters of our custom primitives must be
 given default values. One last thing to note: in order to keep things consistent, DARTS reserves the keyword
 *none* for the *Identity* primitive. Again, this primitive must be included in any custom primitive set, and
-it's key must be *none*. This method of constructing our primitives could be changed in future versions of 
+it's key must be *none*. This method of constructing our primitives could be changed in future versions of
 DARTS to better acccommodate fancier primitives. As always, pull requests are welcome!
 
 Putting it all Together
@@ -114,8 +114,8 @@ Once we have defined our stem, primitives, and our *OPS* constructor, we can tha
 
     architecture = darts.Architecture(model, args, device=device)
 
-Note that we must specify the *classifier_dim* the number of input features from our primitives. Since each 
-of the primitives must have the same number of input and output features, this will be the flattned number 
+Note that we must specify the *classifier_dim* the number of input features from our primitives. Since each
+of the primitives must have the same number of input and output features, this will be the flattned number
 of features from any of your primitives. Since DARTS cannot know ahead of time what your primitives will be,
 we must specify how many features will go into our final fully connected layer of the network.
 

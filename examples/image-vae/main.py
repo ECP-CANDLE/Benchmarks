@@ -6,15 +6,14 @@ import logging
 import numpy as np
 import pandas as pd
 import torch
+from dataloader import MoleLoader
+from model import GeneralVae, PictureDecoder, PictureEncoder, customLoss
 from sklearn.linear_model import LinearRegression
 from torch import nn, optim
 from torchvision.utils import save_image
-
-from dataloader import MoleLoader
-from model import GeneralVae, PictureDecoder, PictureEncoder, customLoss
 from utils import AverageMeter
 
-logger = logging.getLogger('cairosvg')
+logger = logging.getLogger("cairosvg")
 logger.setLevel(logging.CRITICAL)
 
 
@@ -29,28 +28,48 @@ def clip_gradient(optimizer, grad_clip=1.0):
     :param grad_clip: clip value
     """
     for group in optimizer.param_groups:
-        for param in group['params']:
+        for param in group["params"]:
             if param.grad is not None:
                 param.grad.data.clamp_(-grad_clip, grad_clip)
 
 
 def get_args():
-    parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
-    parser.add_argument('-w', '--workers', default=16, type=int,
-                        metavar='N', help='mini-batch size per process (default: 256)')
-    parser.add_argument('-b', '--batch-size', default=256, type=int,
-                        metavar='N', help='mini-batch size per process (default: 256)')
-    parser.add_argument('-g', '--grad-clip', default=2.0, type=float,
-                        metavar='N', help='mini-batch size per process (default: 256)')
-    parser.add_argument('-d', default='moses/data', help='folder with train and test smiles files')
-    parser.add_argument('-mp', help='model save path', default='models/')
-    parser.add_argument('-op', help='output files path', default='output/')
-    parser.add_argument('--checkpoint', default=None, type=str)
+    parser = argparse.ArgumentParser(description="PyTorch ImageNet Training")
+    parser.add_argument(
+        "-w",
+        "--workers",
+        default=16,
+        type=int,
+        metavar="N",
+        help="mini-batch size per process (default: 256)",
+    )
+    parser.add_argument(
+        "-b",
+        "--batch-size",
+        default=256,
+        type=int,
+        metavar="N",
+        help="mini-batch size per process (default: 256)",
+    )
+    parser.add_argument(
+        "-g",
+        "--grad-clip",
+        default=2.0,
+        type=float,
+        metavar="N",
+        help="mini-batch size per process (default: 256)",
+    )
+    parser.add_argument(
+        "-d", default="moses/data", help="folder with train and test smiles files"
+    )
+    parser.add_argument("-mp", help="model save path", default="models/")
+    parser.add_argument("-op", help="output files path", default="output/")
+    parser.add_argument("--checkpoint", default=None, type=str)
 
     return parser.parse_args()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = get_args()
 
     starting_epoch = 1
@@ -68,7 +87,11 @@ if __name__ == '__main__':
     data_para = True
     cuda = True
     device = torch.device("cuda" if cuda and torch.cuda.is_available() else "cpu")
-    kwargs = {'num_workers': args.workers, 'pin_memory': True} if cuda else {'num_workers': args.workers}
+    kwargs = (
+        {"num_workers": args.workers, "pin_memory": True}
+        if cuda
+        else {"num_workers": args.workers}
+    )
 
     print("\nloading data...")
     smiles_lookup_train = pd.read_csv(f"{args.d}/train.csv")
@@ -82,11 +105,13 @@ if __name__ == '__main__':
 
     checkpoint = None
     if args.checkpoint is not None:
-        checkpoint = torch.load(args.checkpoint, map_location='cpu')
-        print(f"Loading Checkpoint ({args.checkpoint}). Starting at epoch: {checkpoint['epoch'] + 1}.")
-        starting_epoch = checkpoint['epoch'] + 1
-        encoder.load_state_dict(checkpoint['encoder_state_dict'])
-        decoder.load_state_dict(checkpoint['decoder_state_dict'])
+        checkpoint = torch.load(args.checkpoint, map_location="cpu")
+        print(
+            f"Loading Checkpoint ({args.checkpoint}). Starting at epoch: {checkpoint['epoch'] + 1}."
+        )
+        starting_epoch = checkpoint["epoch"] + 1
+        encoder.load_state_dict(checkpoint["encoder_state_dict"])
+        decoder.load_state_dict(checkpoint["decoder_state_dict"])
 
     encoder = encoder.to(device)
     decoder = decoder.to(device)
@@ -96,10 +121,10 @@ if __name__ == '__main__':
 
     if checkpoint is not None:
         print("using optimizer past state")
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
 
     for param_group in optimizer.param_groups:
-        param_group['lr'] = LR
+        param_group["lr"] = LR
     print("LR: {}".format(LR))
 
     loss_picture = customLoss()
@@ -114,15 +139,13 @@ if __name__ == '__main__':
 
     train_data = MoleLoader(smiles_lookup_train)
     train_loader_food = torch.utils.data.DataLoader(
-        train_data,
-        batch_size=args.batch_size, shuffle=True, drop_last=True,
-        **kwargs)
+        train_data, batch_size=args.batch_size, shuffle=True, drop_last=True, **kwargs
+    )
 
     val_data = MoleLoader(smiles_lookup_test)
     val_loader_food = torch.utils.data.DataLoader(
-        val_data,
-        batch_size=args.batch_size, shuffle=True, drop_last=True,
-        **kwargs)
+        val_data, batch_size=args.batch_size, shuffle=True, drop_last=True, **kwargs
+    )
 
     def train(epoch):
         print("Epoch {}: batch_size {}".format(epoch, get_batch_size(epoch)))
@@ -144,13 +167,18 @@ if __name__ == '__main__':
             optimizer.step()
 
             if batch_idx % log_interval == 0:
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} {}'.format(
-                    epoch, batch_idx * len(data), len(train_loader_food.dataset),
-                    100. * batch_idx / len(train_loader_food),
-                    loss_meter.avg, datetime.datetime.now()))
+                print(
+                    "Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} {}".format(
+                        epoch,
+                        batch_idx * len(data),
+                        len(train_loader_food.dataset),
+                        100.0 * batch_idx / len(train_loader_food),
+                        loss_meter.avg,
+                        datetime.datetime.now(),
+                    )
+                )
 
-        print('====> Epoch: {} Average loss: {:.4f}'.format(
-            epoch, loss_meter.avg))
+        print("====> Epoch: {} Average loss: {:.4f}".format(epoch, loss_meter.avg))
         return loss_meter.avg
 
     def interpolate_points(x, y, sampling):
@@ -170,7 +198,7 @@ if __name__ == '__main__':
                 data = data.float().cuda()
 
                 recon_batch, mu, logvar, _ = model(data)
-                print('recon', recon_batch.shape, mu.shape, logvar.shape, data.shape)
+                print("recon", recon_batch.shape, mu.shape, logvar.shape, data.shape)
                 loss2 = loss_picture(recon_batch, data, mu, logvar, epoch)
                 loss2 = torch.sum(loss2)
                 losses.update(loss2.item(), int(data.shape[0]))
@@ -178,10 +206,17 @@ if __name__ == '__main__':
                 if i == 0:
                     ##
                     n = min(data.size(0), 8)
-                    comparison = torch.cat([data[:n],
-                                            recon_batch.view(get_batch_size(epoch), 3, 256, 256)[:n]])
-                    save_image(comparison.cpu(),
-                               output_dir + 'reconstruction_' + str(epoch) + '.png', nrow=n)
+                    comparison = torch.cat(
+                        [
+                            data[:n],
+                            recon_batch.view(get_batch_size(epoch), 3, 256, 256)[:n],
+                        ]
+                    )
+                    save_image(
+                        comparison.cpu(),
+                        output_dir + "reconstruction_" + str(epoch) + ".png",
+                        nrow=n,
+                    )
 
                     del recon_batch
 
@@ -198,20 +233,26 @@ if __name__ == '__main__':
                     for i in range(n_image_gen):
                         pt_1 = data_latent[i * 2, ...].cpu().numpy()
                         pt_2 = data_latent[i * 2 + 1, ...].cpu().numpy()
-                        sample_vec = interpolate_points(pt_1, pt_2,
-                                                        np.linspace(0, 1, num=n_samples_linspace, endpoint=True))
+                        sample_vec = interpolate_points(
+                            pt_1,
+                            pt_2,
+                            np.linspace(0, 1, num=n_samples_linspace, endpoint=True),
+                        )
                         sample_vec = torch.from_numpy(sample_vec).to(device)
                         if data_para:
                             images.append(model.module.decode(sample_vec).cpu())
                         else:
                             images.append(model.decode(sample_vec).cpu())
 
-                    save_image(torch.cat(images), output_dir + 'linspace_' + str(epoch) + '.png',
-                               nrow=n_samples_linspace)
+                    save_image(
+                        torch.cat(images),
+                        output_dir + "linspace_" + str(epoch) + ".png",
+                        nrow=n_samples_linspace,
+                    )
 
         test_loss /= len(val_loader_food.dataset)
-        print('====> Test set loss: {:.4f}'.format(test_loss))
-        print('loss', losses.avg)
+        print("====> Test set loss: {:.4f}".format(test_loss))
+        print("loss", losses.avg)
 
         val_losses.append(test_loss)
 
@@ -222,20 +263,25 @@ if __name__ == '__main__':
 
     for epoch in trn_rng:
         for param_group in optimizer.param_groups:
-            print("Current learning rate is: {}".format(param_group['lr']))
+            print("Current learning rate is: {}".format(param_group["lr"]))
 
         loss = train(epoch)
         test(epoch)
 
-        torch.save({
-            'epoch': epoch,
-            'encoder_state_dict': model.module.encoder.state_dict(),
-            'decoder_state_dict': model.module.decoder.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict()
-        }, save_files + 'epoch_' + str(epoch) + '.pt')
+        torch.save(
+            {
+                "epoch": epoch,
+                "encoder_state_dict": model.module.encoder.state_dict(),
+                "decoder_state_dict": model.module.decoder.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+            },
+            save_files + "epoch_" + str(epoch) + ".pt",
+        )
         torch.save(model.module, "model_inf.pt")
         with torch.no_grad():
             sample = torch.randn(64, 512).to(device)
             sample = model.module.decode(sample).cpu()
-            save_image(sample.view(64, 3, 256, 256),
-                       output_dir + 'sample_' + str(epoch) + '.png')
+            save_image(
+                sample.view(64, 3, 256, 256),
+                output_dir + "sample_" + str(epoch) + ".png",
+            )

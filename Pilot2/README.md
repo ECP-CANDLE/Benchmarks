@@ -5,43 +5,47 @@
 ### Benchmark Specs Requirements
 
 #### Description of the Data
-* Data source: MD Simulation output as PDB files (coarse-grained bead simulation)
-* Input dimensions:
-  * Long term target: ~1.26e6 per time step (6000 lipids x 30 beads per lipid x (position + velocity + type))
-  * Current: ~288e3 per time step (6000 lipids x 12 beads per lipid x (position + type))
-* Output dimensions: 500
-* Latent representation dimension:
-* Sample size: O(10^6) for simulation requiring O(10^8) time steps
-* Notes on data balance and other issues: unlabeled data with rare events
+
+- Data source: MD Simulation output as PDB files (coarse-grained bead simulation)
+- Input dimensions:
+  - Long term target: ~1.26e6 per time step (6000 lipids x 30 beads per lipid x (position + velocity + type))
+  - Current: ~288e3 per time step (6000 lipids x 12 beads per lipid x (position + type))
+- Output dimensions: 500
+- Latent representation dimension:
+- Sample size: O(10^6) for simulation requiring O(10^8) time steps
+- Notes on data balance and other issues: unlabeled data with rare events
 
 ### Sample Data Sets
-* RAS
-* 3-component-system (DPPC-DOPC-CHOL)
-* af-restraints-290k
+
+- RAS
+- 3-component-system (DPPC-DOPC-CHOL)
+- af-restraints-290k
 
 #### 3K lipids, 10 microseconds simulation, ~3000 frames:
-* Disordered - 3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
-* Ordered - 3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir
-* Ordered and gel - 3k_run43_10us.35fs-DPPC.70-DOPC.10-CHOL.20.dir
+
+- Disordered - 3k_run10_10us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
+- Ordered - 3k_run32_10us.35fs-DPPC.50-DOPC.10-CHOL.40.dir
+- Ordered and gel - 3k_run43_10us.35fs-DPPC.70-DOPC.10-CHOL.20.dir
 
 #### 6K lipids, 25 microseconds simulation, ~7000 frames:
 
-* Disordered - 6k_run10_25us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
-* Ordered - 6k_run32_25us.35fs-DPPC.50-DOPC.10-CHOL.40.dir
-* Ordered and gel - 6k_run43_25us.35fs-DPPC.70-DOPC.10-CHOL.20.dir
+- Disordered - 6k_run10_25us.35fs-DPPC.10-DOPC.70-CHOL.20.dir
+- Ordered - 6k_run32_25us.35fs-DPPC.50-DOPC.10-CHOL.40.dir
+- Ordered and gel - 6k_run43_25us.35fs-DPPC.70-DOPC.10-CHOL.20.dir
 
 #### Runtime Options
-* ```--data-set=3k_Disordered```
-* ```--data-set=3k_Ordered```
-* ```--data-set=3k_Ordered_and_gel```
-* ```--data-set=6k_Disordered```
-* ```--data-set=6k_Ordered```
-* ```--data-set=6k_Ordered_and_gel```
+
+- `--data-set=3k_Disordered`
+- `--data-set=3k_Ordered`
+- `--data-set=3k_Ordered_and_gel`
+- `--data-set=6k_Disordered`
+- `--data-set=6k_Ordered`
+- `--data-set=6k_Ordered_and_gel`
 
 ### Data Set Release Notice
 
 BAASiC Pilot 2 Data Set
-Produced at the Lawrence Livermore National Laboratory. 
+Produced at the Lawrence Livermore National Laboratory.
 
 LLNL-MI-724660
 All rights reserved.

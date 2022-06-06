@@ -1,2 +1,2 @@
-from .model import Model
 from .dataset import InMemoryDataset
+from .model import Model

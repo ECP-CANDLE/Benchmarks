@@ -1,12 +1,8 @@
-## *UQ*: Predicting Tumor Dose Response across Multiple Data Sources with added UQ functionality.
-
-
+## _UQ_: Predicting Tumor Dose Response across Multiple Data Sources with added UQ functionality.
 
 ## Functionality
 
-*UQ* adds uncertainty quantification (UQ) functionality to the Uno model. For information about the underlaying model, please refer to the Uno benchmark documentation.
-
-
+_UQ_ adds uncertainty quantification (UQ) functionality to the Uno model. For information about the underlaying model, please refer to the Uno benchmark documentation.
 
 This page overviews the added UQ functionality provided, which includes:
 
@@ -20,8 +16,6 @@ This page overviews the added UQ functionality provided, which includes:
 
 - Empirical calibration of UQ for the trained models.
 
-
-
 ## Holdout
 
 The holdout script generates a set of identifiers to holdout during training, depending on the --partition_by argument.
@@ -32,11 +26,7 @@ If --partition_by is 'cell' it generates a set of cell IDs.
 
 In any other case it generates a set of indices.
 
-
-
 The fraction to reserve in the holdout set is given by the --val_split argument.
-
-
 
 #### Example output
 
@@ -118,23 +108,17 @@ Cell IDs in holdout set written in file: save_default/infer_cell_ids
 
 ```
 
-
-
 ## Train
 
-The train script trains the model, as in the underlying Uno benchmark, but excluding the IDs in the holdout  file. The file with the holdout set should be provided via one of the following arguments
+The train script trains the model, as in the underlying Uno benchmark, but excluding the IDs in the holdout file. The file with the holdout set should be provided via one of the following arguments
 
-- --uq_exclude_drugs_file='file'     if the file contains a set of drug IDs.
+- --uq_exclude_drugs_file='file' if the file contains a set of drug IDs.
 
-- --uq_exclude_cells_file='file'       if the file contains a set of cell IDs.
+- --uq_exclude_cells_file='file' if the file contains a set of cell IDs.
 
-- --uq_exclude_indices_file='file'   if the file contains a set of indices.
-
-
+- --uq_exclude_indices_file='file' if the file contains a set of indices.
 
 Additional --loss 'het' and --loss 'qtl' options are available. This will learn the input-dependent noise level as well as the main regression variable specified (i.e. growth or AUC).
-
-
 
 #### Example output
 
@@ -309,39 +293,25 @@ partition:test, rank:0, sharded index size:0, batch_size:32, steps:0
 
 ```
 
-
-
 ## Infer
 
 The infer script does inference on a trained model, as in the underlying Uno benchmark. This script is able to use a pre-generated file or it can construct the data to do inference if a set of identifiers are provided.
 
-
-
 The argument --uq_infer_file must be used to specify the name of the file with the data (or the identifiers) to do inference.
-
-
 
 Additionally, if the data needs to be constructed, then one of the following arguments should be used to specify what type of identifiers are provided
 
-- --uq_infer_given_drugs=True     if the file contains a set of drug IDs.
+- --uq_infer_given_drugs=True if the file contains a set of drug IDs.
 
-- --uq_infer_given_cells=True       if the file contains a set of cell IDs.
+- --uq_infer_given_cells=True if the file contains a set of cell IDs.
 
-- --uq_infer_given_indices=True   if the file contains a set of indices.
-
-
+- --uq_infer_given_indices=True if the file contains a set of indices.
 
 Note that the latter works if all the arguments for the data construction are set as well (usually those are taken from the model configuration file). Of course this specification and the trained model should be consistent for the script to work.
 
-
-
 Likewise, in the case that a pre-generated file is provided, the features included and the trained model should be consistent for the script to work.
 
-
-
 Note also that the --loss 'het' or --loss 'qtl' option should be specified if the model was trained to predict as well the heterogeneous noise, or the quantile distributions.
-
-
 
 #### Example output
 
@@ -521,17 +491,10 @@ Comparing y_true and y_pred:
 Predictions stored in file: save_default/uno.A=relu.B=32.E=10.O=sgd.LS=mse.LR=None.CF=r.DF=df.DR=0.1.L1000.D1=1000.D2=1000.D3=1000.predicted_INFER.tsv
 ```
 
-
-
 ## Empirical Calibration
 
 Scripts included in the calibration subfolder compute empirical calibration for the inference results. The scripts with suffix HOM compute empirical calibration for inference with homoscedastic model, while the script with suffix HET computes empirical calibration for inference with a heteroscedastic model.
 
-
-
 To run the scripts it is necessary to provide the path to the file and the file with the inference results. Note that it is assumed that the file with the inference results includes each realization of the inference (implicit in the 'all' suffix), but for the homoscedastic case a script is provided to process an inference file with only the consolidated statistics (generally the average over all the realizations). Also, note that a specific format of the file with the inference results is assumed. Thus, a set of default values, reflecting the format of current CANDLE infer scripts, is used. More arbitrary formats may be usable, if they incurr in similar column offsets, but it would require passing the right parameters to the function reading the inference file.
 
-
-
 The script generates a series of plots and pickle (dill) files, displaying and encoding the empirical calibration computed.
-

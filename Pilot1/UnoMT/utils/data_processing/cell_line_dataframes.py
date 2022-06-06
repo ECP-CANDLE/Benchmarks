@@ -7,33 +7,33 @@
     File Description:
         This file takes care of all the dataframes related cell lines.
 """
-import os
 import logging
+import os
 
 import numpy as np
 import pandas as pd
-
 from utils.data_processing.dataframe_scaling import scale_dataframe
 from utils.data_processing.label_encoding import encode_label_to_int
 from utils.miscellaneous.file_downloading import download_files
 
-
 logger = logging.getLogger(__name__)
 
 # Folders for raw/processed data
-RAW_FOLDER = './raw/'
-PROC_FOLDER = './processed/'
+RAW_FOLDER = "./raw/"
+PROC_FOLDER = "./processed/"
 
 # All the filenames related to cell lines
-CL_METADATA_FILENAME = 'combined_cl_metadata'
-RNASEQ_SOURCE_SCALE_FILENAME = 'combined_rnaseq_data_lincs1000_source_scale'
-RNASEQ_COMBAT_FILENAME = 'combined_rnaseq_data_lincs1000_combat'
+CL_METADATA_FILENAME = "combined_cl_metadata"
+RNASEQ_SOURCE_SCALE_FILENAME = "combined_rnaseq_data_lincs1000_source_scale"
+RNASEQ_COMBAT_FILENAME = "combined_rnaseq_data_lincs1000_combat"
 
 
-def get_rna_seq_df(data_root: str,
-                   rnaseq_feature_usage: str,
-                   rnaseq_scaling: str,
-                   float_dtype: type = np.float32):
+def get_rna_seq_df(
+    data_root: str,
+    rnaseq_feature_usage: str,
+    rnaseq_scaling: str,
+    float_dtype: type = np.float32,
+):
     """df = get_rna_seq_df('./data/', 'source_scale', 'std')
 
     This function loads the RNA sequence file, process it and return
@@ -57,8 +57,10 @@ def get_rna_seq_df(data_root: str,
         pd.DataFrame: processed RNA sequence dataframe.
     """
 
-    df_filename = 'rnaseq_df(%s, scaling=%s).pkl' \
-                  % (rnaseq_feature_usage, rnaseq_scaling)
+    df_filename = "rnaseq_df(%s, scaling=%s).pkl" % (
+        rnaseq_feature_usage,
+        rnaseq_scaling,
+    )
     df_path = os.path.join(data_root, PROC_FOLDER, df_filename)
 
     # If the dataframe already exists, load and continue ######################
@@ -67,36 +69,41 @@ def get_rna_seq_df(data_root: str,
 
     # Otherwise load from raw files, process it and save ######################
     else:
-        logger.debug('Processing RNA sequence dataframe ... ')
+        logger.debug("Processing RNA sequence dataframe ... ")
 
-        if rnaseq_feature_usage == 'source_scale':
+        if rnaseq_feature_usage == "source_scale":
             raw_data_filename = RNASEQ_SOURCE_SCALE_FILENAME
-        elif rnaseq_feature_usage == 'combat':
+        elif rnaseq_feature_usage == "combat":
             raw_data_filename = RNASEQ_COMBAT_FILENAME
         else:
-            logger.error('Unknown RNA feature %s.' % rnaseq_feature_usage,
-                         exc_info=True)
-            raise ValueError('RNA feature usage must be one of '
-                             '\'source_scale\' or \'combat\'.')
+            logger.error(
+                "Unknown RNA feature %s." % rnaseq_feature_usage, exc_info=True
+            )
+            raise ValueError(
+                "RNA feature usage must be one of " "'source_scale' or 'combat'."
+            )
 
         # Download the raw file if not exist
-        download_files(filenames=raw_data_filename,
-                       target_folder=os.path.join(data_root, RAW_FOLDER))
+        download_files(
+            filenames=raw_data_filename,
+            target_folder=os.path.join(data_root, RAW_FOLDER),
+        )
 
         df = pd.read_csv(
             os.path.join(data_root, RAW_FOLDER, raw_data_filename),
-            sep='\t',
+            sep="\t",
             header=0,
-            index_col=0)
+            index_col=0,
+        )
 
         # Delete '-', which could be inconsistent between seq and meta
-        df.index = df.index.str.replace('-', '')
+        df.index = df.index.str.replace("-", "")
 
         # Note that after this name changing, some rows will have the same
         # name like 'GDSC.TT' and 'GDSC.T-T', but they are actually the same
         # Drop the duplicates for consistency
         print(df.shape)
-        df = df[~df.index.duplicated(keep='first')]
+        df = df[~df.index.duplicated(keep="first")]
         print(df.shape)
 
         # Scaling the descriptor with given scaling method
@@ -117,8 +124,7 @@ def get_rna_seq_df(data_root: str,
     return df
 
 
-def get_cl_meta_df(data_root: str,
-                   int_dtype: type = np.int8):
+def get_cl_meta_df(data_root: str, int_dtype: type = np.int8):
     """df = get_cl_meta_df('./data/')
 
     This function loads the metadata for cell lines, process it and return
@@ -138,7 +144,7 @@ def get_cl_meta_df(data_root: str,
         pd.DataFrame: processed cell line metadata dataframe.
     """
 
-    df_filename = 'cl_meta_df.pkl'
+    df_filename = "cl_meta_df.pkl"
     df_path = os.path.join(data_root, PROC_FOLDER, df_filename)
 
     # If the dataframe already exists, load and continue ######################
@@ -147,40 +153,45 @@ def get_cl_meta_df(data_root: str,
 
     # Otherwise load from raw files, process it and save ######################
     else:
-        logger.debug('Processing cell line meta dataframe ... ')
+        logger.debug("Processing cell line meta dataframe ... ")
 
         # Download the raw file if not exist
-        download_files(filenames=CL_METADATA_FILENAME,
-                       target_folder=os.path.join(data_root, RAW_FOLDER))
+        download_files(
+            filenames=CL_METADATA_FILENAME,
+            target_folder=os.path.join(data_root, RAW_FOLDER),
+        )
 
         df = pd.read_csv(
             os.path.join(data_root, RAW_FOLDER, CL_METADATA_FILENAME),
-            sep='\t',
+            sep="\t",
             header=0,
             index_col=0,
-            usecols=['sample_name',
-                     'dataset',
-                     'simplified_tumor_site',
-                     'simplified_tumor_type',
-                     'sample_category'],
-            dtype=str)
+            usecols=[
+                "sample_name",
+                "dataset",
+                "simplified_tumor_site",
+                "simplified_tumor_type",
+                "sample_category",
+            ],
+            dtype=str,
+        )
 
         # Renaming columns for shorter and better column names
-        df.index.names = ['sample']
-        df.columns = ['data_src', 'site', 'type', 'category']
+        df.index.names = ["sample"]
+        df.columns = ["data_src", "site", "type", "category"]
 
         # Delete '-', which could be inconsistent between seq and meta
         print(df.shape)
-        df.index = df.index.str.replace('-', '')
+        df.index = df.index.str.replace("-", "")
         print(df.shape)
 
         # Convert all the categorical data from text to numeric
         columns = df.columns
-        dict_names = [i + '_dict.txt' for i in columns]
+        dict_names = [i + "_dict.txt" for i in columns]
         for col, dict_name in zip(columns, dict_names):
-            df[col] = encode_label_to_int(data_root=data_root,
-                                          dict_name=dict_name,
-                                          labels=df[col])
+            df[col] = encode_label_to_int(
+                data_root=data_root, dict_name=dict_name, labels=df[col]
+            )
 
         # Convert data type into generic python types
         df = df.astype(int)
@@ -196,14 +207,18 @@ def get_cl_meta_df(data_root: str,
     return df
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG)
 
-    print('=' * 80 + '\nRNA sequence dataframe head:')
-    print(get_rna_seq_df(data_root='../../data/',
-                         rnaseq_feature_usage='source_scale',
-                         rnaseq_scaling='std').head())
+    print("=" * 80 + "\nRNA sequence dataframe head:")
+    print(
+        get_rna_seq_df(
+            data_root="../../data/",
+            rnaseq_feature_usage="source_scale",
+            rnaseq_scaling="std",
+        ).head()
+    )
 
-    print('=' * 80 + '\nCell line metadata dataframe head:')
-    print(get_cl_meta_df(data_root='../../data/').head())
+    print("=" * 80 + "\nCell line metadata dataframe head:")
+    print(get_cl_meta_df(data_root="../../data/").head())

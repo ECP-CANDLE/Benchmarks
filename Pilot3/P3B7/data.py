@@ -1,13 +1,12 @@
 import os
-import torch
-import shutil
 import pickle
+import shutil
+from pathlib import Path
 
 import numpy as np
-
-from tqdm import tqdm
-from pathlib import Path
+import torch
 from torch.utils.data import Dataset
+from tqdm import tqdm
 
 
 class P3B3(Dataset):
@@ -21,14 +20,23 @@ class P3B3(Dataset):
             dataset partition to be loaded.
             Must be either 'train' or 'test'.
     """
-    training_data_file = 'train_X.npy'
-    training_label_file = 'train_Y.npy'
-    test_data_file = 'test_X.npy'
-    test_label_file = 'test_Y.npy'
 
-    def __init__(self, root, partition, subsite=True,
-                 laterality=True, behavior=True, grade=True,
-                 transform=None, target_transform=None):
+    training_data_file = "train_X.npy"
+    training_label_file = "train_Y.npy"
+    test_data_file = "test_X.npy"
+    test_label_file = "test_Y.npy"
+
+    def __init__(
+        self,
+        root,
+        partition,
+        subsite=True,
+        laterality=True,
+        behavior=True,
+        grade=True,
+        transform=None,
+        target_transform=None,
+    ):
         self.root = root
         self.partition = partition
         self.transform = transform
@@ -38,10 +46,10 @@ class P3B3(Dataset):
         self.behavior = behavior
         self.grade = grade
 
-        if self.partition == 'train':
+        if self.partition == "train":
             data_file = self.training_data_file
             label_file = self.training_label_file
-        elif self.partition == 'test':
+        elif self.partition == "test":
             data_file = self.test_data_file
             label_file = self.test_label_file
         else:
@@ -51,11 +59,11 @@ class P3B3(Dataset):
         self.targets = self.get_targets(label_file)
 
     def __repr__(self):
-        fmt_str = 'Dataset ' + self.__class__.__name__ + '\n'
-        fmt_str += '    Number of datapoints: {}\n'.format(self.__len__())
+        fmt_str = "Dataset " + self.__class__.__name__ + "\n"
+        fmt_str += "    Number of datapoints: {}\n".format(self.__len__())
         tmp = self.partition
-        fmt_str += '    Split: {}\n'.format(tmp)
-        fmt_str += '    Root Location: {}\n'.format(self.root)
+        fmt_str += "    Split: {}\n".format(tmp)
+        fmt_str += "    Root Location: {}\n".format(self.root)
         return fmt_str
 
     def __len__(self):
@@ -70,13 +78,13 @@ class P3B3(Dataset):
 
         tasks = {}
         if self.subsite:
-            tasks['subsite'] = targets[:, 0]
+            tasks["subsite"] = targets[:, 0]
         if self.laterality:
-            tasks['laterality'] = targets[:, 1]
+            tasks["laterality"] = targets[:, 1]
         if self.behavior:
-            tasks['behavior'] = targets[:, 2]
+            tasks["behavior"] = targets[:, 2]
         if self.grade:
-            tasks['grade'] = targets[:, 3]
+            tasks["grade"] = targets[:, 3]
 
         return tasks
 
@@ -110,7 +118,6 @@ class P3B3(Dataset):
 
 
 class Vocabulary:
-
     def __init__(self):
         self.word2idx = {}
         self.idx2word = []
@@ -126,7 +133,6 @@ class Vocabulary:
 
 
 class Tokenizer:
-
     def __init__(self, train, valid):
         self.vocab = Vocabulary()
         self.train = self.tokenize(train)
@@ -171,7 +177,7 @@ class Egress(Dataset):
         split: Split to load. Either 'train' or 'valid'
     """
 
-    store = Path('/gpfs/alpine/proj-shared/med107/NCI_Data/yngtodd/dat.pickle')
+    store = Path("/gpfs/alpine/proj-shared/med107/NCI_Data/yngtodd/dat.pickle")
 
     def __init__(self, root, split):
         self._check_split(split)
@@ -183,8 +189,10 @@ class Egress(Dataset):
         return f"Egress(root={self.root}, split={self.split})"
 
     def _check_split(self, split):
-        assert split in ["train", "valid"], \
-            f"Split must be in {'train', 'valid'}, got {split}"
+        assert split in [
+            "train",
+            "valid",
+        ], f"Split must be in {'train', 'valid'}, got {split}"
         self.split = split
 
     def _check_download(self, root):
@@ -203,7 +211,7 @@ class Egress(Dataset):
         print("Preprocessing data...")
         self._make_processed_dirs()
 
-        with open(raw_data, 'rb') as f:
+        with open(raw_data, "rb") as f:
             x_train = np.flip(pickle.load(f), 1)
             y_train = pickle.load(f)
             x_valid = np.flip(pickle.load(f), 1)
@@ -212,16 +220,16 @@ class Egress(Dataset):
         corpus = Tokenizer(x_train, x_valid)
         self.num_vocab = len(corpus.vocab)
 
-        self._save_split('train', corpus.train, y_train)
-        self._save_split('valid', corpus.valid, y_valid)
+        self._save_split("train", corpus.train, y_train)
+        self._save_split("valid", corpus.valid, y_valid)
         self._save_vocab(corpus.vocab)
         print("Done!")
 
     def _save_split(self, split, data, target):
         target = self._create_target(target)
-        split_path = self.root.joinpath(f'processed/{split}')
-        torch.save(data, split_path.joinpath('data.pt'))
-        torch.save(target, split_path.joinpath('target.pt'))
+        split_path = self.root.joinpath(f"processed/{split}")
+        torch.save(data, split_path.joinpath("data.pt"))
+        torch.save(target, split_path.joinpath("target.pt"))
 
     def _save_vocab(self, vocab):
         torch.save(vocab, self.root.joinpath("vocab.pt"))
@@ -234,20 +242,22 @@ class Egress(Dataset):
     def _create_target(self, arry):
         r"""Convert target dictionary"""
         target = {
-            'site': arry[:, 0],
-            'subsite': arry[:, 1],
-            'laterality': arry[:, 2],
-            'histology': arry[:, 3],
-            'behaviour': arry[:, 4],
-            'grade': arry[:, 5]
+            "site": arry[:, 0],
+            "subsite": arry[:, 1],
+            "laterality": arry[:, 2],
+            "histology": arry[:, 3],
+            "behaviour": arry[:, 4],
+            "grade": arry[:, 5],
         }
 
-        return {task: torch.tensor(arry, dtype=torch.long) for task, arry in target.items()}
+        return {
+            task: torch.tensor(arry, dtype=torch.long) for task, arry in target.items()
+        }
 
     def _load_data(self, split):
-        split_path = self.root.joinpath(f'processed/{split}')
-        self.data = torch.load(split_path.joinpath('data.pt'))
-        self.target = torch.load(split_path.joinpath('target.pt'))
+        split_path = self.root.joinpath(f"processed/{split}")
+        self.data = torch.load(split_path.joinpath("data.pt"))
+        self.target = torch.load(split_path.joinpath("target.pt"))
 
     def _load_vocab(self):
         self.vocab = torch.load(self.root.joinpath("vocab.pt"))

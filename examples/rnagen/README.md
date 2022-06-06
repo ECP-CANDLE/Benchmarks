@@ -20,10 +20,10 @@ In this example, we first train a conditional variational autoencoder (CVAE) to 
 
 ![Test accuracy comparison](test-accuracy-comparison-20-types.png)
 
-
 ## Example 1
 
-Training with 10,000 synthetic samples on the 10-type classification problem. 
+Training with 10,000 synthetic samples on the 10-type classification problem.
+
 ```
 python rnagen.py --top_k_types 10 --n_samples 10000
 ```
@@ -66,7 +66,7 @@ Test accuracy change: +11.77% (0.7679 -> 0.8583)
 
 ## Example 2:
 
-Compare and plot model performance. 
+Compare and plot model performance.
 
 ```
 python rnagen.py --plot

@@ -1,13 +1,11 @@
 import torch
 import torch.nn as nn
-
 from darts.api import Model
 from darts.modules.conv.mixed_layer import MixedLayer
 from darts.modules.operations.conv import ConvBlock, FactorizedReduce
 
 
 class Cell(Model):
-
     def __init__(self, num_nodes, multiplier, cpp, cp, c, reduction, reduction_prev):
         """
         :param steps: 4, number of layers inside a cell
@@ -70,11 +68,14 @@ class Cell(Model):
         # for each node, receive input from all previous intermediate nodes and s0, s1
         for i in range(self.num_nodes):  # 4
             # [40, 16, 32, 32]
-            s = sum(self.layers[offset + j](h, weights[offset + j]) for j, h in enumerate(states))
+            s = sum(
+                self.layers[offset + j](h, weights[offset + j])
+                for j, h in enumerate(states)
+            )
             offset += len(states)
             # append one state since s is the elem-wise addition of all output
             states.append(s)
             # print('node:',i, s.shape, self.reduction)
 
         # concat along dim=channel
-        return torch.cat(states[-self.multiplier:], dim=1)  # 6 of [40, 16, 32, 32]
+        return torch.cat(states[-self.multiplier :], dim=1)  # 6 of [40, 16, 32, 32]
