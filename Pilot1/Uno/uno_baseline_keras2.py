@@ -271,7 +271,7 @@ def run(params):
     if args.use_exported_data is not None:
         if os.environ["CANDLE_DATA_DIR"] is not None:
             datadir = os.environ["CANDLE_DATA_DIR"]
-            datafile = os.path.join(dtadir, args.use_exported_data)
+            datafile = os.path.join(datadir, args.use_exported_data)
         else:
             datafile = args.use_exported_data
 
@@ -494,7 +494,7 @@ def run(params):
         if args.use_exported_data is not None:
             if os.environ["CANDLE_DATA_DIR"] is not None:
                 datadir = os.environ["CANDLE_DATA_DIR"]
-                datafile = os.path.join(dtadir, args.use_exported_data)
+                datafile = os.path.join(datadir, args.use_exported_data)
             else:
                 datafile = args.use_exported_data
 
