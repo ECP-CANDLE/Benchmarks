@@ -268,6 +268,13 @@ def run(params):
         config.gpu_options.visible_device_list = ",".join(map(str, args.gpus))
         tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
 
+    if args.use_exported_data is not None:
+        if os.environ["CANDLE_DATA_DIR"] is not None:
+            datadir = os.environ["CANDLE_DATA_DIR"]
+            datafile = os.path.join(dtadir, args.use_exported_data)
+        else:
+            datafile = args.use_exported_data
+
     loader = CombinedDataLoader(seed=args.rng_seed)
     loader.load(
         cache=args.cache,
@@ -289,7 +296,7 @@ def run(params):
         test_sources=args.test_sources,
         embed_feature_source=not args.no_feature_source,
         encode_response_source=not args.no_response_source,
-        use_exported_data=args.use_exported_data,
+        use_exported_data=datafile
     )
 
     target = args.agg_dose or "Growth"
@@ -485,8 +492,14 @@ def run(params):
             callbacks.append(MultiGPUCheckpoint(args.save_weights))
 
         if args.use_exported_data is not None:
+            if os.environ["CANDLE_DATA_DIR"] is not None:
+                datadir = os.environ["CANDLE_DATA_DIR"]
+                datafile = os.path.join(dtadir, args.use_exported_data)
+            else:
+                datafile = args.use_exported_data
+
             train_gen = DataFeeder(
-                filename=args.use_exported_data,
+                filename=datafile,
                 batch_size=args.batch_size,
                 shuffle=args.shuffle,
                 single=args.single,
@@ -495,7 +508,7 @@ def run(params):
             )
             val_gen = DataFeeder(
                 partition="val",
-                filename=args.use_exported_data,
+                filename=datafile,
                 batch_size=args.batch_size,
                 shuffle=args.shuffle,
                 single=args.single,
@@ -504,7 +517,7 @@ def run(params):
             )
             test_gen = DataFeeder(
                 partition="test",
-                filename=args.use_exported_data,
+                filename=datafile,
                 batch_size=args.batch_size,
                 shuffle=args.shuffle,
                 single=args.single,
