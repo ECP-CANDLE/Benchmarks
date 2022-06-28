@@ -296,7 +296,7 @@ def run(params):
         test_sources=args.test_sources,
         embed_feature_source=not args.no_feature_source,
         encode_response_source=not args.no_response_source,
-        use_exported_data=datafile
+        use_exported_data=datafile,
     )
 
     target = args.agg_dose or "Growth"
