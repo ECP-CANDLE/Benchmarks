@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 import sys
+import planargs
 from abc import ABC, abstractmethod  # abstract class support
 from collections import OrderedDict, deque, namedtuple
 from datetime import datetime
@@ -139,8 +140,8 @@ def validate_args(args):
         sys.exit("Terminating due to error")
 
     # construct a partitioning object exporting a partion() function
-    if args.partition_strategy == "leaveout":
-        generator = LeaveoutSubsetGenerator()
+    # if args.partition_strategy == "leaveout":
+    generator = LeaveoutSubsetGenerator()
 
     # return feature-set contents lists
     return generator, fs_content
