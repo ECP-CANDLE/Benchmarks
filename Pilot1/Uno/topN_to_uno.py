@@ -242,7 +242,7 @@ def build_dataframe(args):
         x_test_1.columns = [""] * len(x_test_1.columns)
 
     # store
-    store = pd.HDFStore(args.output, "w", complevel=9, complib="blosc:snappy")
+    store = pd.HDFStore(args.output, "w")
     store.put("y_train", y_train, format="table")
     store.put("y_val", y_val, format="table")
     store.put("x_train_0", x_train_0, format="table")
