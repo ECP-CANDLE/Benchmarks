@@ -74,8 +74,10 @@ class Benchmark:
         self.default_model = defmodel
         self.framework = framework
 
+        # Parameters (and group of parameters) active for all benchmarks
         self.registered_conf = []
-        for lst in parsing_utils.registered_conf:
+        self.registered_group_conf = [parsing_utils.basic_conf, parsing_utils.logging_conf]
+        for lst in self.registered_group_conf:
             self.registered_conf.extend(lst)
 
         self.required = set([])
@@ -91,7 +93,7 @@ class Benchmark:
         """
         # Parse has been split between arguments that are common with the default neon parser
         # and all the other options
-        self.parser = parsing_utils.parse_common(self.parser)
+        self.parser = parsing_utils.parse_common(self.parser, self.registered_group_conf)
         self.parser = parsing_utils.parse_from_dictlist(
             self.additional_definitions, self.parser
         )

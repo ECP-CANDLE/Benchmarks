@@ -99,6 +99,7 @@ required = [
     "timeout",
 ]
 
+registered_group_conf = [candle.input_output_conf, candle.model_conf, candle.training_conf]
 
 class BenchmarkP1B1(candle.Benchmark):
     def set_locals(self):
@@ -108,10 +109,17 @@ class BenchmarkP1B1(candle.Benchmark):
         benchmark.
         """
 
+        # Construct list of required parameters for the benchmark
         if required is not None:
             self.required = set(required)
+        # Construct list of additional definitions for the benchmark
         if additional_definitions is not None:
             self.additional_definitions = additional_definitions
+        # Construct list of `active` parameters for the benchmark
+        if registered_group_conf is not None:
+            self.registered_group_conf += registered_group_conf
+            for lst in registered_group_conf:
+                self.registered_conf.extend(lst)
 
 
 def extension_from_parameters(params, framework=""):
