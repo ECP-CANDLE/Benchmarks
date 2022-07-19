@@ -1,6 +1,6 @@
 [Global_Params]
 data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/'
-train_data = 'svs_pngs.zip'
+train_data = 'svs_png.zip'
 data_dir = 'svs_pngs'
 epochs = 560
 learning_rate = 3e-4
