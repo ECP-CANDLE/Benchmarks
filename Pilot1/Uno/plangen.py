@@ -4,7 +4,6 @@ import json
 import os
 import sqlite3
 import sys
-import planargs
 from abc import ABC, abstractmethod  # abstract class support
 from collections import OrderedDict, deque, namedtuple
 from datetime import datetime
@@ -13,6 +12,7 @@ from pprint import pprint as pp
 from sqlite3 import Error as db_Error
 
 import numpy as np
+import planargs
 from scipy.special import comb
 
 ISO_TIMESTAMP = "seconds"  # timestamp to ISO string
