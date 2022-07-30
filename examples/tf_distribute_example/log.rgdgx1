@@ -1,0 +1,66 @@
+1:DEBUG:Falling back to TensorFlow client; we recommended you install the Cloud TPU client directly with pip install cloud-tpu-client.
+1:DEBUG:Creating converter from 7 to 5
+1:DEBUG:Creating converter from 5 to 7
+1:DEBUG:Creating converter from 7 to 5
+1:DEBUG:Creating converter from 5 to 7
+1:DEBUG:{
+  "cluster": {
+    "worker": [
+      "localhost:12345",
+      "localhost:23456"
+    ]
+  },
+  "task": {
+    "type": "worker",
+    "index": "1"
+  }
+}
+1:DEBUG:calling tf.distribute.MultiWorkerMirroredStrategy()
+0:DEBUG:Falling back to TensorFlow client; we recommended you install the Cloud TPU client directly with pip install cloud-tpu-client.
+0:DEBUG:Creating converter from 7 to 5
+0:DEBUG:Creating converter from 5 to 7
+0:DEBUG:Creating converter from 7 to 5
+0:DEBUG:Creating converter from 5 to 7
+0:DEBUG:{
+  "cluster": {
+    "worker": [
+      "localhost:12345",
+      "localhost:23456"
+    ]
+  },
+  "task": {
+    "type": "worker",
+    "index": "0"
+  }
+}
+0:DEBUG:calling tf.distribute.MultiWorkerMirroredStrategy()
+1:INFO:Enabled multi-worker collective ops with available devices: ['/job:worker/replica:0/task:1/device:CPU:0', '/job:worker/replica:0/task:1/device:GPU:0', '/job:worker/replica:0/task:1/device:GPU:1', '/job:worker/replica:0/task:0/device:CPU:0', '/job:worker/replica:0/task:0/device:GPU:0', '/job:worker/replica:0/task:0/device:GPU:1']
+0:INFO:Enabled multi-worker collective ops with available devices: ['/job:worker/replica:0/task:0/device:CPU:0', '/job:worker/replica:0/task:0/device:GPU:0', '/job:worker/replica:0/task:0/device:GPU:1', '/job:worker/replica:0/task:1/device:CPU:0', '/job:worker/replica:0/task:1/device:GPU:0', '/job:worker/replica:0/task:1/device:GPU:1']
+1:INFO:Check health not enabled.
+1:INFO:MultiWorkerMirroredStrategy with cluster_spec = {'worker': ['localhost:12345', 'localhost:23456']}, task_type = 'worker', task_id = 1, num_workers = 2, local_devices = ('/job:worker/task:1/device:GPU:0', '/job:worker/task:1/device:GPU:1'), communication = CommunicationImplementation.AUTO
+1:DEBUG:done calling tf.distribute.MultiWorkerMirroredStrategy()
+0:INFO:Check health not enabled.
+0:INFO:MultiWorkerMirroredStrategy with cluster_spec = {'worker': ['localhost:12345', 'localhost:23456']}, task_type = 'worker', task_id = 0, num_workers = 2, local_devices = ('/job:worker/task:0/device:GPU:0', '/job:worker/task:0/device:GPU:1'), communication = CommunicationImplementation.AUTO
+0:DEBUG:done calling tf.distribute.MultiWorkerMirroredStrategy()
+0:INFO:Collective all_reduce tensors: 6 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 6 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 6 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 6 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+0:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
+1:INFO:Collective all_reduce tensors: 1 all_reduces, num_devices = 2, group_size = 4, implementation = CommunicationImplementation.AUTO, num_packs = 1
