@@ -6,12 +6,11 @@ import logging
 
 index = sys.argv[1]
 
-logging.basicConfig(
-        filename='log',
-        level=logging.DEBUG,
-        #format=os.getenv('PMI_RANK') + ':%(levelname)s:%(message)s'
-        format=index + ':%(levelname)s:%(message)s'
-        )
+#logging.basicConfig(
+#        filename='log',
+#        level=logging.DEBUG,
+#        format=os.getenv('PMI_RANK') + ':%(levelname)s:%(message)s'
+#        )
 
 import tensorflow as tf
 
@@ -52,16 +51,17 @@ tf_config = {
     'task': {'type': 'worker', 'index': index}
 }
 
-logging.debug(json.dumps(tf_config, indent=2))
+print('{}:{}'.format(index, json.dumps(tf_config, indent=2)))
+
 os.environ['TF_CONFIG'] = json.dumps(tf_config)
 
 per_worker_batch_size = 64
 tf_config = json.loads(os.environ['TF_CONFIG'])
 num_workers = len(tf_config['cluster']['worker'])
 
-logging.debug("calling tf.distribute.MultiWorkerMirroredStrategy()")
+print('{}:calling tf.distribute.MultiWorkerMirroredStrategy()'.format(index))
 strategy = tf.distribute.MultiWorkerMirroredStrategy()
-logging.debug("done calling tf.distribute.MultiWorkerMirroredStrategy()")
+print('{}:done calling tf.distribute.MultiWorkerMirroredStrategy()'.format(index))
 
 global_batch_size = per_worker_batch_size * num_workers
 multi_worker_dataset = mnist_dataset(global_batch_size)
