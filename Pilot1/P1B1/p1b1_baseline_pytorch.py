@@ -77,7 +77,7 @@ class p1b1Model(nn.Module):
         self.seed = seed
         self.winit_func = params['initialization']
 
-        activation = candle.build_activation(params['activation'])
+        activation = candle.build_pytorch_activation(params['activation'])
         dropout = params['dropout']
         dense_layers = params['dense']
 #    dropout_layer = keras.layers.noise.AlphaDropout if params['alpha_dropout'] else Dropout
@@ -126,8 +126,8 @@ class p1b1Model(nn.Module):
         """ Resets parameters of all the layers. """
         for ly in self.ly:
             if isinstance(ly, nn.Linear):
-                candle.initialize(ly.weight, self.winit_func, self.keras_defaults, self.seed)
-                candle.initialize(ly.bias, 'constant', self.keras_defaults, 0.0)
+                candle.pytorch_initialize(ly.weight, self.winit_func, self.keras_defaults, self.seed)
+                candle.pytorch_initialize(ly.bias, 'constant', self.keras_defaults, 0.0)
 
 
     def forward(self, x):
@@ -166,9 +166,9 @@ def fit(model, X_train, X_val, params):
 
     if params['learning_rate'] is None:
         learning_rate = 1e-2
-    optimizer = candle.build_optimizer(model, params['optimizer'], learning_rate, model.keras_defaults)
+    optimizer = candle.build_pytorch_optimizer(model, params['optimizer'], learning_rate, model.keras_defaults)
 
-    loss_fn = candle.get_function(params['loss'])
+    loss_fn = candle.get_pytorch_function(params['loss'])
 
     # Train the model
     freq_log = 1
