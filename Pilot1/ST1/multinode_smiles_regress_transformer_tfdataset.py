@@ -261,16 +261,17 @@ val.prefetch(GLOBAL_BATCH_SIZE)
 train.batch(GLOBAL_BATCH_SIZE)
 val.batch(GLOBAL_BATCH_SIZE)
 
-train_dist_dataset = strategy.experimental_distribute_dataset(train)
-test_dist_dataset = strategy.experimental_distribute_dataset(val)
-
 options = tf.data.Options()
 options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
-train_dist = dataset.with_options(options)
-val_dist = dataset.with_options(options)
+train = train.with_options(options)
+val = train.with_options(options)
 
-train_dist.cache()
-val_dist.cache()
+train_dist_dataset = strategy.experimental_distribute_dataset(train)
+val_dist_dataset = strategy.experimental_distribute_dataset(val)
+
+# AttributeError: 'DistributedDataset' object has no attribute 'cache'
+# train_dist_dataset.cache()
+# val_dist_dataset.cache()
 
 #print_tensor_from_dataset(train)
 #print_tensor_from_dataset(val)
