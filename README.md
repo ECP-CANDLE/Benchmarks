@@ -1,5 +1,9 @@
 # Benchmarks
 
+IMPORTANT
+
+The latest version of Benchmarks uses a separate candle_lib package to replace the functionality formerly found in Benchmarks/common. In order to run the Benchmarks, you will first need to download candle_lib from https://github.com/ECP-CANDLE/candle_lib and install it using the instructions found there.
+
 ECP-CANDLE Benchmarks
 
 This repository contains the CANDLE benchmark codes. These codes implement deep learning architectures that are relevant to problems in cancer. These architectures address problems at different biological scales, specifically problems at the molecular, cellular and population scales.
