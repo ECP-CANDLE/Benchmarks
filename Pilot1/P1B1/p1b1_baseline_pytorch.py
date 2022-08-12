@@ -217,7 +217,7 @@ def run(params):
     prefix = '{}{}'.format(params['save_path'], ext)
     logfile = params['logfile'] if params['logfile'] else prefix + '.log'
     candle.set_up_logger(logfile, p1b1.logger, params['verbose'])
-    p1b1.logger.info('Params: {}'.format(params))
+    # p1b1.logger.info('Params: {}'.format(params))
 
     # Get default parameters for initialization and optimizer functions
     keras_defaults = candle.keras_default_config()
