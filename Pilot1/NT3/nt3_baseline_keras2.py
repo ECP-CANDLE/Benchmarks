@@ -167,14 +167,15 @@ def run(gParameters):
     model.add(Dense(gParameters["classes"]))
     model.add(Activation(gParameters["out_activation"]))
 
-    J = candle.restart(gParameters, model)
+    ckpt_model = CandleCkptModel(gParameters, ModelType.KERAS, model)
+    ckpt = candle.CandleCkptKeras(ckpt_model, verbose=False)
+
+    J = ckpt.restart(gParameters, model)
     if J is not None:
         initial_epoch = J["epoch"]
         best_metric_last = J["best_metric_last"]
         gParameters["ckpt_best_metric_last"] = best_metric_last
         print("initial_epoch: %i" % initial_epoch)
-
-    ckpt = candle.CandleCheckpointCallback(gParameters, verbose=False)
 
     # Reference case
     # model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
