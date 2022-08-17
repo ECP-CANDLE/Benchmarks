@@ -167,8 +167,8 @@ def run(gParameters):
     model.add(Dense(gParameters["classes"]))
     model.add(Activation(gParameters["out_activation"]))
 
-    ckpt_model = CandleCkptModel(gParameters, ModelType.KERAS, model)
-    ckpt = candle.CandleCkptKeras(ckpt_model, verbose=False)
+    # ckpt = CandleCkptModel(gParameters, ModelType.KERAS, model)
+    ckpt = candle.CandleCkptKeras(gParameters, verbose=False)
 
     J = ckpt.restart(gParameters, model)
     if J is not None:
