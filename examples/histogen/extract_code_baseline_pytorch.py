@@ -2,6 +2,7 @@ import os
 import sys
 import pickle
 
+import ipex
 import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
@@ -104,11 +105,11 @@ def run(params):
 
     args = candle.ArgumentStruct(**params)
     # Configure GPUs
-    ndevices = torch.cuda.device_count()
+    ndevices = torch.xpu.device_count()
     if ndevices < 1:
-        raise Exception('No CUDA gpus available')
+        raise Exception('No XPU gpus available')
 
-    device = 'cuda'
+    device = 'xpu'
 
     transform = transforms.Compose(
         [

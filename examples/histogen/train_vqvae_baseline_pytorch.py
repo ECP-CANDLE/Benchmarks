@@ -1,6 +1,7 @@
 import sys
 import os
 
+import ipex
 import torch
 from torch import nn, optim
 from torch.utils.data import DataLoader
@@ -158,11 +159,11 @@ def train(epoch, loader, model, optimizer, scheduler, device):
 
 def config_and_train(args):
     # Configure GPUs
-    ndevices = torch.cuda.device_count()
+    ndevices = torch.xpu.device_count()
     if ndevices < 1:
-        raise Exception('No CUDA gpus available')
+        raise Exception('No Gpus available')
 
-    device = "cuda"
+    device = "xpu"
 
     args.distributed = dist.get_world_size() > 1
 
