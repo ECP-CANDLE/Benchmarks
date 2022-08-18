@@ -1,9 +1,10 @@
 import os
 import sys
 import pickle
+import logging
 
-import ipex
 import torch
+import intel_extension_for_pytorch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import lmdb
@@ -12,6 +13,14 @@ from argparse import SUPPRESS
 
 from dataset import ImageFileDataset, CodeRow
 from vqvae import VQVAE
+
+def build_logger(debug=0):
+    logger_level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(level=logger_level, format='%(asctime)s %(message)s')
+    logger = logging.getLogger(__name__)
+    return logger
+
+logger = build_logger()
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -70,11 +79,11 @@ def initialize_parameters(default_model='extract_code_default_model.txt'):
                          'pytorch', prog='extract_code_baseline',
                          desc='Histology Extract Code - Examples')
 
-    print("Created sample benchmark")
+    logger.info("Created sample benchmark")
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(excd)
-    print("Parameters initialized")
+    logger.info("Parameters initialized")
 
     return gParameters
 
@@ -139,6 +148,7 @@ def run(params):
 def main():
     params = initialize_parameters()
     run(params)
+    logger.info("Done")
 
 
 if __name__ == '__main__':
