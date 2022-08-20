@@ -1,8 +1,10 @@
 import sys
 import os
+import logging
 
 import numpy as np
 import torch
+import intel_extension_for_pytorch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
@@ -17,6 +19,14 @@ except ImportError:
 from dataset import LMDBDataset
 from pixelsnail import PixelSNAIL
 from scheduler import CycleScheduler
+
+def build_logger(debug=0):
+    logger_level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(level=logger_level, format='%(asctime)s %(message)s')
+    logger = logging.getLogger(__name__)
+    return logger
+
+logger = build_logger()
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -109,11 +119,11 @@ def initialize_parameters(default_model='train_pixelsnail_default_model.txt'):
                      prog='train_pixelsnail_baseline',
                      desc='Histology train pixelsnail - Examples')
 
-    print("Created sample benchmark")
+    logger.info("Created sample benchmark")
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(trpsn)
-    print("Parameters initialized")
+    logger.info("Parameters initialized")
 
     return gParameters
 
@@ -172,11 +182,11 @@ def run(params):
 
     args = candle.ArgumentStruct(**params)
     # Configure GPUs
-    ndevices = torch.cuda.device_count()
+    ndevices = torch.xpu.device_count()
     if ndevices < 1:
-        raise Exception('No CUDA gpus available')
+        raise Exception('No XPU gpus available')
 
-    device = 'cuda'
+    device = 'xpu'
 
     dataset = LMDBDataset(args.lmdb_filename)
     loader = DataLoader(
@@ -246,6 +256,7 @@ def run(params):
 def main():
     params = initialize_parameters()
     run(params)
+    logger.info("Done")
 
 
 if __name__ == '__main__':

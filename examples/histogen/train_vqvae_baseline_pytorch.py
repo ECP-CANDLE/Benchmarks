@@ -1,7 +1,10 @@
-import sys
 import os
+import sys
+import logging
+from datetime import datetime
 
 import torch
+import intel_extension_for_pytorch
 from torch import nn, optim
 from torch.utils.data import DataLoader
 
@@ -14,6 +17,13 @@ from vqvae import VQVAE
 from scheduler import CycleScheduler
 import distributed as dist
 
+def build_logger(debug=0):
+    logger_level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(level=logger_level, format='%(asctime)s %(message)s')
+    logger = logging.getLogger(__name__)
+    return logger
+
+logger = build_logger()
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -81,11 +91,11 @@ def initialize_parameters(default_model='train_vqvae_default_model.txt'):
                    prog='train_vqae_baseline',
                    desc='Histology train vqae - Examples')
 
-    print("Created sample benchmark")
+    logger.info("Created sample benchmark")
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(trvq)
-    print("Parameters initialized")
+    logger.info("Parameters initialized")
 
     return gParameters
 
@@ -131,6 +141,7 @@ def train(epoch, loader, model, optimizer, scheduler, device):
 
             loader.set_description(
                 (
+                    f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
                     f"epoch: {epoch + 1}; mse: {recon_loss.item():.5f}; "
                     f"latent: {latent_loss.item():.3f}; avg mse: {mse_sum / mse_n:.5f}; "
                     f"lr: {lr:.5f}"
@@ -158,11 +169,11 @@ def train(epoch, loader, model, optimizer, scheduler, device):
 
 def config_and_train(args):
     # Configure GPUs
-    ndevices = torch.cuda.device_count()
+    ndevices = torch.xpu.device_count()
     if ndevices < 1:
-        raise Exception('No CUDA gpus available')
+        raise Exception('No Gpus available')
 
-    device = "cuda"
+    device = "xpu"
 
     args.distributed = dist.get_world_size() > 1
 

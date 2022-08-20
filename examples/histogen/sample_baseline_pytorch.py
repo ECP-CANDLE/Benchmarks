@@ -1,13 +1,22 @@
 import os
 import sys
+import logging
 
 import torch
-import ipex
+import intel_extension_for_pytorch
 from torchvision.utils import save_image
 from tqdm import tqdm
 
 from vqvae import VQVAE
 from pixelsnail import PixelSNAIL
+
+def build_logger(debug=0):
+    logger_level = logging.DEBUG if debug else logging.INFO
+    logging.basicConfig(level=logger_level, format='%(asctime)s %(message)s')
+    logger = logging.getLogger(__name__)
+    return logger
+
+logger = build_logger()
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..'))
@@ -75,11 +84,11 @@ def initialize_parameters(default_model='sample_default_model.txt'):
     sample = SampleBk(file_path, default_model, 'pytorch',
                       prog='sample_baseline', desc='Histology Sample - Examples')
 
-    print("Created sample benchmark")
+    logger.info("Created sample benchmark")
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(sample)
-    print("Parameters initialized")
+    logger.info("Parameters initialized")
 
     return gParameters
 
@@ -93,7 +102,11 @@ def sample_model(model, device, batch, size, temperature, condition=None):
         for j in range(size[1]):
             out, cache = model(row[:, : i + 1, :], condition=condition, cache=cache)
             prob = torch.softmax(out[:, :, i, j] / temperature, 1)
-            sample = torch.multinomial(prob, 1).squeeze(-1)
+            try: 
+                sample = torch.multinomial(prob, 1).squeeze(-1)
+            except Exception as e:
+                print(prob, temperature)
+                logger.error(str(e))
             row[:, i, j] = sample
 
     return row
@@ -198,6 +211,7 @@ def run(params):
 def main():
     params = initialize_parameters()
     run(params)
+    logger.info("Done")	
 
 
 if __name__ == '__main__':
