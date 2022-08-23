@@ -184,16 +184,18 @@ def fit(model, X_train, X_val, params):
         model = nn.DataParallel(model, device_ids, device)
     model.to(device)
 
+    loss_fn = candle.get_pytorch_function(params["loss"])
+
+    # Train the model
+    freq_log = 1
+
     if params["learning_rate"] is None:
         learning_rate = 1e-2
     optimizer = candle.build_pytorch_optimizer(
         model, params["optimizer"], learning_rate, model.keras_defaults
     )
-
-    loss_fn = candle.get_pytorch_function(params["loss"])
-
-    # Train the model
-    freq_log = 1
+    ckpt = candle.CandleCkptPyTorch(params)
+    ckpt.set_model({"model": model, "optimizer": optimizer})
 
     total_step = len(train_iter)
     loss_list = []
@@ -230,12 +232,15 @@ def fit(model, X_train, X_val, params):
                     )
                 )
                 # loss.data[0]))# / len(in_train)))
-
+            # end batch loop
+        # epoch loop
         print(
             "====> Epoch: {} Average loss: {:.4f}".format(
                 epoch, train_loss / len(train_iter.dataset)
             )
         )
+        ckpt.ckpt_epoch(epoch, train_loss)
+        # end epoch loop
 
 
 def run(params):
@@ -292,11 +297,11 @@ def run(params):
     input_dim = x_train.shape[1]
     cond_dim = cond_train.shape[1]
 
-    net = p1b1Model(params, input_dim, cond_dim, seed)
+    model = p1b1Model(params, input_dim, cond_dim, seed)
     # Display model
-    print(net)
+    print(model)
     # Train model
-    fit(net, x_train, x_val, params)
+    fit(model, x_train, x_val, params)
 
 
 def main():
