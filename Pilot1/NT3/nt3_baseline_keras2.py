@@ -169,7 +169,7 @@ def run(gParameters):
 
     # ckpt = CandleCkptModel(gParameters, ModelType.KERAS, model)
     ckpt = candle.CandleCkptKeras(gParameters, verbose=False)
-
+    ckpt.set_model(model)
     J = ckpt.restart(gParameters, model)
     if J is not None:
         initial_epoch = J["epoch"]
