@@ -167,10 +167,9 @@ def run(gParameters):
     model.add(Dense(gParameters["classes"]))
     model.add(Activation(gParameters["out_activation"]))
 
-    # ckpt = CandleCkptModel(gParameters, ModelType.KERAS, model)
     ckpt = candle.CandleCkptKeras(gParameters, verbose=False)
     ckpt.set_model(model)
-    J = ckpt.restart(gParameters, model)
+    J = ckpt.restart(model)
     if J is not None:
         initial_epoch = J["epoch"]
         best_metric_last = J["best_metric_last"]
