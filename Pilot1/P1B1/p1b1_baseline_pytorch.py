@@ -196,6 +196,12 @@ def fit(model, X_train, X_val, params):
     )
     ckpt = candle.CandleCkptPyTorch(params)
     ckpt.set_model({"model": model, "optimizer": optimizer})
+    J = ckpt.restart(model)
+    if J is not None:
+        initial_epoch = J["epoch"]
+        best_metric_last = J["best_metric_last"]
+        params["ckpt_best_metric_last"] = best_metric_last
+        print("initial_epoch: %i" % initial_epoch)
 
     total_step = len(train_iter)
     loss_list = []
