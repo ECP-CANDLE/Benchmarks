@@ -182,3 +182,19 @@ CHEMBL -- 1.5M training examples (shuffled and resampled so not same 1.5M as cla
 Predicting molecular Weight validation
 Is also 100K samples non-overlapping.
 Regression problem achieves R^2 about .95 after ~20 epochs.
+
+
+## Running Single-Node multi-gpu
+
+## Runing Multi-Node Distributed
+
+The first task is generating tfrecords for our docking data.
+```tfrecord_writer.py```
+
+The second task is reading the tfrecords.
+```tf_record_reader.py```
+
+THe next step is creating the distributed dataset.
+
+The final step is training with the distributed dataset.
+
