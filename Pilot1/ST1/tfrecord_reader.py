@@ -1,5 +1,13 @@
+import sys
 import tensorflow as tf
-fname='test.tfrecord'
+
+import argparse
+parser = argparse.ArgumentParser(description='Read one tfrecord file.')
+parser.add_argument('-i', help='tfrecord file name')
+args=parser.parse_args()
+fname=args.i
+
+#fname=sys.argv[1]
 raw_dataset = tf.data.TFRecordDataset([fname])
 
 
