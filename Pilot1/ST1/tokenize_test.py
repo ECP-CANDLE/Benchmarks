@@ -13,7 +13,7 @@ vocab_size = 40000  #
 maxlen = 250  #
 
 data_path_train = sys.argv[1]
-data_train = pd.read_csv(data_path_train, sep=',', index_col=None)
+data_train = pd.read_csv(data_path_train, sep=',', index_col=None, header=0)
 
 print('done loading csv file\n', data_train.head())
 
