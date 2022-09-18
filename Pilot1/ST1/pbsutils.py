@@ -9,6 +9,9 @@ def nodes():
     return lines
 
 def tf_config(port=123456):
+    print(nodes())
+    print(os.getenv('PMI_RANK'))
+
     config = {
             'cluster': {
                 'worker': nodes()
@@ -34,9 +37,8 @@ def pmi_rank():
 
 def test():
     print('{}'.format(nodes()))
-    print('{}'.format(json.dumps(tf_config())))
+    print('RANK {}'.format(pmi_rank()))
     print('{}'.format(json.dumps(tf_config(), indent=4)))
-    print(pmi_rank())
 
 
 if __name__ == "__main__":
