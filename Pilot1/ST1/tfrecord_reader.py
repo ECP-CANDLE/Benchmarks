@@ -15,7 +15,8 @@ raw_dataset = tf.data.TFRecordDataset([fname])
 # In our case, we have only one feature, the smile string.
 
 feature_description = {
-    'smiles': tf.io.FixedLenFeature([], tf.string, default_value=''),
+    'smile': tf.io.FixedLenFeature([250], tf.int64),
+    'label': tf.io.FixedLenFeature([1], tf.float32)
 }
 
 def _parse_function(example_proto):
@@ -26,5 +27,5 @@ def _parse_function(example_proto):
 parsed_dataset = raw_dataset.map(_parse_function)
 print(parsed_dataset)
 
-# for parsed_record in parsed_dataset.take(10):
-#   print(repr(parsed_record))
+for parsed_record in parsed_dataset.take(10):
+    print("1 : ", repr(parsed_record))
