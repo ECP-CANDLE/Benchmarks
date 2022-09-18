@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-import pprofile
+#import pprofile
 import sys
 import smiles_tokenizer as st
 
