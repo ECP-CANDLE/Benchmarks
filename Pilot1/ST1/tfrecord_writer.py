@@ -1,10 +1,12 @@
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-import pprofile
+#import pprofile
+import sys
 
-profiler = pprofile.Profile()
-fname='ml.3CLpro.100'
+#profiler = pprofile.Profile()
+#fname='ml.3CLpro.100'
+fname = sys.argv[1]
 
 # The following functions can be used to convert a value to a type compatible
 # with tf.train.Example.
@@ -40,7 +42,6 @@ smiles = [_bytes_feature(n) for n in smiles]
 serialized_smiles = [serialize_smile(smile) for smile in smiles]
 dataset = tf.data.Dataset.from_tensor_slices(serialized_smiles)
 
-filename = 'test.tfrecord'
-writer = tf.data.experimental.TFRecordWriter(filename)
+# filename = 'test.tfrecord'
+writer = tf.data.experimental.TFRecordWriter(fname+'.tfrecord')
 writer.write(dataset)
-
