@@ -49,7 +49,7 @@ communication_options=tf.distribute.experimental.CommunicationOptions(
     )
 
 strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy(
-        communication_options=communication_options
+        communication=communication_options
     )
 print('tensorflow version: {}'.format(tf.__version__))
 print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
