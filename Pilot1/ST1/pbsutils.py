@@ -2,6 +2,10 @@ import os
 import json
 
 def nodes():
+    '''
+    Retruns a python list of node names from PBS_NODEFILE
+    '''
+
     lines = []
     with open (os.getenv('PBS_NODEFILE')) as nfile:
         lines = nfile.readlines()
