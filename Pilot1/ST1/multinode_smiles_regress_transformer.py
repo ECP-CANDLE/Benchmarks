@@ -46,10 +46,13 @@ num_workers = len(tf_config['cluster']['worker'])
 print ('num workers {}'.format(num_workers))
 print(os.environ['TF_CONFIG'])
 
-communication_options=tf.distribute.experimental.CommunicationOptions(implementation=tf.distribute.experimental.CommunicationImplementation.NCCL)
+communication_options=tf.distribute.experimental.CommunicationOptions(
+        implementation=tf.distribute.experimental.CommunicationImplementation.NCCL
+    )
 
-strategy = tf.distribute.MultiWorkerMirroredStrategy()
-#communication_options=communication_options)
+strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy(
+        communication=tf.distribute.experimental.CommunicationImplementation.NCCL
+    )
 print('tensorflow version: {}'.format(tf.__version__))
 print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
@@ -243,5 +246,5 @@ history = model.fit(
     callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
 )
 
-model.load_weights('smile_regress.autosave.model.h5')
+#model.load_weights('smile_regress.autosave.model.h5')
 

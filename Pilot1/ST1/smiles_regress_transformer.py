@@ -54,7 +54,7 @@ print(args)
 
 EPOCH = args['ep']
 BATCH = 32
-BATCH = BATCH * strategy.num_replicas_in_sync
+GLOBAL_BATCH_SIZE = BATCH * strategy.num_replicas_in_sync
 
 data_path_train = args['in_train']
 data_path_vali = args['in_vali']
@@ -137,6 +137,37 @@ x_val = prep_text(data_vali["smiles"], tokenizer, maxlen)
 print(x_train.shape)
 print(y_train.shape)
 
+steps = x_train.shape[0]//GLOBAL_BATCH_SIZE
+validation_steps = x_val.shape[0]//GLOBAL_BATCH_SIZE
+
+print('samples {}, global_batch_size {}, steps {}'.format(x_train.shape[0], GLOBAL_BATCH_SIZE, steps))
+print('val samples {}, global_batch_size {}, val_steps {}'.format(x_val.shape[0], GLOBAL_BATCH_SIZE, validation_steps))
+print('{}\n{}\n{}\n{}'.format(x_train, y_train, x_val, y_val))
+
+
+train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(GLOBAL_BATCH_SIZE,
+                                                            drop_remainder=True,
+                                                            num_parallel_calls=None,
+                                                            deterministic=None,
+                                                           ).repeat(EPOCH)
+print(train_ds)
+
+val_ds = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(GLOBAL_BATCH_SIZE,
+                                                            drop_remainder=True,
+                                                            num_parallel_calls=None,
+                                                            deterministic=None,).repeat(EPOCH)
+print(val_ds)
+
+options = tf.data.Options()
+options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
+train_ds = train_ds.with_options(options)
+val_ds = val_ds.with_options(options)
+
+train_dist = strategy.experimental_distribute_dataset(train_ds)
+val_dist = strategy.experimental_distribute_dataset(val_ds)
+
+
+
 ## Create regression/classifier model using N transformer layers
 
 embed_dim = 128  # Embedding size for each token
@@ -188,12 +219,22 @@ print ("fitting on model with train shape {} and validation shape {}".format(
     x_train.shape, x_val.shape))
 
 
-history = model.fit(x_train, y_train,
-                    batch_size=BATCH,
-                    epochs=EPOCH,
-                    verbose=1,
-                    validation_data=(x_val, y_val),
-                    callbacks = [checkpointer,csv_logger, reduce_lr, early_stop])
+#history = model.fit(x_train, y_train,
+#                    batch_size=BATCH,
+#                    epochs=EPOCH,
+#                    verbose=1,
+#                    validation_data=(x_val, y_val),
+#                    callbacks = [checkpointer,csv_logger, reduce_lr, early_stop])
+history = model.fit(
+    train_dist,
+    batch_size=GLOBAL_BATCH_SIZE,
+    steps_per_epoch=int(steps),
+    epochs=EPOCH,
+    verbose=1,
+    validation_data=val_dist,
+    validation_steps=validation_steps,
+    callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
+)
 
 model.load_weights('smile_regress.autosave.model.h5')
 
