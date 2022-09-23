@@ -19,6 +19,8 @@ from tensorflow.keras import layers
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.preprocessing import text
 
+from pbsutils import tf_config
+
 ## set up tensorflow
 gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
@@ -30,14 +32,14 @@ if socket.gethostname().startswith('rbdgx1'):
 elif socket.gethostname().startswith('rbdgx2'):
     index = 1
 else:
-    index = None
+    tf_config = tf_config()
 
-tf_config = {
-    'cluster': {
-        'worker': ['192.168.200.101:12345', '192.168.200.103:12346']
-    },
-    'task': {'type': 'worker', 'index': index}
-}
+#tf_config = {
+#    'cluster': {
+#        'worker': ['192.168.200.101:12345', '192.168.200.103:12346']
+#    },
+#    'task': {'type': 'worker', 'index': index}
+#}
 
 os.environ['TF_CONFIG'] = json.dumps(tf_config)
 num_workers = len(tf_config['cluster']['worker'])
@@ -229,6 +231,7 @@ reduce_lr = ReduceLROnPlateau(
     )
 early_stop = EarlyStopping(monitor='val_loss', patience=50, verbose=1, mode='auto')
 
+print('calling fit')
 history = model.fit(
     train_dist,
     batch_size=GLOBAL_BATCH_SIZE,
