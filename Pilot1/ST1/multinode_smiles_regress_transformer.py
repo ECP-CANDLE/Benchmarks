@@ -29,29 +29,39 @@ for gpu in gpus:
 # RBDGX tf_config
 if socket.gethostname().startswith('rbdgx1'):
     index = 0
+    tf_config = {
+            'cluster': {
+                'worker': ['192.168.200.101:12345', '192.168.200.103:12346']
+                },
+            'task': {'type': 'worker', 'index': index}
+            }
+
 elif socket.gethostname().startswith('rbdgx2'):
     index = 1
+    tf_config = {
+            'cluster': {
+                'worker': ['192.168.200.101:12345', '192.168.200.103:12346']
+                },
+            'task': {'type': 'worker', 'index': index}
+            }
+
+# Polaris tf_config
 else:
     tf_config = tf_config()
 
-#tf_config = {
-#    'cluster': {
-#        'worker': ['192.168.200.101:12345', '192.168.200.103:12346']
-#    },
-#    'task': {'type': 'worker', 'index': index}
-#}
 
 os.environ['TF_CONFIG'] = json.dumps(tf_config)
 num_workers = len(tf_config['cluster']['worker'])
 print ('num workers {}'.format(num_workers))
 print(os.environ['TF_CONFIG'])
 
+# Nothing is done with the communication_options object, need to look into this
 communication_options=tf.distribute.experimental.CommunicationOptions(
-        implementation=tf.distribute.experimental.CommunicationImplementation.NCCL
+        implementation=tf.distribute.experimental.CommunicationImplementation.AUTO
     )
 
-strategy = tf.distribute.experimental.MultiWorkerMirroredStrategy(
-        communication=tf.distribute.experimental.CommunicationImplementation.NCCL
+strategy = tf.distribute.MultiWorkerMirroredStrategy(
+        communication_options=communication_options,
     )
 print('tensorflow version: {}'.format(tf.__version__))
 print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
@@ -170,7 +180,8 @@ val_ds = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(GLOBAL_BATCH_S
 print(val_ds)
 
 options = tf.data.Options()
-options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
+options.autotune.enabled=True
+options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
 train_ds = train_ds.with_options(options)
 val_ds = val_ds.with_options(options)
 
@@ -235,16 +246,24 @@ reduce_lr = ReduceLROnPlateau(
 early_stop = EarlyStopping(monitor='val_loss', patience=50, verbose=1, mode='auto')
 
 print('calling fit')
+#history = model.fit(
+#    train_dist,
+#    batch_size=GLOBAL_BATCH_SIZE,
+#    steps_per_epoch=int(steps),
+#    epochs=EPOCH,
+#    verbose=1,
+#    validation_data=val_dist,
+#    validation_steps=validation_steps,
+#    callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
+#)
 history = model.fit(
-    train_dist,
-    batch_size=GLOBAL_BATCH_SIZE,
-    steps_per_epoch=int(steps),
-    epochs=EPOCH,
-    verbose=1,
-    validation_data=val_dist,
-    validation_steps=validation_steps,
-    callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
-)
+        x_train, y_train,
+        batch_size=GLOBAL_BATCH_SIZE,
+        epochs=EPOCH,
+        verbose=1,
+        validation_data=(x_val,y_val),
+        callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
+        )
 
 #model.load_weights('smile_regress.autosave.model.h5')
 
