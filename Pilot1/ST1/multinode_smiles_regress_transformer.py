@@ -21,6 +21,12 @@ from tensorflow.keras.preprocessing import text
 
 from pbsutils import tf_config
 
+# needed on polaris
+if 'http_proxy' in os.environ:
+    del os.environ['http_proxy']
+if 'https_proxy' in os.environ:
+    del os.environ['https_proxy']
+
 ## set up tensorflow
 gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
@@ -77,7 +83,6 @@ print(args)
 
 EPOCH = args['ep']
 BATCH = 32
-BATCH = BATCH * strategy.num_replicas_in_sync
 GLOBAL_BATCH_SIZE = BATCH * strategy.num_replicas_in_sync
 
 data_path_train = args['in_train']
@@ -246,24 +251,24 @@ reduce_lr = ReduceLROnPlateau(
 early_stop = EarlyStopping(monitor='val_loss', patience=50, verbose=1, mode='auto')
 
 print('calling fit')
-#history = model.fit(
-#    train_dist,
-#    batch_size=GLOBAL_BATCH_SIZE,
-#    steps_per_epoch=int(steps),
-#    epochs=EPOCH,
-#    verbose=1,
-#    validation_data=val_dist,
-#    validation_steps=validation_steps,
-#    callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
-#)
 history = model.fit(
-        x_train, y_train,
-        batch_size=GLOBAL_BATCH_SIZE,
-        epochs=EPOCH,
-        verbose=1,
-        validation_data=(x_val,y_val),
-        callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
-        )
+    train_dist,
+    batch_size=GLOBAL_BATCH_SIZE,
+    steps_per_epoch=int(steps),
+    epochs=EPOCH,
+    verbose=1,
+    validation_data=val_dist,
+    validation_steps=validation_steps,
+    callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
+)
+#history = model.fit(
+#        x_train, y_train,
+#        batch_size=GLOBAL_BATCH_SIZE,
+#        epochs=EPOCH,
+#        verbose=1,
+#        validation_data=(x_val,y_val),
+#        callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
+#        )
 
 #model.load_weights('smile_regress.autosave.model.h5')
 
