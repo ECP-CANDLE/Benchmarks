@@ -5,15 +5,15 @@ from typing import Tuple, Union
 import torch
 import torch.nn as nn
 
-def abstention_loss(torch.nn.Module):
+
+class abstention_loss(nn.Module):
 
     def __init__(self, alpha, mask):
-        super(abstention_loss,self).__init__()
+        super(abstention_loss, self).__init__()
         self.alpha = alpha
         self.mask = mask
         self.ndevices = torch.cuda.device_count()
         self.eps = torch.finfo(torch.float32).eps
-
 
     def forward(self, y_pred, y_true):
 
@@ -26,14 +26,14 @@ def abstention_loss(torch.nn.Module):
         base_true = y_true
         base_cost = loss_cross_entropy(base_pred, base_true)
 
-        abs_pred = torch.sum(mask * y_pred, -1)
+        abs_pred = torch.sum(self.mask * y_pred, -1)
         # add some small value to prevent NaN when prediction is abstained
         abs_pred = torch.clamp(abs_pred, self.eps, 1. - self.eps)
 
-        return ((1. - abs_pred) * base_cost - alpha * torch.log(1. - abs_pred))
+        return ((1. - abs_pred) * base_cost - self.alpha * torch.log(1. - abs_pred))
 
 
-class abstention_loss_ce(torch.nn.Module):
+class abstention_loss_ce(nn.Module):
     """ Function to compute abstention loss for classification problems.
         It is composed by two terms:
         (i) original loss of the multiclass classification problem using cross entropy,
@@ -41,12 +41,12 @@ class abstention_loss_ce(torch.nn.Module):
     """
 
     def __init__(self, alpha0: float,
-                 alpha_scale_factor: float=0.8,
-                 min_abs_acc: float=0.6,
-                 max_abs_frac: float=0.4,
-                 acc_gain: float=1.0,
-                 abs_gain: float=1.0,
-                 ndevices: int=0):
+                 alpha_scale_factor: float = 0.8,
+                 min_abs_acc: float = 0.6,
+                 max_abs_frac: float = 0.4,
+                 acc_gain: float = 1.0,
+                 abs_gain: float = 1.0,
+                 ndevices: int = 0):
         """ Initialization of class for abstention loss using cross entropy.
 
         Parameters
@@ -63,13 +63,13 @@ class abstention_loss_ce(torch.nn.Module):
         self.ndevices = ndevices
         self.eps = torch.finfo(torch.float32).eps
         # weight for abstention term in cost function
-        self.alpha = torch.autograd.Variable(torch.ones(1)*alpha0).float()
+        self.alpha = torch.autograd.Variable(torch.ones(1) * alpha0).float()
         # factor to scale alpha
         self.alpha_scale_factor = alpha_scale_factor
         # min target accuracy (value specified as parameter of the run)
         self.min_abs_acc = min_abs_acc
         # maximum abstention fraction (value specified
-        #as parameter of the run)
+        # as parameter of the run)
         self.max_abs_frac = max_abs_frac
         # factor for adjusting alpha scale
         self.acc_gain = acc_gain
@@ -81,7 +81,6 @@ class abstention_loss_ce(torch.nn.Module):
         self.abs_acc = []
         self.abs_frac = []
 
-
     def abstention_acc_metric(self, x: torch.Tensor, y: torch.Tensor) -> float:
         """Metric of accuracy with abstention.
 
@@ -90,13 +89,13 @@ class abstention_loss_ce(torch.nn.Module):
         x : Prediction made by the model. It is assumed that this tensor includes extra columns to store the abstaining class.
         y : True values to predict
         """
-        mask_noabs = x[:,-1].lt(0.5)
+        mask_noabs = x[:, -1].lt(0.5)
         ind_all = torch.arange(y.shape[0])
-        base_pred = torch.index_select(x[:,:-1], 0, torch.masked_select(ind_all, mask_noabs))
+        base_pred = torch.index_select(x[:, :-1], 0, torch.masked_select(ind_all, mask_noabs))
         base_true = torch.index_select(y, 0, torch.masked_select(ind_all, mask_noabs))
 
         total = base_true.size(0)
-        if total == 0: # All abstention, then base accuracy
+        if total == 0:  # All abstention, then base accuracy
             total = y.size(0)
             _, cl_predicted = torch.max(x.data, 1)
             correct = (cl_predicted == y).sum().item()
@@ -108,7 +107,6 @@ class abstention_loss_ce(torch.nn.Module):
 
         return correct / total
 
-
     def abstention_frac_metric(self, x: torch.Tensor, y: torch.Tensor) -> float:
         """Metric of abstention fraction.
 
@@ -117,11 +115,10 @@ class abstention_loss_ce(torch.nn.Module):
         x : Prediction made by the model. It is assumed that this tensor includes extra columns to store the abstaining class.
         y : True values to predict (not used)
         """
-        xabs = x[:,-1].ge(0.5).float()
+        xabs = x[:, -1].ge(0.5).float()
         abs_pred = xabs.mean()
 
         return abs_pred
-
 
     def update_alpha(self, abs_acc: float, abs_frac: float):
         """ This function adapts the parameter alpha in the abstention loss.
@@ -134,7 +131,7 @@ class abstention_loss_ce(torch.nn.Module):
         ----------
         abs_acc : Current accuracy taking abstention into account
         abs_frac : Current abstention fraction
-    """
+        """
         # Current accuracy (with abstention)
         self.abs_acc.append(abs_acc)
         # Current abstention fraction
@@ -161,7 +158,6 @@ class abstention_loss_ce(torch.nn.Module):
 
         self.alphavalues.append(self.alpha.detach().numpy()[0])
 
-
     def forward(self, x: torch.Tensor, y: torch.Tensor):
         """ Compute cross entropy abstention loss.
 
@@ -171,10 +167,10 @@ class abstention_loss_ce(torch.nn.Module):
             It is assumed that this tensor includes extra columns to store the abstaining classes.
         y : True values to predict
         """
-        xabs = nn.Sigmoid(x[:,-1] - 0.5)
+        xabs = nn.Sigmoid(x[:, -1] - 0.5)
 
         # add some small value to prevent NaN when prediction is abstained
-        xabs = torch.clamp(xabs, min = self.eps, max = 1. - self.eps)
+        xabs = torch.clamp(xabs, min=self.eps, max=1. - self.eps)
 
         # Cross Entropy
         if self.ndevices > 0:
@@ -182,14 +178,13 @@ class abstention_loss_ce(torch.nn.Module):
         else:
             loss_ce = nn.CrossEntropyLoss(reduction='none')
 
-        base_cost = loss_ce(x[:,:-1], y)
+        base_cost = loss_ce(x[:, :-1], y)
 
         # Average over all the samples
         return torch.mean((1. - xabs) * base_cost - self.alpha * torch.log(1. - xabs))
 
 
-
-class abstention_loss_mse(torch.nn.Module):
+class abstention_loss_mse(nn.Module):
     """ Function to compute abstention loss for regression problems.
         It is composed by two terms:
         (i) original loss of the regression problem using mean squared error,
@@ -197,12 +192,12 @@ class abstention_loss_mse(torch.nn.Module):
     """
 
     def __init__(self, alpha0: float,
-                 alpha_scale_factor: float=0.8,
-                 max_abs_loss: float =1.0,
-                 max_abs_frac: float =0.4,
-                 loss_gain: Union[float, Tuple[float]]=1.0,
-                 abs_gain=Union[float, Tuple[float]]=1.0,
-                 ndevices: int=0):
+                 alpha_scale_factor: float = 0.8,
+                 max_abs_loss: float = 1.0,
+                 max_abs_frac: float = 0.4,
+                 loss_gain: Union[float, Tuple[float]] = 1.0,
+                 abs_gain: Union[float, Tuple[float]] = 1.0,
+                 ndevices: int = 0):
         """ Initialization of class for abstention loss using mean squared error.
 
         Parameters
@@ -215,17 +210,17 @@ class abstention_loss_mse(torch.nn.Module):
         abs_gain : Multiplier for abstention fraction error (with respect to target) when updating alpha. If a tuple is provided a PID-based adaptation is used. Default: 1.0
         ndevices : Number of available GPUs.
         """
-        super(abstention_loss_mse,self).__init__()
+        super(abstention_loss_mse, self).__init__()
         self.ndevices = ndevices
         self.eps = torch.finfo(torch.float32).eps
         # weight for abstention term in cost function
-        self.alpha = Variable(torch.ones(1)*alpha0).float()
+        self.alpha = torch.autograd.Variable(torch.ones(1) * alpha0).float()
         # factor to scale alpha
         self.alpha_scale_factor = alpha_scale_factor
         # max target loss (value specified as parameter of the run)
         self.max_abs_loss = max_abs_loss
         # maximum abstention fraction (value specified
-        #as parameter of the run)
+        # as parameter of the run)
         self.max_abs_frac = max_abs_frac
         # factor for adjusting alpha scale
         self.loss_gain = loss_gain
@@ -250,7 +245,6 @@ class abstention_loss_mse(torch.nn.Module):
             # PID-based adaptation
             self.alpha_adapt_func = self.update_alpha_pid
 
-
     def abstention_loss_metric(self, x: torch.Tensor, y: torch.Tensor):
         """Metric of MSE-based loss with abstention. The loss is normalized to have a fixed scale for the target loss.
 
@@ -259,10 +253,10 @@ class abstention_loss_mse(torch.nn.Module):
         x : Prediction made by the model. It is assumed that this tensor includes an extra column to store the abstaining indicator.
         y : True values to predict
         """
-        mask_noabs = x[:,-1].lt(0.5)
+        mask_noabs = x[:, -1].lt(0.5)
 
         ind_all = torch.arange(y.shape[0])
-        base_pred = torch.index_select(x[:,0], 0, torch.masked_select(ind_all, mask_noabs))
+        base_pred = torch.index_select(x[:, 0], 0, torch.masked_select(ind_all, mask_noabs))
         base_true = torch.index_select(y, 0, torch.masked_select(ind_all, mask_noabs))
 
         max_true = y.max()
@@ -270,7 +264,6 @@ class abstention_loss_mse(torch.nn.Module):
         base_pred_n = base_pred / max_true
 
         return torch.nn.functional.mse_loss(base_pred_n, base_true_n)
-
 
     def abstention_frac_metric(self, x: torch.Tensor, y: torch.Tensor):
         """Metric of abstention fraction.
@@ -280,11 +273,10 @@ class abstention_loss_mse(torch.nn.Module):
         x : Prediction made by the model. It is assumed that this tensor includes extra columns to store the abstaining class.
         y : True values to predict (not used)
         """
-        xabs = x[:,-1].ge(0.5).float()
+        xabs = x[:, -1].ge(0.5).float()
         abs_pred = xabs.mean()
 
         return abs_pred
-
 
     def update_alpha(self, abs_loss: float, abs_frac: float):
         """ This function adapts the parameter alpha in the abstention loss.
@@ -322,7 +314,6 @@ class abstention_loss_mse(torch.nn.Module):
         print('alpha: ', self.alpha)
 
         self.alphavalues.append(self.alpha.detach().numpy())
-
 
     def update_alpha_pid(self, abs_loss: float, abs_frac: float):
         """ This function adapts the parameter alpha in the abstention loss using a PID-based adaptation.
@@ -365,8 +356,7 @@ class abstention_loss_mse(torch.nn.Module):
 
         new_scale = 1.0 + p_term + i_term + d_term
         if new_scale < 0.:
-            #new_scale = 0.99
-            new_scale = 0.1
+            new_scale = 0.99
         # threshold to avoid huge swings
         min_scale = self.alpha_scale_factor
         max_scale = 1. / self.alpha_scale_factor
@@ -378,7 +368,6 @@ class abstention_loss_mse(torch.nn.Module):
         self.alphavalues.append(self.alpha.detach().numpy())
         print('alpha: ', self.alphavalues[-1])
 
-
     def forward(self, x: torch.Tensor, y: torch.Tensor):
         """ Compute mean squared error abstention loss.
 
@@ -388,14 +377,13 @@ class abstention_loss_mse(torch.nn.Module):
             It is assumed that this tensor includes an extra column to store the abstaining class.
         y : True values to predict
         """
-        xabs = nn.Sigmoid(x[:,-1] - 0.5)
+        xabs = nn.Sigmoid(x[:, -1] - 0.5)
 
         # add some small value to prevent NaN when prediction is abstained
-        xabs = torch.clamp(xabs, min = self.eps, max = 1. - self.eps)
+        xabs = torch.clamp(xabs, min=self.eps, max=1. - self.eps)
 
         # Squared Error
-        base_cost = torch.sum((x[:,:-1] - y)**2, dim=-1)
+        base_cost = torch.sum((x[:, :-1] - y)**2, dim=-1)
 
         # Average over all the samples
         return torch.mean((1. - xabs) * base_cost - self.alpha * torch.log(1. - xabs))
-
