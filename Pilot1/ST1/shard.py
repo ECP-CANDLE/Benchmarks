@@ -1,4 +1,8 @@
 import numpy as np
+'''
+Example:
+d_shard = slice_total_gpus(shift_to_rank(d,_rank),_tgpus))
+'''
 
 def shift_to_rank (d, _PMI_RANK=0):
     
@@ -8,7 +12,8 @@ def shift_to_rank (d, _PMI_RANK=0):
     last sample in the dataframe. A pmi rank of 10 will pop
     all the samples off the dataframe.
     '''
-
+    print ('in shift_to_rank, _PMI_RANK = {}'.format(_PMI_RANK))
+    print ('in shift_to_rank, d.shape = {}'.format(d.shape))
     strd = d[_PMI_RANK:,:]
     return strd
 
@@ -23,8 +28,10 @@ def slice_total_gpus(d, _TOT_GPUS=1):
     
     return d[::_TOT_GPUS]
 
+
 if __name__ == "__main__":
-    _rank = 3 # (0,1,2,3)
+    # This is a test of the last rank
+    _rank = 0 # (0,1,2,3)
     _tgpus = 4
     d = np.array(np.random.rand(10,2))
     
