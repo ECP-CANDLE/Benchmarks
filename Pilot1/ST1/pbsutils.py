@@ -39,9 +39,15 @@ def tf_config(port=123456):
 def pmi_rank():
     return os.getenv('PMI_RANK')
 
+
+def pmi_size():
+    return os.getenv('PMI_SIZE')
+
+
 def test():
     print('{}'.format(nodes()))
     print('RANK {}'.format(pmi_rank()))
+    print('SIZE {}'.format(pmi_size()))
     print('{}'.format(json.dumps(tf_config(), indent=4)))
 
 
