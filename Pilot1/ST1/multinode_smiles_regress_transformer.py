@@ -19,7 +19,17 @@ from tensorflow.keras import layers
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.preprocessing import text
 
-from pbsutils import tf_config
+from pbsutils import tf_config, pmi_rank, pmi_size
+
+# set up some logging
+from datetime import datetime as dt
+def now():
+    now = dt.now()
+    return '{}'.format(dt.now())
+
+thisdir = os.path.dirname(os.path.realpath(__file__))
+logfile_name = '{}/{}.log'.format(thisdir, pmi_rank())
+f = open(logfile_name, 'w')
 
 # needed on polaris
 if 'http_proxy' in os.environ:
@@ -58,19 +68,19 @@ else:
 
 os.environ['TF_CONFIG'] = json.dumps(tf_config)
 num_workers = len(tf_config['cluster']['worker'])
-print ('num workers {}'.format(num_workers))
-print(os.environ['TF_CONFIG'])
+f.write ('{}: num workers {}\n'.format(now(), num_workers))
+f.write('{}: TF_CONFIG: {}\n'.format(now(), os.environ['TF_CONFIG']))
 
-# Nothing is done with the communication_options object, need to look into this
-communication_options=tf.distribute.experimental.CommunicationOptions(
-        implementation=tf.distribute.experimental.CommunicationImplementation.AUTO
-    )
-
+communication_options = tf.distribute.experimental.CommunicationOptions(
+    #bytes_per_pack=50 * 1024 * 1024,
+    #timeout_seconds=120.0,
+    implementation=tf.distribute.experimental.CommunicationImplementation.NCCL
+)
 strategy = tf.distribute.MultiWorkerMirroredStrategy(
         communication_options=communication_options,
     )
-print('tensorflow version: {}'.format(tf.__version__))
-print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+f.write('{}: tensorflow version: {}\n'.format(now(), tf.__version__))
+f.write('{}: Number of devices: {}\n'.format(now(), strategy.num_replicas_in_sync))
 
 ## get args / globals
 
@@ -79,11 +89,14 @@ psr.add_argument('--in_train',  default='in_train')
 psr.add_argument('--in_vali',  default='in_vali')
 psr.add_argument('--ep',  type=int, default=400)
 args=vars(psr.parse_args())
-print(args)
+f.write('args: {}'.format(args))
 
 EPOCH = args['ep']
 BATCH = 32
 GLOBAL_BATCH_SIZE = BATCH * strategy.num_replicas_in_sync
+
+f.write("{}: batch size: {}\n".format(now(), BATCH))
+f.write("{}: global batch size {}\n".format(now(), GLOBAL_BATCH_SIZE))
 
 data_path_train = args['in_train']
 data_path_vali = args['in_vali']
@@ -137,18 +150,21 @@ class TokenAndPositionEmbedding(layers.Layer):
 vocab_size = 40000  # 
 maxlen = 250  # 
 
+f.write('{}: reading training data {}\n'.format(now(), data_path_train))
 data_train = pd.read_csv(data_path_train)
+f.write('{}: reading validation data {}\n'.format(now(), data_path_vali))
 data_vali = pd.read_csv(data_path_vali)
 
-print(data_train.head())
-print(data_vali.head())
+f.write('{}\n'.format(data_train.head()))
+f.write('{}\n'.format(data_vali.head()))
 
 y_train = data_train["type"].values.reshape(-1, 1) * 1.0
 y_val = data_vali["type"].values.reshape(-1, 1) * 1.0
 
-print(y_train)
-print(y_val)
+f.write('{}\n'.format(y_train))
+f.write('{}\n'.format(y_val))
 
+f.write('{}: calling tokenizer.fit with num_words: {}\n'.format(now(), vocab_size))
 tokenizer = text.Tokenizer(num_words=vocab_size)
 tokenizer.fit_on_texts(data_train["smiles"])
 
@@ -160,29 +176,49 @@ def prep_text(texts, tokenizer, max_sequence_length):
 x_train = prep_text(data_train["smiles"], tokenizer, maxlen)
 x_val = prep_text(data_vali["smiles"], tokenizer, maxlen)
 
-print(x_train.shape)
-print(y_train.shape)
+f.write('{}: x_train.shape {}\n'.format(now(), x_train.shape))
+f.write('{}: y_train.shape {}\n'.format(now(), y_train.shape))
 
 steps = x_train.shape[0]//GLOBAL_BATCH_SIZE
 validation_steps = x_val.shape[0]//GLOBAL_BATCH_SIZE
 
-print('samples {}, global_batch_size {}, steps {}'.format(x_train.shape[0], GLOBAL_BATCH_SIZE, steps))
-print('val samples {}, global_batch_size {}, val_steps {}'.format(x_val.shape[0], GLOBAL_BATCH_SIZE, validation_steps))
-print('{}\n{}\n{}\n{}'.format(x_train, y_train, x_val, y_val))
+f.write('{}: samples {}, global_batch_size {}, steps {}\n'.format(now(), x_train.shape[0], GLOBAL_BATCH_SIZE, steps))
+f.write('{}: val samples {}, global_batch_size {}, val_steps {}\n'.format(now(), x_val.shape[0], GLOBAL_BATCH_SIZE, validation_steps))
+f.write('{}: {}\n{}\n{}\n{}\n'.format(now(), x_train, y_train, x_val, y_val))
 
+# Create in memory shards
+f.write('{}: creating shards\n'.format(now()))
+from shard import slice_total_gpus, shift_to_rank
 
+_PMI_RANK = int(pmi_rank()) # os env variable
+_NNODES = int(pmi_size()) 
+#_GPU_NODE = 4
+#_TGPUS = _NNODES * _GPU_NODE
+#x_train = slice_total_gpus(shift_to_rank(x_train,_PMI_RANK), _TGPUS)
+#y_train = slice_total_gpus(shift_to_rank(y_train,_PMI_RANK), _TGPUS)
+#x_val = slice_total_gpus(shift_to_rank(x_val,_PMI_RANK), _TGPUS)
+#y_val = slice_total_gpus(shift_to_rank(y_val,_PMI_RANK), _TGPUS)
+x_train = slice_total_gpus(shift_to_rank(x_train,_PMI_RANK), _NNODES)
+y_train = slice_total_gpus(shift_to_rank(y_train,_PMI_RANK), _NNODES)
+x_val = slice_total_gpus(shift_to_rank(x_val,_PMI_RANK), _NNODES)
+y_val = slice_total_gpus(shift_to_rank(y_val,_PMI_RANK), _NNODES)
+
+f.write('{}: x_train.shape {}\n'.format(now(), x_train.shape))
+f.write('{}: y_train.shape {}\n'.format(now(), y_train.shape))
+
+f.write('{}: creating tf.data.Dataset.from_tensor_slices\n'.format(now()))
 train_ds = tf.data.Dataset.from_tensor_slices((x_train, y_train)).batch(GLOBAL_BATCH_SIZE, 
                                                             drop_remainder=True,
                                                             num_parallel_calls=None,
                                                             deterministic=None,
                                                            ).repeat(EPOCH)
-print(train_ds)
+f.write('{}\b'.format(train_ds))
 
 val_ds = tf.data.Dataset.from_tensor_slices((x_val, y_val)).batch(GLOBAL_BATCH_SIZE,
                                                             drop_remainder=True,
                                                             num_parallel_calls=None,
                                                             deterministic=None,).repeat(EPOCH)
-print(val_ds)
+f.write('{}\n'.format(val_ds))
 
 options = tf.data.Options()
 options.autotune.enabled=True
@@ -250,7 +286,7 @@ reduce_lr = ReduceLROnPlateau(
     )
 early_stop = EarlyStopping(monitor='val_loss', patience=50, verbose=1, mode='auto')
 
-print('calling fit')
+f.write('{}: calling model.fit\n'.format(now()))
 history = model.fit(
     train_dist,
     batch_size=GLOBAL_BATCH_SIZE,
@@ -261,6 +297,7 @@ history = model.fit(
     validation_steps=validation_steps,
     callbacks = [checkpointer,csv_logger, reduce_lr, early_stop]
 )
+f.write('{}: done calling model.fit\n'.format(now()))
 #history = model.fit(
 #        x_train, y_train,
 #        batch_size=GLOBAL_BATCH_SIZE,
