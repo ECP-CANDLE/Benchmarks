@@ -1,8 +1,17 @@
-import numpy as np
 '''
+This module contains functions to enable in memory sharding
+of data. The basic idea is to use the PMI_RANK to shift a
+starting position, and from there save every Nth sample where
+N is the number of nodes being used.
+
+It is assumed that node level parallism on however many GPUs
+a node has is handled by the framework (ie tensorflow).
+
 Example:
-d_shard = slice_total_gpus(shift_to_rank(d,_rank),_tgpus))
+shard = slice_total_gpus(shift_to_rank(d,_rank),_tgpus))
 '''
+
+import numpy as np
 
 def shift_to_rank (d, _PMI_RANK=0):
     
@@ -17,19 +26,20 @@ def shift_to_rank (d, _PMI_RANK=0):
     strd = d[_PMI_RANK:,:]
     return strd
 
-def slice_total_gpus(d, _TOT_GPUS=1):
+def slice_total_gpus(d, _TOT_NODES=1):
 
     '''
-    In a dataframe shape (10,2) and total gpus of 4, every
+    In a dataframe shape (10,2) and total nodes equal to 4, every
     4th element in the dataframe is saved. The first element
     is always saved, then skip total gpus. If total gpus is 1,
     all elements are kept.
     '''
     
-    return d[::_TOT_GPUS]
+    return d[::_TOT_NODES]
 
 
 if __name__ == "__main__":
+
     # This is a test of the last rank
     _rank = 0 # (0,1,2,3)
     _tgpus = 4
