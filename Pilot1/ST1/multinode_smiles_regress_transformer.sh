@@ -15,7 +15,7 @@ ST1="/lus/eagle/projects/candle_aesp/brettin/Benchmarks/Pilot1/ST1/multinode_smi
 
 # enums-test
 TRAIN="/lus/eagle/projects/candle_aesp/brettin/enums-test/3.2M.train.csv"
-VALI="2M-flatten.3CLPro_7BQY_A_1_F.val"
+VALI="/lus/eagle/projects/candle_aesp/brettin/enums-test/2M-flatten.3CLPro_7BQY_A_1_F.val"
 
 EP=5
 echo "calling python on: $ST1"
