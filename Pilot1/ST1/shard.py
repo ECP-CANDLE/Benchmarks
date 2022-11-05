@@ -1,6 +1,6 @@
 '''
 This module contains functions to enable in memory sharding
-of data. The basic idea is to use the PMI_RANK to shift a
+of data. The basic idea is to use the PMI_RANK to shift to a
 starting position, and from there save every Nth sample where
 N is the number of nodes being used.
 
