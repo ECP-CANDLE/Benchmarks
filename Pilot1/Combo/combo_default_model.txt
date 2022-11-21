@@ -1,4 +1,5 @@
 [Global_Params]
+model_name='combo'
 cell_features=['expression']
 drug_features=['descriptors']
 dense=[1000, 1000, 1000]

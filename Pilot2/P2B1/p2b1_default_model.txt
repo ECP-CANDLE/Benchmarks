@@ -1,4 +1,5 @@
 [Global_Params]
+model_name='p2b1'
 num_hidden=[512,32]
 batch_size=64
 learning_rate=0.01
