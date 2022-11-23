@@ -40,5 +40,8 @@ save_path='save/uno'
 single=True
 on_memory_loader=True
 
+ckpt_checksum=True
+ckpt_save_interval=1
+
 [Monitor_Params]
 timeout=-1

@@ -1401,8 +1401,9 @@ class DataFeeder(keras.utils.Sequence):
         self.agg_dose = agg_dose
         self.on_memory = on_memory
         self.target = agg_dose if agg_dose is not None else "Growth"
-
+        print("DataFeeder constructor: reading: '%s' ..." % filename)
         self.store = pd.HDFStore(filename, mode="r")
+
         self.input_size = len(
             list(filter(lambda x: x.startswith("/x_train"), self.store.keys()))
         )
