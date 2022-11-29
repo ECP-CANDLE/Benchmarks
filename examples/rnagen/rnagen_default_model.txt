@@ -1,4 +1,5 @@
 [Global_Params]
+model_name = 'rnagen'
 data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/rnagen/'
 train_data = 'combined_cancer_types'
 model = 'cvae'

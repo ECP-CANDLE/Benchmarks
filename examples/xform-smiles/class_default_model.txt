@@ -1,4 +1,5 @@
 [Global_Params]
+model_name = 'xform-smiles'
 data_url = "https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/xform-smiles-data/"
 train_data = 'chm.lipinski.trn.csv'
 val_data = 'chm.lipinski.val.csv'
