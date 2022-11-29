@@ -1,4 +1,5 @@
 [Global_Params]
+model_name = 'image-vae'
 data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/image_vae/moses_data/'
 train_data = 'train.csv'
 test_data = 'test.csv'

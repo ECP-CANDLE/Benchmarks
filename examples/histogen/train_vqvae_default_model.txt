@@ -1,4 +1,5 @@
 [Global_Params]
+model_name = 'histogen'
 data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/histogen/'
 train_data = 'svs_pngs.zip'
 data_dir = 'svs_pngs'
