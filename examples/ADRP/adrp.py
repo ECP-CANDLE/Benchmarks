@@ -19,6 +19,13 @@ candle.set_parallelism_threads()
 additional_definitions = [
     {"name": "latent_dim", "action": "store", "type": int, "help": "latent dimensions"},
     {
+        "name": "local_data",
+        "action": "store",
+        "type": candle.str2bool,
+        "default": False,
+        "help": "use local data"
+    },
+    {
         "name": "residual",
         "type": candle.str2bool,
         "default": False,
@@ -189,6 +196,7 @@ def extension_from_parameters(params, framework=""):
 
     return ext
 
+    
 
 def load_headers(desc_headers, train_headers, header_url):
 
@@ -228,8 +236,20 @@ def get_model(params):
     model_file = candle.get_file(file_model, url + file_model, cache_subdir="Pilot1")
     return model_file
 
+def histogram(df_y):
+    bins = np.arange(0, 20)
+    histogram, bin_edges = np.histogram(df_y, bins=bins, density=False)
+    print("Histogram of samples (bins, counts)")
+    print(bin_edges)
+    print(histogram)
+    return histogram
 
-def load_data(params, seed):
+def standard_scalar(df_x):
+    scaler = StandardScaler()
+    df_x = scaler.fit_transform(df_x)
+    return df_x
+
+def load_data(params, seed=42):
     header_url = params["header_url"]
     dh_dict, th_list = load_headers(
         "descriptor_headers.csv", "training_headers.csv", header_url
@@ -253,25 +273,54 @@ def load_data(params, seed):
     # df_x = df[:, 1:PL].astype(np.float32)
     df_x = df.iloc[:, desc_col_idx].astype(np.float32)
 
-    bins = np.arange(0, 20)
-    histogram, bin_edges = np.histogram(df_y, bins=bins, density=False)
-    print("Histogram of samples (bins, counts)")
-    print(bin_edges)
-    print(histogram)
+    histogram = histogram(df_y)
 
     #    scaler = MaxAbsScaler()
 
-    scaler = StandardScaler()
-    df_x = scaler.fit_transform(df_x)
+    df_x = standard_scalar(df_x)
 
     X_train, X_test, Y_train, Y_test = train_test_split(
-        df_x, df_y, test_size=0.20, random_state=42
+        df_x, df_y, test_size=0.20, random_state=seed
     )
 
     print("x_train shape:", X_train.shape)
     print("x_test shape:", X_test.shape)
 
+    print('x_train:\n{}\ny_train:\n{}'.format(X_train, Y_train))
+
     return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
+
+
+def load_local_data(params, desc_col_idx=5, seed=42):
+    """For loading custom data that resides locally.
+    params - from candle.initialize_parameters()
+    desc_col_idx - column index where descriptor values start"""
+
+    file_train = params["train_data"]
+    train_file = candle.get_file(file_train, url + file_train, cache_subdir="Pilot1")
+    
+    print("Loading data...")
+    df = pd.read_parquet(train_file)
+    print("Done loading data.\n{}".format(df))
+
+    df_y = df["reg"].astype("float32")
+    df_x = df.iloc[:, desc_col_idx].astype(np.float32)
+
+    histogram = histogram(df_y)
+
+    df_x = standard_scalar(df_x)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(
+        df_x, df_y, test_size=0.20, random_state=seed
+    )
+
+    print("x_train shape:", X_train.shape)
+    print("x_test shape:", X_test.shape)
+    print('x_train:\n{}\ny_train:\n{}'.format(X_train, Y_train))
+
+    '''returns X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram'''
+    return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
+
 
 
 # def load_data(params, seed):

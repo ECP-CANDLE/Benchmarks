@@ -260,7 +260,11 @@ def run(params):
     keras_defaults = candle.keras_default_config()
 
     ##
-    X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_data(params, seed)
+    if(params['local_data']):
+        X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_local_data(params, seed)
+    else:
+        X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_data(params, seed)
+
 
     print("X_train shape:", X_train.shape)
     print("X_test shape:", X_test.shape)
