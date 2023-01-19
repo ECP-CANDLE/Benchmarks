@@ -2,10 +2,8 @@
 header_url = 'https://raw.githubusercontent.com/brettin/ML-training-inferencing/master/'
 data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/V5.1-1M-flatten/'
 base_name = 'ADRP_6W02_A_1_H'
-#
 train_data = '/lus/gila/projects/candle_aesp_CNDA/brettin/NSUN1/mlNSUN1.1M.score.id.smi.csv.parquet'
 local_data = True
-#
 model_name = 'adrp'
 dense = [500, 250, 125, 60, 30]
 batch_size = 32
