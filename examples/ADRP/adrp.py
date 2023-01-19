@@ -20,7 +20,6 @@ additional_definitions = [
     {"name": "latent_dim", "action": "store", "type": int, "help": "latent dimensions"},
     {
         "name": "local_data",
-        "action": "store",
         "type": candle.str2bool,
         "default": False,
         "help": "use local data"
@@ -238,11 +237,11 @@ def get_model(params):
 
 def histogram(df_y):
     bins = np.arange(0, 20)
-    histogram, bin_edges = np.histogram(df_y, bins=bins, density=False)
+    histo, bin_edges = np.histogram(df_y, bins=bins, density=False)
     print("Histogram of samples (bins, counts)")
     print(bin_edges)
-    print(histogram)
-    return histogram
+    print(histo)
+    return histo
 
 def standard_scalar(df_x):
     scaler = StandardScaler()
@@ -271,9 +270,9 @@ def load_data(params, seed=42):
     # df_y = df[:,0].astype('float32')
     df_y = df["reg"].astype("float32")
     # df_x = df[:, 1:PL].astype(np.float32)
-    df_x = df.iloc[:, desc_col_idx].astype(np.float32)
+    df_x = df.iloc[:, desc_col_idx:].astype(np.float32)
 
-    histogram = histogram(df_y)
+    histo = histogram(df_y)
 
     #    scaler = MaxAbsScaler()
 
@@ -288,7 +287,7 @@ def load_data(params, seed=42):
 
     print('x_train:\n{}\ny_train:\n{}'.format(X_train, Y_train))
 
-    return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
+    return X_train, Y_train, X_test, Y_test, X_train.shape[1], histo
 
 
 def load_local_data(params, desc_col_idx=5, seed=42):
@@ -297,16 +296,16 @@ def load_local_data(params, desc_col_idx=5, seed=42):
     desc_col_idx - column index where descriptor values start"""
 
     file_train = params["train_data"]
-    train_file = candle.get_file(file_train, url + file_train, cache_subdir="Pilot1")
+    print("using local data {}".format(params['train_data']))
     
     print("Loading data...")
-    df = pd.read_parquet(train_file)
+    df = pd.read_parquet(file_train)
     print("Done loading data.\n{}".format(df))
 
     df_y = df["reg"].astype("float32")
-    df_x = df.iloc[:, desc_col_idx].astype(np.float32)
+    df_x = df.iloc[:, desc_col_idx:].astype(np.float32)
 
-    histogram = histogram(df_y)
+    histo = histogram(df_y)
 
     df_x = standard_scalar(df_x)
 
@@ -314,12 +313,14 @@ def load_local_data(params, desc_col_idx=5, seed=42):
         df_x, df_y, test_size=0.20, random_state=seed
     )
 
-    print("x_train shape:", X_train.shape)
-    print("x_test shape:", X_test.shape)
+    print("df_x shape: {}".format(df_x.shape))
+    print("df_y shape: {}".format(df_y.shape))
+    print("x_train shape: {}".format(X_train.shape))
+    print("x_test shape: {}".format(X_test.shape))
     print('x_train:\n{}\ny_train:\n{}'.format(X_train, Y_train))
 
-    '''returns X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram'''
-    return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
+    '''returns X_train, Y_train, X_test, Y_test, X_train.shape[1], histo'''
+    return X_train, Y_train, X_test, Y_test, X_train.shape[1], histo
 
 
 
