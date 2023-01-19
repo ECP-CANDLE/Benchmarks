@@ -260,10 +260,13 @@ def run(params):
     keras_defaults = candle.keras_default_config()
 
     ##
+    print("LOCAL_DATA {}".format(params['local_data']))
     if(params['local_data']):
-        X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_local_data(params, seed)
+        print ("USING LOCAL DATA")
+        X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_local_data(params, seed=seed)
     else:
-        X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_data(params, seed)
+        print ("USING REMOTE DATA")
+        X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_data(params, seed=seed)
 
 
     print("X_train shape:", X_train.shape)
@@ -346,13 +349,23 @@ def run(params):
 
     # set up a bunch of callbacks to do work during model training..
 
-    checkpointer = ModelCheckpoint(
-        filepath=params["save_path"] + "agg_adrp.autosave.model.h5",
-        verbose=1,
-        save_weights_only=False,
-        save_best_only=True,
-    )
-    csv_logger = CSVLogger(params["save_path"] + "agg_adrp.training.log")
+    #checkpointer = ModelCheckpoint(
+    #    filepath=params["save_path"] + "agg_adrp.autosave.model.h5",
+    #    verbose=1,
+    #    save_weights_only=False,
+    #    save_best_only=True,
+    #)
+
+    initial_epoch = 0
+    checkpointer = candle.CandleCkptKeras(params, verbose=False)
+    checkpointer.set_model(model)
+    J = checkpointer.restart(model)
+    if J is not None:
+        initial_epoch = J["epoch"]
+        print("restarting from ckpt: initial_epoch: %i" % initial_epoch)
+
+    csv_logger = CSVLogger(params["save_path"] + "agg_adrp.training.log"
+            + ".epoch_start-" + initial_epoch)
 
     # min_lr = params['learning_rate']*params['reduce_ratio']
     min_lr = 0.000000001
@@ -456,6 +469,7 @@ def run(params):
         X_train,
         Y_train,
         batch_size=batch_size,
+        initial_epoch=initial_epoch,
         epochs=epochs,
         verbose=1,
         sample_weight=train_weight,
