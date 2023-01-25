@@ -4,11 +4,15 @@ import logging
 
 import numpy as np
 import torch
-import intel_extension_for_pytorch
+import intel_extension_for_pytorch as ipex
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from argparse import SUPPRESS
+
+import torch.distributed as dist
+from torch.nn.parallel import DistributedDataParallel as DDP
+import oneccl_bindings_for_pytorch
 
 try:
     from apex import amp
@@ -182,11 +186,34 @@ def run(params):
 
     args = candle.ArgumentStruct(**params)
     # Configure GPUs
-    ndevices = torch.xpu.device_count()
-    if ndevices < 1:
+    n_xpus = torch.xpu.device_count()
+    print(f"n_xpus = {n_xpus}")
+    if n_xpus < 1:
         raise Exception('No XPU gpus available')
+    else:
+        print(f"n_xpus = {n_xpus}")
+
+	# get parallel envs
+    os.environ['RANK'] = str(os.environ.get('PMI_RANK', 0))
+    os.environ['WORLD_SIZE'] = str(os.environ.get('PMI_SIZE', 1))
+    os.environ['MASTER_ADDR'] = '127.0.0.1'  # your master address
+    os.environ['MASTER_PORT'] = '29500'  # your master port
+    if 'OMPI_COMM_WORLD_LOCAL_RANK' in os.environ.keys():
+        local_rank = os.environ['OMPI_COMM_WORLD_LOCAL_RANK']
+    else:
+        local_rank = os.environ['MPI_LOCALRANKID']
 
     device = 'xpu'
+
+    local_rank = int(local_rank)
+    devid = local_rank % n_xpus
+    torch.xpu.set_device(devid)
+    device = "xpu:{}".format(devid)
+
+    dist.init_process_group(backend='ccl')
+    my_rank = dist.get_rank()
+    my_size = dist.get_world_size()
+    print(f"my rank = {my_rank},  mysize = {my_size}")
 
     dataset = LMDBDataset(args.lmdb_filename)
     loader = DataLoader(
@@ -236,8 +263,8 @@ def run(params):
     if amp is not None:
         model, optimizer = amp.initialize(model, optimizer, opt_level=args.amp)
 
-    model = nn.DataParallel(model)
-    model = model.to(device)
+    model = DDP(model, device_ids=[device])
+    # model = model.to(device)
 
     scheduler = None
     if args.sched_mode == 'cycle':
