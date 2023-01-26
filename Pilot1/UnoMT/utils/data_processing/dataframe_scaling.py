@@ -9,16 +9,18 @@
 """
 
 import logging
-import pandas as pd
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 logger = logging.getLogger(__name__)
-SCALING_METHODS = ['none', 'std', 'minmax']
+SCALING_METHODS = ["none", "std", "minmax"]
 
 
-def scale_dataframe(dataframe: pd.DataFrame,
-                    scaling_method: str,):
+def scale_dataframe(
+    dataframe: pd.DataFrame,
+    scaling_method: str,
+):
     """new_df = dataframe_scaling(old_df, 'std')
 
     Scaling features in dataframe according to specific scaling strategy.
@@ -33,15 +35,14 @@ def scale_dataframe(dataframe: pd.DataFrame,
     """
     scaling_method = scaling_method.lower()
 
-    if scaling_method.lower() == 'none':
+    if scaling_method.lower() == "none":
         return dataframe
-    elif scaling_method.lower() == 'std':
+    elif scaling_method.lower() == "std":
         scaler = StandardScaler()
-    elif scaling_method.lower() == 'minmax':
+    elif scaling_method.lower() == "minmax":
         scaler = MinMaxScaler()
     else:
-        logger.error('Unknown scaling method %s' % scaling_method,
-                     exc_info=True)
+        logger.error("Unknown scaling method %s" % scaling_method, exc_info=True)
         return dataframe
 
     if len(dataframe.shape) == 1:
