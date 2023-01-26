@@ -1,9 +1,10 @@
 import os
 import time
 import torch
-
+import logging
 import p3b8 as bmk
 import candle
+import intel_extension_for_pytorch as ipex
 
 import numpy as np
 
@@ -19,6 +20,12 @@ from transformers import (
 
 from random_data import MimicDatasetSynthetic
 
+debug = True
+logger_level = logging.DEBUG if debug else logging.INFO
+logging.basicConfig(level=logger_level, format='%(asctime)s %(message)s')
+logger = logging.getLogger(__name__)
+
+screen_output = 500
 
 def initialize_parameters():
     """ Initialize the parameters for the P3B5 benchmark """
@@ -90,7 +97,8 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
         output.loss.backward()
         optimizer.step()
 
-        print(f"epoch: {epoch}, batch: {idx}, train loss: {output.loss}")
+        if idx % screen_output == 0:
+            logger.info(f"epoch: {epoch}, batch: {idx}, train loss: {output.loss}")
 
 
 def validate(dataloader, model, args, device, epoch):
@@ -100,33 +108,34 @@ def validate(dataloader, model, args, device, epoch):
         for idx, batch in enumerate(dataloader):
 
             input_ids = batch["tokens"].to(device)
-            labels = batch["label"].to(args.device)
+            labels = batch["label"].to(device)
 
             output = model(
                 input_ids,
                 labels=labels
             )
 
-            print(f"epoch: {epoch}, batch: {idx}, valid loss: {output.loss}")
+            if idx % screen_output == 0:
+                logger.info(f"epoch: {epoch}, batch: {idx}, valid loss: {output.loss}")
 
 
 def time_evaluation(dataloader, model, args, device):
     s = time.time()
     loss = validate(dataloader, model, args, device, epoch=0)
     elapsed = time.time() - s
-    print(f"\telapsed time (seconds): {elapsed:.1f}")
+    logger.info(f"\telapsed time (seconds): {elapsed:.1f}")
 
 
 def print_size_of_model(model):
     torch.save(model.state_dict(), "temp.p")
-    print('Size (MB):', os.path.getsize("temp.p") / 1e6)
+    logger.info(f'Size (MB): {os.path.getsize("temp.p") / 1e6}')
     os.remove('temp.p')
 
 
 def run(args):
     args = candle.ArgumentStruct(**args)
-    args.cuda = torch.cuda.is_available()
-    args.device = torch.device(f"cuda" if args.cuda else "cpu")
+    args.xpu = True # torch.xpu.is_available()
+    args.device = torch.device(f"xpu" if args.xpu else "cpu")
 
     train_loader, valid_loader, test_loader = create_data_loaders(args)
 
@@ -149,8 +158,10 @@ def run(args):
     criterion = nn.BCEWithLogitsLoss()
 
     for epoch in range(args.num_epochs):
+        s = time.time()
         train(train_loader, model, optimizer, criterion, args, epoch)
         validate(valid_loader, model, args, args.device, epoch)
+        logger.info(f"Done epoch {epoch} in {time.time() - s} s...")
 
     quantized_model = torch.quantization.quantize_dynamic(
         model.to('cpu'), {torch.nn.Linear}, dtype=torch.qint8
@@ -159,7 +170,7 @@ def run(args):
     model = model.to('cpu')
 
     if args.verbose:
-        print(quantized_model)
+        logger.info(quantized_model)
 
     print_size_of_model(model)
     print_size_of_model(quantized_model)
@@ -171,6 +182,7 @@ def run(args):
 def main():
     params = initialize_parameters()
     run(params)
+    logger.info("Done")
 
 
 if __name__ == "__main__":
