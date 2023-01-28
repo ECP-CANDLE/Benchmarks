@@ -85,7 +85,6 @@ def run(gParameters):
     model = Sequential()
 
     initial_epoch = 0
-    best_metric_last = None
 
     X_train, Y_train, X_test, Y_test = load_data(train_file, test_file, gParameters)
 
@@ -167,14 +166,12 @@ def run(gParameters):
     model.add(Dense(gParameters["classes"]))
     model.add(Activation(gParameters["out_activation"]))
 
-    J = candle.restart(gParameters, model)
+    ckpt = candle.CandleCkptKeras(gParameters, verbose=False)
+    ckpt.set_model(model)
+    J = ckpt.restart(model)
     if J is not None:
         initial_epoch = J["epoch"]
-        best_metric_last = J["best_metric_last"]
-        gParameters["ckpt_best_metric_last"] = best_metric_last
-        print("initial_epoch: %i" % initial_epoch)
-
-    ckpt = candle.CandleCheckpointCallback(gParameters, verbose=False)
+        print("restarting from ckpt: initial_epoch: %i" % initial_epoch)
 
     # Reference case
     # model.add(Conv1D(filters=128, kernel_size=20, strides=1, padding='valid', input_shape=(P, 1)))
