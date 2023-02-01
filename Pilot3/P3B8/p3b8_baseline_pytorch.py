@@ -163,6 +163,7 @@ def run(args):
         validate(valid_loader, model, args, args.device, epoch)
         logger.info(f"Done epoch {epoch} in {time.time() - s} s...")
 
+# comment out for training only runs
     quantized_model = torch.quantization.quantize_dynamic(
         model.to('cpu'), {torch.nn.Linear}, dtype=torch.qint8
     )
