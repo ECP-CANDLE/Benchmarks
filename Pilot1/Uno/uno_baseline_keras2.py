@@ -82,7 +82,7 @@ def evaluate_prediction(y_true, y_pred):
 def log_evaluation(metric_outputs, logger, description='Comparing y_true and y_pred:'):
     logger.info(description)
     for metric, value in metric_outputs.items():
-        logger.info('  {}: {:.4f}'.format(metric, value))
+        logger.info('  {}: {:.8f}'.format(metric, value))
 
 
 class LoggingCallback(Callback):
@@ -375,6 +375,8 @@ def run(params):
 
         ckpt.set_model(template_model)
         J = ckpt.restart(params)
+        # J = candle.restart(params, model)
+
         if J is not None:
             initial_epoch = J['epoch']
             best_metric_last = J['best_metric_last']
@@ -382,6 +384,10 @@ def run(params):
             print('initial_epoch: %i' % initial_epoch)
 
         elif args.initial_weights is not None:
+        # ckpt = candle.CandleCheckpointCallback(params,
+        #                                        verbose=True)
+
+        # if args.initial_weights:
             logger.info("Loading initial weights from '{}'"
                         .format(args.initial_weights))
             start = time.time()
@@ -419,7 +425,7 @@ def run(params):
         es_monitor = keras.callbacks.EarlyStopping(patience=patience,
                                                    verbose=1)
 
-        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, min_lr=0.00001)
+        reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=100, min_lr=0.00001)
         warmup_lr = LearningRateScheduler(warmup_scheduler)
         # prefix + cv_ext + '.
         checkpointer = MultiGPUCheckpoint('model.h5', save_best_only=True)
