@@ -160,8 +160,13 @@ def run(args):
     for epoch in range(args.num_epochs):
         s = time.time()
         train(train_loader, model, optimizer, criterion, args, epoch)
+        train_time = time.time() - s
+        logger.info(f"Done training epoch {epoch} in {train_time} s, at {train_time*1000 / args.num_train_samples} ms/step...")
+
+        s = time.time()
         validate(valid_loader, model, args, args.device, epoch)
-        logger.info(f"Done epoch {epoch} in {time.time() - s} s...")
+        val_time = time.time() - s
+        logger.info(f"Done validation epoch {epoch} in {val_time} s, at {val_time*1000 / args.num_valid_samples} ms/step...")
 
 # comment out for training only runs
     quantized_model = torch.quantization.quantize_dynamic(
