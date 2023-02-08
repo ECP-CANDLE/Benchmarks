@@ -4,6 +4,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.keras import Model
 import tensorflow.keras.layers as layers
+from tensorflow.keras import mixed_precision
 from dense_attention import scaled_attention
 import sys
 import time
@@ -24,6 +25,7 @@ class mthisan(object):
                      attention_heads):
 
             super(mthisan.mthisan_model, self).__init__()
+            mixed_precision.set_global_policy('mixed_float16')
             self.attention_size = attention_size
             self.attention_heads = attention_heads
             self.training = False
