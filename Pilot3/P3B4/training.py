@@ -1,18 +1,25 @@
 import pandas as pd
 import numpy as np
 import os
+import logging
 import time
 import sys
 import json
 import random
 
 import torch
+import intel_extension_for_pytorch as ipex
 from torch.utils.data import Dataset, DataLoader, Subset
 from torch import nn
 import torch.nn.functional as F
 from sklearn.metrics import f1_score
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+debug = True
+logger_level = logging.DEBUG if debug else logging.INFO
+logging.basicConfig(level=logger_level, format='%(asctime)s %(message)s')
+logger = logging.getLogger(__name__)
+
+device = torch.device("xpu" if torch.xpu.is_available() else "cpu")
 
 ########################################
 #
@@ -136,7 +143,7 @@ def train(model,
     bestloss = np.inf
     pat_counter = 0
     use_amp = False
-    scaler = torch.cuda.amp.GradScaler(enabled=use_amp)
+    # scaler = torch.xpu.amp.GradScaler(enabled=use_amp)
 
     # train model
     for ep in range(epochs):
@@ -148,7 +155,7 @@ def train(model,
         start_time = time.time()
 
         for b, batch in enumerate(train_loader):
-            with torch.cuda.amp.autocast(enabled=use_amp):
+            with torch.xpu.amp.autocast(enabled=use_amp):
                 optimizer.zero_grad()
                 X = batch['X'].to(device)
                 ys = [batch['y_%s' % t].to(device) for t in tasks]
@@ -198,9 +205,11 @@ def train(model,
                     loss += keywords_loss(model,tasks,kw_X,kw_Y,max_len)
 
             # backprop
-            scaler.scale(loss).backward() # loss.backward()
-            scaler.step(optimizer) # optimizer.step()
-            scaler.update()
+            loss.backward()
+            optimizer.step()
+            # scaler.scale(loss).backward() # loss.backward()
+            # scaler.step(optimizer) # optimizer.step()
+            # scaler.update()
             optimizer.zero_grad()
             l = loss.cpu().detach().numpy()
             sys.stdout.write("epoch %i, sample %i of %i, loss: %f           \r"\
@@ -208,7 +217,7 @@ def train(model,
             sys.stdout.flush()
 
         print()
-        print("\ntraining time: %.2f" % (time.time() - start_time))
+        logger.info("training time: %.2f" % (time.time() - start_time))
         print_header(abstain_flag)
 
         # track train scores for abstention in case no validation set
@@ -295,7 +304,7 @@ def train(model,
                     ntask_scale_factor = ntask_scale_factor[0]
                     ntask_stop_metric = ntask_stop_metric[0]
 
-            print("epoch %i validation" % (ep + 1))
+            logger.info("epoch %i validation" % (ep + 1))
             if abstain_flag:
                 print_abs_tune_header(abstain_tune_mode)
             else:
@@ -350,7 +359,7 @@ def train(model,
             # track best validation loss, save best model, track patience
             if abstain_flag:
                 # use the stop_metric for stopping
-                print('epoch %i' % (ep + 1))
+                logger.info('epoch %i' % (ep + 1))
                 if stop_norm == 'max':
                     # max value
                     stop_metric = np.linalg.norm(np.array(stop_metrics), np.inf)
@@ -361,14 +370,14 @@ def train(model,
                 torch.save(model.state_dict(), savepath)
                 torch.save(model.state_dict(), savepath + '%i' % ep)
                 if (stop_metric < abstain_stop_limit):
-                    print('Stopping criterion reached: %.4f < %.4f' % (stop_metric, abstain_stop_limit))
+                    logger.info('Stopping criterion reached: %.4f < %.4f' % (stop_metric, abstain_stop_limit))
                     break
                 else:
-                    print('Stopping criterion not reached: %.4f > %.4f' % (stop_metric, abstain_stop_limit))
+                    logger.info('Stopping criterion not reached: %.4f > %.4f' % (stop_metric, abstain_stop_limit))
                 #checkpoint at every epoch until stopping criteria reached
 
             else:
-                print("epoch %i val loss: %.8f, best val loss: %.8f" % (ep + 1, val_loss, bestloss))
+                logger.info("epoch %i val loss: %.8f, best val loss: %.8f" % (ep + 1, val_loss, bestloss))
                 # use patience based on val_loss
                 if val_loss < bestloss:
                     bestloss = val_loss
@@ -378,7 +387,7 @@ def train(model,
                     pat_counter += 1
                     if pat_counter >= patience:
                         break
-                print('patience counter is at %i of %i' % (pat_counter, patience))
+                logger.info('patience counter is at %i of %i' % (pat_counter, patience))
 
         # if no validation set, save after every epoch
         else:
@@ -388,10 +397,10 @@ def train(model,
         if abstain_flag:
             for i, alpha in enumerate(abstain_alphas):
                 abstain_alphas[i] = abstain_alphas[i] * task_scale_factors[i]
-            print('New alphas', ['%.4f' % a for a in abstain_alphas])
+            logger.info('New alphas', ['%.4f' % a for a in abstain_alphas])
             if ntask_flag:
                 ntask_alpha = ntask_alpha * ntask_scale_factor
-                print('New ntask alpha', ['%.4f' % ntask_alpha])
+                logger.info('New ntask alpha', ['%.4f' % ntask_alpha])
 
 
 def score(model,
@@ -600,7 +609,7 @@ def modify_alphas(alphas,
 
         if (tune_mode == 'abs_acc'):
             # modify the scaling factor according to error in target abstention and accuracy
-            #print('Tuning for abstention and accuracy')
+            #logger.info('Tuning for abstention and accuracy')
 
             # clip if accuracy is above min_acc
             acc_error = min([acc_error, 0.0])
@@ -626,7 +635,7 @@ def modify_alphas(alphas,
 
         elif (tune_mode == 'acc'):
 
-            #print('Tuning for accuracy')
+            #logger.info('Tuning for accuracy')
             # no clipping here
             new_scale = (1. + acc_gain * acc_error)
             stop_i = acc_error
@@ -638,7 +647,7 @@ def modify_alphas(alphas,
 
         elif (tune_mode == 'abs'):
 
-            #print('Tuning for abstention')
+            #logger.info('Tuning for abstention')
             # no clipping here
             new_scale = (1. + abs_gain * abs_error)
             stop_i = abs_error
@@ -692,44 +701,44 @@ def write_abs_stats(alphas, accs, abs_frac, stop_metrics, savepath):
 def print_abs_tune_header(tune_mode):
     # change the output based on tuning mode
     if (tune_mode == 'abs_acc'):
-        print("%12s, %10s, %10s, %10s, %10s, %10s, %10s, %10s, %10s" % \
+        logger.info("%12s, %10s, %10s, %10s, %10s, %10s, %10s, %10s, %10s" % \
               ('task', 'micro', 'macro', 'abs_frac', 'min_acc', 'max_abs', 'alpha', 'scale_fac', 'stop_metric'))
     elif (tune_mode == 'abs'):
-        print("%12s, %10s, %10s, %10s, %10s, %10s, %10s, %10s" % \
+        logger.info("%12s, %10s, %10s, %10s, %10s, %10s, %10s, %10s" % \
               ('task', 'micro', 'macro', 'abs_frac', 'max_abs', 'alpha', 'scale_fac', 'stop_metric'))
     elif (tune_mode == 'acc'):
-        print("%12s, %10s, %10s, %10s, %10s, %10s, %10s, %10s" % \
+        logger.info("%12s, %10s, %10s, %10s, %10s, %10s, %10s, %10s" % \
               ('task', 'micro', 'macro', 'abs_frac', 'target_acc', 'alpha', 'scale_fac', 'stop_metric'))
     else:
-        print("Tuning mode must be one of [abs_acc, abs, acc]")
+        logger.info("Tuning mode must be one of [abs_acc, abs, acc]")
 
 
 def print_abs_tune_stats(tune_mode, task, macro, micro, min_acc, abs_frac, max_abs, alpha, scale_fac, stop_metric):
     if (tune_mode == 'abs_acc'):
-        print("%12s, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f" %
+        logger.info("%12s, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f" %
               (task, micro, macro, abs_frac, min_acc, max_abs, alpha, scale_fac, stop_metric))
     elif (tune_mode == 'abs'):
-        print("%12s, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f" %
+        logger.info("%12s, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f" %
               (task, micro, macro, abs_frac, max_abs, alpha, scale_fac, stop_metric))
     elif (tune_mode == 'acc'):
-        print("%12s, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f" %
+        logger.info("%12s, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f, %10.4f" %
               (task, micro, macro, abs_frac, min_acc, alpha, scale_fac, stop_metric))
 
 
 def print_header(abstain_flag):
     if abstain_flag:
-        print("%12s, %10s, %10s, %10s" %
+        logger.info("%12s, %10s, %10s, %10s" %
               ('task', 'micro', 'macro', 'abs_frac'))
     else:
-        print("%12s, %10s, %10s" %
+        logger.info("%12s, %10s, %10s" %
               ('task', 'micro', 'macro'))
 
 
 def print_stats(task, micro, macro, abs_frac=None):
     if abs_frac is not None:
-        print("%12s, %10.4f, %10.4f, %10.4f" % (task, micro, macro, abs_frac))
+        logger.info("%12s, %10.4f, %10.4f, %10.4f" % (task, micro, macro, abs_frac))
     else:
-        print("%12s, %10.4f, %10.4f" % (task, micro, macro))
+        logger.info("%12s, %10.4f, %10.4f" % (task, micro, macro))
 
 
 def print_all_stats(tasks, base_scores, abs_scores, abstain_args):
@@ -806,9 +815,9 @@ def set_abstain_args(model_args, id2label={}):
     abstain_args['ntask_tasks'] = model_args['abstain_kwargs']['ntask_tasks']
 
     if abstain_flag:
-        print('Running with:')
+        logger.info('Running with:')
         for key in abstain_args:
-            print(key, abstain_args[key])
+            logger.info(key, abstain_args[key])
 
     return abstain_args, num_classes, id2label_new
 
