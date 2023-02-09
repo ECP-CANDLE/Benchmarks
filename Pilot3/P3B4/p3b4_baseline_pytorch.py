@@ -1,9 +1,11 @@
 
 import numpy
 import os
+import logging
 import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 import torch
+import intel_extension_for_pytorch as ipex
 from torch.utils.data import Dataset, DataLoader, Subset
 
 # import candle
@@ -12,6 +14,11 @@ from mthisan import MTHiSAN
 from training import *
 import p3b4 as bmk
 import candle
+
+debug = True
+logger_level = logging.DEBUG if debug else logging.INFO
+logging.basicConfig(level=logger_level, format='%(asctime)s %(message)s')
+logger = logging.getLogger(__name__)
 
 def initialize_parameters(default_model='p3b4_default_model.txt'):
     """ Initialize the parameters for the P3B5 benchmark """
@@ -79,8 +86,8 @@ def run(gParameters):
         le.fit( codes )
         labelencoders[ task ] = le
         num_classes.append( len( le.classes_ ) )
-    print(labelencoders)
-    print(num_classes)
+    logger.info(labelencoders)
+    logger.info(num_classes)
 
     np_X_train = np.flip( np_X_train, axis= 1 )
     np_X_val = np.flip( np_X_val, axis= 1 )
@@ -111,7 +118,7 @@ def run(gParameters):
         max_len= max_len,
     )
 
-    print( train_dataset )
+    logger.info( train_dataset )
 
     # data loader
     train_loader = DataLoader( train_dataset, batch_size= batch_size, shuffle= True )
@@ -132,7 +139,7 @@ def run(gParameters):
     # training
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), learning_rate, ( 0.9, 0.99 ) )
-    print( 'training hisan using %i %s devices' % ( torch.cuda.device_count(), device ) )
+    logger.info( 'training hisan using %i %s devices' % ( torch.xpu.device_count(), device ) )
 
     if not os.path.exists( 'checkpoints' ):
         os.makedirs( 'checkpoints' )
@@ -150,7 +157,7 @@ def run(gParameters):
         )
 
     # load best model
-    print('Testing best saved model')
+    logger.info('Testing best saved model')
     model.load_state_dict(torch.load( model_filename ) )
 
     # test accuracy
@@ -165,7 +172,7 @@ def run(gParameters):
     macros = base_scores['macros']
     val_loss = base_scores['val_loss']
 
-    print( 'Task, Micro, Macro' )
+    logger.info( 'Task, Micro, Macro' )
     for t, task in enumerate(tasks):
         print_stats( task, micros[ t ], macros[ t ] )
 
