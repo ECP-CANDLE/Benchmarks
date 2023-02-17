@@ -30,7 +30,6 @@ def parse_arguments():
     args, unparsed = parser.parse_known_args()
     return args, unparsed
 
-
 def read_plan(filename, node):
     print("read_plan(): reading file {} for node {}"
           .format(filename, node))
@@ -157,7 +156,6 @@ def read_dataframe(args):
     _, ext = os.path.splitext(args.dataframe_from)
     if ext == '.h5' or ext == '.hdf5':
         print("HDFStore r " + str(args.dataframe_from))
-        sys.stdout.flush()
         store = pd.HDFStore(args.dataframe_from, 'r')
         print("HDFStore opened") ; sys.stdout.flush()
         df = store.get('df')
@@ -166,7 +164,6 @@ def read_dataframe(args):
         print("HDFStore closed") ; sys.stdout.flush()
     elif ext == '.feather':
         print("read feather " + str(args.dataframe_from))
-        sys.stdout.flush()
         df = pd.read_feather(args.dataframe_from).fillna(0)
         print("read feather ok." + str(args.dataframe_from))
         sys.stdout.flush()
@@ -250,7 +247,6 @@ def build_dataframe(args):
 
     # store
     import os.path
-
     output = os.path.realpath(args.output)
     print("topN HDFStore w " + output) ; sys.stdout.flush()
     store = pd.HDFStore(output, 'w') # , complevel=9, complib='blosc:snappy')
@@ -278,7 +274,7 @@ def build_dataframe(args):
         store.put('y_test', y_test, format='table')
         store.put('x_test_0', x_test_0, format='table')
         store.put('x_test_1', x_test_1, format='table')
-    print("topN HDFStore close " + output) ; sys.stdout.flush()
+    print("topN HDFStore close " + output)
     store.close()
 
 
