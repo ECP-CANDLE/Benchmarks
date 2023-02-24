@@ -25,6 +25,7 @@ def parse_arguments():
     parser.add_argument('--output', type=str, default='topN.uno.h5',
                         help='output filename')
     parser.add_argument('--show', action='store_true', help='Simply show the plan node')
+    parser.add_argument('--raw', action='store_true', help='With --show, also show raw JSON')
 
     args, unparsed = parser.parse_known_args()
     return args, unparsed
@@ -319,21 +320,34 @@ def show_list(L):
     print_line(line)
     print("")
 
+def show_node(subtree):
+    """Write out the given plan subtree"""
+    for partition in ["val", "train"]:
+        partition_sets = len(subtree[partition])
+        print("%s_sets: %i" % (partition, partition_sets))
+        for index in range(0, len(subtree[partition])):
+            print("index: %i" % index)
+            dataset = subtree[partition][index]
+            for key in ["CELL", "DRUG"]:
+                if key not in dataset:
+                    continue
+                partition_keys = dataset[key]
+                print("%s %ss: count: %i" %
+                      (partition, key, len(partition_keys)))
+                show_list(partition_keys)
+
 
 def show(args):
     """Simply show the entry for this node"""
     if args.node is None:
         print("Provide a node to show!")
         exit(1)
-    plan_dict = read_plan(args.plan, args.node)
-    # print(str(plan_dict))
-    val_cells = plan_dict['val'][0]['cell']
-    print("val cells: count: %i" % len(val_cells))
-    show_list(val_cells)
-    train_cells = plan_dict['train'][0]['cell']
-    print("train cells: count: %i" % len(train_cells))
-    show_list(train_cells)
-
+    # Get the plan subtree for the given node
+    subtree = read_plan(args.plan, args.node)
+    if args.raw:
+        print(str(subtree))
+    print("node: " + args.node)
+    show_node(subtree)
 
 if __name__ == '__main__':
     parsed, unparsed = parse_arguments()
