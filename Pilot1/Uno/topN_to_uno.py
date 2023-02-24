@@ -26,6 +26,7 @@ def parse_arguments():
                         help='output filename')
     parser.add_argument('--show', action='store_true', help='Simply show the plan node')
     parser.add_argument('--raw', action='store_true', help='With --show, also show raw JSON')
+    parser.add_argument('--convert', help='Convert JSON to text format')
 
     args, unparsed = parser.parse_known_args()
     return args, unparsed
@@ -286,17 +287,17 @@ def build_dataframe(args):
     store.close()
 
 
-def print_line(line):
+def print_line(line, fp_out):
     """line: list of str"""
     if len(line) == 0:
         return
     # Indent
-    print("  ", end="")
+    print("  ", end="", file=fp_out)
     text = " ".join(line)
-    print(text)
+    print(text, file=fp_out)
 
 
-def show_list(L):
+def show_list(L, fp_out):
     """
     Show list entries in indented 70-character lines,
     ending on blank line
@@ -312,33 +313,34 @@ def show_list(L):
         n = len(s) + 1
         c += n
         if c > limit:
-            print_line(line)
+            print_line(line, fp_out)
             line.clear()
             c = len(s)
         line.append(s)
 
-    print_line(line)
-    print("")
+    print_line(line, fp_out)
+    print("", file=fp_out)
 
 
-def show_node(subtree):
+def show_node(subtree, fp_out):
     """Write out the given plan subtree"""
     for partition in ["val", "train"]:
         partition_sets = len(subtree[partition])
-        print("%s_sets: %i" % (partition, partition_sets))
+        print("%s_sets: %i" % (partition, partition_sets), file=fp_out)
         for index in range(0, len(subtree[partition])):
-            print("index: %i" % index)
+            print("index: %i" % index, file=fp_out)
             dataset = subtree[partition][index]
             for key in ["CELL", "DRUG"]:
                 if key not in dataset:
                     continue
                 partition_keys = dataset[key]
                 print("%s %ss: count: %i" %
-                      (partition, key, len(partition_keys)))
-                show_list(partition_keys)
+                      (partition, key, len(partition_keys)),
+                      file=fp_out)
+                show_list(partition_keys, fp_out)
 
 
-def show(args):
+def show(args, fp_out):
     """Simply show the entry for this node"""
     if args.node is None:
         print("Provide a node to show!")
@@ -346,13 +348,47 @@ def show(args):
     # Get the plan subtree for the given node
     subtree = read_plan(args.plan, args.node)
     if args.raw:
-        print(str(subtree))
-    print("node: " + args.node)
-    show_node(subtree)
+        print(str(subtree), file=fp_out)
+    print("node: " + args.node, file=fp_out)
+    show_node(subtree, fp_out)
+
+
+def show_metadata(node, fp_out):
+    print("metadata:", file=fp_out)
+    for key in node:
+        print("%s: %s" % (key, str(node[key])), file=fp_out)
+    print("", file=fp_out)
+
+
+def convert_all(tree, fp_out):
+    for node in tree.keys():
+        if node == "1":
+            show_metadata(tree[node], fp_out)
+            continue
+        print("node: " + node, file=fp_out)
+        show_node(tree[node], fp_out)
+
+
+def convert(args):
+    output = args.convert
+    if output == "-":
+        print("converting to: stdout")
+        fp_out = sys.stdout
+    else:
+        print("converting to: " + output)
+        fp_out = open(output, "w")
+    # Get the full tree:
+    tree = read_plan(args.plan, None)
+    convert_all(tree, fp_out)
+    if output != "-":
+        fp_out.close()
+
 
 if __name__ == '__main__':
     parsed, unparsed = parse_arguments()
     if parsed.show:
-        show(parsed)
+        show(parsed, sys.stdout)
+    elif parsed.convert is not None:
+        convert(parsed)
     else:
         build_dataframe(parsed)
