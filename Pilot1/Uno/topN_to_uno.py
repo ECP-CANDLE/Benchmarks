@@ -320,6 +320,7 @@ def show_list(L):
     print_line(line)
     print("")
 
+
 def show_node(subtree):
     """Write out the given plan subtree"""
     for partition in ["val", "train"]:
