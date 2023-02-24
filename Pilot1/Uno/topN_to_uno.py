@@ -4,8 +4,6 @@ import sys
 import time
 import json
 from collections import OrderedDict
-import pandas as pd
-import numpy as np
 
 
 def parse_arguments():
@@ -26,6 +24,7 @@ def parse_arguments():
                         help='Plain text list for drug feature filtering. one item per line')
     parser.add_argument('--output', type=str, default='topN.uno.h5',
                         help='output filename')
+    parser.add_argument('--show', action='store_true', help='Simply show the plan node')
 
     args, unparsed = parser.parse_known_args()
     return args, unparsed
@@ -36,11 +35,14 @@ def read_plan(filename, node):
     with open(filename, 'r') as plan_file:
         plan = json.load(plan_file)
         if node is None:
-            return plan
-        if node in plan:
-            return plan[node]
+            result = plan
+        elif node in plan:
+            result = plan[node]
         else:
             raise Exception('Node index "{}" was not found in plan file'.format(node))
+    print("read_plan(): done.")
+    return result
+
 
 class topN_NoDataException(Exception):
     pass
@@ -60,16 +62,16 @@ def build_masks(args, df):
 
     for partition in ['train', 'val']:
         _mask = df['Sample'] == None  # noqa Should keep == operator here. This is a pandas operation.
-        for i in range(len(ids[partition]['cell'])):
-            if 'cell' in ids[partition] and 'drug' in ids[partition]:
-                cl_filter = ids[partition]['cell'][i]
-                dr_filter = ids[partition]['drug'][i]
-                __mask = df['Sample'].isin(cl_filter) & df['Drug1'].isin(dr_filter)
-            elif 'cell' in ids[partition]:
-                cl_filter = ids[partition]['cell'][i]
+        for i in range(len(ids[partition]['CELL'])):
+            if 'CELL' in ids[partition] and 'DRUG' in ids[partition]:
+                cl_filter = ids[partition]['CELL'][i]
+                dr_filter = ids[partition]['DRUG'][i]
+                __mask = df['Sample'].isin(cl_filter) & df['DRUG1'].isin(dr_filter)
+            elif 'CELL' in ids[partition]:
+                cl_filter = ids[partition]['CELL'][i]
                 __mask = df['Sample'].isin(cl_filter)
-            elif 'drug' in ids[partition]:
-                dr_filter = ids[partition]['drug'][i]
+            elif 'DRUG' in ids[partition]:
+                dr_filter = ids[partition]['DRUG'][i]
                 __mask = df['Drug1'].isin(dr_filter)
             _mask = _mask | __mask
         mask[partition] = _mask
@@ -84,17 +86,18 @@ def build_masks_w_holdout(args, df):
 
     print('from new build_mask: {} {} {}'.format(args.plan, args.node, args.incremental))
     import plangen
-    plan = read_plan(args.plan, None)
+    plan = read_plan(args.plan, args.node)
+
     ids = {}
     mask = {}
-    # Dicts  {'cell': [[CCL_510, CCL_577, ...]]} :
+    # Dicts  {'CELL': [[CCL_510, CCL_577, ...]]} :
     _, _, ids['train'], ids['val'] = plangen.get_subplan_features(plan, args.node, args.incremental)
     if ids['train'] == None:
         print("topN: get_subplan_features() returned None!")
         raise topN_NoDataException()
 
-    print("cell lines in plan for %s: ids train len: " % args.node +
-          str(len(ids['train']['cell'][0])))
+    print("CELL lines in plan for %s: ids train len: " % args.node +
+          str(len(ids['train']['CELL'][0])))
 
     # holdout
     from sklearn.model_selection import ShuffleSplit
@@ -124,19 +127,19 @@ def build_masks_w_holdout(args, df):
 
     for partition in ['train', 'val']:
         _mask = df['Sample'] == None  # noqa Should keep == operator here. This is a pandas operation.
-        for i in range(len(ids[partition]['cell'])):
+        for i in range(len(ids[partition]['CELL'])):
             print("i: %i" % i)
 
-            if 'cell' in ids[partition] and 'drug' in ids[partition]:
+            if 'CELL' in ids[partition] and 'drug' in ids[partition]:
                 print("IF CD")
-                cl_filter = ids[partition]['cell'][i]
+                cl_filter = ids[partition]['CELL'][i]
                 dr_filter = ids[partition]['drug'][i]
                 __mask = df_new['Sample'].isin(cl_filter) & \
                          df_new['Drug1'].isin(dr_filter)
 
-            elif 'cell' in ids[partition]:
+            elif 'CELL' in ids[partition]:
                 print("IF C.")
-                cl_filter = ids[partition]['cell'][i]
+                cl_filter = ids[partition]['CELL'][i]
                 __mask = df_new['Sample'].isin(cl_filter)
             elif 'drug' in ids[partition]:
                 print("IF D.")
@@ -148,11 +151,14 @@ def build_masks_w_holdout(args, df):
 
 
 def get_random_mask(df):
+    import numpy as np
     return np.random.rand(len(df)) < 0.8
 
 
 def read_dataframe(args):
     print("in read_dataframe") ; sys.stdout.flush()
+    import pandas as pd
+
     _, ext = os.path.splitext(args.dataframe_from)
     if ext == '.h5' or ext == '.hdf5':
         print("HDFStore r " + str(args.dataframe_from))
@@ -198,6 +204,7 @@ def read_dataframe(args):
 
 def build_dataframe(args):
     print("read_dataframe") ; sys.stdout.flush()
+    import pandas as pd
     df_y, df_cl, df_dd = read_dataframe(args)
     print("read_dataframe OK") ; sys.stdout.flush()
 
@@ -224,7 +231,7 @@ def build_dataframe(args):
         x_test_0 = df_cl.iloc[~df_cl.index.isin(tr_vl_idx), :].reset_index(drop=True)
         x_test_1 = df_dd.iloc[~df_dd.index.isin(tr_vl_idx), :].reset_index(drop=True)
         x_test_1.columns = [''] * len(x_val_1.columns)
-    else:
+    else:  # args.fold is None
         # train_mask, val_mask = build_masks(args, df_y)
         train_mask, val_mask, test_mask = build_masks_w_holdout(args, df_y)
         print(str(train_mask))
@@ -278,6 +285,56 @@ def build_dataframe(args):
     store.close()
 
 
+def print_line(line):
+    """line: list of str"""
+    if len(line) == 0:
+        return
+    # Indent
+    print("  ", end="")
+    text = " ".join(line)
+    print(text)
+
+
+def show_list(L):
+    """
+    Show list entries in indented 70-character lines,
+    ending on blank line
+    """
+    limit = 70
+    # Current character in line:
+    c = 0
+
+    line = []
+    for entry in L:
+        s = str(entry)
+        # Include space between last entry and this one
+        n = len(s) + 1
+        c += n
+        if c > limit:
+            print_line(line)
+            line.clear()
+            c = len(s)
+        line.append(s)
+
+    print_line(line)
+    print("")
+
+
+def show(args):
+    """Simply show the entry for this node"""
+    plan_dict = read_plan(args.plan, args.node)
+    print(str(plan_dict))
+    val_cells = plan_dict['val'][0]['cell']
+    print("val cells: count: %i" % len(val_cells))
+    show_list(val_cells)
+    train_cells = plan_dict['train'][0]['cell']
+    print("train cells: count: %i" % len(train_cells))
+    show_list(train_cells)
+
+
 if __name__ == '__main__':
     parsed, unparsed = parse_arguments()
-    build_dataframe(parsed)
+    if parsed.show:
+        show(parsed)
+    else:
+        build_dataframe(parsed)
