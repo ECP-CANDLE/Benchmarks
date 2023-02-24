@@ -322,8 +322,11 @@ def show_list(L):
 
 def show(args):
     """Simply show the entry for this node"""
+    if args.node is None:
+        print("Provide a node to show!")
+        exit(1)
     plan_dict = read_plan(args.plan, args.node)
-    print(str(plan_dict))
+    # print(str(plan_dict))
     val_cells = plan_dict['val'][0]['cell']
     print("val cells: count: %i" % len(val_cells))
     show_list(val_cells)
