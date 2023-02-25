@@ -1,4 +1,5 @@
 [Global_Params]
+model_name='uno'
 train_sources=['CCLE']
 test_sources=['train']
 cell_types=None
