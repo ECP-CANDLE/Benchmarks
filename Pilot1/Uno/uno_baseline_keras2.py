@@ -19,12 +19,8 @@ from tensorflow.keras.callbacks import Callback, ModelCheckpoint, ReduceLROnPlat
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from scipy.stats.stats import pearsonr
 
-print("IMPORT UNO")
 import uno as benchmark
-print("IMPORTED UNO")
-print("IMPORT CANDLE")
 import candle
-print("IMPORTED CANDLE")
 
 import uno_data
 from uno_data import CombinedDataLoader, CombinedDataGenerator, DataFeeder
