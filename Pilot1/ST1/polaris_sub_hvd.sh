@@ -1,7 +1,14 @@
 #!/bin/bash
-
-module load conda/2022-09-08
-conda activate
+#PBS -N st_hvd
+#PBS -l select=2
+#PBS -l walltime=24:00:00
+#PBS -q preemptable
+#PBS -l filesystems=grand
+#PBS -A datascience
+#PBS -o logs/
+#PBS -e logs/
+#PBS -m abe
+#PBS -M avasan@anl.gov
 
 DATA_PATH=/grand/datascience/avasan/ST_Benchmarks/Data/1M-flatten
 
@@ -29,3 +36,4 @@ else
     mpiexec --np $NP -ppn $PPN --cpu-bind verbose,list:0,1,2,3,4,5,6,7 -env NCCL_COLLNET_ENABLE=1 -env NCCL_NET_GDR_LEVEL=PHB python smiles_regress_transformer_run_hvd.py  --in_train ${DATA_PATH}/${TFIL} --in_vali ${DATA_PATH}/${VFIL} --ep $EP --num_heads $NUMHEAD --DR_TB $DR_TB --DR_ff $DR_ff --activation $ACT --drop_post_MHA $DROP --lr $LR --loss_fn $LOSS --hvd_switch $HVDSWITCH > $OUT
 
 fi
+
