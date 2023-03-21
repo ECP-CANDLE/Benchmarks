@@ -269,3 +269,41 @@ Current time ....23512.750
 ```
 python uno_infer.py --data All.h5 --model_file model.h5 --n_pred 30
 ```
+
+## top21 Plans
+
+Top21 plans may be generated in JSON format with `plangen.py`.
+
+JSON plans may be converted to a TXT format via
+`topN_to_uno.py --convert`
+
+The TXT format is (comments are not actually supported yet).
+
+```
+metadata:
+key1: value1   # Some number of key value pairs
+key2: value2
+...
+
+node: <NODE ID>  # Some NODE ID, e.g., 1.2.3
+val_sets: 1  # Number of validation sets
+index: 0     # The current validation set index
+val CELLS: count: 175   # Number of CELLs in validation set
+  CCL_100 CCL_1000 CCL_1001 CCL_1002   # CCLs up till blank line
+  CCL_1013 CCL_1016 CCL_1017 CCL_1020
+
+train_sets: 3  # Number of training sets
+index: 0     # The current training set index
+train CELLs: count: <N> # Number of CELLs in training set
+     ...    # CCLs as above
+
+index: 1
+train CELLS: count: <N>
+     ...    # CCLs as above
+
+node: <NODE ID>  # Start next node...
+
+```
+
+The TXT format is much faster to load and search with, e.g.,
+`get-node-txt.sh`.
