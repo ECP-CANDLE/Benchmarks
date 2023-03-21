@@ -42,3 +42,4 @@ use_sample_weight = False
 sample_weight_type = 'linear'
 [Monitor Params]
 timeout = 36000
+batch_log=False

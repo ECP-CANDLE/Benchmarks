@@ -14,11 +14,13 @@ matplotlib.use('Agg')
 # import matplotlib.pyplot as plt
 
 import tensorflow as tf
+options = tf.profiler.experimental.ProfilerOptions(host_tracer_level = 3, python_tracer_level = 1, device_tracer_level = 1)
+import time
 
 from tensorflow import keras
 from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau, EarlyStopping, TensorBoard
 from tensorflow.keras import layers
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.preprocessing import text
@@ -31,6 +33,10 @@ psr = argparse.ArgumentParser(description='input csv file')
 psr.add_argument('--in_train', default='in_train')
 psr.add_argument('--in_vali', default='in_vali')
 psr.add_argument('--ep', type=int, default=400)
+psr.add_argument('--profiler', type=bool, default=False)
+psr.add_argument('--prof_dir', default="profile_data")
+psr.add_argument('--batch_log', default=False)
+
 args = vars(psr.parse_args())
 print(args)
 
@@ -41,6 +47,61 @@ data_path_train = args['in_train']
 data_path_vali = args['in_vali']
 
 DR = 0.1      # Dropout rate
+
+class MyCallBack(keras.callbacks.Callback):
+    def __init__(self, args):
+        super( ).__init__()
+        self.batchsize = BATCH
+        self.logfreq = 10
+        self.batch_begin_time = 0
+        self.batch_end_time = 0
+        self.max_speed = 0
+        self.epoch_time = 0
+        self.train_time = 0
+        self.args = args
+        #self.batch_log = args.batch_log
+
+    def on_batch_begin(self, batch, logs=None):
+        if batch == 10 and self.args['profiler'] is not None and self.args['profiler'] is True:
+            tf.profiler.experimental.start(self.args['prof_dir'], options = options)
+        if batch%self.logfreq == 0:
+            self.batch_begin_time = time.time()
+        self.batch_begin_time = time.time()
+
+    def on_batch_end(self, batch, logs=None):
+        self.epoch_batch_count += 1
+        self.train_batch_count += 1
+        self.batch_time = time.time() - self.batch_begin_time
+        self.epoch_time += self.batch_time
+        if batch == 10 and self.args['profiler'] is not None and self.args['profiler'] is True:
+           tf.profiler.experimental.stop()
+           sys.exit()
+
+        if batch%self.logfreq == 0:
+            self.batch_speed = self.batchsize/self.batch_time
+            if self.batch_speed > self.max_speed :
+                self.max_speed = self.batch_speed
+        print ( f"batch {batch} time(s) {round(self.batch_time,6)} throughput(samples/sec): {round(self.batch_speed,3)}")
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self.epoch_batch_count = 0
+        self.epoch_begin_time = time.time()
+        self.epoch_time = 0
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.train_time += self.epoch_time
+        self.epoch_avg_speed = self.epoch_batch_count*self.batchsize/self.epoch_time
+        print (f"epoch {epoch} time (s):", round (self.epoch_time, 3), " throughput(samples/sec):", round (self.epoch_avg_speed, 3))
+
+    def on_train_begin(self, logs=None):
+        self.train_batch_count = 0
+        self.train_begin_time = time.time()
+        self.train_time = 0
+
+    def on_train_end(self, logs=None):
+        speed_train = (self.batchsize * self.train_batch_count) / self.train_time
+        print ("Total train time(s) :" , round ( self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize,  " throughput(samples/sec) ( avg, max): ", round(speed_train,3), round(self.max_speed,3) )
+
 
 # define r2 for reporting
 
@@ -169,11 +230,20 @@ csv_logger = CSVLogger('smile_class.training.log')
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.75, patience=20, verbose=1, mode='auto', epsilon=0.0001, cooldown=3, min_lr=0.000000001)
 early_stop = EarlyStopping(monitor='val_loss', patience=100, verbose=1, mode='auto')
 
+callbacks=[checkpointer, csv_logger, reduce_lr, early_stop]
+
+if args['profiler'] is not None and args['profiler'] is True:
+    tensorboard = TensorBoard(log_dir=args['prof_dir'])
+    callbacks.append(tensorboard)
+
+my_hook = MyCallBack(args)
+callbacks.append(my_hook)
+
 history = model.fit(x_train, y_train,
                     batch_size=BATCH,
                     epochs=EPOCH,
                     verbose=1,
                     validation_data=(x_val, y_val),
-                    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
+                    callbacks=callbacks)
 
 model.load_weights('smile_class.autosave.model.h5')

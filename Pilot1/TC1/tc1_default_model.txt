@@ -17,3 +17,4 @@ classes=36
 feature_subsample=0
 pool=[1, 10]
 output_dir='.'
+batch_log=False

@@ -35,6 +35,10 @@ psr = argparse.ArgumentParser(description='input agg csv file')
 psr.add_argument('--in', default='in_file')
 psr.add_argument('--ep', type=int, default=400)
 psr.add_argument('--save_dir', default=".")
+psr.add_argument('--profiler', type=bool, default=False)
+psr.add_argument('--prof_dir', default="prof")
+psr.add_argument('--batch_log', default=False)
+
 args = vars(psr.parse_args())
 if not args['save_dir'].endswith('/'):
     args['save_dir'] = args['save_dir'] + '/'
@@ -45,7 +49,6 @@ BATCH = 32
 nb_classes = 2
 
 data_path = args['in']
-
 # df_toss = (pd.read_csv(data_path,nrows=1).values)
 
 # print('df_toss:', df_toss.shape)
@@ -60,6 +63,65 @@ data_path = args['in']
 DR = 0.2      # Dropout rate
 
 tf.compat.v1.disable_eager_execution()
+
+from tensorflow import keras
+import time
+import sys
+options = tf.profiler.experimental.ProfilerOptions(host_tracer_level = 3, python_tracer_level = 1, device_tracer_level = 1)
+
+class MyCallBack(keras.callbacks.Callback):
+  def __init__(self, args):
+    super( ).__init__()
+    self.batchsize = BATCH
+    self.logfreq = 10
+    self.batch_begin_time = 0
+    self.batch_end_time = 0
+    self.max_speed = 0
+    self.epoch_time = 0
+    self.train_time = 0
+    self.batch_log = args['batch_log']
+    self.args = args
+
+  def on_batch_begin(self, batch, logs=None):
+    self.batch_begin_time = time.time()
+    if batch == 100 and self.args['profiler'] is not None and self.args['profiler'] is True:
+        tf.profiler.experimental.start(self.args['prof_dir'], options = options)
+
+  def on_batch_end(self, batch, logs=None):
+    if batch == 0:
+      return
+    self.epoch_batch_count += 1
+    self.train_batch_count += 1
+    self.batch_time = time.time() - self.batch_begin_time
+    self.epoch_time += self.batch_time
+
+    self.batch_speed = self.batchsize/self.batch_time
+    if self.batch_speed > self.max_speed :
+        self.max_speed = self.batch_speed
+    if self.batch_log is not None and self.batch_log is True:
+        print ( f"\r\nbatch {batch} time(s) {round(self.batch_time,6)} throughput(samples/sec): {round(self.batch_speed,3)}", flush=True)
+    if batch == 100 and self.args['profiler'] is not None and self.args['profiler'] is True:
+       tf.profiler.experimental.stop()
+       sys.exit()
+
+  def on_epoch_begin(self, epoch, logs=None):
+    self.epoch_batch_count = 0
+    self.epoch_time = 0
+    self.epoch_begin_time = time.time()
+
+  def on_epoch_end(self, epoch, logs=None):
+    self.train_time += self.epoch_time
+    self.epoch_avg_speed = self.epoch_batch_count*self.batchsize/self.epoch_time
+    print (f"\r\nepoch {epoch} time (s):", round (self.epoch_time, 3), " throughput(samples/sec):", round (self.epoch_avg_speed, 3), flush=True)
+
+  def on_train_begin(self, logs=None):
+    self.train_batch_count = 0
+    self.train_time = 0
+    self.train_begin_time = time.time()
+
+  def on_train_end(self, logs=None):
+    speed_train = (self.batchsize * self.train_batch_count) / self.train_time
+    print ("\r\nTotal train time(s) :" , round ( self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize,  " throughput(samples/sec) ( avg, max): ", round(speed_train,3), round(self.max_speed,3),flush=True)
 
 
 def r2(y_true, y_pred):
@@ -214,11 +276,17 @@ model.compile(loss='categorical_crossentropy',
               metrics=['acc', tf_auc])
 
 # set up a bunch of callbacks to do work during model training
-
 checkpointer = ModelCheckpoint(filepath=args['save_dir'] + 'Agg_attn_bin.autosave.model.h5', verbose=1, save_weights_only=False, save_best_only=True)
 csv_logger = CSVLogger(args['save_dir'] + 'Agg_attn_bin.training.log')
 reduce_lr = ReduceLROnPlateau(monitor='val_tf_auc', factor=0.20, patience=40, verbose=1, mode='auto', min_delta=0.0001, cooldown=3, min_lr=0.000000001)
 early_stop = EarlyStopping(monitor='val_tf_auc', patience=200, verbose=1, mode='auto')
+
+my_hook = MyCallBack(args)
+callbacks=[checkpointer, csv_logger, reduce_lr, early_stop, my_hook]
+
+if args['profiler'] is not None and args['profiler'] is True:
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=args['prof_dir'])
+    callbacks.append(tensorboard_callback)
 
 # history = parallel_model.fit(X_train, Y_train,
 history = model.fit(X_train, Y_train, class_weight=d_class_weights,
@@ -226,7 +294,7 @@ history = model.fit(X_train, Y_train, class_weight=d_class_weights,
                     epochs=EPOCH,
                     verbose=1,
                     validation_data=(X_val, Y_val),
-                    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
+                    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop, my_hook])
 
 score = model.evaluate(X_test, Y_test, verbose=0)
 

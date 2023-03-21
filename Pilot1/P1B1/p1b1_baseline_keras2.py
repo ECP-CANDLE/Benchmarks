@@ -24,8 +24,61 @@ mpl.use('Agg')
 
 import p1b1
 import candle
+import tensorflow as tf
+import time
 
 np.set_printoptions(precision=4)
+
+class MyCallBack(keras.callbacks.Callback):
+  def __init__(self, params):
+    super( ).__init__()
+    self.batchsize = params['batch_size']
+    self.logfreq = 100
+    self.batch_begin_time = 0
+    self.batch_end_time = 0
+    self.max_speed = 0
+    self.epoch_time = 0
+    self.train_time = 0
+    self.batch_log = params['batch_log']
+
+  def on_batch_begin(self, batch, logs=None):
+    if batch%self.logfreq == 0:
+        self.batch_begin_time = time.time()
+
+    self.batch_begin_time = time.time()
+
+  def on_batch_end(self, batch, logs=None):
+    self.epoch_batch_count += 1
+    self.train_batch_count += 1
+    self.batch_time = time.time() - self.batch_begin_time
+    self.epoch_time += self.batch_time
+
+    if batch%self.logfreq == 0:
+        self.batch_speed = self.batchsize/self.batch_time
+        if self.batch_speed > self.max_speed :
+            self.max_speed = self.batch_speed
+
+    if self.batch_log is not None and self.batch_log is True:
+        print ( f"batch {batch} time(s) {round(self.batch_time,6)} throughput(samples/sec): {round(self.batch_speed,3)}")
+
+  def on_epoch_begin(self, epoch, logs=None):
+    self.epoch_batch_count = 0
+    self.epoch_begin_time = time.time()
+    self.epoch_time = 0
+
+  def on_epoch_end(self, epoch, logs=None):
+    self.train_time += self.epoch_time
+    self.epoch_avg_speed = self.epoch_batch_count*self.batchsize/self.epoch_time
+    print (f"epoch {epoch} time (s):", round (self.epoch_time, 3), " throughput(samples/sec):", round (self.epoch_avg_speed, 3))
+
+  def on_train_begin(self, logs=None):
+    self.train_batch_count = 0
+    self.train_begin_time = time.time()
+    self.train_time = 0
+
+  def on_train_end(self, logs=None):
+    speed_train = (self.batchsize * self.train_batch_count) / self.train_time
+    print ("Total train time(s) :" , round ( self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize,  " throughput(samples/sec) ( avg, max): ", round(speed_train,3), round(self.max_speed,3) )
 
 
 def covariance(x, y):
@@ -342,6 +395,9 @@ def run(params):
     outputs = x_train
     val_outputs = x_val
     # test_outputs = x_test
+
+    my_hook = MyCallBack(params)
+    callbacks.append(my_hook)
 
     history = model.fit(inputs, outputs,
                         verbose=2,

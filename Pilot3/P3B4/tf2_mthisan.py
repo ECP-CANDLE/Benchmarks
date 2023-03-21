@@ -22,13 +22,15 @@ class mthisan(object):
     class mthisan_model(Model):
 
         def __init__(self, embedding_matrix, num_classes, attention_size,
-                     attention_heads):
+                     attention_heads, profiler, prof_dir):
 
             super(mthisan.mthisan_model, self).__init__()
             mixed_precision.set_global_policy('mixed_float16')
             self.attention_size = attention_size
             self.attention_heads = attention_heads
             self.training = False
+            self.profiler = profiler
+            self.prof_dir = prof_dir
 
             self.embedding = layers.Embedding(embedding_matrix.shape[0],
                                               embedding_matrix.shape[1],
@@ -157,7 +159,7 @@ class mthisan(object):
             return tf.transpose(x, perm=[0, 2, 1, 3])
 
     def __init__(self, embedding_matrix, num_classes, max_sents=201, max_words=15,
-                 attention_heads=8, attention_size=400):
+                 attention_heads=8, attention_size=400, profiler=False, prof_dir='profile_data'):
 
         self.ms = max_sents
         self.mw = max_words
@@ -166,12 +168,14 @@ class mthisan(object):
         self.num_tasks = len(num_classes)
         self.vocab_size = embedding_matrix.shape[0]
         self.model = self.mthisan_model(
-            embedding_matrix, num_classes, attention_size, attention_heads)
+            embedding_matrix, num_classes, attention_size, attention_heads, profiler, prof_dir)
         self.loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
             from_logits=True)
         self.optimizer = tf.keras.optimizers.Adam(
             0.0001, 0.9, 0.99, 1e-08, False)
         # self.optimizer = tf.train.experimental.enable_mixed_precision_graph_rewrite(self.optimizer)
+        self.profiler = profiler
+        self.prof_dir = prof_dir
 
     @tf.function
     def _train_step(self, text, labels):
@@ -236,7 +240,16 @@ class mthisan(object):
             start_time = time.time()
 
             # train
-            for start in range(0, len(data), batch_size):
+            data_len = len(data)
+
+            if self.profiler is not None and self.profiler is True:
+                tf.profiler.experimental.start(self.prof_dir)
+                data_len = 192
+
+            epoch_time = 0
+            epoch_batch_count = 0
+
+            for start in range(0, data_len, batch_size):
 
                 # get batch index
                 if start + batch_size < len(data):
@@ -244,9 +257,15 @@ class mthisan(object):
                 else:
                     stop = len(data)
 
-                # train step
+                batch_begin_time = time.time()
                 predictions, loss = self._train_step(data[start:stop],
                                                      np.array([lIndex[start:stop] for lIndex in labels]))
+                batch_time = time.time() - batch_begin_time
+                epoch_time += batch_time
+                epoch_batch_count += 1
+                batch_speed = batch_size/batch_time
+                #if self.batch_log is not None and self.batch_log is True:
+                #    print(f"\r\nbatch time(s) {round(batch_time,6)} throughput(samples/sec): {round(batch_speed,3)}", flush=True)
 
                 # track correct predictions
                 for i, (p, lIndex) in enumerate(zip(predictions, [lIndex[start:stop] for lIndex in labels])):
@@ -256,9 +275,13 @@ class mthisan(object):
                                  % (ep + 1, stop, len(data), loss))
                 sys.stdout.flush()
 
+            if self.profiler is not None and self.profiler is True:
+                tf.profiler.experimental.stop()
+
             # checkpoint after every epoch
             print("\ntraining time: %.2f" % (time.time() - start_time))
-
+            epoch_speed = (batch_size * epoch_batch_count) / epoch_time
+            print(f"\r\nepoch time (s):", round (epoch_time, 3), " throughput(samples/sec):", round (epoch_speed, 3), flush=True)
             for i in range(self.num_tasks):
                 micro = f1_score(y_trues[i], y_preds[i], average='micro')
                 macro = f1_score(y_trues[i], y_preds[i], average='macro')
@@ -294,9 +317,7 @@ class mthisan(object):
         self.model.training = False
 
         y_preds = [[] for c in self.num_classes]
-
         for start in range(0, len(data), batch_size):
-
             # get batch index
             if start + batch_size < len(data):
                 stop = start + batch_size
@@ -317,12 +338,15 @@ class mthisan(object):
     def score(self, data, labels, batch_size=128):
 
         self.model.training = False
-
         y_preds = [[] for c in self.num_classes]
         losses = []
 
-        for start in range(0, len(data), batch_size):
+        val_data_len = len(data)
 
+        if self.profiler is not None and self.profiler is True:
+            val_data_len = 0
+
+        for start in range(0, val_data_len, batch_size):
             # get batch index
             if start + batch_size < len(data):
                 stop = start + batch_size
@@ -403,7 +427,9 @@ if __name__ == "__main__":
     # train model
     model = mthisan(vocab, num_classes, int(np.ceil(max_words / 15) + 1), 15,
                     attention_heads, attention_size)
+
     model.train(X_train, y_trains, batch_size, epochs,
                 validation_data=(X_test, y_tests),
                 savebest=True, filepath='savedmodels/model.ckpt')
+
 #     model.load('savedmodels/model.ckpt')

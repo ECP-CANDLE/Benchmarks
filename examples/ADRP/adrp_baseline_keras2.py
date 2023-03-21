@@ -32,6 +32,56 @@ import candle
 
 np.set_printoptions(precision=4)
 
+from tensorflow import keras
+import time
+
+class MyCallBack(keras.callbacks.Callback):
+  def __init__(self, params):
+    super( ).__init__()
+    self.batchsize = params["batch_size"]
+    self.logfreq = 10
+    self.batch_begin_time = 0
+    self.batch_end_time = 0
+    self.max_speed = 0
+    self.epoch_time = 0
+    self.train_time = 0
+    self.batch_log = params["batch_log"]
+
+  def on_batch_begin(self, batch, logs=None):
+    self.batch_begin_time = time.time()
+
+  def on_batch_end(self, batch, logs=None):
+    if batch == 0:
+      return
+    self.epoch_batch_count += 1
+    self.train_batch_count += 1
+    self.batch_time = time.time() - self.batch_begin_time
+    self.epoch_time += self.batch_time
+
+    self.batch_speed = self.batchsize/self.batch_time
+    if self.batch_speed > self.max_speed :
+        self.max_speed = self.batch_speed
+    if self.batch_log is not None and self.batch_log is True:
+        print ( f"\r\nbatch {batch} time(s) {round(self.batch_time,6)} throughput(samples/sec): {round(self.batch_speed,3)}", flush=True)
+
+  def on_epoch_begin(self, epoch, logs=None):
+    self.epoch_batch_count = 0
+    self.epoch_time = 0
+    self.epoch_begin_time = time.time()
+
+  def on_epoch_end(self, epoch, logs=None):
+    self.train_time += self.epoch_time
+    self.epoch_avg_speed = self.epoch_batch_count*self.batchsize/self.epoch_time
+    print (f"\r\nepoch {epoch} time (s):", round (self.epoch_time, 3), " throughput(samples/sec):", round (self.epoch_avg_speed, 3), flush=True)
+
+  def on_train_begin(self, logs=None):
+    self.train_batch_count = 0
+    self.train_time = 0
+    self.train_begin_time = time.time()
+
+  def on_train_end(self, logs=None):
+    speed_train = (self.batchsize * self.train_batch_count) / self.train_time
+    print ("\r\nTotal train time(s) :" , round ( self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize,  " throughput(samples/sec) ( avg, max): ", round(speed_train,3), round(self.max_speed,3),flush=True)
 
 def r2(y_true, y_pred):
     SS_res = K.sum(K.square(y_true - y_pred))
@@ -423,6 +473,8 @@ def run(params):
     print(test_weight[:10, ])
 
     print("calling model.fit with epochs={}".format(epochs))
+    my_hook = MyCallBack(params)
+
     history = model.fit(
         X_train,
         Y_train,
@@ -431,7 +483,7 @@ def run(params):
         verbose=1,
         sample_weight=train_weight,
         validation_data=(X_test, Y_test, test_weight),
-        callbacks=[checkpointer, timeout_monitor, csv_logger, reduce_lr, early_stop],
+        callbacks=[checkpointer, timeout_monitor, csv_logger, reduce_lr, early_stop, my_hook],
     )
 
     print("Reloading saved best model")

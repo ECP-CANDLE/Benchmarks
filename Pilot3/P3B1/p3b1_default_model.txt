@@ -20,3 +20,4 @@ scaling = 'none'
 output_dir = '.'
 initialization = 'glorot_uniform'
 shuffle = True
+batch_log=False

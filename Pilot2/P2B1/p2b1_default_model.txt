@@ -18,3 +18,4 @@ data_set='3k_Ordered'
 sampling_density = 0.15
 save_path='.'
 backend = 'tensorflow'
+batch_log=False

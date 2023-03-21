@@ -15,3 +15,4 @@ emb_l2 = 0.001
 w_l2 = 0.01
 task_list = [0, 2, 3]
 task_names = ['site', 'laterality', 'histology', 'grade']
+batch_log=False

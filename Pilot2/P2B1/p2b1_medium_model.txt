@@ -16,3 +16,4 @@ dropout = 0.5
 l2_reg=0.01
 sampling_density = 0.15
 save_path='.'
+batch_log=False

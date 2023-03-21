@@ -16,3 +16,4 @@ primetext = 'Diagnosis'
 length = 1000
 do_sample = True
 verbose = True
+itexlstm=False

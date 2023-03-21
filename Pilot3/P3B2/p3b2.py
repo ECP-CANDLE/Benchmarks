@@ -31,6 +31,10 @@ additional_definitions = [
      'action': 'store',
      'type': int,
      'help': 'length of synthesized text'},
+    {'name': 'itexlstm',
+     'action': 'store',
+     'type': bool,
+     'help': 'Enable ITEX LSTM'},
 ]
 
 required = ['train_data', 'rnn_size', 'epochs', 'n_layers',

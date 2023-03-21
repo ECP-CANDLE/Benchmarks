@@ -24,16 +24,77 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
 
+import tensorflow as tf
+options = tf.profiler.experimental.ProfilerOptions(host_tracer_level = 3, python_tracer_level = 1, device_tracer_level = 1)
+
 import matplotlib as mpl
 mpl.use('Agg')
 
 import NCI60
 import combo
 import candle
+import time
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
+class MyCallBack(keras.callbacks.Callback):
+  def __init__(self, args):
+    super( ).__init__()
+    self.batchsize = args.batch_size
+    self.logfreq = 100
+    self.batch_begin_time = 0
+    self.batch_end_time = 0
+    self.max_speed = 0
+    self.epoch_time = 0
+    self.train_time = 0
+    self.args = args
+
+  def on_batch_begin(self, batch, logs=None):
+    if batch == 100 and self.args.profiler is not None and self.args.profiler is True:
+        tf.profiler.experimental.start(self.args.prof_dir, options = options)
+
+    if batch%self.logfreq == 0:
+        self.batch_begin_time = time.time()
+
+    self.batch_begin_time = time.time()
+
+  def on_batch_end(self, batch, logs=None):
+    self.epoch_batch_count += 1
+    self.train_batch_count += 1
+    self.batch_time = time.time() - self.batch_begin_time
+    self.epoch_time += self.batch_time
+
+    if batch == 100 and self.args.profiler is not None and self.args.profiler is True:
+       tf.profiler.experimental.stop()
+       sys.exit()
+
+    if batch%self.logfreq == 0:
+        self.batch_speed = self.batchsize/self.batch_time
+        if self.batch_speed > self.max_speed :
+            self.max_speed = self.batch_speed
+
+    if self.args.batch_log is not None and self.args.batch_log is True:
+        print ( f"batch {batch} time(s) {round(self.batch_time,6)} throughput(samples/sec): {round(self.batch_speed,3)}")
+
+  def on_epoch_begin(self, epoch, logs=None):
+    self.epoch_batch_count = 0
+    self.epoch_begin_time = time.time()
+    self.epoch_time = 0
+
+  def on_epoch_end(self, epoch, logs=None):
+    self.train_time += self.epoch_time
+    self.epoch_avg_speed = self.epoch_batch_count*self.batchsize/self.epoch_time
+    print (f"epoch {epoch} time (s):", round (self.epoch_time, 3), " throughput(samples/sec):", round (self.epoch_avg_speed, 3))
+
+  def on_train_begin(self, logs=None):
+    self.train_batch_count = 0
+    self.train_begin_time = time.time()
+    self.train_time = 0
+
+  def on_train_end(self, logs=None):
+    speed_train = (self.batchsize * self.train_batch_count) / self.train_time
+    print ("Total train time(s) :" , round ( self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize,  " throughput(samples/sec) ( avg, max): ", round(speed_train,3), round(self.max_speed,3) )
 
 def verify_path(path):
     folder = os.path.dirname(path)
@@ -708,8 +769,11 @@ def run(params):
             callbacks.append(warmup_lr)
         if args.cp:
             callbacks.append(checkpointer)
-        if args.tb:
+        if args.profiler is not None and args.profiler is True:
             callbacks.append(tensorboard)
+
+        my_hook = MyCallBack(args)
+        callbacks.append(my_hook)
 
         if args.gen:
             history = model.fit_generator(train_gen, train_steps,
@@ -726,6 +790,7 @@ def run(params):
             y_shuf = np.random.permutation(y_val)
             log_evaluation(evaluate_prediction(y_val, y_shuf),
                            description='Between random pairs in y_val:')
+
             history = model.fit(x_train_list, y_train,
                                 batch_size=args.batch_size,
                                 shuffle=args.shuffle,

@@ -88,7 +88,19 @@ additional_definitions = [
     {'name': 'exclude_drugs',
      'nargs': '+',
      'default': [],
-     'help': "drug line IDs to exclude"}
+     'help': "drug line IDs to exclude"},
+    {'name': 'profiler',
+        'type': bool,
+        'default': None,
+        'help': 'Enable new TF Profiler'},
+    {'name': 'prof_dir',
+        'type': str,
+        'default': './profile-data',
+        'help': 'Directory name for the TF-profiling data'},
+    {'name': 'batch_log',
+        'type': bool,
+        'default': None,
+        'help': 'Enable throughput logging information for each batch'}
 ]
 
 required = ['activation', 'batch_size', 'dense', 'dense_feature_layers', 'dropout',

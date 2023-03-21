@@ -19,3 +19,4 @@ classes = 2
 output_dir = '.'
 add_noise = False
 timeout = 7200
+batch_log=False

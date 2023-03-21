@@ -33,7 +33,19 @@ additional_definitions = [
      'type': int},
     {'name': 'wv_len',
      'action': 'store',
-     'type': int}
+     'type': int},
+    {'name': 'profiler',
+        'type': bool,
+        'default': None,
+        'help': 'Enable new TF Profiler'},
+    {'name': 'prof_dir',
+        'type': str,
+        'default': './',
+        'help': 'Directory name for the TF-profiling data'},
+    {'name': 'batch_log',
+        'type': bool,
+        'default': None,
+        'help': 'Enable throughput logging information for each batch'}
 ]
 
 required = [

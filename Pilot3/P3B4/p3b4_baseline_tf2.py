@@ -87,7 +87,8 @@ def run(gParameters):
     # train model
     model = mthisan(vocab, num_classes, max_lines, max_words,
                     attention_heads=attention_heads,
-                    attention_size=attention_size)
+                    attention_size=attention_size,
+                    profiler=gParameters['profiler'], prof_dir=gParameters['prof_dir'])
 
     ret = model.train(X_train,
                       y_trains,

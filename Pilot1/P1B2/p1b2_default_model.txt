@@ -19,3 +19,4 @@ rng_seed=2017
 initialization='glorot_uniform'
 save_path='save'
 shuffle = True
+batch_log=False

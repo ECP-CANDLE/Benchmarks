@@ -23,7 +23,68 @@ import p1b3 as benchmark
 import candle
 import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
+import time
+import sys
+from tensorflow import keras
+options = tf.profiler.experimental.ProfilerOptions(host_tracer_level = 3, python_tracer_level = 1, device_tracer_level = 1)
 
+class MyCallBack(keras.callbacks.Callback):
+  def __init__(self, params):
+    super( ).__init__()
+    self.batchsize = params['batch_size']
+    self.logfreq = 100
+    self.batch_begin_time = 0
+    self.batch_end_time = 0
+    self.max_speed = 0
+    self.epoch_time = 0
+    self.train_time = 0
+    self.batch_log = params['batch_log']
+    self.profiler = params['profiler']
+    self.profile_dir = params['profile_dir']
+
+  def on_batch_begin(self, batch, logs=None):
+    if batch%self.logfreq == 0:
+        self.batch_begin_time = time.time()
+    self.batch_begin_time = time.time()
+    if batch == 100 and self.profiler is not None and self.profiler is True:
+        tf.profiler.experimental.start(self.profile_dir, options = options)
+
+  def on_batch_end(self, batch, logs=None):
+    self.epoch_batch_count += 1
+    self.train_batch_count += 1
+    self.batch_time = time.time() - self.batch_begin_time
+    self.epoch_time += self.batch_time
+
+    if batch%self.logfreq == 0:
+        self.batch_speed = self.batchsize/self.batch_time
+        if self.batch_speed > self.max_speed :
+            self.max_speed = self.batch_speed
+
+    if self.batch_log is not None and self.batch_log is True:
+        print ( f"batch {batch} time(s) {round(self.batch_time,6)} throughput(samples/sec): {round(self.batch_speed,3)}")
+
+    if batch == 100 and self.profiler is not None and self.profiler is True:
+        tf.profiler.experimental.stop()
+        sys.exit()
+
+  def on_epoch_begin(self, epoch, logs=None):
+    self.epoch_batch_count = 0
+    self.epoch_begin_time = time.time()
+    self.epoch_time = 0
+
+  def on_epoch_end(self, epoch, logs=None):
+    self.train_time += self.epoch_time
+    self.epoch_avg_speed = self.epoch_batch_count*self.batchsize/self.epoch_time
+    print (f"epoch {epoch} time (s):", round (self.epoch_time, 3), " throughput(samples/sec):", round (self.epoch_avg_speed, 3))
+
+  def on_train_begin(self, logs=None):
+    self.train_batch_count = 0
+    self.train_begin_time = time.time()
+    self.train_time = 0
+
+  def on_train_end(self, logs=None):
+    speed_train = (self.batchsize * self.train_batch_count) / self.train_time
+    print ("Total train time(s) :" , round ( self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize,  " throughput(samples/sec) ( avg, max): ", round(speed_train,3), round(self.max_speed,3) )
 
 def initialize_parameters(default_model='p1b3_default_model.txt'):
 
@@ -342,8 +403,13 @@ def run(gParameters):
 
     # Seed random generator for training
     np.random.seed(seed)
-
+    my_hook = MyCallBack(gParameters)
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
+    callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor, my_hook]
+
+    if gParameters['profiler'] is not None and gParameters['profiler'] is True:
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=gParameters['profile_dir'])
+        callbacks.append(tensorboard_callback)
 
     # history = model.fit(train_gen, steps_per_epoch=train_steps, # this should be the deprecation fix
     history = model.fit(train_gen, steps_per_epoch=train_steps,
@@ -351,7 +417,7 @@ def run(gParameters):
                         validation_data=val_gen,
                         validation_steps=val_steps,
                         verbose=0,
-                        callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
+                        callbacks=callbacks,
                         )
     # callbacks=[checkpointer, loss_history, candleRemoteMonitor], # this just caused the job to hang on Biowulf
 

@@ -23,6 +23,7 @@ feature_subsample=0
 batch_normalization=False
 alpha_dropout=False
 save_path='save/'
+batch_log=False
 
 [Monitor_Params]
 timeout=3600
