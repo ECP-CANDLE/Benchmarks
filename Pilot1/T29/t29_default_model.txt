@@ -1,4 +1,5 @@
 [Global_Params]
+model_name='t29'
 train_path='./rip.it.train.csv'
 test_path='./rip.it.test.csv'
 batch_size=64
