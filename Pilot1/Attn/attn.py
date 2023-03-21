@@ -131,8 +131,9 @@ def load_data(params, seed):
 
         url = params["data_url"]
         file_train = params["train_data"]
+        cdd = os.environ["CANDLE_DATA_DIR"]
         train_file = candle.get_file(
-            file_train, url + file_train, cache_subdir="Pilot1"
+            file_train, url + file_train, datadir = cdd, cache_subdir="Pilot1"
         )
 
         df_x_train_0 = pd.read_hdf(train_file, "x_train_0").astype(np.float32)

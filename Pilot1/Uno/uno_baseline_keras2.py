@@ -251,6 +251,14 @@ def run(params):
         config.gpu_options.visible_device_list = ",".join(map(str, args.gpus))
         tf.compat.v1.keras.backend.set_session(tf.compat.v1.Session(config=config))
 
+    datafile = None
+    if args.use_exported_data is not None:
+        if os.environ["CANDLE_DATA_DIR"] is not None:
+            datadir = os.environ["CANDLE_DATA_DIR"]
+            datafile = os.path.join(datadir, args.use_exported_data)
+        else:
+            datafile = args.use_exported_data
+
     loader = CombinedDataLoader(seed=args.rng_seed)
     loader.load(cache=args.cache,
                 ncols=args.feature_subsample,

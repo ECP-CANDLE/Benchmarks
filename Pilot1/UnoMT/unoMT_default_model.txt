@@ -1,4 +1,6 @@
 [Global_Params]
+model_name = 'uno'
+
 #train_sources='NCI60'
 #val_sources=['NCI60', 'CTRP', 'GDSC', 'CCLE', 'gCSI']
 train_sources='gCSI'
