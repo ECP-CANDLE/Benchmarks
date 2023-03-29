@@ -59,6 +59,9 @@ def initialize_parameters():
     return gParameters
 
 
+from t29res import load_data
+
+"""
 def load_data(gParameters):
     train_path = gParameters["train_path"]
     test_path = gParameters["test_path"]
@@ -77,8 +80,8 @@ def load_data(gParameters):
     Y_test = to_categorical(df_y_test, gParameters["classes"])
     # test_classes = np.argmax(Y_test, axis=1)
 
-    df_x_train = df_train[:, 1 : df_train.shape[1]].astype(np.float32)
-    df_x_test = df_test[:, 1 : df_train.shape[1]].astype(np.float32)
+    df_x_train = df_train[:, 1: df_train.shape[1]].astype(np.float32)
+    df_x_test = df_test[:, 1: df_train.shape[1]].astype(np.float32)
 
     # not sure the extra variable is needed, and is this a copy or reference
     X_train = df_x_train
@@ -89,9 +92,10 @@ def load_data(gParameters):
     mat = scaler.fit_transform(mat)
 
     X_train = mat[: X_train.shape[0], :]
-    X_test = mat[X_train.shape[0] :, :]
+    X_test = mat[X_train.shape[0]:, :]
 
     return X_train, Y_train, X_test, Y_test
+"""
 
 
 # This is required for candle compliance.
@@ -99,8 +103,12 @@ def load_data(gParameters):
 def run(gParameters):
     print("gParameters: ", gParameters)
 
+    # extra values needed by the base data loader
+    PL = 6213
+    nb_classes = gParameters["classes"]
+
     # load the data
-    X_train, Y_train, X_test, Y_test = load_data(gParameters)
+    X_train, Y_train, X_test, Y_test = load_data(nb_classes, PL, gParameters)
 
     # load json and create model
     json_file = open(gParameters["model"], "r")
