@@ -54,7 +54,11 @@ def initialize_parameters(default_model="t29_default_model.txt"):
     return gParameters
 
 
-def load_data(nb_classes, PL, gParameters):
+def load_data(gParameters):
+
+    PL = gParameters["PL"]
+    nb_classes = gParameters["classes"]
+
     train_path = gParameters["train_path"]
     test_path = gParameters["test_path"]
     df_train = (pd.read_csv(train_path, header=None).values).astype("float32")
@@ -86,7 +90,7 @@ def load_data(nb_classes, PL, gParameters):
     mat = scaler.fit_transform(mat)
 
     X_train = mat[: X_train.shape[0], :]
-    X_test = mat[X_train.shape[0] :, :]
+    X_test = mat[X_train.shape[0]:, :]
 
     return X_train, Y_train, X_test, Y_test
 
@@ -127,7 +131,10 @@ def run(gParameters):
     PL = 6213  # 38 + 60483
     PS = 6212  # 60483
 
-    X_train, Y_train, X_test, Y_test = load_data(nb_classes, PL, gParameters)
+    gParameters["PL"] = PL
+    gParameters["PS"] = PS
+
+    X_train, Y_train, X_test, Y_test = load_data(gParameters)
 
     print("X_train shape:", X_train.shape)
     print("X_test shape:", X_test.shape)

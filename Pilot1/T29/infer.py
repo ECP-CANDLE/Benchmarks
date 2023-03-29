@@ -104,11 +104,10 @@ def run(gParameters):
     print("gParameters: ", gParameters)
 
     # extra values needed by the base data loader
-    PL = 6213
-    nb_classes = gParameters["classes"]
+    gParameters["PL"] = 6213
 
     # load the data
-    X_train, Y_train, X_test, Y_test = load_data(nb_classes, PL, gParameters)
+    X_train, Y_train, X_test, Y_test = load_data(gParameters)
 
     # load json and create model
     json_file = open(gParameters["model"], "r")
