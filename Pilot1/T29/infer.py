@@ -36,13 +36,13 @@ def initialize_parameters():
             "help": "Residual connection distance between dense layers.",
         },
         {
-            "name": "model",
+            "name": "saved_model",
             "default": "model.json",
             "type": str,
             "help": "Name of json model description file.",
         },
         {
-            "name": "weights",
+            "name": "saved_weights",
             "default": "model.h5",
             "type": str,
             "help": "Name of h5 weights file.",
@@ -110,13 +110,13 @@ def run(gParameters):
     X_train, Y_train, X_test, Y_test = load_data(gParameters)
 
     # load json and create model
-    json_file = open(gParameters["model"], "r")
+    json_file = open(gParameters["saved_model"], "r")
     loaded_model_json = json_file.read()
     json_file.close()
     loaded_model_json = model_from_json(loaded_model_json)
 
     # load weights into new model
-    loaded_model_json.load_weights(gParameters["weights"])
+    loaded_model_json.load_weights(gParameters["saved_weights"])
     print("Loaded json model from disk")
 
     # predict using loaded yaml model on test and training data
