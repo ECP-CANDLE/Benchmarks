@@ -166,7 +166,7 @@ def run(params):
     # Construct extension to save model
     ext = p1b1.extension_from_parameters(params, ".keras")
     candle.verify_path(params["save_path"])
-    prefix = "{}{}".format(params["save_path"], ext)
+    prefix = "{}{}{}".format(params["save_path"], params["model_name"], ext)
     logfile = params["logfile"] if params["logfile"] else prefix + ".log"
     candle.set_up_logger(logfile, p1b1.logger, params["verbose"])
     p1b1.logger.info("Params: {}".format(params))
@@ -176,7 +176,7 @@ def run(params):
 
     # Load dataset
     x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = p1b1.load_data(
-        params, seed
+        params, #seed
     )
 
     # cache_file = 'data_l1000_cache.h5'
@@ -346,6 +346,9 @@ def run(params):
         model_json = model.to_json()
         with open(prefix + ".model.json", "w") as f:
             print(model_json, file=f)
+        encoder_json = encoder.to_json()
+        with open(prefix + ".encoder.json", "w") as f:
+            print(encoder_json, file=f)
 
     # Define optimizer
     # optimizer = candle.build_optimizer(params['optimizer'],
@@ -377,7 +380,7 @@ def run(params):
     )
     warmup_lr = LearningRateScheduler(warmup_scheduler)
     checkpointer = ModelCheckpoint(
-        params["save_path"] + ext + ".weights.h5",
+        params["save_path"] + params["model_name"] + ext + ".weights.h5",
         save_best_only=True,
         save_weights_only=True,
     )

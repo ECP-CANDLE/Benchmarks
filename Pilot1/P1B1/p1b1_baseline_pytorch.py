@@ -266,7 +266,7 @@ def run(params):
 
     # Load dataset
     x_train, y_train, x_val, y_val, x_test, y_test, x_labels, y_labels = p1b1.load_data(
-        params, seed
+        params, #seed
     )
 
     # cache_file = 'data_l1000_cache.h5'

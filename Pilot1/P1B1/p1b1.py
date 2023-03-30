@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import argparse
 import logging
 import os
 
@@ -78,6 +79,21 @@ additional_definitions = [
     },
 ]
 
+temporary = [
+    {
+        "name": "saved_model",
+        "type": str,
+        "default": argparse.SUPPRESS,
+        "help": "file with saved model.",
+    },
+    {
+        "name": "saved_weights",
+        "type": str,
+        "default": argparse.SUPPRESS,
+        "help": "file with model's saved weights.",
+    },
+]
+
 required = [
     "activation",
     "batch_size",
@@ -111,7 +127,7 @@ class BenchmarkP1B1(candle.Benchmark):
         if required is not None:
             self.required = set(required)
         if additional_definitions is not None:
-            self.additional_definitions = additional_definitions
+            self.additional_definitions = additional_definitions + temporary
 
 
 def extension_from_parameters(params, framework=""):
@@ -149,10 +165,11 @@ def extension_from_parameters(params, framework=""):
     return ext
 
 
-def load_data(params, seed):
+def load_data(params):
     drop_cols = ["case_id"]
     onehot_cols = ["cancer_type"]
     y_cols = ["cancer_type"]
+    seed = params["rng_seed"]
 
     if params["use_landmark_genes"]:
         lincs_file = "lincs1000.tsv"
