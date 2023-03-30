@@ -26,52 +26,22 @@ def initialize_parameters(default_model="p1b2_default_model.txt"):
     return gParameters
 
 
-def run(gParameters):
-
-    # Construct extension to save model
-    ext = p1b2.extension_from_parameters(gParameters, ".keras")
-    candle.verify_path(gParameters["save_path"])
-    prefix = "{}{}".format(gParameters["save_path"], ext)
-    logfile = gParameters["logfile"] if gParameters["logfile"] else prefix + ".log"
-    candle.set_up_logger(logfile, p1b2.logger, gParameters["verbose"])
-    p1b2.logger.info("Params: {}".format(gParameters))
+def build_model(gParameters, input_dim, output_dim):
 
     # Get default parameters for initialization and optimizer functions
     kerasDefaults = candle.keras_default_config()
-    seed = gParameters["rng_seed"]
-
-    # Load dataset
-    (X_train, y_train), (X_val, y_val), (X_test, y_test) = p1b2.load_data_one_hot(
-        gParameters, seed
-    )
-
-    print("Shape X_train: ", X_train.shape)
-    print("Shape X_val: ", X_val.shape)
-    print("Shape X_test: ", X_test.shape)
-    print("Shape y_train: ", y_train.shape)
-    print("Shape y_val: ", y_val.shape)
-    print("Shape y_test: ", y_test.shape)
-
-    print("Range X_train --> Min: ", np.min(X_train), ", max: ", np.max(X_train))
-    print("Range X_val --> Min: ", np.min(X_val), ", max: ", np.max(X_val))
-    print("Range X_test --> Min: ", np.min(X_test), ", max: ", np.max(X_test))
-    print("Range y_train --> Min: ", np.min(y_train), ", max: ", np.max(y_train))
-    print("Range y_val --> Min: ", np.min(y_val), ", max: ", np.max(y_val))
-    print("Range y_test --> Min: ", np.min(y_test), ", max: ", np.max(y_test))
-
-    input_dim = X_train.shape[1]
-    input_vector = Input(shape=(input_dim,))
-    output_dim = y_train.shape[1]
 
     # Initialize weights and learning rule
     initializer_weights = candle.build_initializer(
-        gParameters["initialization"], kerasDefaults, seed
+        gParameters["initialization"], kerasDefaults, gParameters["rng_seed"]
     )
     initializer_bias = candle.build_initializer("constant", kerasDefaults, 0.0)
 
     activation = gParameters["activation"]
 
     # Define MLP architecture
+    input_vector = Input(shape=(input_dim,))
+
     layers = gParameters["dense"]
 
     if layers is not None:
@@ -114,26 +84,97 @@ def run(gParameters):
 
     # Build MLP model
     mlp = Model(outputs=output, inputs=input_vector)
-    p1b2.logger.debug("Model: {}".format(mlp.to_json()))
 
     # Define optimizer
     optimizer = candle.build_optimizer(
         gParameters["optimizer"], gParameters["learning_rate"], kerasDefaults
     )
 
-    # Compile and display model
-    mlp.compile(loss=gParameters["loss"], optimizer=optimizer, metrics=["accuracy"])
-    mlp.summary()
+    # Compile model
+    mlp.compile(loss=gParameters["loss"], optimizer=optimizer, metrics=[gParameters["metrics"]])
+
+    return mlp
+
+
+def run(gParameters):
+
+    # Construct extension to save model
+    ext = p1b2.extension_from_parameters(gParameters, ".keras")
+    candle.verify_path(gParameters["save_path"])
+    # prefix = "{}{}".format(gParameters["save_path"], ext)
+    prefix = "{}/{}{}".format(gParameters["save_path"], gParameters["model_name"], ext)
+    logfile = gParameters["logfile"] if gParameters["logfile"] else prefix + ".log"
+    candle.set_up_logger(logfile, p1b2.logger, gParameters["verbose"])
+    p1b2.logger.info("Params: {}".format(gParameters))
+
+    # Load dataset
+    (x_train, y_train), (x_val, y_val), (x_test, y_test) = p1b2.load_data(
+        gParameters
+    )
+    p1b2.logger.info("Shape x_train: {}".format(x_train.shape))
+    p1b2.logger.info("Shape x_val:   {}".format(x_val.shape))
+    p1b2.logger.info("Shape x_test:  {}".format(x_test.shape))
+    p1b2.logger.info("Shape y_train: {}".format(y_train.shape))
+    p1b2.logger.info("Shape y_val:   {}".format(y_val.shape))
+    p1b2.logger.info("Shape y_test:  {}".format(y_test.shape))
+
+    p1b2.logger.info(
+        "Range x_train: [{:.3g}, {:.3g}]".format(np.min(x_train), np.max(x_train))
+    )
+    p1b2.logger.info(
+        "Range x_val: [{:.3g}, {:.3g}]".format(np.min(x_val), np.max(x_val))
+    )
+    p1b2.logger.info(
+        "Range x_test: [{:.3g}, {:.3g}]".format(np.min(x_test), np.max(x_test))
+    )
+    p1b2.logger.info(
+        "Range y_train: [{:.3g}, {:.3g}]".format(np.min(y_train), np.max(y_train))
+    )
+    p1b2.logger.info(
+        "Range y_val: [{:.3g}, {:.3g}]".format(np.min(y_val), np.max(y_val))
+    )
+    p1b2.logger.info(
+        "Range y_test: [{:.3g}, {:.3g}]".format(np.min(y_test), np.max(y_test))
+    )
 
     # Seed random generator for training
-    np.random.seed(seed)
+    np.random.seed(gParameters["rng_seed"])
 
-    mlp.fit(
-        X_train,
+    # Build and compile model
+    input_dim = x_train.shape[1]
+    output_dim = y_train.shape[1]
+    model = build_model(gParameters, input_dim, output_dim)
+    p1b2.logger.debug("Model: {}".format(model.to_json()))
+    p1b2.logger.info(model.summary())
+
+    # Build checkpointing
+    if gParameters["ckpt_save_interval"] > 0:
+        # Specified in configuration
+        ckpt = candle.CandleCkptKeras(gParameters, verbose=False)
+        ckpt.set_model(model)
+        J = ckpt.restart(model)
+        if J is not None:
+            initial_epoch = J["epoch"]
+            p1b2.logger.info("restarting from ckpt: initial_epoch: {}".format(initial_epoch))
+    else:
+        # By default
+        gParameters["ckpt_save_best"] = True
+        gParameters["ckpt_directory"] = gParameters["save_path"]
+        gParameters["ckpt_keep_limit"] = 1
+        gParameters["ckpt_save_interval"] = 1
+        ckpt = candle.CandleCkptKeras(gParameters)
+        ckpt.set_model(model)
+        model_json = model.to_json()
+        with open(prefix + ".model.json", "w") as f:
+            print(model_json, file=f)
+
+    model.fit(
+        x_train,
         y_train,
         batch_size=gParameters["batch_size"],
         epochs=gParameters["epochs"],
-        validation_data=(X_val, y_val),
+        validation_data=(x_val, y_val),
+        callbacks=[ckpt],
     )
 
     # model save
@@ -141,9 +182,10 @@ def run(gParameters):
     # mlp.save_weights(save_filepath)
 
     # Evalute model on test set
-    y_pred = mlp.predict(X_test)
-    scores = p1b2.evaluate_accuracy_one_hot(y_pred, y_test)
-    print("Evaluation on test data:", scores)
+    y_pred = model.predict(x_test)
+    scores = p1b2.evaluate_accuracy(y_pred, y_test, gParameters["one_hot_dtrep"])
+
+    p1b2.logger.info("\nEvaluation on test data: {}".format(scores))
 
 
 def main():

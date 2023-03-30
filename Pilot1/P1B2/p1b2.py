@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import argparse
 import logging
 import os
 
@@ -18,7 +19,28 @@ additional_definitions = [
         "type": float,
         "default": 0.0,
         "help": "weight of regularization for l2 norm of nn weights",
+    },
+    {
+        "name": "one_hot_dtrep",
+        "type": candle.str2bool,
+        "default": True,
+        "help": "use one-hot data representation.",
     }
+]
+
+temporary = [
+    {
+        "name": "saved_model",
+        "type": str,
+        "default": argparse.SUPPRESS,
+        "help": "file with saved model.",
+    },
+    {
+        "name": "saved_weights",
+        "type": str,
+        "default": argparse.SUPPRESS,
+        "help": "file with model's saved weights.",
+    },
 ]
 
 required = [
@@ -54,7 +76,7 @@ class BenchmarkP1B2(candle.Benchmark):
         if required is not None:
             self.required = set(required)
         if additional_definitions is not None:
-            self.additional_definitions = additional_definitions
+            self.additional_definitions = additional_definitions + temporary
 
 
 def extension_from_parameters(params, framework):
@@ -74,7 +96,8 @@ def extension_from_parameters(params, framework):
     return ext
 
 
-def load_data_one_hot(params, seed):
+def load_data(params):
+
     # fetch data
     file_train = candle.fetch_file(
         params["data_url"] + params["train_data"], subdir="Pilot1"
@@ -83,28 +106,22 @@ def load_data_one_hot(params, seed):
         params["data_url"] + params["test_data"], subdir="Pilot1"
     )
 
-    return candle.load_Xy_one_hot_data2(
-        file_train,
-        file_test,
-        class_col=["cancer_type"],
-        drop_cols=["case_id", "cancer_type"],
-        n_cols=params["feature_subsample"],
-        shuffle=params["shuffle"],
-        scaling=params["scaling"],
-        validation_split=params["val_split"],
-        dtype=params["data_type"],
-        seed=seed,
-    )
+    seed = params["rng_seed"]
+    one_hot_dtrep = params["one_hot_dtrep"]
 
-
-def load_data(params, seed):
-    # fetch data
-    file_train = candle.fetch_file(
-        params["data_url"] + params["train_data"], subdir="Pilot1"
-    )
-    file_test = candle.fetch_file(
-        params["data_url"] + params["test_data"], subdir="Pilot1"
-    )
+    if one_hot_dtrep:  # Use one-hot data representation
+        return candle.load_Xy_one_hot_data2(
+            file_train,
+            file_test,
+            class_col=["cancer_type"],
+            drop_cols=["case_id", "cancer_type"],
+            n_cols=params["feature_subsample"],
+            shuffle=params["shuffle"],
+            scaling=params["scaling"],
+            validation_split=params["val_split"],
+            dtype=params["data_type"],
+            seed=seed,
+        )
 
     return candle.load_Xy_data2(
         file_train,
@@ -120,22 +137,19 @@ def load_data(params, seed):
     )
 
 
-def evaluate_accuracy_one_hot(y_pred, y_test):
-    def map_max_indices(nparray):
-        # maxi = lambda a: a.argmax()
-        def maxi(a):
-            return a.argmax()
+def evaluate_accuracy(y_pred, y_test, one_hot_dtrep=False):
+    if one_hot_dtrep:
+        def map_max_indices(nparray):
+            # maxi = lambda a: a.argmax()
+            def maxi(a):
+                return a.argmax()
 
-        # iter_to_na = lambda i: np.fromiter(i, dtype=np.float)
-        return np.array([maxi(a) for a in nparray])
+            # iter_to_na = lambda i: np.fromiter(i, dtype=np.float)
+            return np.array([maxi(a) for a in nparray])
 
-    ya, ypa = tuple(map(map_max_indices, (y_test, y_pred)))
-    accuracy = accuracy_score(ya, ypa)
-    # print('Accuracy: {}%'.format(100 * accuracy))
-    return {"accuracy": accuracy}
-
-
-def evaluate_accuracy(y_pred, y_test):
-    accuracy = accuracy_score(y_test, y_pred)
+        ya, ypa = tuple(map(map_max_indices, (y_test, y_pred)))
+        accuracy = accuracy_score(ya, ypa)
+    else:
+        accuracy = accuracy_score(y_test, y_pred)
     # print('Accuracy: {}%'.format(100 * accuracy))
     return {"accuracy": accuracy}
