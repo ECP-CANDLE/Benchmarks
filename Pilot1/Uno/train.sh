@@ -10,8 +10,7 @@ set -eu
 ### Path to your CANDLEized model's main Python script###
 CANDLE_MODEL=/usr/local/Benchmarks/Pilot1/Uno/uno_baseline_keras2.py
 
-set -x
-
+# Make copy of $# before shifts
 ARGC=$#
 
 if (( $ARGC < 2 )) ; then
@@ -48,7 +47,6 @@ echo "using CANDLE_CONFIG ${CANDLE_CONFIG}"
 
 echo "train.sh: running command..."
 
-set -x
 # Set up environmental variables and execute the model!
 if env CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} \
        CANDLE_DATA_DIR=${CANDLE_DATA_DIR} \
