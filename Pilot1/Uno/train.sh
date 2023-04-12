@@ -49,6 +49,7 @@ if env CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} \
        CANDLE_DATA_DIR=${CANDLE_DATA_DIR} \
        ${CMD[@]}
 then
+  CODE=0
   echo "train.sh: OK."
 else
   CODE=$?
