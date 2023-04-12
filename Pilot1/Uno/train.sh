@@ -10,8 +10,12 @@ set -eu
 ### Path to your CANDLEized model's main Python script###
 CANDLE_MODEL=/usr/local/Benchmarks/Pilot1/Uno/uno_baseline_keras2.py
 
-if (( $# < 2 )) ; then
-  echo "Uno/train.sh: Illegal number of parameters: given: ${#}"
+set -x
+
+ARGC=$#
+
+if (( $ARGC < 2 )) ; then
+  echo "Uno/train.sh: Illegal number of parameters: given: ${ARGC}"
   echo "CUDA_VISIBLE_DEVICES and CANDLE_DATA_DIR are required"
   exit -1
 fi
@@ -20,12 +24,11 @@ CUDA_VISIBLE_DEVICES=$1 ; shift
 CANDLE_DATA_DIR=$1 ; shift
 CANDLE_CONFIG=0
 
-set -x
-if (( $# == 2 )) ; then
+if (( $ARGC == 2 )) ; then
   CMD=( python ${CANDLE_MODEL} )
   echo "CMD2 = ${CMD[@]}"
-elif (( $# >= 3 )) ; then
-  # if original $3 is a file, set candle_config and passthrough $@
+elif (( $ARGC >= 3 )) ; then
+  # If original $3 is a file, set candle_config and passthrough $@
   CANDLE_CONFIG=$1
   if [[ -f $CANDLE_CONFIG ]] ; then
     echo "Uno/train.sh: found CANDLE_CONFIG=$CANDLE_CONFIG"
