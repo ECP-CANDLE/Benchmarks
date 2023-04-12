@@ -18,6 +18,7 @@ fi
 
 CUDA_VISIBLE_DEVICES=$1 ; shift
 CANDLE_DATA_DIR=$1 ; shift
+CANDLE_CONFIG=0
 
 if (( $# == 2 )) ; then
   CMD=( python ${CANDLE_MODEL} )
