@@ -20,6 +20,7 @@ CUDA_VISIBLE_DEVICES=$1 ; shift
 CANDLE_DATA_DIR=$1 ; shift
 CANDLE_CONFIG=0
 
+set -x
 if (( $# == 2 )) ; then
   CMD=( python ${CANDLE_MODEL} )
   echo "CMD2 = ${CMD[@]}"
