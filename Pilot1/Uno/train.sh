@@ -22,7 +22,7 @@ CANDLE_CONFIG=0
 
 if (( $# == 2 )) ; then
   CMD=( python ${CANDLE_MODEL} )
-  echo "CMD = $CMD"
+  echo "CMD2 = ${CMD[@]}"
 elif (( $# >= 3 )) ; then
   # if original $3 is a file, set candle_config and passthrough $@
   CANDLE_CONFIG=$1
@@ -44,6 +44,7 @@ echo "using CANDLE_CONFIG ${CANDLE_CONFIG}"
 
 echo "train.sh: running command..."
 
+set -x
 # Set up environmental variables and execute the model!
 if env CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} \
        CANDLE_DATA_DIR=${CANDLE_DATA_DIR} \
