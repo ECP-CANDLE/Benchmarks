@@ -49,6 +49,7 @@ psr = argparse.ArgumentParser(description='input csv file')
 psr.add_argument('--in_train',  default='in_train')
 psr.add_argument('--in_vali',  default='in_vali')
 psr.add_argument('--ep',  type=int, default=400)
+psr.add_argument('--opt', default='Adam')
 args=vars(psr.parse_args())
 print(args)
 
@@ -205,7 +206,7 @@ with strategy.scope():
     ## Train and Evaluate
 
     model.compile(loss='mean_squared_error',
-                  optimizer=Adam(lr=0.00001),
+                  optimizer=globals()[args['opt']](lr=0.00001),
                   metrics=['mae',r2])
 
 # set up a bunch of callbacks to do work during model training..
