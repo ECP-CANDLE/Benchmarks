@@ -8,6 +8,14 @@ test_data  = 'ml.ADRP_6W02_A_1_H.Orderable_zinc_db_enaHLL.sorted.4col.dd.dedup.t
 train_data = 'ml.ADRP_6W02_A_1_H.Orderable_zinc_db_enaHLL.sorted.4col.dd.dedup.train.parquet'
 val_data   = 'ml.ADRP_6W02_A_1_H.Orderable_zinc_db_enaHLL.sorted.4col.dd.dedup.val.parquet'
 
+# for checkpointing
+ckpt_restart_mode = 'off'
+ckpt_save_best = True
+ckpt_save_best_metric = 'val_loss'
+ckpt_skip_epochs = 50 
+ckpt_save_interval = 500
+ckpt_keep_limit = 1
+
 base_name = 'ADRP_6W02_A_1_H'
 model_name = 'adrp'
 dense = [250, 125, 60, 30]
