@@ -1,4 +1,5 @@
 [Global_Params]
+model_name = "st1"
 data_url = "https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/xform-smiles-data/"
 train_data = 'chm.weight.trn.csv'
 val_data = 'chm.weight.val.csv'
@@ -18,3 +19,11 @@ batch_size = 32
 loss = 'mean_squared_error'
 optimizer = 'adam'
 learning_rate = 0.001
+
+# checkpoint config
+ckpt_restart_mode = 'off'
+ckpt_save_best = True
+ckpt_save_best_metric = 'val_loss'
+ckpt_skip_epochs = 1 
+ckpt_save_interval = 400
+ckpt_keep_limit = 1
