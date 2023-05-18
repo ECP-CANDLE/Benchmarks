@@ -20,52 +20,53 @@ import time
 
 
 class MyCallBack(keras.callbacks.Callback):
-  def __init__(self, batch_size):
-    super( ).__init__()
-    self.batchsize = batch_size
-    self.logfreq = 10
-    self.batch_begin_time = 0
-    self.batch_end_time = 0
-    self.max_speed = 0
-    self.epoch_time = 0
-    self.train_time = 0
-    self.batch_log = False
+    def __init__(self, batch_size):
+        super().__init__()
+        self.batchsize = batch_size
+        self.logfreq = 10
+        self.batch_begin_time = 0
+        self.batch_end_time = 0
+        self.max_speed = 0
+        self.epoch_time = 0
+        self.train_time = 0
+        self.batch_log = False
 
-  def on_batch_begin(self, batch, logs=None):
-    self.batch_begin_time = time.time()
+    def on_batch_begin(self, batch, logs=None):
+        self.batch_begin_time = time.time()
 
-  def on_batch_end(self, batch, logs=None):
-    if batch == 0:
-      return
-    self.epoch_batch_count += 1
-    self.train_batch_count += 1
-    self.batch_time = time.time() - self.batch_begin_time
-    self.epoch_time += self.batch_time
+    def on_batch_end(self, batch, logs=None):
+        if batch == 0:
+            return
+        self.epoch_batch_count += 1
+        self.train_batch_count += 1
+        self.batch_time = time.time() - self.batch_begin_time
+        self.epoch_time += self.batch_time
 
-    self.batch_speed = self.batchsize/self.batch_time
-    if self.batch_speed > self.max_speed :
-        self.max_speed = self.batch_speed
-    if self.batch_log is not None and self.batch_log is True:
-        print ( f"\r\nbatch {batch} time(s) {round(self.batch_time,6)} throughput(samples/sec): {round(self.batch_speed,3)}", flush=True)
+        self.batch_speed = self.batchsize / self.batch_time
+        if self.batch_speed > self.max_speed:
+            self.max_speed = self.batch_speed
+        if self.batch_log is not None and self.batch_log is True:
+            print(f"\r\nbatch {batch} time(s) {round(self.batch_time, 6)} throughput(samples/sec): {round(self.batch_speed, 3)}", flush=True)
 
-  def on_epoch_begin(self, epoch, logs=None):
-    self.epoch_batch_count = 0
-    self.epoch_time = 0
-    self.epoch_begin_time = time.time()
+    def on_epoch_begin(self, epoch, logs=None):
+        self.epoch_batch_count = 0
+        self.epoch_time = 0
+        self.epoch_begin_time = time.time()
 
-  def on_epoch_end(self, epoch, logs=None):
-    self.train_time += self.epoch_time
-    self.epoch_avg_speed = self.epoch_batch_count*self.batchsize/self.epoch_time
-    print (f"\r\nepoch {epoch} time (s):", round (self.epoch_time, 3), " throughput(samples/sec):", round (self.epoch_avg_speed, 3), flush=True)
+    def on_epoch_end(self, epoch, logs=None):
+        self.train_time += self.epoch_time
+        self.epoch_avg_speed = self.epoch_batch_count * self.batchsize / self.epoch_time
+        print(f"\r\nepoch {epoch} time (s):", round(self.epoch_time, 3), " throughput(samples/sec):", round(self.epoch_avg_speed, 3), flush=True)
 
-  def on_train_begin(self, logs=None):
-    self.train_batch_count = 0
-    self.train_time = 0
-    self.train_begin_time = time.time()
+    def on_train_begin(self, logs=None):
+        self.train_batch_count = 0
+        self.train_time = 0
+        self.train_begin_time = time.time()
 
-  def on_train_end(self, logs=None):
-    speed_train = (self.batchsize * self.train_batch_count) / self.train_time
-    print ("\r\nTotal train time(s) :" , round ( self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize,  " throughput(samples/sec) ( avg, max): ", round(speed_train,3), round(self.max_speed,3),flush=True)
+    def on_train_end(self, logs=None):
+        speed_train = (self.batchsize * self.train_batch_count) / self.train_time
+        print("\r\nTotal train time(s) :", round(self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize,  " throughput(samples/sec) (avg, max): ", round(speed_train, 3), round(self.max_speed, 3),flush=True)
+
 
 def initialize_parameters(default_model='p3b2_default_model.txt'):
 
@@ -190,7 +191,7 @@ def run(gParameters):
                               dropout=dropout, recurrent_dropout=recurrent_dropout))
                 else:
                     model.add(itex.ops.ItexLSTM(rnn_size, dropout=dropout, recurrent_dropout=recurrent_dropout,
-                          return_sequences=ret_seq))
+                              return_sequences=ret_seq))
             except ImportError:
                 from tensorflow.keras.layers import LSTM
                 print('Using Keras-LSTM')
@@ -208,7 +209,6 @@ def run(gParameters):
             else:
                 model.add(LSTM(rnn_size, dropout=dropout, recurrent_dropout=recurrent_dropout,
                           return_sequences=ret_seq))
-
 
     model.add(Dense(len(chars)))
     model.add(Activation(gParameters['activation']))

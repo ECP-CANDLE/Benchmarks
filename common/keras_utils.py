@@ -90,15 +90,15 @@ def build_optimizer(optimizer, lr, kerasDefaults):
 
     if optimizer == 'sgd':
         return tf.keras.optimizers.legacy.SGD(lr=lr, decay=kerasDefaults['decay_lr'],
-                              momentum=kerasDefaults['momentum_sgd'],
-                              nesterov=kerasDefaults['nesterov_sgd'])  # ,
+                                              momentum=kerasDefaults['momentum_sgd'],
+                                              nesterov=kerasDefaults['nesterov_sgd'])  # ,
 # clipnorm=kerasDefaults['clipnorm'],
 # clipvalue=kerasDefaults['clipvalue'])
 
     elif optimizer == 'rmsprop':
         return tf.keras.optimizers.legacy.RMSprop(lr=lr, rho=kerasDefaults['rho'],
-                                  epsilon=kerasDefaults['epsilon'],
-                                  decay=kerasDefaults['decay_lr'])  # ,
+                                                  epsilon=kerasDefaults['epsilon'],
+                                                  decay=kerasDefaults['decay_lr'])  # ,
 # clipnorm=kerasDefaults['clipnorm'],
 # clipvalue=kerasDefaults['clipvalue'])
 
@@ -118,9 +118,9 @@ def build_optimizer(optimizer, lr, kerasDefaults):
 
     elif optimizer == 'adam':
         return tf.keras.optimizers.legacy.Adam(lr=lr, beta_1=kerasDefaults['beta_1'],
-                               beta_2=kerasDefaults['beta_2'],
-                               epsilon=kerasDefaults['epsilon'],
-                               decay=kerasDefaults['decay_lr'])  # ,
+                                               beta_2=kerasDefaults['beta_2'],
+                                               epsilon=kerasDefaults['epsilon'],
+                                               decay=kerasDefaults['decay_lr'])  # ,
 # clipnorm=kerasDefaults['clipnorm'],
 # clipvalue=kerasDefaults['clipvalue'])
 

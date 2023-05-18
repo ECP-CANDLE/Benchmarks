@@ -263,9 +263,7 @@ class mthisan(object):
                 batch_time = time.time() - batch_begin_time
                 epoch_time += batch_time
                 epoch_batch_count += 1
-                batch_speed = batch_size/batch_time
-                #if self.batch_log is not None and self.batch_log is True:
-                #    print(f"\r\nbatch time(s) {round(batch_time,6)} throughput(samples/sec): {round(batch_speed,3)}", flush=True)
+                batch_speed = batch_size / batch_time
 
                 # track correct predictions
                 for i, (p, lIndex) in enumerate(zip(predictions, [lIndex[start:stop] for lIndex in labels])):
@@ -281,7 +279,7 @@ class mthisan(object):
             # checkpoint after every epoch
             print("\ntraining time: %.2f" % (time.time() - start_time))
             epoch_speed = (batch_size * epoch_batch_count) / epoch_time
-            print(f"\r\nepoch time (s):", round (epoch_time, 3), " throughput(samples/sec):", round (epoch_speed, 3), flush=True)
+            print(f"\r\nepoch time (s):", round(epoch_time, 3), " throughput(samples/sec):", round(epoch_speed, 3), flush=True)
             for i in range(self.num_tasks):
                 micro = f1_score(y_trues[i], y_preds[i], average='micro')
                 macro = f1_score(y_trues[i], y_preds[i], average='macro')

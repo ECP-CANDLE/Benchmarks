@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 
 screen_output = 500
 
+
 def initialize_parameters():
     """ Initialize the parameters for the P3B5 benchmark """
 
@@ -134,7 +135,7 @@ def print_size_of_model(model):
 
 def run(args):
     args = candle.ArgumentStruct(**args)
-    args.xpu = True # torch.xpu.is_available()
+    args.xpu = True  # torch.xpu.is_available()
     args.device = torch.device(f"xpu" if args.xpu else "cpu")
 
     train_loader, valid_loader, test_loader = create_data_loaders(args)

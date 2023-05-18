@@ -1,4 +1,3 @@
-#import numba.cuda
 
 
 def start_profiling(do_prof):
