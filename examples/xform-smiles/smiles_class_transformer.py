@@ -14,7 +14,7 @@ matplotlib.use('Agg')
 # import matplotlib.pyplot as plt
 
 import tensorflow as tf
-options = tf.profiler.experimental.ProfilerOptions(host_tracer_level = 3, python_tracer_level = 1, device_tracer_level = 1)
+options = tf.profiler.experimental.ProfilerOptions(host_tracer_level=3, python_tracer_level=1, device_tracer_level=1)
 import time
 
 from tensorflow import keras
@@ -48,9 +48,10 @@ data_path_vali = args['in_vali']
 
 DR = 0.1      # Dropout rate
 
+
 class MyCallBack(keras.callbacks.Callback):
     def __init__(self, args):
-        super( ).__init__()
+        super().__init__()
         self.batchsize = BATCH
         self.logfreq = 10
         self.batch_begin_time = 0
@@ -59,12 +60,11 @@ class MyCallBack(keras.callbacks.Callback):
         self.epoch_time = 0
         self.train_time = 0
         self.args = args
-        #self.batch_log = args.batch_log
 
     def on_batch_begin(self, batch, logs=None):
         if batch == 10 and self.args['profiler'] is not None and self.args['profiler'] is True:
-            tf.profiler.experimental.start(self.args['prof_dir'], options = options)
-        if batch%self.logfreq == 0:
+            tf.profiler.experimental.start(self.args['prof_dir'], options=options)
+        if batch % self.logfreq == 0:
             self.batch_begin_time = time.time()
         self.batch_begin_time = time.time()
 
@@ -74,14 +74,14 @@ class MyCallBack(keras.callbacks.Callback):
         self.batch_time = time.time() - self.batch_begin_time
         self.epoch_time += self.batch_time
         if batch == 10 and self.args['profiler'] is not None and self.args['profiler'] is True:
-           tf.profiler.experimental.stop()
-           sys.exit()
+            tf.profiler.experimental.stop()
+            sys.exit()
 
-        if batch%self.logfreq == 0:
-            self.batch_speed = self.batchsize/self.batch_time
-            if self.batch_speed > self.max_speed :
+        if batch % self.logfreq == 0:
+            self.batch_speed = self.batchsize / self.batch_time
+            if self.batch_speed > self.max_speed:
                 self.max_speed = self.batch_speed
-        print ( f"batch {batch} time(s) {round(self.batch_time,6)} throughput(samples/sec): {round(self.batch_speed,3)}")
+        print(f"batch {batch} time(s) {round(self.batch_time, 6)} throughput(samples/sec): {round(self.batch_speed, 3)}")
 
     def on_epoch_begin(self, epoch, logs=None):
         self.epoch_batch_count = 0
@@ -90,8 +90,8 @@ class MyCallBack(keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         self.train_time += self.epoch_time
-        self.epoch_avg_speed = self.epoch_batch_count*self.batchsize/self.epoch_time
-        print (f"epoch {epoch} time (s):", round (self.epoch_time, 3), " throughput(samples/sec):", round (self.epoch_avg_speed, 3))
+        self.epoch_avg_speed = self.epoch_batch_count * self.batchsize / self.epoch_time
+        print(f"epoch {epoch} time (s):", round(self.epoch_time, 3), " throughput(samples/sec):", round(self.epoch_avg_speed, 3))
 
     def on_train_begin(self, logs=None):
         self.train_batch_count = 0
@@ -100,7 +100,7 @@ class MyCallBack(keras.callbacks.Callback):
 
     def on_train_end(self, logs=None):
         speed_train = (self.batchsize * self.train_batch_count) / self.train_time
-        print ("Total train time(s) :" , round ( self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize,  " throughput(samples/sec) ( avg, max): ", round(speed_train,3), round(self.max_speed,3) )
+        print("Total train time(s) :", round(self.train_time, 3), " batches:", self.train_batch_count, " batchsize:",  self.batchsize, " throughput(samples/sec) (avg, max): ", round(speed_train, 3), round(self.max_speed, 3))
 
 
 # define r2 for reporting
@@ -230,7 +230,7 @@ csv_logger = CSVLogger('smile_class.training.log')
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.75, patience=20, verbose=1, mode='auto', epsilon=0.0001, cooldown=3, min_lr=0.000000001)
 early_stop = EarlyStopping(monitor='val_loss', patience=100, verbose=1, mode='auto')
 
-callbacks=[checkpointer, csv_logger, reduce_lr, early_stop]
+callbacks = [checkpointer, csv_logger, reduce_lr, early_stop]
 
 if args['profiler'] is not None and args['profiler'] is True:
     tensorboard = TensorBoard(log_dir=args['prof_dir'])
