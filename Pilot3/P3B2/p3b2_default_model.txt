@@ -2,6 +2,7 @@
 data_url = 'http://ftp.mcs.anl.gov/pub/candle/public/benchmarks/P3B2/'
 train_data = 'P3B2_data.tgz'
 model_name = 'p3b2'
+batch_size = 100
 rnn_size = 64
 epochs = 2
 n_layers = 1
@@ -16,3 +17,4 @@ primetext = 'Diagnosis'
 length = 1000
 do_sample = True
 verbose = True
+itexlstm = True

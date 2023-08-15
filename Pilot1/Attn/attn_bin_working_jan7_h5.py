@@ -26,11 +26,12 @@ from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPla
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import roc_auc_score, auc, roc_curve, f1_score, precision_recall_curve
 
-
 file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
+import candle
+from keras_utils import PerformanceReportCallback
 psr = argparse.ArgumentParser(description='input agg csv file')
 psr.add_argument('--in', default='in_file')
 psr.add_argument('--ep', type=int, default=400)
@@ -220,13 +221,14 @@ csv_logger = CSVLogger(args['save_dir'] + 'Agg_attn_bin.training.log')
 reduce_lr = ReduceLROnPlateau(monitor='val_tf_auc', factor=0.20, patience=40, verbose=1, mode='auto', min_delta=0.0001, cooldown=3, min_lr=0.000000001)
 early_stop = EarlyStopping(monitor='val_tf_auc', patience=200, verbose=1, mode='auto')
 
+perf_callback = PerformanceReportCallback(BATCH)
 # history = parallel_model.fit(X_train, Y_train,
 history = model.fit(X_train, Y_train, class_weight=d_class_weights,
                     batch_size=BATCH,
                     epochs=EPOCH,
                     verbose=1,
                     validation_data=(X_val, Y_val),
-                    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
+                    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop, perf_callback])
 
 score = model.evaluate(X_test, Y_test, verbose=0)
 

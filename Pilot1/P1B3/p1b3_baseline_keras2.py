@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import p1b3 as benchmark
 import candle
 import tensorflow as tf
+from keras_utils import PerformanceReportCallback
 tf.compat.v1.disable_eager_execution()
 
 
@@ -344,6 +345,7 @@ def run(gParameters):
     np.random.seed(seed)
 
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
+    perf_callback = PerformanceReportCallback(gParameters['batch_size'])
 
     # history = model.fit(train_gen, steps_per_epoch=train_steps, # this should be the deprecation fix
     history = model.fit(train_gen, steps_per_epoch=train_steps,
@@ -351,7 +353,7 @@ def run(gParameters):
                         validation_data=val_gen,
                         validation_steps=val_steps,
                         verbose=0,
-                        callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor],
+                        callbacks=[checkpointer, loss_history, progbar, candleRemoteMonitor, perf_callback],
                         )
     # callbacks=[checkpointer, loss_history, candleRemoteMonitor], # this just caused the job to hang on Biowulf
 

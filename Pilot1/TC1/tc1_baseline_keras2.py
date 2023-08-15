@@ -17,6 +17,7 @@ sys.path.append(lib_path2)
 
 import tc1 as bmk
 import candle
+from keras_utils import PerformanceReportCallback
 
 
 def initialize_parameters(default_model='tc1_default_model.txt'):
@@ -122,12 +123,13 @@ def run(gParameters):
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=10,
                                   verbose=1, mode='auto', min_delta=0.0001, cooldown=0, min_lr=0)
 
+    perf_callback = PerformanceReportCallback(gParameters['batch_size'])
     history = model.fit(X_train, Y_train,
                         batch_size=gParameters['batch_size'],
                         epochs=gParameters['epochs'],
                         verbose=1,
                         validation_data=(X_test, Y_test),
-                        callbacks=[checkpointer, csv_logger, reduce_lr])
+                        callbacks=[checkpointer, csv_logger, reduce_lr, perf_callback])
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 

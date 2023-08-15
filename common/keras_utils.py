@@ -5,6 +5,7 @@ from tensorflow.keras import backend as K
 from tensorflow.keras import optimizers
 from tensorflow.keras import initializers
 
+import tensorflow as tf
 from tensorflow.keras.layers import Dropout
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.utils import get_custom_objects
@@ -20,6 +21,7 @@ with warnings.catch_warnings():
     from sklearn.metrics import r2_score
 
 import os
+import time
 
 
 def set_parallelism_threads():
@@ -89,35 +91,35 @@ def build_optimizer(optimizer, lr, kerasDefaults):
     """
 
     if optimizer == 'sgd':
-        return optimizers.SGD(lr=lr, decay=kerasDefaults['decay_lr'],
+        return tf.keras.optimizers.legacy.SGD(lr=lr, decay=kerasDefaults['decay_lr'],
                               momentum=kerasDefaults['momentum_sgd'],
                               nesterov=kerasDefaults['nesterov_sgd'])  # ,
 # clipnorm=kerasDefaults['clipnorm'],
 # clipvalue=kerasDefaults['clipvalue'])
 
     elif optimizer == 'rmsprop':
-        return optimizers.RMSprop(lr=lr, rho=kerasDefaults['rho'],
+        return tf.keras.optimizers.legacy.RMSprop(lr=lr, rho=kerasDefaults['rho'],
                                   epsilon=kerasDefaults['epsilon'],
                                   decay=kerasDefaults['decay_lr'])  # ,
 # clipnorm=kerasDefaults['clipnorm'],
 # clipvalue=kerasDefaults['clipvalue'])
 
     elif optimizer == 'adagrad':
-        return optimizers.Adagrad(lr=lr,
+        return tf.keras.optimizers.legacy.Adagrad(lr=lr,
                                   epsilon=kerasDefaults['epsilon'],
                                   decay=kerasDefaults['decay_lr'])  # ,
 # clipnorm=kerasDefaults['clipnorm'],
 # clipvalue=kerasDefaults['clipvalue'])
 
     elif optimizer == 'adadelta':
-        return optimizers.Adadelta(lr=lr, rho=kerasDefaults['rho'],
+        return tf.keras.optimizers.legacy.Adadelta(lr=lr, rho=kerasDefaults['rho'],
                                    epsilon=kerasDefaults['epsilon'],
                                    decay=kerasDefaults['decay_lr'])  # ,
 # clipnorm=kerasDefaults['clipnorm'],
 # clipvalue=kerasDefaults['clipvalue'])
 
     elif optimizer == 'adam':
-        return optimizers.Adam(lr=lr, beta_1=kerasDefaults['beta_1'],
+        return tf.keras.optimizers.legacy.Adam(lr=lr, beta_1=kerasDefaults['beta_1'],
                                beta_2=kerasDefaults['beta_2'],
                                epsilon=kerasDefaults['epsilon'],
                                decay=kerasDefaults['decay_lr'])  # ,
@@ -255,3 +257,57 @@ class LoggingCallback(Callback):
     def on_epoch_end(self, epoch, logs={}):
         msg = "[Epoch: %i] %s" % (epoch, ", ".join("%s: %f" % (k, v) for k, v in sorted(logs.items())))
         self.print_fcn(msg)
+
+
+class PerformanceReportCallback(Callback):
+    def __init__(self, BATCH_SIZE):
+        super( ).__init__()
+        self.batchsize = BATCH_SIZE
+        self.logfreq = 0
+        self.batch_begin_time = 0
+        self.batch_end_time = 0
+        self.max_speed = 0
+        self.epoch_time = 0
+        self.train_time = 0
+        self.epoch_count = 0
+
+    def on_batch_begin(self, batch, logs=None):
+        self.batch_begin_time = time.time()
+
+    def on_batch_end(self, batch, logs=None):
+        if batch == 0 and self.epoch_count == 0:
+            return
+        self.batch_time = time.time() - self.batch_begin_time
+        self.epoch_time += self.batch_time
+        self.epoch_batch_count += 1
+        self.train_batch_count += 1
+
+        self.batch_speed = self.batchsize / self.batch_time
+        if self.batch_speed > self.max_speed:
+            self.max_speed = self.batch_speed
+
+        if self.logfreq != 0 and batch % self.logfreq == 0:
+            print(f"\r\nbatch {batch} time(s) {round(self.batch_time, 6)} throughput(samples/sec): {round(self.batch_speed, 3)}", flush = True)
+
+    def on_epoch_begin(self, epoch, logs=None):
+        self.epoch_batch_count = 0
+        self.epoch_time = 0
+        self.epoch_begin_time = time.time()
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.train_time += self.epoch_time
+        self.epoch_count += 1
+
+        if self.epoch_time != 0:
+            self.epoch_avg_speed = self.epoch_batch_count * self.batchsize / self.epoch_time
+            print(f"\r\nepoch {epoch} time(s): ", round(self.epoch_time, 3), " throughput(samples/sec): ", round(self.epoch_avg_speed, 3), flush = True)
+
+    def on_train_begin(self, logs=None):
+        self.train_batch_count = 0
+        self.train_time = 0
+        self.train_begin_time = time.time()
+
+    def on_train_end(self, logs=None):
+        if self.train_time != 0:
+            speed_train = (self.batchsize * self.train_batch_count) / self.train_time
+            print("\r\nTotal train time(s): " , round(self.train_time, 3), " batches: ", self.train_batch_count, " batchsize: ", self.batchsize, " throughput(samples/sec) (avg, max): ", round(speed_train, 3), round(self.max_speed, 3), flush = True)

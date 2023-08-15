@@ -23,6 +23,7 @@ import p2b1
 import candle
 
 import p2b1_AE_models as AE_models
+from keras_utils import PerformanceReportCallback
 
 HOME = os.environ['HOME']
 
@@ -249,7 +250,8 @@ def run(GP):
     history_logger = candle.LoggingCallback(logger.debug)
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=GP)
     timeoutMonitor = candle.TerminateOnTimeOut(TIMEOUT)
-    callbacks = [history, history_logger, candleRemoteMonitor, timeoutMonitor]
+    perfCallback = PerformanceReportCallback(GP['batch_size'])
+    callbacks = [history, history_logger, candleRemoteMonitor, timeoutMonitor, perfCallback]
     # loss = 0.
 
 # ### Save the Model to disk

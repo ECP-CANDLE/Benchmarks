@@ -24,6 +24,13 @@ from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.preprocessing import text
 
 file_path = os.path.dirname(os.path.realpath(__file__))
+lib_path2 = os.path.abspath(os.path.join(file_path, "..", "..", "common"))
+sys.path.append(lib_path2)
+
+import candle
+from keras_utils import PerformanceReportCallback
+
+file_path = os.path.dirname(os.path.realpath(__file__))
 lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
 sys.path.append(lib_path)
 
@@ -168,12 +175,13 @@ checkpointer = ModelCheckpoint(filepath='smile_class.autosave.model.h5', verbose
 csv_logger = CSVLogger('smile_class.training.log')
 reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.75, patience=20, verbose=1, mode='auto', epsilon=0.0001, cooldown=3, min_lr=0.000000001)
 early_stop = EarlyStopping(monitor='val_loss', patience=100, verbose=1, mode='auto')
+perf_callback = PerformanceReportCallback(BATCH)
 
 history = model.fit(x_train, y_train,
                     batch_size=BATCH,
                     epochs=EPOCH,
                     verbose=1,
                     validation_data=(x_val, y_val),
-                    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop])
+                    callbacks=[checkpointer, csv_logger, reduce_lr, early_stop, perf_callback])
 
 model.load_weights('smile_class.autosave.model.h5')

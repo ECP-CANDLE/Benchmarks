@@ -22,6 +22,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import tensorflow as tf
 from tensorflow.python.framework import dtypes
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import smart_cond
@@ -172,7 +173,11 @@ class BaseDenseAttention(Layer):
             q_mask = mask[0]
             if q_mask is None:
                 return None
-            return ops.convert_to_tensor_v2(q_mask)
+            if tf.__version__ < '2.13.0':
+              return ops.convert_to_tensor_v2(q_mask)
+            else:
+              from tensorflow.python.framework import tensor_conversion
+              return tensor_conversion.convert_to_tensor_v2(q_mask)
         return None
 
     def _validate_call_args(self, inputs, mask):

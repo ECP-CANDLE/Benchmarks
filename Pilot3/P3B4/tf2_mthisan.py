@@ -235,9 +235,11 @@ class mthisan(object):
             y_trues = [[] for c in self.num_classes]
             start_time = time.time()
 
+            epoch_time = 0
+            epoch_batch_count = 0
+
             # train
             for start in range(0, len(data), batch_size):
-
                 # get batch index
                 if start + batch_size < len(data):
                     stop = start + batch_size
@@ -245,8 +247,13 @@ class mthisan(object):
                     stop = len(data)
 
                 # train step
+                batch_begin_time = time.time()
                 predictions, loss = self._train_step(data[start:stop],
                                                      np.array([lIndex[start:stop] for lIndex in labels]))
+                batch_time = time.time() - batch_begin_time
+                epoch_time += batch_time
+                epoch_batch_count += 1
+                batch_speed = batch_size/batch_time
 
                 # track correct predictions
                 for i, (p, lIndex) in enumerate(zip(predictions, [lIndex[start:stop] for lIndex in labels])):
@@ -258,7 +265,8 @@ class mthisan(object):
 
             # checkpoint after every epoch
             print("\ntraining time: %.2f" % (time.time() - start_time))
-
+            epoch_speed = (batch_size * epoch_batch_count) / epoch_time
+            print(f"\r\nepoch time (s):", round(epoch_time, 3), " throughput(samples/sec):", round(epoch_speed, 3), flush=True)
             for i in range(self.num_tasks):
                 micro = f1_score(y_trues[i], y_preds[i], average='micro')
                 macro = f1_score(y_trues[i], y_preds[i], average='macro')
