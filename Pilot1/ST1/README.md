@@ -2,13 +2,22 @@
 
 ## Introduction
 
-The ST1 benchmark represent two versions of a simple transformer, one that can perform regression and the other classification. We chose the transformer architecture to see if we could train directly on SMILE strings. This benchmark brings novel capability to the suite of Pilot1 benchmarks in two ways. First, the featureization of a small molecule is simply its SMILE string. The second novel aspect to the set of Pilot1 benchmarks is that the model is based on the Transformer architecture, albeit this benchmark is a simpler version of the large Transformer models that train on billions and greater parameters.
+The ST1 benchmark represent different versions of a simple transformer that can either do classification or regression. We chose the transformer architecture to see if we could train directly on SMILE strings. This benchmark brings novel capability to the suite of Pilot1 benchmarks in two ways. First, featurization of a small molecule is simply a tokenization of the SMILES string. The second novel aspect to the set of Pilot1 benchmarks is that the model is based on the Transformer architecture, albeit this benchmark is a simpler version of the large Transformer models that train on billions and greater parameters.
 
 Both the original code and the CANDLE versions are available. The original examples are retained and can be run as noted below. The CANDLE versions make use of the common network design in `smiles_transformer.py`, and implement the models in `sct_baseline_keras2.py` and `srt_baseline_keras2.py`, for classification and regression, respectively.
 
 The example classification problem takes as input SMILE strings and trains a model to predict whether or not a compound is 'drug-like' based on Lipinski criteria. The example regression problem takes as input SMILE strings and trains a model to predict the molecular weight. Data are freely downloadable and automatically downloaded by the CANDLE versions.
 
 For the CANDLE versions, all the relevant arguments are contained in the respective default model files. All variables can be overwritten from the command line. The datasets will be automatically downloaded and stored in the `../../Data/Pilot1 directory`. The respective default model files and commands to invoke the classifier and regressor are:
+
+Additional developments to ST1 are three implementations designed for performing regression on SMILES to predict binding affinity to macromolecular targets.
+These implementations are:
+
+(1) ST1 original: The original ST1 code initially trained to predict molecular weight now trained on binding affinity measurements.
+
+(2) ST1-horovod: ST1 original with additional functionality allowing for distributed training with horovod.
+
+(3) ST1 with SPE tokenizer: ST1 model trained on binding affinity measurements that featurizes SMILES strings using a special byte-pair encoder known as SMILES-pair encoder (https://doi.org/10.1021/acs.jcim.0c01127). We show this implementation improves accuracy of the model and reduces the overall model size (thus improving inference speed).
 
 ```
 class_default_model.txt
@@ -182,3 +191,4 @@ CHEMBL -- 1.5M training examples (shuffled and resampled so not same 1.5M as cla
 Predicting molecular Weight validation
 Is also 100K samples non-overlapping.
 Regression problem achieves R^2 about .95 after ~20 epochs.
+
