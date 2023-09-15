@@ -8,7 +8,14 @@ set -eu
 # arg 3 CANDLE_CONFIG
 
 ### Path to your CANDLEized model's main Python script###
-CANDLE_MODEL=/usr/local/Benchmarks/Pilot1/Uno/uno_baseline_keras2.py
+CANDLE_MODEL=uno_baseline_keras2.py
+IMPROVE_MODEL_DIR=${IMPROVE_MODEL_DIR:-$( dirname -- "$0" )}
+CANDLE_MODEL=${IMPROVE_MODEL_DIR}/${CANDLE_MODEL}
+
+if [ ! -f ${CANDLE_MODEL} ] ; then
+  echo No such file ${CANDLE_MODEL}
+  exit 404
+fi
 
 # Make copy of $# before shifts
 ARGC=$#
