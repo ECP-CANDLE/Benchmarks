@@ -555,7 +555,9 @@ def run(params):
 
 def main():
     params = initialize_parameters()
-    run(params)
+    history = run(params)
+    print("IMPROVE_RESULT val_loss: " +
+          str(history.history["val_loss"][-1]))
 
 
 if __name__ == '__main__':
