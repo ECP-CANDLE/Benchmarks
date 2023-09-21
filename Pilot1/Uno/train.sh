@@ -7,9 +7,9 @@ set -eu
 # arg 2 CANDLE_DATA_DIR
 # arg 3 CANDLE_CONFIG
 
-### Path to your CANDLEized model's main Python script###
+# Path to your CANDLEized model's main Python script
 CANDLE_MODEL=uno_baseline_keras2.py
-IMPROVE_MODEL_DIR=${IMPROVE_MODEL_DIR:-$( dirname -- "$0" )}
+IMPROVE_MODEL_DIR=${IMPROVE_MODEL_DIR:-/usr/local/Benchmarks/Pilot1/Uno}
 CANDLE_MODEL=${IMPROVE_MODEL_DIR}/${CANDLE_MODEL}
 
 if [ ! -f ${CANDLE_MODEL} ] ; then
