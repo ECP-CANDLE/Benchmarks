@@ -553,12 +553,24 @@ def run(params):
     return history
 
 
+def report_improve_result(params, history):
+    if "save_best_metric" in params:
+        save_best_metric = params["save_best_metric"]
+    else:
+        save_best_metric = "val_loss"
+    if save_best_metric not in history.history:
+        print("save_best_metric='%s' is not in history",
+              save_best_metric)
+        print("known keys are: " + str(history.history.keys()))
+        exit(1)
+    metric_value = history.history[save_best_metric][-1]
+    print("IMPROVE_RESULT %s: %f" % (save_best_metric, metric_value))
+
+
 def main():
     params = initialize_parameters()
     history = run(params)
-    print("IMPROVE_RESULT val_loss: " +
-          str(history.history["val_loss"][-1]))
-
+    report_improve_result(params, history)
 
 if __name__ == '__main__':
     main()
