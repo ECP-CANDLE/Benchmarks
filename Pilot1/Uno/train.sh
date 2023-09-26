@@ -53,7 +53,7 @@ echo "train.sh: running command..."
 echo "CMD = ${CMD[@]}"
 echo
 
-# Set up environmental variables and execute the model!
+# Set up environment variables and execute the model!
 if env CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES} \
        CANDLE_DATA_DIR=${CANDLE_DATA_DIR} \
        ${CMD[@]}
