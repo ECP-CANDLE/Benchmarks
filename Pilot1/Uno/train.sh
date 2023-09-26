@@ -48,6 +48,9 @@ fi
 echo "using CUDA_VISIBLE_DEVICES ${CUDA_VISIBLE_DEVICES}"
 echo "using CANDLE_DATA_DIR ${CANDLE_DATA_DIR}"
 echo "using CANDLE_CONFIG ${CANDLE_CONFIG}"
+echo
+echo "PWD:" $( pwd -P )
+echo
 
 echo "train.sh: running command..."
 echo "CMD = ${CMD[@]}"
