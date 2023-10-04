@@ -16,7 +16,6 @@ additional_definitions = [
     {"name": "num_test_samples", "action": "store", "type": int},
     {"name": "num_classes", "action": "store", "type": int},
     {"name": "eps", "action": "store", "type": float},
-
 ]
 
 required = [

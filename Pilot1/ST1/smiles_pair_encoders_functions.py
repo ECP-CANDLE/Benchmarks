@@ -2,15 +2,17 @@
 # reference: https://github.com/huggingface/transformers/blob/master/src/transformers/tokenization_bert.py
 # reference https://github.com/rxn4chemistry/rxnmapper
 
+import codecs
 import collections
 import logging
 import os
 import re
-import codecs
 import unicodedata
 from typing import List, Optional
-from transformers import PreTrainedTokenizer
+
 from SmilesPE.tokenizer import SPE_Tokenizer
+from transformers import PreTrainedTokenizer
+
 
 def load_vocab(vocab_file):
     """Loads a vocabulary file into a dictionary."""
@@ -22,21 +24,21 @@ def load_vocab(vocab_file):
         vocab[token] = index
     return vocab
 
+
 class Atomwise_Tokenizer(object):
     """Run atom-level SMILES tokenization"""
 
     def __init__(self):
-        """ Constructs a atom-level Tokenizer.
-        """
+        """Constructs a atom-level Tokenizer."""
         self.regex_pattern = r"(\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|=|#|-|\+|\\|\/|:|~|@|\?|>>?|\*|\$|\%[0-9]{2}|[0-9])"
         self.regex = re.compile(self.regex_pattern)
 
     def tokenize(self, text):
-        """ Basic Tokenization of a SMILES.
-        """
+        """Basic Tokenization of a SMILES."""
         tokens = [token for token in self.regex.findall(text)]
         return tokens
-    
+
+
 class SMILES_SPE_Tokenizer(PreTrainedTokenizer):
     r"""
     Constructs a SMILES tokenizer. Based on SMILES Pair Encoding (https://github.com/XinhaoLi74/SmilesPE).
@@ -95,7 +97,9 @@ class SMILES_SPE_Tokenizer(PreTrainedTokenizer):
             )
         self.vocab = load_vocab(vocab_file)
         self.spe_vocab = codecs.open(spe_file)
-        self.ids_to_tokens = collections.OrderedDict([(ids, tok) for tok, ids in self.vocab.items()])
+        self.ids_to_tokens = collections.OrderedDict(
+            [(ids, tok) for tok, ids in self.vocab.items()]
+        )
         self.spe_tokenizer = SPE_Tokenizer(self.spe_vocab)
 
     @property
@@ -106,10 +110,10 @@ class SMILES_SPE_Tokenizer(PreTrainedTokenizer):
         return dict(self.vocab, **self.added_tokens_encoder)
 
     def _tokenize(self, text):
-        return self.spe_tokenizer.tokenize(text).split(' ')
+        return self.spe_tokenizer.tokenize(text).split(" ")
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.vocab.get(token, self.vocab.get(self.unk_token))
 
     def _convert_id_to_token(self, index):
@@ -117,7 +121,7 @@ class SMILES_SPE_Tokenizer(PreTrainedTokenizer):
         return self.ids_to_tokens.get(index, self.unk_token)
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         out_string = " ".join(tokens).replace(" ##", "").strip()
         return out_string
 
@@ -145,7 +149,10 @@ class SMILES_SPE_Tokenizer(PreTrainedTokenizer):
         return cls + token_ids_0 + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -167,7 +174,12 @@ class SMILES_SPE_Tokenizer(PreTrainedTokenizer):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formated with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                )
+            )
 
         if token_ids_1 is not None:
             return [1] + ([0] * len(token_ids_0)) + [1] + ([0] * len(token_ids_1)) + [1]
@@ -217,27 +229,29 @@ class SMILES_SPE_Tokenizer(PreTrainedTokenizer):
                 if index != token_index:
                     logger.warning(
                         "Saving vocabulary to {}: vocabulary indices are not consecutive."
-                        " Please check that the vocabulary is not corrupted!".format(vocab_file)
+                        " Please check that the vocabulary is not corrupted!".format(
+                            vocab_file
+                        )
                     )
                     index = token_index
                 writer.write(token + "\n")
                 index += 1
         return (vocab_file,)
 
+
 class Atomwise_Tokenizer(object):
     """Run atom-level SMILES tokenization"""
 
     def __init__(self):
-        """ Constructs a atom-level Tokenizer.
-        """
+        """Constructs a atom-level Tokenizer."""
         self.regex_pattern = r"(\[[^\]]+]|Br?|Cl?|N|O|S|P|F|I|b|c|n|o|s|p|\(|\)|\.|=|#|-|\+|\\|\/|:|~|@|\?|>>?|\*|\$|\%[0-9]{2}|[0-9])"
         self.regex = re.compile(self.regex_pattern)
 
     def tokenize(self, text):
-        """ Basic Tokenization of a SMILES.
-        """
+        """Basic Tokenization of a SMILES."""
         tokens = [token for token in self.regex.findall(text)]
         return tokens
+
 
 class SMILES_Atomwise_Tokenizer(PreTrainedTokenizer):
     r"""
@@ -289,7 +303,9 @@ class SMILES_Atomwise_Tokenizer(PreTrainedTokenizer):
                 "Can't find a vocabulary file at path '{}'.".format(vocab_file)
             )
         self.vocab = load_vocab(vocab_file)
-        self.ids_to_tokens = collections.OrderedDict([(ids, tok) for tok, ids in self.vocab.items()])
+        self.ids_to_tokens = collections.OrderedDict(
+            [(ids, tok) for tok, ids in self.vocab.items()]
+        )
         self.tokenizer = Atomwise_Tokenizer()
 
     @property
@@ -303,7 +319,7 @@ class SMILES_Atomwise_Tokenizer(PreTrainedTokenizer):
         return self.tokenizer.tokenize(text)
 
     def _convert_token_to_id(self, token):
-        """ Converts a token (str) in an id using the vocab. """
+        """Converts a token (str) in an id using the vocab."""
         return self.vocab.get(token, self.vocab.get(self.unk_token))
 
     def _convert_id_to_token(self, index):
@@ -311,7 +327,7 @@ class SMILES_Atomwise_Tokenizer(PreTrainedTokenizer):
         return self.ids_to_tokens.get(index, self.unk_token)
 
     def convert_tokens_to_string(self, tokens):
-        """ Converts a sequence of tokens (string) in a single string. """
+        """Converts a sequence of tokens (string) in a single string."""
         out_string = " ".join(tokens).replace(" ##", "").strip()
         return out_string
 
@@ -339,7 +355,10 @@ class SMILES_Atomwise_Tokenizer(PreTrainedTokenizer):
         return cls + token_ids_0 + sep + token_ids_1 + sep
 
     def get_special_tokens_mask(
-        self, token_ids_0: List[int], token_ids_1: Optional[List[int]] = None, already_has_special_tokens: bool = False
+        self,
+        token_ids_0: List[int],
+        token_ids_1: Optional[List[int]] = None,
+        already_has_special_tokens: bool = False,
     ) -> List[int]:
         """
         Retrieves sequence ids from a token list that has no special tokens added. This method is called when adding
@@ -361,7 +380,12 @@ class SMILES_Atomwise_Tokenizer(PreTrainedTokenizer):
                     "You should not supply a second sequence if the provided sequence of "
                     "ids is already formated with special tokens for the model."
                 )
-            return list(map(lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0, token_ids_0))
+            return list(
+                map(
+                    lambda x: 1 if x in [self.sep_token_id, self.cls_token_id] else 0,
+                    token_ids_0,
+                )
+            )
 
         if token_ids_1 is not None:
             return [1] + ([0] * len(token_ids_0)) + [1] + ([0] * len(token_ids_1)) + [1]
@@ -411,10 +435,11 @@ class SMILES_Atomwise_Tokenizer(PreTrainedTokenizer):
                 if index != token_index:
                     logger.warning(
                         "Saving vocabulary to {}: vocabulary indices are not consecutive."
-                        " Please check that the vocabulary is not corrupted!".format(vocab_file)
+                        " Please check that the vocabulary is not corrupted!".format(
+                            vocab_file
+                        )
                     )
                     index = token_index
                 writer.write(token + "\n")
                 index += 1
         return (vocab_file,)
-

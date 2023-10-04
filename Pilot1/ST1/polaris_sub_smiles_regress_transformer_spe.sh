@@ -13,7 +13,7 @@
 module load conda/2022-09-08
 conda activate
 
-cd /grand/datascience/avasan/ST_Benchmarks/Test_Tokenizers/SMILESPair_Encoder_continue 
+cd /grand/datascience/avasan/ST_Benchmarks/Test_Tokenizers/SMILESPair_Encoder_continue
 
 NP=16
 PPN=4

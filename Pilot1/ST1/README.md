@@ -191,4 +191,3 @@ CHEMBL -- 1.5M training examples (shuffled and resampled so not same 1.5M as cla
 Predicting molecular Weight validation
 Is also 100K samples non-overlapping.
 Regression problem achieves R^2 about .95 after ~20 epochs.
-

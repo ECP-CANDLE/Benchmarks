@@ -9,6 +9,7 @@ import pandas as pd
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt
+import tensorflow as tf
 import tensorflow.keras as ke
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -22,23 +23,24 @@ from tensorflow.keras.callbacks import (
 from tensorflow.keras.layers import Dense, Dropout, Input
 from tensorflow.keras.models import Model, model_from_json, model_from_yaml
 from tensorflow.keras.optimizers import SGD
-import tensorflow as tf
 
 file_path = os.path.dirname(os.path.realpath(__file__))
 
-strategy = tf.distribute.MirroredStrategy([
-                                        '/xpu:0'
-#                                        ,'/xpu:1'
-#                                        ,'/xpu:2'
-#                                        ,'/xpu:3'
-#                                        ,'/xpu:4'
-#                                        ,'/xpu:5'
-#                                        ,'/xpu:6','/xpu:7'
-#                                        ,'/xpu:8','/xpu:9'
-#                                        ,'/xpu:10','/xpu:11'
-    ])
-print('tensorflow version: {}'.format(tf.__version__))
-print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+strategy = tf.distribute.MirroredStrategy(
+    [
+        "/xpu:0"
+        #                                        ,'/xpu:1'
+        #                                        ,'/xpu:2'
+        #                                        ,'/xpu:3'
+        #                                        ,'/xpu:4'
+        #                                        ,'/xpu:5'
+        #                                        ,'/xpu:6','/xpu:7'
+        #                                        ,'/xpu:8','/xpu:9'
+        #                                        ,'/xpu:10','/xpu:11'
+    ]
+)
+print("tensorflow version: {}".format(tf.__version__))
+print("Number of devices: {}".format(strategy.num_replicas_in_sync))
 
 # parse args
 psr = argparse.ArgumentParser(description="input csv file")
@@ -53,6 +55,7 @@ DR = 0.1  # Dropout rate
 data_path = args["in"]
 print(args)
 
+
 def r2(y_true, y_pred):
     SS_res = K.sum(K.square(y_true - y_pred))
     SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
@@ -66,8 +69,8 @@ def load_data():
     df = (pd.read_csv(data_path, skiprows=1).values).astype("float32")
     df_y = df[:, 0].astype("float32")
     df_x = df[:, 1:PL].astype(np.float32)
-    print('df_y: {}\n{}'.format(df_y.shape, df_y))
-    print('df_x: {}\n{}'.format(df_x.shape, df_x))
+    print("df_y: {}\n{}".format(df_y.shape, df_y))
+    print("df_x: {}\n{}".format(df_x.shape, df_x))
 
     scaler = StandardScaler()
     df_x = scaler.fit_transform(df_x)
@@ -77,16 +80,17 @@ def load_data():
     )
 
     return X_train, Y_train, X_test, Y_test
+
 
 def load_data_from_parquet():
-    
+
     data_path = args["in"]
 
-    df=pd.read_parquet(data_path)
-    df_y = df['reg'].values.astype("float32")
-    df_x = df.iloc[:,6:].values.astype("float32")
-    print('df_y: {}\n{}'.format(df_y.shape, df_y))
-    print('df_x: {}\n{}'.format(df_x.shape, df_x))
+    df = pd.read_parquet(data_path)
+    df_y = df["reg"].values.astype("float32")
+    df_x = df.iloc[:, 6:].values.astype("float32")
+    print("df_y: {}\n{}".format(df_y.shape, df_y))
+    print("df_x: {}\n{}".format(df_x.shape, df_x))
 
     scaler = StandardScaler()
     df_x = scaler.fit_transform(df_x)
@@ -98,31 +102,52 @@ def load_data_from_parquet():
     return X_train, Y_train, X_test, Y_test
 
 
-#X_train, Y_train, X_test, Y_test = load_data()
+# X_train, Y_train, X_test, Y_test = load_data()
 X_train, Y_train, X_test, Y_test = load_data_from_parquet()
 print("X_train shape:", X_train.shape)
 print("X_test shape:", X_test.shape)
 print("Y_train_shape: ", Y_train.shape)
 print("Y_test shape: ", Y_test.shape)
 
-steps = X_train.shape[0]//GLOBAL_BATCH_SIZE
-validation_steps = X_test.shape[0]//GLOBAL_BATCH_SIZE
-print('samples {}, global_batch_size {}, steps {}'.format(X_train.shape[0], GLOBAL_BATCH_SIZE, steps))
-print('val samples {}, global_batch_size {}, val_steps {}'.format(X_test.shape[0], GLOBAL_BATCH_SIZE, validation_steps))
+steps = X_train.shape[0] // GLOBAL_BATCH_SIZE
+validation_steps = X_test.shape[0] // GLOBAL_BATCH_SIZE
+print(
+    "samples {}, global_batch_size {}, steps {}".format(
+        X_train.shape[0], GLOBAL_BATCH_SIZE, steps
+    )
+)
+print(
+    "val samples {}, global_batch_size {}, val_steps {}".format(
+        X_test.shape[0], GLOBAL_BATCH_SIZE, validation_steps
+    )
+)
 
 
-train_ds = tf.data.Dataset.from_tensor_slices((X_train, Y_train)).batch(GLOBAL_BATCH_SIZE,
-                                                            drop_remainder=True,
-                                                            num_parallel_calls=None,
-                                                            deterministic=None,
-                                                           ).repeat(EPOCH)
-val_ds = tf.data.Dataset.from_tensor_slices((X_test, Y_test)).batch(GLOBAL_BATCH_SIZE,
-                                                            drop_remainder=True,
-                                                            num_parallel_calls=None,
-                                                            deterministic=None,).repeat(EPOCH)
+train_ds = (
+    tf.data.Dataset.from_tensor_slices((X_train, Y_train))
+    .batch(
+        GLOBAL_BATCH_SIZE,
+        drop_remainder=True,
+        num_parallel_calls=None,
+        deterministic=None,
+    )
+    .repeat(EPOCH)
+)
+val_ds = (
+    tf.data.Dataset.from_tensor_slices((X_test, Y_test))
+    .batch(
+        GLOBAL_BATCH_SIZE,
+        drop_remainder=True,
+        num_parallel_calls=None,
+        deterministic=None,
+    )
+    .repeat(EPOCH)
+)
 
 options = tf.data.Options()
-options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
+options.experimental_distribute.auto_shard_policy = (
+    tf.data.experimental.AutoShardPolicy.DATA
+)
 train_ds = train_ds.with_options(options)
 val_ds = val_ds.with_options(options)
 
@@ -131,7 +156,7 @@ val_dist = strategy.experimental_distribute_dataset(val_ds)
 
 
 with strategy.scope():
-    #inputs = Input(shape=(PS,))
+    # inputs = Input(shape=(PS,))
     inputs = Input(shape=(1826,))
     x = Dense(250, activation="relu")(inputs)
     x = Dropout(DR)(x)
@@ -173,21 +198,30 @@ reduce_lr = ReduceLROnPlateau(
 early_stop = EarlyStopping(monitor="val_loss", patience=100, verbose=1, mode="auto")
 
 from datetime import datetime as dt
-print("{} calling model.fit".format(dt.fromtimestamp(dt.timestamp(dt.now())).strftime("%D %H:%M:%S.%s")))
+
+print(
+    "{} calling model.fit".format(
+        dt.fromtimestamp(dt.timestamp(dt.now())).strftime("%D %H:%M:%S.%s")
+    )
+)
 history = model.fit(
-    #X_train,
-    #Y_train,
+    # X_train,
+    # Y_train,
     train_dist,
     batch_size=GLOBAL_BATCH_SIZE,
     steps_per_epoch=int(steps),
     epochs=EPOCH,
     verbose=1,
-    #validation_data=(X_test, Y_test),
+    # validation_data=(X_test, Y_test),
     validation_data=val_dist,
     validation_steps=validation_steps,
     callbacks=[checkpointer, csv_logger, reduce_lr, early_stop],
 )
-print("{} done calling model.fit".format(dt.fromtimestamp(dt.timestamp(dt.now())).strftime("%D %H:%M:%S.%s")))
+print(
+    "{} done calling model.fit".format(
+        dt.fromtimestamp(dt.timestamp(dt.now())).strftime("%D %H:%M:%S.%s")
+    )
+)
 
 
 score = model.evaluate(X_test, Y_test, verbose=0)

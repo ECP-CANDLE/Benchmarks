@@ -18,7 +18,13 @@ candle.set_parallelism_threads()
 
 additional_definitions = [
     {"name": "latent_dim", "action": "store", "type": int, "help": "latent dimensions"},
-    {"name": "benchmark_data", "action": "store", "type": candle.str2bool, "default": False, "help": "Use prepared benchmark data"},
+    {
+        "name": "benchmark_data",
+        "action": "store",
+        "type": candle.str2bool,
+        "default": False,
+        "help": "Use prepared benchmark data",
+    },
     {
         "name": "residual",
         "type": candle.str2bool,
@@ -231,8 +237,8 @@ def get_model(params):
 
 
 def load_data(params, seed):
-    if 'benchmark_data' in params and params['benchmark_data'] != "":
-        if params['train_data'].endswith('.parquet'):
+    if "benchmark_data" in params and params["benchmark_data"] != "":
+        if params["train_data"].endswith(".parquet"):
             header_url = params["header_url"]
             dh_dict, th_list = load_headers(
                 "descriptor_headers.csv", "training_headers.csv", header_url
@@ -243,9 +249,15 @@ def load_data(params, seed):
             url = params["data_url"]
 
             # file_train = params["train_data"]
-            train_file = candle.get_file(params['train_data'], url + params['train_data'], cache_subdir="Pilot1")
-            test_file = candle.get_file(params['test_data'], url + params['test_data'], cache_subdir="Pilot1")
-            val_file = candle.get_file(params['val_data'], url + params['val_data'], cache_subdir="Pilot1")
+            train_file = candle.get_file(
+                params["train_data"], url + params["train_data"], cache_subdir="Pilot1"
+            )
+            test_file = candle.get_file(
+                params["test_data"], url + params["test_data"], cache_subdir="Pilot1"
+            )
+            val_file = candle.get_file(
+                params["val_data"], url + params["val_data"], cache_subdir="Pilot1"
+            )
 
             # df = (pd.read_csv(data_path,skiprows=1).values).astype('float32')
             print("Loading data...")
@@ -270,11 +282,18 @@ def load_data(params, seed):
             scaler = StandardScaler()
             scaler.fit(train_df_x)
             train_df_x = scaler.fit_transform(train_df_x)
-            test_df_x  = scaler.fit_transform(test_df_x)
-            val_df_x  = scaler.fit_transform(val_df_x)
+            test_df_x = scaler.fit_transform(test_df_x)
+            val_df_x = scaler.fit_transform(val_df_x)
 
-            return train_df_x, train_df_y, val_df_x, val_df_y, train_df_x.shape[1], histogram
-            #return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
+            return (
+                train_df_x,
+                train_df_y,
+                val_df_x,
+                val_df_y,
+                train_df_x.shape[1],
+                histogram,
+            )
+            # return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
 
     else:
         header_url = params["header_url"]
@@ -286,10 +305,14 @@ def load_data(params, seed):
 
         url = params["data_url"]
         file_train = (
-            "ml." + params["base_name"] + ".Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet"
+            "ml."
+            + params["base_name"]
+            + ".Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet"
         )
         # file_train = params["train_data"]
-        train_file = candle.get_file(file_train, url + file_train, cache_subdir="Pilot1")
+        train_file = candle.get_file(
+            file_train, url + file_train, cache_subdir="Pilot1"
+        )
         # df = (pd.read_csv(data_path,skiprows=1).values).astype('float32')
         print("Loading data...")
         df = pd.read_parquet(train_file)

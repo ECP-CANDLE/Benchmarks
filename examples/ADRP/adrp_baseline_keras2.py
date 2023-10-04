@@ -335,12 +335,12 @@ def run(params):
 
     # set up a bunch of callbacks to do work during model training..
 
-    #checkpointer = ModelCheckpoint(
+    # checkpointer = ModelCheckpoint(
     #    filepath=params["save_path"] + "agg_adrp.autosave.model.h5",
     #    verbose=1,
     #    save_weights_only=False,
     #    save_best_only=True,
-    #)
+    # )
     initial_epoch = 0
     ckpt = candle.CandleCkptKeras(params, verbose=True)
     ckpt.set_model(model)

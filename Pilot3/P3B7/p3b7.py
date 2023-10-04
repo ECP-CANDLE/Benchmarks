@@ -18,7 +18,6 @@ additional_definitions = [
     {"name": "kernel1", "action": "store", "type": int},
     {"name": "kernel2", "action": "store", "type": int},
     {"name": "kernel3", "action": "store", "type": int},
-
 ]
 
 required = [

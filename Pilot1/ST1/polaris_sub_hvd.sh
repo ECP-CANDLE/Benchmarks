@@ -36,4 +36,3 @@ else
     mpiexec --np $NP -ppn $PPN --cpu-bind verbose,list:0,1,2,3,4,5,6,7 -env NCCL_COLLNET_ENABLE=1 -env NCCL_NET_GDR_LEVEL=PHB python smiles_regress_transformer_run_hvd.py  --in_train ${DATA_PATH}/${TFIL} --in_vali ${DATA_PATH}/${VFIL} --ep $EP --num_heads $NUMHEAD --DR_TB $DR_TB --DR_ff $DR_ff --activation $ACT --drop_post_MHA $DROP --lr $LR --loss_fn $LOSS --hvd_switch $HVDSWITCH > $OUT
 
 fi
-
