@@ -90,7 +90,7 @@ def validate(dataloader, model, args, device, epoch):
         for idx, batch in enumerate(dataloader):
 
             input_ids = batch["tokens"].to(device)
-            labels = batch["label"].to(args.device)
+            labels = batch["label"].to(device)
 
             output = model(input_ids, labels=labels)
 
@@ -137,7 +137,7 @@ def run(args):
     optimizer = torch.optim.Adam(params, lr=args.learning_rate, eps=args.eps)
     criterion = nn.BCEWithLogitsLoss()
 
-    for epoch in range(args.num_epochs):
+    for epoch in range(args.epochs):
         train(train_loader, model, optimizer, criterion, args, epoch)
         validate(valid_loader, model, args, args.device, epoch)
 

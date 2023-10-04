@@ -11,6 +11,14 @@ additional_definitions = [
     {"name": "grad_clip", "action": "store", "type": int},
     {"name": "unrolled", "action": "store", "type": candle.str2bool},
     {"name": "use_synthetic_data", "action": "store", "type": candle.str2bool},
+    {"name": "eps", "action": "store", "type": float},
+    {"name": "device", "action": "store", "type": str},
+    {"name": "embed_dim", "action": "store", "type": int},
+    {"name": "n_filters", "action": "store", "type": int},
+    {"name": "kernel1", "action": "store", "type": int},
+    {"name": "kernel2", "action": "store", "type": int},
+    {"name": "kernel3", "action": "store", "type": int},
+
 ]
 
 required = [

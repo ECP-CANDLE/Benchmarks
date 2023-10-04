@@ -10,6 +10,12 @@ additional_definitions = [
     {"name": "weight_decay", "action": "store", "type": float},
     {"name": "grad_clip", "action": "store", "type": int},
     {"name": "unrolled", "action": "store", "type": candle.str2bool},
+    {"name": "device", "action": "store", "type": str},
+    {"name": "num_train_samples", "action": "store", "type": int},
+    {"name": "num_valid_samples", "action": "store", "type": int},
+    {"name": "num_test_samples", "action": "store", "type": int},
+    {"name": "num_classes", "action": "store", "type": int},
+    {"name": "eps", "action": "store", "type": float},
 ]
 
 required = [
@@ -17,7 +23,7 @@ required = [
     "weight_decay",
     "rng_seed",
     "batch_size",
-    "num_epochs",
+    "epochs",
 ]
 
 
