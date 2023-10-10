@@ -1,0 +1,59 @@
+{
+    "general": {
+        "use_hvd": false,
+        "use_mpi": true,
+        "batch_size": 256,
+        "epochs": 400,
+        "lr": 0.00000991301767144166,
+        "loss_fn": "mean_squared_error"
+    },
+
+    "inference_data": {
+        "data_dir": "/lus/gila/projects/Shared/avasan/Inference_Data",
+        "databases": ["BDB","CAS", "CHM", "DBK",  "DCL",  "DUD",  "E15",  "EDB",  "EMO",  "ENA",  "FFI",  "G13",  "G17",  "HOP",  "LIT",  "MCU",  "MOS",  "PCH.incomplete",  "QM9",  "REP",  "SAV.incomplete",  "SUR",  "ZIN"]
+    },
+
+    "data_loading": {
+        "data_path": "/lus/grand/projects/datascience/avasan/Data_Docking/2M-flatten",
+        "rec": "3CLPro_7BQY_A_1_F",
+        "pattern": "Orderable_zinc_db_enaHLL.sorted.4col.descriptors.parquet.xform-smiles.csv.reg"
+    },
+
+    "tokenization": {
+        "vocab_size": 3132,
+        "maxlen": 45,
+        "tokenizer": {
+            "category": "smilespair",
+            "spe_file": "VocabFiles/SPE_ChEMBL.txt",
+            "vocab_file": "VocabFiles/vocab_spe.txt"
+        }
+    },
+
+    "architecture": {
+        "compile": false,
+        "embedding": {
+            "embed_dim": 128 
+        },
+        "transformer_block": {
+            "num_blocks": 5,
+            "activation": "selu",
+            "ff_dim": 128,
+            "num_heads": 21,
+            "dr1": 0.12717945391278226,
+            "dr2": 0.12717945391278226,
+            "drop_mha": true
+        },
+        "regressor_head": {
+            "activation": "selu",
+            "dr": 0.04990303516069576
+        }
+    },
+    
+    "callbacks": {
+        "checkpt_file": "smile_regress.autosave.model.h5",
+        "log_csv": "smile_regress.training.log",
+        "patience_red_lr": 20,
+        "patience_early_stop": 100
+    }
+
+}
