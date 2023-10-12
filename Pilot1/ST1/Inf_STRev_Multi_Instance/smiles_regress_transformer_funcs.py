@@ -159,7 +159,9 @@ def inference_data_gen(hyper_params, tokenizer, fil, rank):
     maxlen = hyper_params['tokenization']['maxlen']
 
     #Data_smiles_total = pd.read_feather(data_path_inference, columns=['SMILE']).to_numpy()
-    Data_smiles_total = pd.read_feather(data_path_inference)['SMILE']
+    #Data_smiles_total = pd.read_feather(data_path_inference)['SMILE']
+    Data_smiles_total = pd.read_csv(data_path_inference)['SMILE']
+
     Data_smiles_raw = np.array_split(Data_smiles_total, 4)[rank%4]
     #print(Data_smiles_raw)
     del(Data_smiles_total)
