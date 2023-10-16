@@ -1,0 +1,5 @@
+Working directory is /lus/gila/projects/candle_aesp_CNDA/avasan/DockingSurrogates/Inference/Inference_Scaling/ST_Sort_CheckList
+Jobid: 5000978.amn-0001
+Running on host x1922c3s1b0n0
+Running on nodes x1922c3s1b0n0.hostmgmt2001.cm.americas.sgi.com x1922c4s2b0n0.hostmgmt2001.cm.americas.sgi.com
+NUM_OF_NODES=2  TOTAL_NUM_RANKS=96  RANKS_PER_NODE=48
