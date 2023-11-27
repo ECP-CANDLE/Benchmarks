@@ -11,7 +11,7 @@ from sklearn.metrics import f1_score
 
 import p3b1 as bmk
 import candle
-
+from keras_utils import PerformanceReportCallback
 
 def initialize_parameters(default_model='p3b1_default_model.txt'):
 
@@ -160,10 +160,11 @@ def train_model(gParameters, models,
             gParameters['run_id'] = base_run_id + ".{}.{}.{}".format(fold, epoch, k)
             candleRemoteMonitor = candle.CandleRemoteMonitor(params=gParameters)
             timeoutMonitor = candle.TerminateOnTimeOut(gParameters['timeout'])
+            perf_callback = PerformanceReportCallback(gParameters['batch_size'])
 
             model.fit({'input': X_train[k]}, {'out_' + str(k): Y_train[k]},
                       epochs=1, verbose=verbose,
-                      callbacks=[candleRemoteMonitor, timeoutMonitor],
+                      callbacks=[candleRemoteMonitor, timeoutMonitor, perf_callback],
                       batch_size=gParameters['batch_size'],
                       validation_data=(X_test[k], Y_test[k]))
 

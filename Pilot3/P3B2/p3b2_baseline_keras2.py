@@ -1,3 +1,4 @@
+import tensorflow as tf
 import tensorflow.keras as keras
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Activation
@@ -11,7 +12,7 @@ import sys
 
 import p3b2 as bmk
 import candle
-
+from keras_utils import PerformanceReportCallback
 
 def initialize_parameters(default_model='p3b2_default_model.txt'):
 
@@ -126,13 +127,33 @@ def run(gParameters):
             ret_seq = True
         else:
             ret_seq = False
-
-        if k == 0:
-            model.add(LSTM(rnn_size, input_shape=(maxlen, len(chars)), return_sequences=ret_seq,
-                           dropout=dropout, recurrent_dropout=recurrent_dropout))
+        if gParameters['itexlstm'] is not None and gParameters['itexlstm'] is True:
+            try:
+                import intel_extension_for_tensorflow as itex
+                print('Using ITEX-LSTM')
+                if k == 0:
+                    model.add(itex.ops.ItexLSTM(rnn_size, input_shape=(maxlen, len(chars)), return_sequences=ret_seq,
+                              dropout=dropout, recurrent_dropout=recurrent_dropout))
+                else:
+                    model.add(itex.ops.ItexLSTM(rnn_size, dropout=dropout, recurrent_dropout=recurrent_dropout,
+                              return_sequences=ret_seq))
+            except ImportError:
+                from tensorflow.keras.layers import LSTM
+                print('Using Keras-LSTM')
+                if k == 0:
+                    model.add(LSTM(rnn_size, input_shape=(maxlen, len(chars)), return_sequences=ret_seq,
+                                   dropout=dropout, recurrent_dropout=recurrent_dropout))
+                else:
+                    model.add(LSTM(rnn_size, dropout=dropout, recurrent_dropout=recurrent_dropout,
+                              return_sequences=ret_seq))
         else:
-            model.add(LSTM(rnn_size, dropout=dropout, recurrent_dropout=recurrent_dropout,
-                      return_sequences=ret_seq))
+            from tensorflow.keras.layers import LSTM
+            if k == 0:
+                model.add(LSTM(rnn_size, input_shape=(maxlen, len(chars)), return_sequences=ret_seq,
+                               dropout=dropout, recurrent_dropout=recurrent_dropout))
+            else:
+                model.add(LSTM(rnn_size, dropout=dropout, recurrent_dropout=recurrent_dropout,
+                          return_sequences=ret_seq))
 
     model.add(Dense(len(chars)))
     model.add(Activation(gParameters['activation']))
@@ -153,7 +174,8 @@ def run(gParameters):
             print('Iteration', iteration)
 
         history = LossHistory()
-        model.fit(X, y, batch_size=100, epochs=1, callbacks=[history])
+        perf_callback = PerformanceReportCallback(gParameters['batch_size'])
+        model.fit(X, y, batch_size=gParameters['batch_size'], epochs=gParameters['epochs'], callbacks=[history, perf_callback])
 
         loss = history.losses[-1]
         if verbose:

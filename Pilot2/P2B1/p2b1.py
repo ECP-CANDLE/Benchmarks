@@ -334,7 +334,7 @@ class Candle_Molecular_Train():
                 # for frame in random.sample(range(len(xt_all)), int(self.sampling_density*len(xt_all))):
                 for frame in range(len(xt_all)):
                     history = self.molecular_model.fit(xt_all[frame], yt_all[frame], epochs=1,
-                                                       batch_size=self.batch_size, callbacks=self.callbacks[:2])
+                                                       batch_size=self.batch_size, callbacks=self.callbacks)
                     frame_loss.append(history.history['loss'])
                     frame_mse.append(history.history['mean_squared_error'])
 

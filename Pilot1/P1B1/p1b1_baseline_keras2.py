@@ -24,7 +24,7 @@ mpl.use('Agg')
 
 import p1b1
 import candle
-
+from keras_utils import PerformanceReportCallback
 np.set_printoptions(precision=4)
 
 
@@ -324,6 +324,8 @@ def run(params):
         callbacks.append(checkpointer)
     if params['tb']:
         callbacks.append(tensorboard)
+    perf_callback = PerformanceReportCallback(params['batch_size'])
+    callbacks.append(perf_callback)
 
     x_val2 = np.copy(x_val)
     np.random.shuffle(x_val2)

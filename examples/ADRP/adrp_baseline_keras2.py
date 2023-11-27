@@ -6,8 +6,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import h5py
 
-import tensorflow as tf
 
+import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras.layers import Input, Dense, Dropout
 from tensorflow.keras.models import Model, model_from_json, model_from_yaml
@@ -29,6 +29,7 @@ from scipy.stats import pearsonr
 import sys
 import adrp
 import candle
+from keras_utils import PerformanceReportCallback
 
 np.set_printoptions(precision=4)
 
@@ -376,6 +377,7 @@ def run(params):
     # history = parallel_model.fit(X_train, Y_train,
     epochs = params["epochs"]
     batch_size = params["batch_size"]
+    perf_callback = PerformanceReportCallback(batch_size)
     timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
     if (params['use_sample_weight']):
         if (params['sample_weight_type'] == 'linear'):
@@ -431,7 +433,7 @@ def run(params):
         verbose=1,
         sample_weight=train_weight,
         validation_data=(X_test, Y_test, test_weight),
-        callbacks=[checkpointer, timeout_monitor, csv_logger, reduce_lr, early_stop],
+        callbacks=[checkpointer, timeout_monitor, csv_logger, reduce_lr, early_stop, perf_callback],
     )
 
     print("Reloading saved best model")

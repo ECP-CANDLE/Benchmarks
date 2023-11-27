@@ -24,12 +24,18 @@ from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 from sklearn.model_selection import StratifiedKFold, GroupKFold
 from scipy.stats.stats import pearsonr
 
+import tensorflow as tf
+options = tf.profiler.experimental.ProfilerOptions(host_tracer_level = 3, python_tracer_level = 1, device_tracer_level = 1)
+tf.compat.v1.disable_eager_execution()
+
 import matplotlib as mpl
 mpl.use('Agg')
 
 import NCI60
 import combo
 import candle
+from keras_utils import PerformanceReportCallback
+
 
 logger = logging.getLogger(__name__)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -702,6 +708,8 @@ def run(params):
 
         # callbacks = [history_logger, model_recorder]
         callbacks = [candle_monitor, timeout_monitor, history_logger, model_recorder]
+        perf_callback = PerformanceReportCallback(args.batch_size)
+        callbacks.append(perf_callback)
         if args.reduce_lr:
             callbacks.append(reduce_lr)
         if args.warmup_lr:

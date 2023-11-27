@@ -17,7 +17,7 @@ from sklearn.metrics import f1_score
 import p3b3 as bmk
 import keras_mt_shared_cnn
 import candle
-
+from keras_utils import PerformanceReportCallback
 
 def initialize_parameters(default_model='p3b3_default_model.txt'):
 
@@ -105,7 +105,7 @@ def run_cnn(GP, train_x, train_y, test_x, test_y,
 
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=GP)
     timeoutMonitor = candle.TerminateOnTimeOut(GP['timeout'])
-
+    perf_callback = PerformanceReportCallback(batch_size)
     history = cnn.fit(
         x=np.array(train_x),
         y=train_labels,
@@ -113,7 +113,7 @@ def run_cnn(GP, train_x, train_y, test_x, test_y,
         epochs=epochs,
         verbose=2,
         validation_data=validation_data,
-        callbacks=[candleRemoteMonitor, timeoutMonitor]
+        callbacks=[candleRemoteMonitor, timeoutMonitor, perf_callback]
     )
 
     return history

@@ -9,7 +9,7 @@ from tensorflow.keras.regularizers import l2
 
 import p1b2
 import candle
-
+from keras_utils import PerformanceReportCallback
 
 def initialize_parameters(default_model='p1b2_default_model.txt'):
 
@@ -109,10 +109,12 @@ def run(gParameters):
     # Seed random generator for training
     np.random.seed(seed)
 
+    perf_callback = PerformanceReportCallback(gParameters['batch_size'])
     mlp.fit(X_train, y_train,
             batch_size=gParameters['batch_size'],
             epochs=gParameters['epochs'],
-            validation_data=(X_val, y_val)
+            validation_data=(X_val, y_val),
+            callbacks=[perf_callback]
             )
 
     # model save

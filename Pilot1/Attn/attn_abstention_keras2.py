@@ -21,6 +21,7 @@ import candle
 import attn_viz_utils as attnviz
 
 from attn_baseline_keras2 import build_attention_model
+from keras_utils import PerformanceReportCallback
 
 np.set_printoptions(precision=4)
 tf.compat.v1.disable_eager_execution()
@@ -292,6 +293,8 @@ def run(params):
 
     epochs = params['epochs']
     batch_size = params['batch_size']
+    perf_callback = PerformanceReportCallback(batch_size)
+    callbacks.append(perf_callback)
     history = model.fit(X_train, Y_train, class_weight=d_class_weights,
                         batch_size=batch_size,
                         epochs=epochs,
