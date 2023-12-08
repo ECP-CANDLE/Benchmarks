@@ -183,6 +183,12 @@ def load_combo_dose_response(fraction=True):
     path = get_file(DATA_URL + "ComboDrugGrowth_Nov2017.csv")
     df = global_cache.get(path)
     if df is None:
+        # Handle multiple Pandas APIs:
+        if pd.__version__ >= "1.4.0":
+            pandas_csv_errors = { "on_bad_lines": "warn" }
+        else:
+            pandas_csv_errors = { "error_bad_lines": False,
+                                  "warn_bad_lines": True }
         df = pd.read_csv(
             path,
             sep=",",
@@ -211,8 +217,7 @@ def load_combo_dose_response(fraction=True):
                 "SCREENER": str,
                 "STUDY": str,
             },
-            error_bad_lines=False,
-            warn_bad_lines=True,
+            **pandas_csv_errors
         )
         global_cache[path] = df
 
