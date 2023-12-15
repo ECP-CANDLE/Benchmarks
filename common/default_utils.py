@@ -1,27 +1,28 @@
 from __future__ import absolute_import
 
-import numpy as np
-import random
-from pprint import pprint
-import inspect
-
-import warnings
-
-import os
-import sys
 import argparse
+import inspect
+import os
+import random
+import sys
+import warnings
+from pprint import pprint
+
+import numpy as np
+
 try:
     import configparser
 except ImportError:
     import ConfigParser as configparser
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
+lib_path = os.path.abspath(os.path.join(file_path, "..", "..", "common"))
 sys.path.append(lib_path)
 
 work_path = os.path.dirname(os.path.realpath(__file__))
 
 from helper_utils import eval_string_as_list_of_lists, str2bool
+
 # from ckpt_keras_utils import ckpt_parser, ckpt_defs
 
 # Starting modifications
@@ -31,35 +32,71 @@ DEFAULT_SEED = 7102
 DEFAULT_TIMEOUT = -1  # no timeout
 DEFAULT_DATATYPE = np.float32
 PARAMETERS_CANDLE = [
-    'config_file',
+    "config_file",
     # neon parser
-    'verbose', 'logfile', 'save_path', 'model_name', 'data_type', 'dense', 'rng_seed', 'epochs', 'batch_size',
+    "verbose",
+    "logfile",
+    "save_path",
+    "model_name",
+    "data_type",
+    "dense",
+    "rng_seed",
+    "epochs",
+    "batch_size",
     # general behavior
-    'train_bool', 'eval_bool', 'timeout',
+    "train_bool",
+    "eval_bool",
+    "timeout",
     # logging
-    'home_dir', 'train_data', 'test_data', 'output_dir', 'data_url', 'experiment_id', 'run_id',
+    "home_dir",
+    "train_data",
+    "test_data",
+    "output_dir",
+    "data_url",
+    "experiment_id",
+    "run_id",
     # model architecture
-    'conv', 'locally_connected', 'activation', 'out_activation', 'lstm_size', 'recurrent_dropout',
+    "conv",
+    "locally_connected",
+    "activation",
+    "out_activation",
+    "lstm_size",
+    "recurrent_dropout",
     # processing between layers
-    'dropout', 'pool', 'batch_normalization',
+    "dropout",
+    "pool",
+    "batch_normalization",
     # model evaluation
-    'loss', 'optimizer', 'metrics',
+    "loss",
+    "optimizer",
+    "metrics",
     # data preprocessing
-    'scaling', 'shuffle', 'feature_subsample',
+    "scaling",
+    "shuffle",
+    "feature_subsample",
     # training
-    'learning_rate', 'early_stop', 'momentum', 'initialization',
-    'val_split', 'train_steps', 'val_steps', 'test_steps', 'train_samples', 'val_samples',
+    "learning_rate",
+    "early_stop",
+    "momentum",
+    "initialization",
+    "val_split",
+    "train_steps",
+    "val_steps",
+    "test_steps",
+    "train_samples",
+    "val_samples",
     # backend
-    'gpus',
+    "gpus",
     # profiling
-    'profiling',
+    "profiling",
     # cyclic learning rate
-    'clr_flag', 'clr_mode', 'clr_base_lr', 'clr_max_lr', 'clr_gamma'
+    "clr_flag",
+    "clr_mode",
+    "clr_base_lr",
+    "clr_max_lr",
+    "clr_gamma",
 ]
-CONFLICT_LIST = [
-    ['clr_flag', 'warmup_lr'],
-    ['clr_flag', 'reduce_lr']
-]
+CONFLICT_LIST = [["clr_flag", "warmup_lr"], ["clr_flag", "reduce_lr"]]
 
 
 def check_flag_conflicts(params):
@@ -76,45 +113,50 @@ def check_flag_conflicts(params):
                     flag_count += 1
         if flag_count > 1:
             raise Exception(
-                'ERROR ! Conflict in flag specification. These flags should not be used together: '
-                + str(sorted(flag_list)) + '... Exiting')
+                "ERROR ! Conflict in flag specification. These flags should not be used together: "
+                + str(sorted(flag_list))
+                + "... Exiting"
+            )
+
 
 # CLASS DEFINITIONS
 
 
 class ArgumentStruct:
     """Class that converts a python dictionary into an object with
-       named entries given by the dictionary keys.
-       This structure simplifies the calling convention for accessing
-       the dictionary values (corresponding to problem parameters).
-       After the object instantiation both modes of access (dictionary
-       or object entries) can be used.
+    named entries given by the dictionary keys.
+    This structure simplifies the calling convention for accessing
+    the dictionary values (corresponding to problem parameters).
+    After the object instantiation both modes of access (dictionary
+    or object entries) can be used.
     """
+
     def __init__(self, **entries):
         self.__dict__.update(entries)
 
 
 class ListOfListsAction(argparse.Action):
     """This class extends the argparse.Action class by instantiating
-        an argparser that constructs a list-of-lists from an input
-        (command-line option or argument) given as a string.
+    an argparser that constructs a list-of-lists from an input
+    (command-line option or argument) given as a string.
     """
+
     def __init__(self, option_strings, dest, type, **kwargs):
         """Initialize a ListOfListsAction object. If no type is specified,
-           an integer is assumed by default as the type for the elements
-           of the list-of-lists.
+        an integer is assumed by default as the type for the elements
+        of the list-of-lists.
 
-           Parameters
-           ----------
-           option_strings : string
-               String to parse
-           dest : object
-               Object to store the output (in this case the parsed list-of-lists).
-           type : data type
-               Data type to decode the elements of the lists.
-               Defaults to np.int32.
-           kwargs : object
-               Python object containing other argparse.Action parameters.
+        Parameters
+        ----------
+        option_strings : string
+            String to parse
+        dest : object
+            Object to store the output (in this case the parsed list-of-lists).
+        type : data type
+            Data type to decode the elements of the lists.
+            Defaults to np.int32.
+        kwargs : object
+            Python object containing other argparse.Action parameters.
 
         """
 
@@ -125,44 +167,45 @@ class ListOfListsAction(argparse.Action):
 
     def __call__(self, parser, namespace, values, option_string=None):
         """This function overrides the __call__ method of the base
-           argparse.Action class.
+        argparse.Action class.
 
-           This function implements the action of the ListOfListAction
-           class by parsing an input string (command-line option or argument)
-           and maping it into a list-of-lists. The resulting list-of-lists is
-           added to the namespace of parsed arguments. The parsing assumes that
-           the separator between lists is a colon ':' and the separator inside
-           the list is a comma ','. The values of the list are casted to the
-           type specified at the object initialization.
+        This function implements the action of the ListOfListAction
+        class by parsing an input string (command-line option or argument)
+        and maping it into a list-of-lists. The resulting list-of-lists is
+        added to the namespace of parsed arguments. The parsing assumes that
+        the separator between lists is a colon ':' and the separator inside
+        the list is a comma ','. The values of the list are casted to the
+        type specified at the object initialization.
 
-           Parameters
-           ----------
-           parser : ArgumentParser object
-               Object that contains this action
-           namespace : Namespace object
-               Namespace object that will be returned by the parse_args()
-               function.
-           values : string
-               The associated command-line arguments converted to string type
-               (i.e. input).
-           option_string : string
-               The option string that was used to invoke this action. (optional)
+        Parameters
+        ----------
+        parser : ArgumentParser object
+            Object that contains this action
+        namespace : Namespace object
+            Namespace object that will be returned by the parse_args()
+            function.
+        values : string
+            The associated command-line arguments converted to string type
+            (i.e. input).
+        option_string : string
+            The option string that was used to invoke this action. (optional)
 
         """
 
         decoded_list = []
-        removed1 = values.replace('[', '')
-        removed2 = removed1.replace(']', '')
-        out_list = removed2.split(':')
+        removed1 = values.replace("[", "")
+        removed2 = removed1.replace("]", "")
+        out_list = removed2.split(":")
 
         for line in out_list:
             in_list = []
-            elem = line.split(',')
+            elem = line.split(",")
             for el in elem:
                 in_list.append(self.dtype(el))
             decoded_list.append(in_list)
 
         setattr(namespace, self.dest, decoded_list)
+
 
 # INITIALIZATION UTILS
 
@@ -170,12 +213,12 @@ class ListOfListsAction(argparse.Action):
 def set_seed(seed):
     """Set the seed of the pseudo-random generator to the specified value.
 
-        Parameters
-        ----------
-        seed : int
-            Value to intialize or re-seed the generator.
+    Parameters
+    ----------
+    seed : int
+        Value to intialize or re-seed the generator.
     """
-    os.environ['PYTHONHASHSEED'] = '0'
+    os.environ["PYTHONHASHSEED"] = "0"
     np.random.seed(seed)
 
     random.seed(seed)
@@ -203,7 +246,7 @@ def check_file_parameters_exists(params_parser, params_benchmark, params_file):
     # Get keywords from benchmark definition
     bmk_keys = []
     for item in params_benchmark:
-        bmk_keys.append(item['name'])
+        bmk_keys.append(item["name"])
     bmk_set = set(bmk_keys)
     # Get core CANDLE keywords
     candle_set = set(PARAMETERS_CANDLE)
@@ -215,25 +258,28 @@ def check_file_parameters_exists(params_parser, params_benchmark, params_file):
     # Compute keywords that come from the config_file that are not in the CANDLE specs
     diff_set = file_set.difference(candle_set)
 
-    if (len(diff_set) > 0):
-        message = 'These keywords used in the configuration file are not defined in CANDLE: ' + str(sorted(diff_set))
+    if len(diff_set) > 0:
+        message = (
+            "These keywords used in the configuration file are not defined in CANDLE: "
+            + str(sorted(diff_set))
+        )
         warnings.warn(message, RuntimeWarning)
 
 
 def finalize_parameters(bmk):
     """Utility to parse parameters in common as well as parameters
-        particular to each benchmark.
+    particular to each benchmark.
 
-        Parameters
-        ----------
-        bmk : benchmark object
-            Object that has benchmark filepaths and specifications
+    Parameters
+    ----------
+    bmk : benchmark object
+        Object that has benchmark filepaths and specifications
 
-        Return
-        ----------
-        gParameters : python dictionary
-            Dictionary with all the parameters necessary to run the benchmark.
-            Command line overwrites config file specifications
+    Return
+    ----------
+    gParameters : python dictionary
+        Dictionary with all the parameters necessary to run the benchmark.
+        Command line overwrites config file specifications
     """
 
     # Parse common parameters
@@ -255,7 +301,9 @@ def finalize_parameters(bmk):
         conffile = os.path.join(bmk.file_path, conffile_txt)
 
     # print("Configuration file: ", conffile)
-    fileParameters = bmk.read_config_file(conffile)  # aux.config_file)#args.config_file)
+    fileParameters = bmk.read_config_file(
+        conffile
+    )  # aux.config_file)#args.config_file)
     # Get command-line parameters
     args = bmk.parser.parse_args()
     # print ('Params:', fileParameters)
@@ -268,7 +316,7 @@ def finalize_parameters(bmk):
     gParameters = args_overwrite_config(args, fileParameters)
     # Check that required set of parameters has been defined
     bmk.check_required_exists(gParameters)
-    print('Params:')
+    print("Params:")
     pprint(gParameters)
     # Check that no keywords conflict
     check_flag_conflicts(gParameters)
@@ -278,39 +326,56 @@ def finalize_parameters(bmk):
 
 def get_default_neon_parser(parser):
     """Parse command-line arguments that are default in neon parser (and are common to all frameworks).
-        Ignore if not present.
+    Ignore if not present.
 
-        Parameters
-        ----------
-        parser : ArgumentParser object
-            Parser for neon default command-line options
+    Parameters
+    ----------
+    parser : ArgumentParser object
+        Parser for neon default command-line options
     """
     # Logging Level
-    parser.add_argument("-v", "--verbose", type=str2bool,
-                        help="increase output verbosity")
-    parser.add_argument("-l", "--log", dest='logfile',
-                        default=None,
-                        help="log file")
+    parser.add_argument(
+        "-v", "--verbose", type=str2bool, help="increase output verbosity"
+    )
+    parser.add_argument("-l", "--log", dest="logfile", default=None, help="log file")
 
     # Logging utilities
-    parser.add_argument("-s", "--save_path", dest='save_path',
-                        default=argparse.SUPPRESS, type=str,
-                        help="file path to save model snapshots")
+    parser.add_argument(
+        "-s",
+        "--save_path",
+        dest="save_path",
+        default=argparse.SUPPRESS,
+        type=str,
+        help="file path to save model snapshots",
+    )
 
     # General behavior
-    parser.add_argument("--model_name", dest='model_name', type=str,
-                        default=argparse.SUPPRESS,
-                        help="specify model name to use when building filenames for saving")
-    parser.add_argument("-d", "--data_type", dest='data_type',
-                        default=argparse.SUPPRESS,
-                        choices=['f16', 'f32', 'f64'],
-                        help="default floating point")
+    parser.add_argument(
+        "--model_name",
+        dest="model_name",
+        type=str,
+        default=argparse.SUPPRESS,
+        help="specify model name to use when building filenames for saving",
+    )
+
+    parser.add_argument(
+        "-d",
+        "--data_type",
+        dest="data_type",
+        default=argparse.SUPPRESS,
+        choices=["f16", "f32", "f64"],
+        help="default floating point",
+    )
 
     # Model definition
     # Model Architecture
-    parser.add_argument("--dense", nargs='+', type=int,
-                        default=argparse.SUPPRESS,
-                        help="number of units in fully connected layers in an integer array")
+    parser.add_argument(
+        "--dense",
+        nargs="+",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="number of units in fully connected layers in an integer array",
+    )
 
     # Data preprocessing
     # parser.add_argument("--shuffle", type=str2bool,
@@ -318,15 +383,26 @@ def get_default_neon_parser(parser):
     #                    help="randomly shuffle data set (produces different training and testing partitions each run depending on the seed)")
 
     # Training configuration
-    parser.add_argument("-r", "--rng_seed", dest='rng_seed', type=int,
-                        default=argparse.SUPPRESS,
-                        help="random number generator seed")
-    parser.add_argument("-e", "--epochs", type=int,
-                        default=argparse.SUPPRESS,
-                        help="number of training epochs")
-    parser.add_argument("-z", "--batch_size", type=int,
-                        default=argparse.SUPPRESS,
-                        help="batch size")
+    parser.add_argument(
+        "-r",
+        "--rng_seed",
+        dest="rng_seed",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="random number generator seed",
+    )
+
+    parser.add_argument(
+        "-e",
+        "--epochs",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="number of training epochs",
+    )
+
+    parser.add_argument(
+        "-z", "--batch_size", type=int, default=argparse.SUPPRESS, help="batch size"
+    )
 
     return parser
 
@@ -334,166 +410,324 @@ def get_default_neon_parser(parser):
 def get_common_parser(parser):
     """Parse command-line arguments. Ignore if not present.
 
-        Parameters
-        ----------
-        parser : ArgumentParser object
-            Parser for command-line options
+    Parameters
+    ----------
+    parser : ArgumentParser object
+        Parser for command-line options
     """
 
     # Configuration file
-    parser.add_argument("--config_file", dest='config_file', default=argparse.SUPPRESS,
-                        help="specify model configuration file")
+    parser.add_argument(
+        "--config_file",
+        dest="config_file",
+        default=argparse.SUPPRESS,
+        help="specify model configuration file",
+    )
 
     # General behavior
-    parser.add_argument("--train_bool", dest='train_bool', type=str2bool,
-                        default=True,
-                        help="train model")
-    parser.add_argument("--eval_bool", dest='eval_bool', type=str2bool,
-                        default=argparse.SUPPRESS,
-                        help="evaluate model (use it for inference)")
+    parser.add_argument(
+        "--train_bool",
+        dest="train_bool",
+        type=str2bool,
+        default=True,
+        help="train model",
+    )
 
-    parser.add_argument("--timeout", dest='timeout', type=int, action="store",
-                        default=argparse.SUPPRESS,
-                        help="seconds allowed to train model (default: no timeout)")
+    parser.add_argument(
+        "--eval_bool",
+        dest="eval_bool",
+        type=str2bool,
+        default=argparse.SUPPRESS,
+        help="evaluate model (use it for inference)",
+    )
+
+    parser.add_argument(
+        "--timeout",
+        dest="timeout",
+        type=int,
+        action="store",
+        default=argparse.SUPPRESS,
+        help="seconds allowed to train model (default: no timeout)",
+    )
 
     # Logging utilities
-    parser.add_argument("--home_dir", dest='home_dir',
-                        default=argparse.SUPPRESS, type=str,
-                        help="set home directory")
+    parser.add_argument(
+        "--home_dir",
+        dest="home_dir",
+        default=argparse.SUPPRESS,
+        type=str,
+        help="set home directory",
+    )
 
-    parser.add_argument("--train_data", action="store",
-                        default=argparse.SUPPRESS,
-                        help="training data filename")
+    parser.add_argument(
+        "--train_data",
+        action="store",
+        default=argparse.SUPPRESS,
+        help="training data filename",
+    )
 
-    parser.add_argument("--test_data", action="store",
-                        default=argparse.SUPPRESS,
-                        help="testing data filename")
+    parser.add_argument(
+        "--val_data",
+        action="store",
+        default=argparse.SUPPRESS,
+        help="validation data filename",
+    )
 
-    parser.add_argument("--output_dir", dest='output_dir',
-                        default=argparse.SUPPRESS, type=str,
-                        help="output directory")
+    parser.add_argument(
+        "--test_data",
+        action="store",
+        default=argparse.SUPPRESS,
+        help="testing data filename",
+    )
 
-    parser.add_argument("--data_url", dest='data_url',
-                        default=argparse.SUPPRESS, type=str,
-                        help="set data source url")
+    parser.add_argument(
+        "--output_dir",
+        dest="output_dir",
+        default=argparse.SUPPRESS,
+        type=str,
+        help="output directory",
+    )
 
-    parser.add_argument("--experiment_id", default="EXP000", type=str, help="set the experiment unique identifier")
+    parser.add_argument(
+        "--data_url",
+        dest="data_url",
+        default=argparse.SUPPRESS,
+        type=str,
+        help="set data source url",
+    )
 
-    parser.add_argument("--run_id", default="RUN000", type=str, help="set the run unique identifier")
+    parser.add_argument(
+        "--experiment_id",
+        default="EXP000",
+        type=str,
+        help="set the experiment unique identifier",
+    )
+
+    parser.add_argument(
+        "--run_id", default="RUN000", type=str, help="set the run unique identifier"
+    )
 
     # Model definition
     # Model Architecture
-    parser.add_argument("--conv", nargs='+', type=int,
-                        default=argparse.SUPPRESS,
-                        help="integer array describing convolution layers: conv1_filters, conv1_filter_len, conv1_stride, conv2_filters, conv2_filter_len, conv2_stride ...")
-    parser.add_argument("--locally_connected", type=str2bool,
-                        default=argparse.SUPPRESS,
-                        help="use locally connected layers instead of convolution layers")
-    parser.add_argument("-a", "--activation",
-                        default=argparse.SUPPRESS,
-                        help="keras activation function to use in inner layers: relu, tanh, sigmoid...")
-    parser.add_argument("--out_activation",
-                        default=argparse.SUPPRESS,
-                        help="keras activation function to use in out layer: softmax, linear, ...")
+    parser.add_argument(
+        "--conv",
+        nargs="+",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="integer array describing convolution layers: conv1_filters, conv1_filter_len, conv1_stride, conv2_filters, conv2_filter_len, conv2_stride ...",
+    )
+    parser.add_argument(
+        "--locally_connected",
+        type=str2bool,
+        default=argparse.SUPPRESS,
+        help="use locally connected layers instead of convolution layers",
+    )
+    parser.add_argument(
+        "-a",
+        "--activation",
+        default=argparse.SUPPRESS,
+        help="keras activation function to use in inner layers: relu, tanh, sigmoid...",
+    )
+    parser.add_argument(
+        "--out_activation",
+        default=argparse.SUPPRESS,
+        help="keras activation function to use in out layer: softmax, linear, ...",
+    )
 
-    parser.add_argument("--lstm_size", nargs='+', type=int,
-                        default=argparse.SUPPRESS,
-                        help="integer array describing size of LSTM internal state per layer")
-    parser.add_argument("--recurrent_dropout", action="store",
-                        default=argparse.SUPPRESS, type=float,
-                        help="ratio of recurrent dropout")
+    parser.add_argument(
+        "--lstm_size",
+        nargs="+",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="integer array describing size of LSTM internal state per layer",
+    )
+    parser.add_argument(
+        "--recurrent_dropout",
+        action="store",
+        default=argparse.SUPPRESS,
+        type=float,
+        help="ratio of recurrent dropout",
+    )
 
     # Processing between layers
-    parser.add_argument("--dropout", type=float,
-                        default=argparse.SUPPRESS,
-                        help="ratio of dropout used in fully connected layers")
-    parser.add_argument("--pool", type=int,
-                        default=argparse.SUPPRESS,
-                        help="pooling layer length")
-    parser.add_argument("--batch_normalization", type=str2bool,
-                        default=argparse.SUPPRESS,
-                        help="use batch normalization")
+    parser.add_argument(
+        "--dropout",
+        type=float,
+        default=argparse.SUPPRESS,
+        help="ratio of dropout used in fully connected layers",
+    )
+    parser.add_argument(
+        "--pool", type=int, default=argparse.SUPPRESS, help="pooling layer length"
+    )
+    parser.add_argument(
+        "--batch_normalization",
+        type=str2bool,
+        default=argparse.SUPPRESS,
+        help="use batch normalization",
+    )
 
     # Model Evaluation
-    parser.add_argument("--loss",
-                        default=argparse.SUPPRESS,
-                        help="keras loss function to use: mse, ...")
-    parser.add_argument("--optimizer",
-                        default=argparse.SUPPRESS,
-                        help="keras optimizer to use: sgd, rmsprop, ...")
+    parser.add_argument(
+        "--loss", default=argparse.SUPPRESS, help="keras loss function to use: mse, ..."
+    )
+    parser.add_argument(
+        "--optimizer",
+        default=argparse.SUPPRESS,
+        help="keras optimizer to use: sgd, rmsprop, ...",
+    )
 
-    parser.add_argument("--metrics",
-                        default=argparse.SUPPRESS,
-                        help="metrics to evaluate performance: accuracy, ...")
+    parser.add_argument(
+        "--metrics",
+        default=argparse.SUPPRESS,
+        help="metrics to evaluate performance: accuracy, ...",
+    )
 
     # Data preprocessing
-    parser.add_argument("--scaling",
-                        default=argparse.SUPPRESS,
-                        choices=['minabs', 'minmax', 'std', 'none'],
-                        help="type of feature scaling; 'minabs': to [-1,1]; 'minmax': to [0,1], 'std': standard unit normalization; 'none': no normalization")
+    parser.add_argument(
+        "--scaling",
+        default=argparse.SUPPRESS,
+        choices=["minabs", "minmax", "std", "none"],
+        help="type of feature scaling; 'minabs': to [-1,1]; 'minmax': to [0,1], 'std': standard unit normalization; 'none': no normalization",
+    )
 
-    parser.add_argument("--shuffle", type=str2bool, default=False,
-                        help="randomly shuffle data set (produces different training and testing partitions each run depending on the seed)")
+    parser.add_argument(
+        "--shuffle",
+        type=str2bool,
+        default=False,
+        help="randomly shuffle data set (produces different training and testing partitions each run depending on the seed)",
+    )
 
     # Feature selection
-    parser.add_argument("--feature_subsample", type=int,
-                        default=argparse.SUPPRESS,
-                        help="number of features to randomly sample from each category (cellline expression, drug descriptors, etc), 0 means using all features")
+    parser.add_argument(
+        "--feature_subsample",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="number of features to randomly sample from each category (cellline expression, drug descriptors, etc), 0 means using all features",
+    )
 
     # Training configuration
-    parser.add_argument("--learning_rate",
-                        default=argparse.SUPPRESS, type=float,
-                        help="overrides the learning rate for training")
-    parser.add_argument("--early_stop", type=str2bool,
-                        default=argparse.SUPPRESS,
-                        help="activates keras callback for early stopping of training in function of the monitored variable specified")
-    parser.add_argument("--momentum",
-                        default=argparse.SUPPRESS, type=float,
-                        help="overrides the momentum to use in the SGD optimizer when training")
+    parser.add_argument(
+        "--learning_rate",
+        default=argparse.SUPPRESS,
+        type=float,
+        help="overrides the learning rate for training",
+    )
+    parser.add_argument(
+        "--early_stop",
+        type=str2bool,
+        default=argparse.SUPPRESS,
+        help="activates keras callback for early stopping of training in function of the monitored variable specified",
+    )
+    parser.add_argument(
+        "--momentum",
+        default=argparse.SUPPRESS,
+        type=float,
+        help="overrides the momentum to use in the SGD optimizer when training",
+    )
 
-    parser.add_argument("--initialization",
-                        default=argparse.SUPPRESS,
-                        choices=['constant', 'uniform', 'normal', 'glorot_uniform', 'glorot_normal', 'lecun_uniform', 'he_normal'],
-                        help="type of weight initialization; 'constant': to 0; 'uniform': to [-0.05,0.05], 'normal': mean 0, stddev 0.05; 'glorot_uniform': [-lim,lim] with lim = sqrt(6/(fan_in+fan_out)); 'lecun_uniform' : [-lim,lim] with lim = sqrt(3/fan_in); 'he_normal' : mean 0, stddev sqrt(2/fan_in)")
-    parser.add_argument("--val_split", type=float,
-                        default=argparse.SUPPRESS,
-                        help="fraction of data to use in validation")
-    parser.add_argument("--train_steps", type=int,
-                        default=argparse.SUPPRESS,
-                        help="overrides the number of training batches per epoch if set to nonzero")
-    parser.add_argument("--val_steps", type=int,
-                        default=argparse.SUPPRESS,
-                        help="overrides the number of validation batches per epoch if set to nonzero")
-    parser.add_argument("--test_steps", type=int,
-                        default=argparse.SUPPRESS,
-                        help="overrides the number of test batches per epoch if set to nonzero")
-    parser.add_argument("--train_samples", action="store",
-                        default=argparse.SUPPRESS, type=int,
-                        help="overrides the number of training samples if set to nonzero")
-    parser.add_argument("--val_samples", action="store",
-                        default=argparse.SUPPRESS, type=int,
-                        help="overrides the number of validation samples if set to nonzero")
+    parser.add_argument(
+        "--initialization",
+        default=argparse.SUPPRESS,
+        choices=[
+            "constant",
+            "uniform",
+            "normal",
+            "glorot_uniform",
+            "glorot_normal",
+            "lecun_uniform",
+            "he_normal",
+        ],
+        help="type of weight initialization; 'constant': to 0; 'uniform': to [-0.05,0.05], 'normal': mean 0, stddev 0.05; 'glorot_uniform': [-lim,lim] with lim = sqrt(6/(fan_in+fan_out)); 'lecun_uniform' : [-lim,lim] with lim = sqrt(3/fan_in); 'he_normal' : mean 0, stddev sqrt(2/fan_in)",
+    )
+    parser.add_argument(
+        "--val_split",
+        type=float,
+        default=argparse.SUPPRESS,
+        help="fraction of data to use in validation",
+    )
+    parser.add_argument(
+        "--train_steps",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="overrides the number of training batches per epoch if set to nonzero",
+    )
+    parser.add_argument(
+        "--val_steps",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="overrides the number of validation batches per epoch if set to nonzero",
+    )
+    parser.add_argument(
+        "--test_steps",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="overrides the number of test batches per epoch if set to nonzero",
+    )
+    parser.add_argument(
+        "--train_samples",
+        action="store",
+        default=argparse.SUPPRESS,
+        type=int,
+        help="overrides the number of training samples if set to nonzero",
+    )
+    parser.add_argument(
+        "--val_samples",
+        action="store",
+        default=argparse.SUPPRESS,
+        type=int,
+        help="overrides the number of validation samples if set to nonzero",
+    )
 
     # Backend configuration
-    parser.add_argument("--gpus", nargs='+', type=int,
-                        default=argparse.SUPPRESS,
-                        help="set IDs of GPUs to use")
+    parser.add_argument(
+        "--gpus",
+        nargs="+",
+        type=int,
+        default=argparse.SUPPRESS,
+        help="set IDs of GPUs to use",
+    )
 
     # profiling flags
-    parser.add_argument("-p", "--profiling", type=str2bool,
-                        default='false',
-                        help="Turn profiling on or off")
+    parser.add_argument(
+        "-p",
+        "--profiling",
+        type=str2bool,
+        default="false",
+        help="Turn profiling on or off",
+    )
 
     # cyclic learning rate
-    parser.add_argument("--clr_flag", default=argparse.SUPPRESS, type=str2bool, help="CLR flag (boolean)")
-    parser.add_argument("--clr_mode", default=argparse.SUPPRESS, type=str, choices=['trng1', 'trng2', 'exp'],
-                        help="CLR mode (default: trng1)")
-    parser.add_argument("--clr_base_lr", type=float, default=argparse.SUPPRESS,
-                        help="Base lr for cycle lr.")
-    parser.add_argument("--clr_max_lr", type=float, default=argparse.SUPPRESS,
-                        help="Max lr for cycle lr.")
-    parser.add_argument("--clr_gamma", type=float, default=argparse.SUPPRESS,
-                        help="Gamma parameter for learning cycle LR.")
+    parser.add_argument(
+        "--clr_flag",
+        default=argparse.SUPPRESS,
+        type=str2bool,
+        help="CLR flag (boolean)",
+    )
+    parser.add_argument(
+        "--clr_mode",
+        default=argparse.SUPPRESS,
+        type=str,
+        choices=["trng1", "trng2", "exp"],
+        help="CLR mode (default: trng1)",
+    )
+    parser.add_argument(
+        "--clr_base_lr",
+        type=float,
+        default=argparse.SUPPRESS,
+        help="Base lr for cycle lr.",
+    )
+    parser.add_argument(
+        "--clr_max_lr",
+        type=float,
+        default=argparse.SUPPRESS,
+        help="Max lr for cycle lr.",
+    )
+    parser.add_argument(
+        "--clr_gamma",
+        type=float,
+        default=argparse.SUPPRESS,
+        help="Gamma parameter for learning cycle LR.",
+    )
 
     # build these from definitions
     # parser = ckpt_parser(parser)
@@ -503,14 +737,14 @@ def get_common_parser(parser):
 
 def args_overwrite_config(args, config):
     """Overwrite configuration parameters with
-        parameters specified via command-line.
+    parameters specified via command-line.
 
-        Parameters
-        ----------
-        args : ArgumentParser object
-            Parameters specified via command-line
-        config : python dictionary
-            Parameters read from configuration file
+    Parameters
+    ----------
+    args : ArgumentParser object
+        Parameters specified via command-line
+    config : python dictionary
+        Parameters read from configuration file
     """
 
     params = config
@@ -520,35 +754,34 @@ def args_overwrite_config(args, config):
     for key in args_dict.keys():
         params[key] = args_dict[key]
 
-    if 'data_type' not in params:
-        params['data_type'] = DEFAULT_DATATYPE
+    if "data_type" not in params:
+        params["data_type"] = DEFAULT_DATATYPE
     else:
-        if params['data_type'] in set(['f16', 'f32', 'f64']):
-            params['data_type'] = get_choice(params['datatype'])
+        if params["data_type"] in set(["f16", "f32", "f64"]):
+            params["data_type"] = get_choice(params["datatype"])
 
-    if 'output_dir' not in params:
-        params['output_dir'] = directory_from_parameters(params)
+    if "output_dir" not in params:
+        params["output_dir"] = directory_from_parameters(params)
     else:
-        params['output_dir'] = directory_from_parameters(params, params['output_dir'])
+        params["output_dir"] = directory_from_parameters(params, params["output_dir"])
 
-    if 'rng_seed' not in params:
-        params['rng_seed'] = DEFAULT_SEED
+    if "rng_seed" not in params:
+        params["rng_seed"] = DEFAULT_SEED
 
-    if 'timeout' not in params:
-        params['timeout'] = DEFAULT_TIMEOUT
+    if "timeout" not in params:
+        params["timeout"] = DEFAULT_TIMEOUT
 
     return params
 
 
 def get_choice(name):
-    """ Maps name string to the right type of argument
-    """
+    """Maps name string to the right type of argument"""
     mapping = {}
 
     # dtype
-    mapping['f16'] = np.float16
-    mapping['f32'] = np.float32
-    mapping['f64'] = np.float64
+    mapping["f16"] = np.float16
+    mapping["f32"] = np.float32
+    mapping["f64"] = np.float64
 
     mapped = mapping.get(name)
     if not mapped:
@@ -557,30 +790,30 @@ def get_choice(name):
     return mapped
 
 
-def directory_from_parameters(params, commonroot='Output'):
-    """ Construct output directory path with unique IDs from parameters
+def directory_from_parameters(params, commonroot="Output"):
+    """Construct output directory path with unique IDs from parameters
 
-        Parameters
-        ----------
-        params : python dictionary
-            Dictionary of parameters read
-        commonroot : string
-            String to specify the common folder to store results.
+    Parameters
+    ----------
+    params : python dictionary
+        Dictionary of parameters read
+    commonroot : string
+        String to specify the common folder to store results.
 
     """
 
-    if commonroot in set(['.', './']):  # Same directory --> convert to absolute path
-        outdir = os.path.abspath('.')
+    if commonroot in set([".", "./"]):  # Same directory --> convert to absolute path
+        outdir = os.path.abspath(".")
     else:  # Create path specified
-        outdir = os.path.abspath(os.path.join('.', commonroot))
+        outdir = os.path.abspath(os.path.join(".", commonroot))
         if not os.path.exists(outdir):
             os.makedirs(outdir)
 
-        outdir = os.path.abspath(os.path.join(outdir, params['experiment_id']))
+        outdir = os.path.abspath(os.path.join(outdir, params["experiment_id"]))
         if not os.path.exists(outdir):
             os.makedirs(outdir)
 
-        outdir = os.path.abspath(os.path.join(outdir, params['run_id']))
+        outdir = os.path.abspath(os.path.join(outdir, params["run_id"]))
         if not os.path.exists(outdir):
             os.makedirs(outdir)
 
@@ -588,38 +821,45 @@ def directory_from_parameters(params, commonroot='Output'):
 
 
 class Benchmark:
-    """ Class that implements an interface to handle configuration options for the
-        different CANDLE benchmarks.
-        It provides access to all the common configuration
-        options and configuration options particular to each individual benchmark.
-        It describes what minimum requirements should be specified to instantiate
-        the corresponding benchmark.
-        It interacts with the argparser to extract command-line options and arguments
-        from the benchmark's configuration files.
+    """Class that implements an interface to handle configuration options for the
+    different CANDLE benchmarks.
+    It provides access to all the common configuration
+    options and configuration options particular to each individual benchmark.
+    It describes what minimum requirements should be specified to instantiate
+    the corresponding benchmark.
+    It interacts with the argparser to extract command-line options and arguments
+    from the benchmark's configuration files.
     """
 
-    def __init__(self, filepath, defmodel, framework, prog=None, desc=None, parser=None):
-        """ Initialize Benchmark object.
+    def __init__(
+        self, filepath, defmodel, framework, prog=None, desc=None, parser=None
+    ):
+        """Initialize Benchmark object.
 
-            Parameters
-            ----------
-            filepath : ./
-                os.path.dirname where the benchmark is located. Necessary to locate utils and
-                establish input/ouput paths
-            defmodel : 'p*b*_default_model.txt'
-                string corresponding to the default model of the benchmark
-            framework : 'keras', 'neon', 'mxnet', 'pytorch'
-                framework used to run the benchmark
-            prog : 'p*b*_baseline_*'
-                string for program name (usually associated to benchmark and framework)
-            desc : ' '
-                string describing benchmark (usually a description of the neural network model built)
-            parser : argparser (default None)
-                if 'neon' framework a NeonArgparser is passed. Otherwise an argparser is constructed.
+        Parameters
+        ----------
+        filepath : ./
+            os.path.dirname where the benchmark is located. Necessary to locate utils and
+            establish input/ouput paths
+        defmodel : 'p*b*_default_model.txt'
+            string corresponding to the default model of the benchmark
+        framework : 'keras', 'neon', 'mxnet', 'pytorch'
+            framework used to run the benchmark
+        prog : 'p*b*_baseline_*'
+            string for program name (usually associated to benchmark and framework)
+        desc : ' '
+            string describing benchmark (usually a description of the neural network model built)
+        parser : argparser (default None)
+            if 'neon' framework a NeonArgparser is passed. Otherwise an argparser is constructed.
         """
 
         if parser is None:
-            parser = argparse.ArgumentParser(prog=prog, formatter_class=argparse.ArgumentDefaultsHelpFormatter, description=desc, conflict_handler='resolve')
+            parser = argparse.ArgumentParser(
+                prog=prog,
+                formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                description=desc,
+                conflict_handler="resolve",
+            )
 
         self.parser = parser
         self.file_path = filepath
@@ -632,15 +872,15 @@ class Benchmark:
 
     def parse_from_common(self):
         """Functionality to parse options common
-           for all benchmarks.
-           This functionality is based on methods 'get_default_neon_parser' and
-           'get_common_parser' which are defined previously(above). If the order changes
-           or they are moved, the calling has to be updated.
+        for all benchmarks.
+        This functionality is based on methods 'get_default_neon_parser' and
+        'get_common_parser' which are defined previously(above). If the order changes
+        or they are moved, the calling has to be updated.
         """
         # Parse has been split between arguments that are common with the default neon parser
         # and all the other options
         parser = self.parser
-        if self.framework != 'neon':
+        if self.framework != "neon":
             parser = get_default_neon_parser(parser)
         parser = get_common_parser(parser)
 
@@ -651,73 +891,119 @@ class Benchmark:
 
     def parse_from_benchmark(self):
         """Functionality to parse options specific
-           specific for each benchmark.
+        specific for each benchmark.
         """
 
         for d in self.additional_definitions:
-            if 'type' not in d:
-                d['type'] = None
-            if 'default' not in d:
-                d['default'] = argparse.SUPPRESS
-            if 'help' not in d:
-                d['help'] = ''
-            if 'action' in d:  # Actions
-                if d['action'] == 'list-of-lists':  # Non standard. Specific functionallity has been added
-                    d['action'] = ListOfListsAction
-                    self.parser.add_argument('--' + d['name'], dest=d['name'], action=d['action'], type=d['type'], default=d['default'], help=d['help'])
-                elif (d['action'] == 'store_true') or (d['action'] == 'store_false'):
-                    raise Exception('The usage of store_true or store_false cannot be undone in the command line. Use type=str2bool instead.')
+            if "type" not in d:
+                d["type"] = None
+            if "default" not in d:
+                d["default"] = argparse.SUPPRESS
+            if "help" not in d:
+                d["help"] = ""
+            if "action" in d:  # Actions
+                if (
+                    d["action"] == "list-of-lists"
+                ):  # Non standard. Specific functionallity has been added
+                    d["action"] = ListOfListsAction
+                    self.parser.add_argument(
+                        "--" + d["name"],
+                        dest=d["name"],
+                        action=d["action"],
+                        type=d["type"],
+                        default=d["default"],
+                        help=d["help"],
+                    )
+                elif (d["action"] == "store_true") or (d["action"] == "store_false"):
+                    raise Exception(
+                        "The usage of store_true or store_false cannot be undone in the command line. Use type=str2bool instead."
+                    )
                 else:
-                    self.parser.add_argument('--' + d['name'], action=d['action'], default=d['default'], help=d['help'], type=d['type'])
+                    self.parser.add_argument(
+                        "--" + d["name"],
+                        action=d["action"],
+                        default=d["default"],
+                        help=d["help"],
+                        type=d["type"],
+                    )
             else:  # Non actions
-                if 'nargs' in d:  # variable parameters
-                    if 'choices' in d:  # choices with variable parameters
-                        self.parser.add_argument('--' + d['name'], nargs=d['nargs'], choices=d['choices'], default=d['default'], help=d['help'])
+                if "nargs" in d:  # variable parameters
+                    if "choices" in d:  # choices with variable parameters
+                        self.parser.add_argument(
+                            "--" + d["name"],
+                            nargs=d["nargs"],
+                            choices=d["choices"],
+                            default=d["default"],
+                            help=d["help"],
+                        )
                     else:  # Variable parameters (free, no limited choices)
-                        self.parser.add_argument('--' + d['name'], nargs=d['nargs'], type=d['type'], default=d['default'], help=d['help'])
-                elif 'choices' in d:  # Select from choice (fixed number of parameters)
-                    self.parser.add_argument('--' + d['name'], choices=d['choices'], default=d['default'], help=d['help'])
+                        self.parser.add_argument(
+                            "--" + d["name"],
+                            nargs=d["nargs"],
+                            type=d["type"],
+                            default=d["default"],
+                            help=d["help"],
+                        )
+                elif "choices" in d:  # Select from choice (fixed number of parameters)
+                    self.parser.add_argument(
+                        "--" + d["name"],
+                        choices=d["choices"],
+                        default=d["default"],
+                        help=d["help"],
+                    )
                 else:  # Non an action, one parameter, no choices
-                    self.parser.add_argument('--' + d['name'], type=d['type'], default=d['default'], help=d['help'])
+                    self.parser.add_argument(
+                        "--" + d["name"],
+                        type=d["type"],
+                        default=d["default"],
+                        help=d["help"],
+                    )
 
     def format_benchmark_config_arguments(self, dictfileparam):
-        """ Functionality to format the particular parameters of
-            the benchmark.
+        """Functionality to format the particular parameters of
+        the benchmark.
 
-            Parameters
-            ----------
-            dictfileparam : python dictionary
-                parameters read from configuration file
-            args : python dictionary
-                parameters read from command-line
-                Most of the time command-line overwrites configuration file
-                except when the command-line is using default values and
-                config file defines those values
+        Parameters
+        ----------
+        dictfileparam : python dictionary
+            parameters read from configuration file
+        args : python dictionary
+            parameters read from command-line
+            Most of the time command-line overwrites configuration file
+            except when the command-line is using default values and
+            config file defines those values
 
         """
 
         configOut = dictfileparam.copy()
 
         for d in self.additional_definitions:
-            if d['name'] in configOut.keys():
-                if 'type' in d:
-                    dtype = d['type']
+            if d["name"] in configOut.keys():
+                if "type" in d:
+                    dtype = d["type"]
                 else:
                     dtype = None
 
-                if 'action' in d:
-                    if inspect.isclass(d['action']):
-                        str_read = dictfileparam[d['name']]
-                        configOut[d['name']] = eval_string_as_list_of_lists(str_read, ':', ',', dtype)
-                elif d['default'] != argparse.SUPPRESS:
+                if "action" in d:
+                    if inspect.isclass(d["action"]):
+                        str_read = dictfileparam[d["name"]]
+                        configOut[d["name"]] = eval_string_as_list_of_lists(
+                            str_read, ":", ",", dtype
+                        )
+                elif d["default"] != argparse.SUPPRESS:
                     # default value on benchmark definition cannot overwrite config file
-                    self.parser.add_argument('--' + d['name'], type=d['type'], default=configOut[d['name']], help=d['help'])
+                    self.parser.add_argument(
+                        "--" + d["name"],
+                        type=d["type"],
+                        default=configOut[d["name"]],
+                        help=d["help"],
+                    )
 
         return configOut
 
     def read_config_file(self, file):
         """Functionality to read the configue file
-           specific for each benchmark.
+        specific for each benchmark.
         """
 
         config = configparser.ConfigParser()
@@ -749,21 +1035,24 @@ class Benchmark:
 
     def check_required_exists(self, gparam):
         """Functionality to verify that the required
-           model parameters have been specified.
+        model parameters have been specified.
         """
 
         key_set = set(gparam.keys())
         intersect_set = key_set.intersection(self.required)
         diff_set = self.required.difference(intersect_set)
 
-        if (len(diff_set) > 0):
+        if len(diff_set) > 0:
             raise Exception(
-                'ERROR ! Required parameters are not specified.  These required parameters have not been initialized: ' + str(sorted(diff_set)) + '... Exiting')
+                "ERROR ! Required parameters are not specified.  These required parameters have not been initialized: "
+                + str(sorted(diff_set))
+                + "... Exiting"
+            )
 
 
 def keras_default_config():
     """Defines parameters that intervine in different functions using the keras defaults.
-        This helps to keep consistency in parameters between frameworks.
+    This helps to keep consistency in parameters between frameworks.
     """
 
     kerasDefaults = {}
@@ -771,19 +1060,35 @@ def keras_default_config():
     # Optimizers
     # kerasDefaults['clipnorm']=?               # Maximum norm to clip all parameter gradients
     # kerasDefaults['clipvalue']=?              # Maximum (minimum=-max) value to clip all parameter gradients
-    kerasDefaults['decay_lr'] = 0.              # Learning rate decay over each update
-    kerasDefaults['epsilon'] = 1e-8             # Factor to avoid divide by zero (fuzz factor)
-    kerasDefaults['rho'] = 0.9                  # Decay parameter in some optmizer updates (rmsprop, adadelta)
-    kerasDefaults['momentum_sgd'] = 0.          # Momentum for parameter update in sgd optimizer
-    kerasDefaults['nesterov_sgd'] = False       # Whether to apply Nesterov momentum in sgd optimizer
-    kerasDefaults['beta_1'] = 0.9               # Parameter in some optmizer updates (adam, adamax, nadam)
-    kerasDefaults['beta_2'] = 0.999             # Parameter in some optmizer updates (adam, adamax, nadam)
-    kerasDefaults['decay_schedule_lr'] = 0.004  # Parameter for nadam optmizer
+    kerasDefaults["decay_lr"] = 0.0  # Learning rate decay over each update
+    kerasDefaults["epsilon"] = 1e-8  # Factor to avoid divide by zero (fuzz factor)
+    kerasDefaults[
+        "rho"
+    ] = 0.9  # Decay parameter in some optmizer updates (rmsprop, adadelta)
+    kerasDefaults[
+        "momentum_sgd"
+    ] = 0.0  # Momentum for parameter update in sgd optimizer
+    kerasDefaults[
+        "nesterov_sgd"
+    ] = False  # Whether to apply Nesterov momentum in sgd optimizer
+    kerasDefaults[
+        "beta_1"
+    ] = 0.9  # Parameter in some optmizer updates (adam, adamax, nadam)
+    kerasDefaults[
+        "beta_2"
+    ] = 0.999  # Parameter in some optmizer updates (adam, adamax, nadam)
+    kerasDefaults["decay_schedule_lr"] = 0.004  # Parameter for nadam optmizer
 
     # Initializers
-    kerasDefaults['minval_uniform'] = -0.05   # Lower bound of the range of random values to generate
-    kerasDefaults['maxval_uniform'] = 0.05    # Upper bound of the range of random values to generate
-    kerasDefaults['mean_normal'] = 0.         # Mean of the random values to generate
-    kerasDefaults['stddev_normal'] = 0.05     # Standard deviation of the random values to generate
+    kerasDefaults[
+        "minval_uniform"
+    ] = -0.05  # Lower bound of the range of random values to generate
+    kerasDefaults[
+        "maxval_uniform"
+    ] = 0.05  # Upper bound of the range of random values to generate
+    kerasDefaults["mean_normal"] = 0.0  # Mean of the random values to generate
+    kerasDefaults[
+        "stddev_normal"
+    ] = 0.05  # Standard deviation of the random values to generate
 
     return kerasDefaults

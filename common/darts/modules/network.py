@@ -1,13 +1,12 @@
-from typing import Dict, List, Callable
+from typing import Callable, Dict, List
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from darts.api import Model
+from darts.genotypes import Genotype
 from darts.modules import Cell
 from darts.modules.classifier import MultitaskClassifier
-from darts.genotypes import Genotype
 
 
 class Hyperparameters:
@@ -18,7 +17,7 @@ class Hyperparameters:
 
 
 class Network(Model):
-    """ Collection of cells
+    """Collection of cells
 
     Args:
         stem: nn.Module that takes the input data
@@ -44,17 +43,19 @@ class Network(Model):
         device: Either "cpu" or "gpu
 
         hyperparams: instance of Hyperparameters. This hyperparamters for DARTS.
-        """
+    """
 
-    def __init__(self,
-                 stem: nn.Module,
-                 cell_dim: int,
-                 classifier_dim: int,
-                 ops: Dict[str, Callable[[int, int, bool], nn.Module]],
-                 tasks: Dict[str, int],
-                 criterion,
-                 device="cpu",
-                 hyperparams=Hyperparameters()):
+    def __init__(
+        self,
+        stem: nn.Module,
+        cell_dim: int,
+        classifier_dim: int,
+        ops: Dict[str, Callable[[int, int, bool], nn.Module]],
+        tasks: Dict[str, int],
+        criterion,
+        device="cpu",
+        hyperparams=Hyperparameters(),
+    ):
         super(Network, self).__init__()
         self.ops = ops
         self.cell_dim = cell_dim
@@ -81,7 +82,7 @@ class Network(Model):
                 cp,
                 c_curr,
                 self.primitives,
-                self.ops
+                self.ops,
             ).to(self.device)
 
             self.cells += [cell]
@@ -103,7 +104,7 @@ class Network(Model):
         ]
 
     def new(self):
-        """ Create a new model initialzed with current alpha parameters.
+        """Create a new model initialzed with current alpha parameters.
 
         Weights are left untouched.
 
@@ -113,11 +114,7 @@ class Network(Model):
             New model initialized with current alpha.
         """
         model = Network(
-            self.stem,
-            self.cell_dim,
-            self.ops,
-            self.tasks,
-            self.criterion
+            self.stem, self.cell_dim, self.ops, self.tasks, self.criterion
         ).to(self.device)
 
         for x, y in zip(model.arch_parameters(), self.arch_parameters()):
@@ -138,8 +135,8 @@ class Network(Model):
 
         return logits
 
-    def loss_value(self, x_data, y_true, y_pred, reduce='mean'):
-        """ Calculate a value of loss function """
+    def loss_value(self, x_data, y_true, y_pred, reduce="mean"):
+        """Calculate a value of loss function"""
         y_pred = self(x_data)
 
         losses = {}
@@ -165,6 +162,7 @@ class Network(Model):
         """
         :return:
         """
+
         def _parse(weights):
             gene = []
             n = 2
@@ -172,15 +170,22 @@ class Network(Model):
             for i in range(self.num_nodes):  # for each node
                 end = start + n
                 W = weights[start:end].copy()
-                edges = sorted(range(i + 2),  # i+2 is the number of connection for node i
-                               key=lambda x: -max(W[x][k]  # by descending order
-                                                           for k in range(len(W[x]))  # get strongest ops
-                                                           if k != self.primitives.index('none'))
-                               )[:2]  # only has two inputs
+                edges = sorted(
+                    range(i + 2),  # i+2 is the number of connection for node i
+                    key=lambda x: -max(
+                        W[x][k]  # by descending order
+                        for k in range(len(W[x]))  # get strongest ops
+                        if k != self.primitives.index("none")
+                    ),
+                )[
+                    :2
+                ]  # only has two inputs
                 for j in edges:  # for every input nodes j of current node i
                     k_best = None
-                    for k in range(len(W[j])):  # get strongest ops for current input j->i
-                        if k != self.primitives.index('none'):
+                    for k in range(
+                        len(W[j])
+                    ):  # get strongest ops for current input j->i
+                        if k != self.primitives.index("none"):
                             if k_best is None or W[j][k] > W[j][k_best]:
                                 k_best = k
                     gene.append((self.primitives[k_best], j))  # save ops and input node
@@ -192,8 +197,10 @@ class Network(Model):
         concat = range(2 + self.num_nodes - self.channel_multiplier, self.num_nodes + 2)
 
         genotype = Genotype(
-            normal=gene_normal, normal_concat=concat,
-            reduce=gene_normal, reduce_concat=concat
+            normal=gene_normal,
+            normal_concat=concat,
+            reduce=gene_normal,
+            reduce_concat=concat,
         )
 
         return genotype

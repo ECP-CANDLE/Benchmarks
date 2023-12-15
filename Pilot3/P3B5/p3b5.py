@@ -1,48 +1,35 @@
 import os
-import sys
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-lib_path2 = os.path.abspath(os.path.join(file_path, '..', '..', 'common'))
-sys.path.append(lib_path2)
 
 import candle
 
 additional_definitions = [
-    {'name': 'learning_rate_min',
-     'action': 'store',
-     'type': float},
-    {'name': 'log_interval',
-     'action': 'store',
-     'type': int},
-    {'name': 'weight_decay',
-     'action': 'store',
-     'type': float},
-    {'name': 'grad_clip',
-     'action': 'store',
-     'type': int},
-    {'name': 'unrolled',
-     'action': 'store',
-     'type': candle.str2bool},
+    {"name": "learning_rate_min", "action": "store", "type": float},
+    {"name": "log_interval", "action": "store", "type": int},
+    {"name": "weight_decay", "action": "store", "type": float},
+    {"name": "grad_clip", "action": "store", "type": int},
+    {"name": "unrolled", "action": "store", "type": candle.str2bool},
 ]
 
 required = [
-    'learning_rate',
-    'learning_rate_min',
-    'momentum',
-    'weight_decay',
-    'grad_clip',
-    'rng_seed',
-    'unrolled',
-    'batch_size',
-    'epochs',
+    "learning_rate",
+    "learning_rate_min",
+    "momentum",
+    "weight_decay",
+    "grad_clip",
+    "rng_seed",
+    "unrolled",
+    "batch_size",
+    "epochs",
 ]
 
 
 class BenchmarkP3B5(candle.Benchmark):
-    """ Benchmark for P3B5 """
+    """Benchmark for P3B5"""
 
     def set_locals(self):
-        """ Set parameters for the benchmark.
+        """Set parameters for the benchmark.
 
         Args:
             required: set of required parameters for the benchmark.

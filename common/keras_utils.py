@@ -1,20 +1,20 @@
 from __future__ import absolute_import
 
-
-from tensorflow.keras import backend as K
-from tensorflow.keras import optimizers
-from tensorflow.keras import initializers
-
-from tensorflow.keras.layers import Dropout
-from tensorflow.keras.callbacks import Callback
-from tensorflow.keras.utils import get_custom_objects
-from tensorflow.keras.metrics import binary_crossentropy, mean_squared_error, mean_absolute_error
-
-from scipy.stats.stats import pearsonr
+import warnings
 
 from default_utils import set_seed as set_seed_defaultUtils
+from scipy.stats.stats import pearsonr
+from tensorflow.keras import backend as K
+from tensorflow.keras import initializers, optimizers
+from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.layers import Dropout
+from tensorflow.keras.metrics import (
+    binary_crossentropy,
+    mean_absolute_error,
+    mean_squared_error,
+)
+from tensorflow.keras.utils import get_custom_objects
 
-import warnings
 with warnings.catch_warnings():
     warnings.filterwarnings("ignore", category=DeprecationWarning)
     from sklearn.metrics import r2_score
@@ -23,31 +23,38 @@ import os
 
 
 def set_parallelism_threads():
-    """ Set the number of parallel threads according to the number available on the hardware
-    """
+    """Set the number of parallel threads according to the number available on the hardware"""
 
-    if K.backend() == 'tensorflow' and 'NUM_INTRA_THREADS' in os.environ and 'NUM_INTER_THREADS' in os.environ:
+    if (
+        K.backend() == "tensorflow"
+        and "NUM_INTRA_THREADS" in os.environ
+        and "NUM_INTER_THREADS" in os.environ
+    ):
         import tensorflow as tf
+
         # print('Using Thread Parallelism: {} NUM_INTRA_THREADS, {} NUM_INTER_THREADS'.format(os.environ['NUM_INTRA_THREADS'], os.environ['NUM_INTER_THREADS']))
-        session_conf = tf.ConfigProto(inter_op_parallelism_threads=int(os.environ['NUM_INTER_THREADS']),
-                                      intra_op_parallelism_threads=int(os.environ['NUM_INTRA_THREADS']))
+        session_conf = tf.ConfigProto(
+            inter_op_parallelism_threads=int(os.environ["NUM_INTER_THREADS"]),
+            intra_op_parallelism_threads=int(os.environ["NUM_INTRA_THREADS"]),
+        )
         sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
         K.set_session(sess)
 
 
 def set_seed(seed):
-    """ Set the random number seed to the desired value
+    """Set the random number seed to the desired value
 
-        Parameters
-        ----------
-        seed : integer
-            Random number seed.
+    Parameters
+    ----------
+    seed : integer
+        Random number seed.
     """
 
     set_seed_defaultUtils(seed)
 
-    if K.backend() == 'tensorflow':
+    if K.backend() == "tensorflow":
         import tensorflow as tf
+
         if tf.__version__ < "2.0.0":
             tf.compat.v1.set_random_seed(seed)
         else:
@@ -64,133 +71,151 @@ def get_function(name):
     return mapped
 
 
-def build_optimizer(type, lr, kerasDefaults):
-    """ Set the optimizer to the appropriate Keras optimizer function
-        based on the input string and learning rate. Other required values
-        are set to the Keras default values
+def build_optimizer(optimizer, lr, kerasDefaults):
+    """Set the optimizer to the appropriate Keras optimizer function
+    based on the input string and learning rate. Other required values
+    are set to the Keras default values
 
-        Parameters
-        ----------
-        type : string
-            String to choose the optimizer
+    Parameters
+    ----------
+    optimizer : string
+        String to choose the optimizer
 
-            Options recognized: 'sgd', 'rmsprop', 'adagrad', adadelta', 'adam'
-            See the Keras documentation for a full description of the options
+        Options recognized: 'sgd', 'rmsprop', 'adagrad', adadelta', 'adam'
+        See the Keras documentation for a full description of the options
 
-        lr : float
-            Learning rate
+    lr : float
+        Learning rate
 
-        kerasDefaults : list
-            List of default parameter values to ensure consistency between frameworks
+    kerasDefaults : list
+        List of default parameter values to ensure consistency between frameworks
 
-        Returns
-        ----------
-        The appropriate Keras optimizer function
+    Returns
+    ----------
+    The appropriate Keras optimizer function
     """
 
-    if type == 'sgd':
-        return optimizers.SGD(lr=lr, decay=kerasDefaults['decay_lr'],
-                              momentum=kerasDefaults['momentum_sgd'],
-                              nesterov=kerasDefaults['nesterov_sgd'])  # ,
-# clipnorm=kerasDefaults['clipnorm'],
-# clipvalue=kerasDefaults['clipvalue'])
+    if optimizer == "sgd":
+        return optimizers.SGD(
+            lr=lr,
+            decay=kerasDefaults["decay_lr"],
+            momentum=kerasDefaults["momentum_sgd"],
+            nesterov=kerasDefaults["nesterov_sgd"],
+        )  # ,
+    # clipnorm=kerasDefaults['clipnorm'],
+    # clipvalue=kerasDefaults['clipvalue'])
 
-    elif type == 'rmsprop':
-        return optimizers.RMSprop(lr=lr, rho=kerasDefaults['rho'],
-                                  epsilon=kerasDefaults['epsilon'],
-                                  decay=kerasDefaults['decay_lr'])  # ,
-# clipnorm=kerasDefaults['clipnorm'],
-# clipvalue=kerasDefaults['clipvalue'])
+    elif optimizer == "rmsprop":
+        return optimizers.RMSprop(
+            lr=lr,
+            rho=kerasDefaults["rho"],
+            epsilon=kerasDefaults["epsilon"],
+            decay=kerasDefaults["decay_lr"],
+        )  # ,
+    # clipnorm=kerasDefaults['clipnorm'],
+    # clipvalue=kerasDefaults['clipvalue'])
 
-    elif type == 'adagrad':
-        return optimizers.Adagrad(lr=lr,
-                                  epsilon=kerasDefaults['epsilon'],
-                                  decay=kerasDefaults['decay_lr'])  # ,
-# clipnorm=kerasDefaults['clipnorm'],
-# clipvalue=kerasDefaults['clipvalue'])
+    elif optimizer == "adagrad":
+        return optimizers.Adagrad(
+            lr=lr, epsilon=kerasDefaults["epsilon"], decay=kerasDefaults["decay_lr"]
+        )  # ,
+    # clipnorm=kerasDefaults['clipnorm'],
+    # clipvalue=kerasDefaults['clipvalue'])
 
-    elif type == 'adadelta':
-        return optimizers.Adadelta(lr=lr, rho=kerasDefaults['rho'],
-                                   epsilon=kerasDefaults['epsilon'],
-                                   decay=kerasDefaults['decay_lr'])  # ,
-# clipnorm=kerasDefaults['clipnorm'],
-# clipvalue=kerasDefaults['clipvalue'])
+    elif optimizer == "adadelta":
+        return optimizers.Adadelta(
+            lr=lr,
+            rho=kerasDefaults["rho"],
+            epsilon=kerasDefaults["epsilon"],
+            decay=kerasDefaults["decay_lr"],
+        )  # ,
+    # clipnorm=kerasDefaults['clipnorm'],
+    # clipvalue=kerasDefaults['clipvalue'])
 
-    elif type == 'adam':
-        return optimizers.Adam(lr=lr, beta_1=kerasDefaults['beta_1'],
-                               beta_2=kerasDefaults['beta_2'],
-                               epsilon=kerasDefaults['epsilon'],
-                               decay=kerasDefaults['decay_lr'])  # ,
+    elif optimizer == "adam":
+        return optimizers.Adam(
+            lr=lr,
+            beta_1=kerasDefaults["beta_1"],
+            beta_2=kerasDefaults["beta_2"],
+            epsilon=kerasDefaults["epsilon"],
+            decay=kerasDefaults["decay_lr"],
+        )  # ,
+
+
 # clipnorm=kerasDefaults['clipnorm'],
 # clipvalue=kerasDefaults['clipvalue'])
 
 # Not generally available
-#    elif type == 'adamax':
+#    elif optimizer == 'adamax':
 #        return optimizers.Adamax(lr=lr, beta_1=kerasDefaults['beta_1'],
 #                               beta_2=kerasDefaults['beta_2'],
 #                               epsilon=kerasDefaults['epsilon'],
 #                               decay=kerasDefaults['decay_lr'])
 
-#    elif type == 'nadam':
+#    elif optimizer == 'nadam':
 #        return optimizers.Nadam(lr=lr, beta_1=kerasDefaults['beta_1'],
 #                               beta_2=kerasDefaults['beta_2'],
 #                               epsilon=kerasDefaults['epsilon'],
 #                               schedule_decay=kerasDefaults['decay_schedule_lr'])
 
 
-def build_initializer(type, kerasDefaults, seed=None, constant=0.):
-    """ Set the initializer to the appropriate Keras initializer function
-        based on the input string and learning rate. Other required values
-        are set to the Keras default values
+def build_initializer(initializer, kerasDefaults, seed=None, constant=0.0):
+    """Set the initializer to the appropriate Keras initializer function
+    based on the input string and learning rate. Other required values
+    are set to the Keras default values
 
-        Parameters
-        ----------
-        type : string
-            String to choose the initializer
+    Parameters
+    ----------
+    initializer : string
+        String to choose the initializer
 
-            Options recognized: 'constant', 'uniform', 'normal',
-            'glorot_uniform', 'lecun_uniform', 'he_normal'
+        Options recognized: 'constant', 'uniform', 'normal',
+        'glorot_uniform', 'lecun_uniform', 'he_normal'
 
-            See the Keras documentation for a full description of the options
+        See the Keras documentation for a full description of the options
 
-        kerasDefaults : list
-            List of default parameter values to ensure consistency between frameworks
+    kerasDefaults : list
+        List of default parameter values to ensure consistency between frameworks
 
-        seed : integer
-            Random number seed
+    seed : integer
+        Random number seed
 
-        constant : float
-            Constant value (for the constant initializer only)
+    constant : float
+        Constant value (for the constant initializer only)
 
-        Return
-        ----------
-        The appropriate Keras initializer function
+    Return
+    ----------
+    The appropriate Keras initializer function
     """
 
-    if type == 'constant':
+    if initializer == "constant":
         return initializers.Constant(value=constant)
 
-    elif type == 'uniform':
-        return initializers.RandomUniform(minval=kerasDefaults['minval_uniform'],
-                                          maxval=kerasDefaults['maxval_uniform'],
-                                          seed=seed)
+    elif initializer == "uniform":
+        return initializers.RandomUniform(
+            minval=kerasDefaults["minval_uniform"],
+            maxval=kerasDefaults["maxval_uniform"],
+            seed=seed,
+        )
 
-    elif type == 'normal':
-        return initializers.RandomNormal(mean=kerasDefaults['mean_normal'],
-                                         stddev=kerasDefaults['stddev_normal'],
-                                         seed=seed)
+    elif initializer == "normal":
+        return initializers.RandomNormal(
+            mean=kerasDefaults["mean_normal"],
+            stddev=kerasDefaults["stddev_normal"],
+            seed=seed,
+        )
 
-    elif type == 'glorot_normal':
+    elif initializer == "glorot_normal":
         # aka Xavier normal initializer. keras default
         return initializers.glorot_normal(seed=seed)
 
-    elif type == 'glorot_uniform':
+    elif initializer == "glorot_uniform":
         return initializers.glorot_uniform(seed=seed)
 
-    elif type == 'lecun_uniform':
+    elif initializer == "lecun_uniform":
         return initializers.lecun_uniform(seed=seed)
 
-    elif type == 'he_normal':
+    elif initializer == "he_normal":
         return initializers.he_normal(seed=seed)
 
 
@@ -201,7 +226,7 @@ def xent(y_true, y_pred):
 def r2(y_true, y_pred):
     SS_res = K.sum(K.square(y_true - y_pred))
     SS_tot = K.sum(K.square(y_true - K.mean(y_true)))
-    return (1 - SS_res / (SS_tot + K.epsilon()))
+    return 1 - SS_res / (SS_tot + K.epsilon())
 
 
 def mae(y_true, y_pred):
@@ -228,7 +253,7 @@ def evaluate_autoencoder(y_pred, y_test):
     r2 = r2_score(y_test, y_pred)
     corr, _ = pearsonr(y_pred.flatten(), y_test.flatten())
     # print('Mean squared error: {}%'.format(mse))
-    return {'mse': mse, 'r2_score': r2, 'correlation': corr}
+    return {"mse": mse, "r2_score": r2, "correlation": corr}
 
 
 class PermanentDropout(Dropout):
@@ -237,14 +262,14 @@ class PermanentDropout(Dropout):
         self.uses_learning_phase = False
 
     def call(self, x, mask=None):
-        if 0. < self.rate < 1.:
+        if 0.0 < self.rate < 1.0:
             noise_shape = self._get_noise_shape(x)
             x = K.dropout(x, self.rate, noise_shape)
         return x
 
 
 def register_permanent_dropout():
-    get_custom_objects()['PermanentDropout'] = PermanentDropout
+    get_custom_objects()["PermanentDropout"] = PermanentDropout
 
 
 class LoggingCallback(Callback):
@@ -253,5 +278,8 @@ class LoggingCallback(Callback):
         self.print_fcn = print_fcn
 
     def on_epoch_end(self, epoch, logs={}):
-        msg = "[Epoch: %i] %s" % (epoch, ", ".join("%s: %f" % (k, v) for k, v in sorted(logs.items())))
+        msg = "[Epoch: %i] %s" % (
+            epoch,
+            ", ".join("%s: %f" % (k, v) for k, v in sorted(logs.items())),
+        )
         self.print_fcn(msg)

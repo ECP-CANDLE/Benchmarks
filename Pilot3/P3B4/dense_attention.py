@@ -18,20 +18,12 @@ This file follows the terminology of https://arxiv.org/abs/1706.03762 Figure 2.
 Attention is formed by three tensors: Query, Key and Value.
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-from tensorflow.python.framework import dtypes
-from tensorflow.python.framework import ops
-from tensorflow.python.framework import tensor_shape
+from tensorflow.python.framework import dtypes, ops, smart_cond, tensor_shape
 from tensorflow.python.keras import backend as K
 from tensorflow.python.keras.engine.base_layer import Layer
-from tensorflow.python.keras.utils import tf_utils
-from tensorflow.python.ops import array_ops
-from tensorflow.python.ops import init_ops
-from tensorflow.python.ops import math_ops
-from tensorflow.python.ops import nn
+from tensorflow.python.ops import array_ops, init_ops, math_ops, nn
 from tensorflow.python.util.tf_export import keras_export
 
 
@@ -119,7 +111,7 @@ class BaseDenseAttention(Layer):
         if scores_mask is not None:
             padding_mask = math_ops.logical_not(scores_mask)
             # Bias so padding positions do not contribute to attention distribution.
-            scores -= 1.e9 * math_ops.cast(padding_mask, dtype=K.floatx())
+            scores -= 1.0e9 * math_ops.cast(padding_mask, dtype=K.floatx())
         if training is None:
             training = K.learning_phase()
         weights = nn.softmax(scores)
@@ -127,10 +119,9 @@ class BaseDenseAttention(Layer):
         def dropped_weights():
             return nn.dropout(weights, rate=self.dropout)
 
-        weights = tf_utils.smart_cond(
-            training,
-            dropped_weights,
-            lambda: array_ops.identity(weights))
+        weights = smart_cond.smart_cond(
+            training, dropped_weights, lambda: array_ops.identity(weights)
+        )
         return math_ops.matmul(weights, value)
 
     # TODO(b/125916026): Consider exposing a __call__ method with named args.
@@ -152,14 +143,15 @@ class BaseDenseAttention(Layer):
             scores_shape = array_ops.shape(scores)
             # causal_mask_shape = [1, Tq, Tv].
             causal_mask_shape = array_ops.concat(
-                [array_ops.ones_like(scores_shape[:-2]), scores_shape[-2:]],
-                axis=0)
+                [array_ops.ones_like(scores_shape[:-2]), scores_shape[-2:]], axis=0
+            )
             causal_mask = _lower_triangular_mask(causal_mask_shape)
         else:
             causal_mask = None
         scores_mask = _merge_masks(v_mask, causal_mask)
         result = self._apply_scores(
-            scores=scores, value=v, scores_mask=scores_mask, training=training)
+            scores=scores, value=v, scores_mask=scores_mask, training=training
+        )
         if q_mask is not None:
             # Mask of shape [batch_size, Tq, 1].
             q_mask = array_ops.expand_dims(q_mask, axis=-1)
@@ -180,33 +172,37 @@ class BaseDenseAttention(Layer):
         class_name = self.__class__.__name__
         if not isinstance(inputs, list):
             raise ValueError(
-                '{} layer must be called on a list of inputs, namely [query, value] '
-                'or [query, value, key].'.format(class_name))
+                "{} layer must be called on a list of inputs, namely [query, value] "
+                "or [query, value, key].".format(class_name)
+            )
         if len(inputs) < 2 or len(inputs) > 3:
             raise ValueError(
-                '{} layer accepts inputs list of length 2 or 3, '
-                'namely [query, value] or [query, value, key]. '
-                'Given length: {}'.format(class_name, len(inputs)))
+                "{} layer accepts inputs list of length 2 or 3, "
+                "namely [query, value] or [query, value, key]. "
+                "Given length: {}".format(class_name, len(inputs))
+            )
         if mask:
             if not isinstance(mask, list):
                 raise ValueError(
-                    '{} layer mask must be a list, '
-                    'namely [query_mask, value_mask].'.format(class_name))
+                    "{} layer mask must be a list, "
+                    "namely [query_mask, value_mask].".format(class_name)
+                )
             if len(mask) != 2:
                 raise ValueError(
-                    '{} layer mask must be a list of length 2, namely [query_mask, '
-                    'value_mask]. Given length: {}'.format(class_name, len(mask)))
+                    "{} layer mask must be a list of length 2, namely [query_mask, "
+                    "value_mask]. Given length: {}".format(class_name, len(mask))
+                )
 
     def get_config(self):
         config = {
-            'causal': self.causal,
-            'dropout': self.dropout,
+            "causal": self.causal,
+            "dropout": self.dropout,
         }
         base_config = super(BaseDenseAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
 
-@keras_export('keras.layers.Attention')
+@keras_export("keras.layers.Attention")
 class Attention(BaseDenseAttention):
     """Dot-product attention layer, a.k.a. Luong-style attention.
 
@@ -311,11 +307,12 @@ class Attention(BaseDenseAttention):
         """Creates scale variable if use_scale==True."""
         if self.use_scale:
             self.scale = self.add_weight(
-                name='scale',
+                name="scale",
                 shape=(),
                 initializer=init_ops.ones_initializer(),
                 dtype=self.dtype,
-                trainable=True)
+                trainable=True,
+            )
         else:
             self.scale = None
         super(Attention, self).build(input_shape)
@@ -335,12 +332,12 @@ class Attention(BaseDenseAttention):
         return scores
 
     def get_config(self):
-        config = {'use_scale': self.use_scale}
+        config = {"use_scale": self.use_scale}
         base_config = super(Attention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
 
-@keras_export('keras.layers.AdditiveAttention')
+@keras_export("keras.layers.AdditiveAttention")
 class AdditiveAttention(BaseDenseAttention):
     """Additive attention layer, a.k.a. Bahdanau-style attention.
 
@@ -450,11 +447,12 @@ class AdditiveAttention(BaseDenseAttention):
             dim = dim.value
         if self.use_scale:
             self.scale = self.add_weight(
-                name='scale',
+                name="scale",
                 shape=[dim],
                 initializer=init_ops.glorot_uniform_initializer(),
                 dtype=self.dtype,
-                trainable=True)
+                trainable=True,
+            )
         else:
             self.scale = None
         super(AdditiveAttention, self).build(input_shape)
@@ -476,12 +474,13 @@ class AdditiveAttention(BaseDenseAttention):
         if self.use_scale:
             scale = self.scale
         else:
-            scale = 1.
+            scale = 1.0
         return math_ops.reduce_sum(
-            scale * math_ops.tanh(q_reshaped + k_reshaped), axis=-1)
+            scale * math_ops.tanh(q_reshaped + k_reshaped), axis=-1
+        )
 
     def get_config(self):
-        config = {'use_scale': self.use_scale}
+        config = {"use_scale": self.use_scale}
         base_config = super(AdditiveAttention, self).get_config()
         return dict(list(base_config.items()) + list(config.items()))
 
@@ -489,9 +488,11 @@ class AdditiveAttention(BaseDenseAttention):
 def _lower_triangular_mask(shape):
     """Creates a lower-triangular boolean mask over the last 2 dimensions."""
     row_index = math_ops.cumsum(
-        array_ops.ones(shape=shape, dtype=dtypes.int32), axis=-2)
+        array_ops.ones(shape=shape, dtype=dtypes.int32), axis=-2
+    )
     col_index = math_ops.cumsum(
-        array_ops.ones(shape=shape, dtype=dtypes.int32), axis=-1)
+        array_ops.ones(shape=shape, dtype=dtypes.int32), axis=-1
+    )
     return math_ops.greater_equal(row_index, col_index)
 
 
@@ -504,7 +505,6 @@ def _merge_masks(x, y):
 
 
 class scaled_attention(Attention):
-
     def __init__(self, use_scale=False, **kwargs):
         super(scaled_attention, self).__init__(**kwargs)
         self.use_scale = use_scale
@@ -512,11 +512,12 @@ class scaled_attention(Attention):
     def build(self, input_shape):
         if self.use_scale:
             self.scale = self.add_weight(
-                name='scale',
+                name="scale",
                 shape=(),
                 initializer=init_ops.constant_initializer(self.use_scale),
                 dtype=self.dtype,
-                trainable=True)
+                trainable=True,
+            )
         else:
             self.scale = None
         super(Attention, self).build(input_shape)

@@ -1,6 +1,7 @@
 ## Uno: Predicting Tumor Dose Response across Multiple Data Sources
 
 #### Example output
+
 Uno can be trained with a subset of dose response data sources. Here is an command line example of training with all 6 sources: CCLE, CTRP, gCSI, GDSC, NCI60 single drug response, ALMANAC drug pair response.
 
 ```
@@ -155,33 +156,40 @@ Comparing y_true and y_pred:
 ```
 
 Training Uno on all data sources is slow. The `--train_sources` parameter can be used to test the code with a smaller set of training data. An example command line is the following.
+
 ```
 uno_baseline_keras2.py --train_sources CCLE --cache cache/CCLE --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True
 ```
 
 A faster example is given in the `uno_by_drug_example.txt` configuration file. This example focuses on a single drug (paclitaxel) and trains at 15s/epoch on a single P100.
+
 ```
 uno_baseline_keras2.py --config_file uno_by_drug_example.txt
 ```
 
 ## Profile runs
-We have run the same configuration across multiple machines and compared the resource utilization. 
+
+We have run the same configuration across multiple machines and compared the resource utilization.
+
 ```
 python uno_baseline_keras2.py --conf uno_perf_benchmark.txt
 ```
 
-| Machine | Time to complete (HH:mm:ss) | Time per epoch (s) | Perf factor <sup>*</sup> | CPU % | Mem % | Mem GB | GPU % | GPU Mem % | Note |
-| ------- | --------------------------: | -----------------: | -----------------------: | ----: | ----: | -----: | ----: | --------: | ---- |
-| Theta   | 2:26:10 | 3268 | 0.20 | 1.1 | 5.9 | 9.6| | | |
-| Nucleus | 0:32:11 | 518 | 1.23 | 39.1 | 12.7 | 30.6 | 2.1 | 4.8 | |
-| Tesla (K20) | 0:43:21 | 638 | 1.00 | 35.5 | 31.8 | 9.6 | 8.9 | 6.5 | |
-| Titan | | | | | | | | |keras version 2.0.3 does not supprot model.clone_model() which is introduced in 2.0.7
-* Time per epoch on the machine divided by time per epoch of Titan (or Tesla)
+| Machine     | Time to complete (HH:mm:ss) | Time per epoch (s) | Perf factor <sup>\*</sup> | CPU % | Mem % | Mem GB | GPU % | GPU Mem % | Note                                                                                  |
+| ----------- | --------------------------: | -----------------: | ------------------------: | ----: | ----: | -----: | ----: | --------: | ------------------------------------------------------------------------------------- |
+| Theta       |                     2:26:10 |               3268 |                      0.20 |   1.1 |   5.9 |    9.6 |       |           |                                                                                       |
+| Nucleus     |                     0:32:11 |                518 |                      1.23 |  39.1 |  12.7 |   30.6 |   2.1 |       4.8 |                                                                                       |
+| Tesla (K20) |                     0:43:21 |                638 |                      1.00 |  35.5 |  31.8 |    9.6 |   8.9 |       6.5 |                                                                                       |
+| Titan       |                             |                    |                           |       |       |        |       |           | keras version 2.0.3 does not supprot model.clone_model() which is introduced in 2.0.7 |
+
+- Time per epoch on the machine divided by time per epoch of Titan (or Tesla)
 
 ## Training and Inferencing Uno with Pre-staged Datasets
+
 We can expedite the training and inferencing using pre-staged dataset file. You may need to regenerate the files for a different combination of parameters, which are relevant to the data processing such as preprocess_rnaseq, train_sources, cell_feature_subset, etc. but you don't need to for training related params (i.e., batch_size, number of epochs, etc.)
 
 1. Generate pre-staged dataset file. Use `--export_data` to specify the file name and use a large batch size to speed up.
+
 ```
 python uno_baseline_keras2.py --train_sources all --cache cache/all --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True -z 4096 --export_data All.h5 --shuffle True
 
@@ -201,9 +209,11 @@ Generating val dataset. 1254 / 1256
 Generating val dataset. 1255 / 1256
 Completed generating All.h5
 ```
+
 This took ~3 hours.
 
 2. Training with pre-staged dataset. Use `--use_exported_data` to point dataset file.
+
 ```
 python uno_baseline_keras2.py --train_sources all --cache cache/all \
 --use_landmark_genes True --preprocess_rnaseq source_scale --no_feature_source True --no_response_source True \
@@ -255,6 +265,45 @@ Current time ....23512.750
 ```
 
 3. Inferencing with pre-staged dataset.
+
 ```
 python uno_infer.py --data All.h5 --model_file model.h5 --n_pred 30
 ```
+
+## top21 Plans
+
+Top21 plans may be generated in JSON format with `plangen.py`.
+
+JSON plans may be converted to a TXT format via
+`topN_to_uno.py --convert`
+
+The TXT format is (comments are not actually supported yet).
+
+```
+metadata:
+key1: value1   # Some number of key value pairs
+key2: value2
+...
+
+node: <NODE ID>  # Some NODE ID, e.g., 1.2.3
+val_sets: 1  # Number of validation sets
+index: 0     # The current validation set index
+val CELLS: count: 175   # Number of CELLs in validation set
+  CCL_100 CCL_1000 CCL_1001 CCL_1002   # CCLs up till blank line
+  CCL_1013 CCL_1016 CCL_1017 CCL_1020
+
+train_sets: 3  # Number of training sets
+index: 0     # The current training set index
+train CELLs: count: <N> # Number of CELLs in training set
+     ...    # CCLs as above
+
+index: 1
+train CELLS: count: <N>
+     ...    # CCLs as above
+
+node: <NODE ID>  # Start next node...
+
+```
+
+The TXT format is much faster to load and search with, e.g.,
+`get-node-txt.sh`.

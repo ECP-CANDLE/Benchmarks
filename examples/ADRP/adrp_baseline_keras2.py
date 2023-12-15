@@ -1,34 +1,28 @@
 from __future__ import print_function
 
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import h5py
-
-import tensorflow as tf
-
-from tensorflow.keras import backend as K
-from tensorflow.keras.layers import Input, Dense, Dropout
-from tensorflow.keras.models import Model, model_from_json, model_from_yaml
-from tensorflow.keras.callbacks import (
-    Callback,
-    ModelCheckpoint,
-    CSVLogger,
-    ReduceLROnPlateau,
-    EarlyStopping,
-)
-
-from sklearn.metrics import (
-    r2_score,
-    roc_auc_score,
-    accuracy_score,
-)
-from scipy.stats import pearsonr
-
 import sys
+
 import adrp
 import candle
+import h5py
+import matplotlib.pyplot as plt
+import tensorflow as tf
+from scipy.stats import pearsonr
+from sklearn.metrics import accuracy_score, r2_score, roc_auc_score
+from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import (
+    Callback,
+    CSVLogger,
+    EarlyStopping,
+    ModelCheckpoint,
+    ReduceLROnPlateau,
+)
+from tensorflow.keras.layers import Dense, Dropout, Input
+from tensorflow.keras.models import Model, model_from_json, model_from_yaml
 
 np.set_printoptions(precision=4)
 
@@ -182,49 +176,51 @@ def load_cache(cache_file):
 
 def run_inference(params):
 
-    if params['saved_model'] is not None:
-        model_file = params['saved_model']
+    if params["saved_model"] is not None:
+        model_file = params["saved_model"]
     else:
         model_file = adrp.get_model(params)
 
-    print('Loading model from ', model_file)
+    print("Loading model from ", model_file)
 
     # switch based on model type specified
-    if model_file.endswith('.json'):
+    if model_file.endswith(".json"):
         # load json model + weights
-        base_model_file = model_file.split('.json')
+        base_model_file = model_file.split(".json")
         # load json and create model
-        json_file = open(model_file, 'r')
+        json_file = open(model_file, "r")
         loaded_model = json_file.read()
         json_file.close()
         loaded_model = model_from_json(loaded_model)
 
         # load weights into new model
-        loaded_model.load_weights(base_model_file[0] + '.h5')
+        loaded_model.load_weights(base_model_file[0] + ".h5")
         print("Loaded json model from disk")
-    elif model_file.endswith('.yaml'):
+    elif model_file.endswith(".yaml"):
         # load yaml model + weights
-        base_model_file = model_file.split('.yaml')
+        base_model_file = model_file.split(".yaml")
         # load yaml and create model
-        yaml_file = open(model_file, 'r')
+        yaml_file = open(model_file, "r")
         loaded_model = yaml_file.read()
         yaml_file.close()
         loaded_model = model_from_yaml(loaded_model)
 
         # load weights into new model
-        loaded_model.load_weights(base_model_file[0] + '.h5')
+        loaded_model.load_weights(base_model_file[0] + ".h5")
         print("Loaded yaml model from disk")
-    elif model_file.endswith('.h5'):
+    elif model_file.endswith(".h5"):
         loaded_model = tf.keras.models.load_model(model_file, compile=False)
         print("Loaded h5 model from disk")
     else:
         sys.exit("Model format should be one of json, yaml or h5")
 
     # compile separately to get custom functions as needed
-    loaded_model.compile(optimizer=params['optimizer'], loss=params['loss'], metrics=['mae', r2])
+    loaded_model.compile(
+        optimizer=params["optimizer"], loss=params["loss"], metrics=["mae", r2]
+    )
 
     # use same data as training
-    seed = params['rng_seed']
+    seed = params["rng_seed"]
     X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_data(params, seed)
 
     print("X_train shape:", X_train.shape)
@@ -249,12 +245,6 @@ def run(params):
     seed = args.rng_seed
     candle.set_seed(seed)
 
-    # Construct extension to save model
-    # ext = adrp.extension_from_parameters(params, ".keras")
-    # params['save_path'] = './'+params['base_name']+'/'
-    # candle.verify_path(params["save_path"])
-
-    # prefix = "{}{}".format(params["save_path"], ext)
     prefix = "{}".format(params["save_path"])
     logfile = params["logfile"] if params["logfile"] else prefix + "TEST.log"
     candle.set_up_logger(logfile, adrp.logger, params["verbose"])
@@ -263,7 +253,6 @@ def run(params):
     # Get default parameters for initialization and optimizer functions
     keras_defaults = candle.keras_default_config()
 
-    ##
     X_train, Y_train, X_test, Y_test, PS, count_array = adrp.load_data(params, seed)
 
     print("X_train shape:", X_train.shape)
@@ -339,17 +328,27 @@ def run(params):
     )
 
     model.compile(
-        loss=params["loss"], optimizer=optimizer, metrics=["mae", r2],
+        loss=params["loss"],
+        optimizer=optimizer,
+        metrics=["mae", r2],
     )
 
     # set up a bunch of callbacks to do work during model training..
 
-    checkpointer = ModelCheckpoint(
-        filepath=params["save_path"] + "agg_adrp.autosave.model.h5",
-        verbose=1,
-        save_weights_only=False,
-        save_best_only=True
-    )
+    # checkpointer = ModelCheckpoint(
+    #    filepath=params["save_path"] + "agg_adrp.autosave.model.h5",
+    #    verbose=1,
+    #    save_weights_only=False,
+    #    save_best_only=True,
+    # )
+    initial_epoch = 0
+    ckpt = candle.CandleCkptKeras(params, verbose=True)
+    ckpt.set_model(model)
+    J = ckpt.restart(model)
+    if J is not None:
+        initial_epoch = J["epoch"]
+        print("restarting from ckpt: initial_epoch: %i" % initial_epoch)
+
     csv_logger = CSVLogger(params["save_path"] + "agg_adrp.training.log")
 
     # min_lr = params['learning_rate']*params['reduce_ratio']
@@ -357,18 +356,17 @@ def run(params):
     reduce_lr = ReduceLROnPlateau(
         monitor="val_loss",
         factor=0.75,
-        patience=params['reduce_patience'],
+        patience=params["reduce_patience"],
         mode="auto",
         verbose=1,
         epsilon=0.0001,
         cooldown=3,
-        min_lr=min_lr
+        min_lr=min_lr,
     )
 
-    early_stop = EarlyStopping(monitor="val_loss",
-                               patience=params['early_patience'],
-                               verbose=1,
-                               mode="auto")
+    early_stop = EarlyStopping(
+        monitor="val_loss", patience=params["early_patience"], verbose=1, mode="auto"
+    )
 
     # count_array = np.random.random_integers(0, 10000, 20)
     # print(count_array)
@@ -376,51 +374,79 @@ def run(params):
     # history = parallel_model.fit(X_train, Y_train,
     epochs = params["epochs"]
     batch_size = params["batch_size"]
-    timeout_monitor = candle.TerminateOnTimeOut(params['timeout'])
-    if (params['use_sample_weight']):
-        if (params['sample_weight_type'] == 'linear'):
+    timeout_monitor = candle.TerminateOnTimeOut(params["timeout"])
+    if params["use_sample_weight"]:
+        if params["sample_weight_type"] == "linear":
             train_weight = np.array(Y_train.values.tolist())
             test_weight = np.array(Y_test.values.tolist())
             print("Linear score weighting")
-        elif (params['sample_weight_type'] == 'quadratic'):
+        elif params["sample_weight_type"] == "quadratic":
             train_weight = np.square(np.array(Y_train.values.tolist()))
             test_weight = np.square(np.array(Y_test.values.tolist()))
             print("Quadratic score weighting")
-        elif (params['sample_weight_type'] == 'inverse_samples'):
+        elif params["sample_weight_type"] == "inverse_samples":
             train_score = np.array(Y_train.values.tolist())
             test_score = np.array(Y_test.values.tolist())
             train_bin = train_score.astype(int)
             test_bin = test_score.astype(int)
             train_count = count_array[train_bin].astype(float)
             test_count = count_array[test_bin].astype(float)
-            train_weight = 1. / (train_count + 1.0)
-            test_weight = 1. / (test_count + 1.0)
+            train_weight = 1.0 / (train_count + 1.0)
+            test_weight = 1.0 / (test_count + 1.0)
             print("Inverse sample weighting")
             print("Test score, bin, count, weight:")
-            print(test_score[:10, ])
-            print(test_bin[:10, ])
-            print(test_count[:10, ])
-        elif (params['sample_weight_type'] == 'inverse_samples_sqrt'):
+            print(
+                test_score[
+                    :10,
+                ]
+            )
+            print(
+                test_bin[
+                    :10,
+                ]
+            )
+            print(
+                test_count[
+                    :10,
+                ]
+            )
+        elif params["sample_weight_type"] == "inverse_samples_sqrt":
             train_score = np.array(Y_train.values.tolist())
             test_score = np.array(Y_test.values.tolist())
             train_bin = train_score.astype(int)
             test_bin = test_score.astype(int)
             train_count = count_array[train_bin].astype(float)
             test_count = count_array[test_bin].astype(float)
-            train_weight = 1. / np.sqrt(train_count + 1.0)
-            test_weight = 1. / np.sqrt(test_count + 1.0)
+            train_weight = 1.0 / np.sqrt(train_count + 1.0)
+            test_weight = 1.0 / np.sqrt(test_count + 1.0)
             print("Inverse sqrt sample weighting")
             print("Test score, bin, count, weight:")
-            print(test_score[:10, ])
-            print(test_bin[:10, ])
-            print(test_count[:10, ])
+            print(
+                test_score[
+                    :10,
+                ]
+            )
+            print(
+                test_bin[
+                    :10,
+                ]
+            )
+            print(
+                test_count[
+                    :10,
+                ]
+            )
 
     else:
         train_weight = np.ones(shape=(len(Y_train),))
         test_weight = np.ones(shape=(len(Y_test),))
 
     print("Test weight:")
-    print(test_weight[:10, ])
+    print(
+        test_weight[
+            :10,
+        ]
+    )
 
     print("calling model.fit with epochs={}".format(epochs))
     history = model.fit(
@@ -431,11 +457,12 @@ def run(params):
         verbose=1,
         sample_weight=train_weight,
         validation_data=(X_test, Y_test, test_weight),
-        callbacks=[checkpointer, timeout_monitor, csv_logger, reduce_lr, early_stop],
+        callbacks=[ckpt, timeout_monitor, csv_logger, reduce_lr, early_stop],
     )
+    ckpt.report_final()
 
     print("Reloading saved best model")
-    model.load_weights(params['save_path'] + "agg_adrp.autosave.model.h5")
+    model.load_weights(params["save_path"] + "agg_adrp.autosave.model.h5")
 
     score = model.evaluate(X_test, Y_test, verbose=0)
 
@@ -516,7 +543,9 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     print("Loaded json model from disk")
 
     # evaluate json loaded model on test data
-    loaded_model_json.compile(optimizer=params['optimizer'], loss=params['loss'], metrics=['mae', r2])
+    loaded_model_json.compile(
+        optimizer=params["optimizer"], loss=params["loss"], metrics=["mae", r2]
+    )
     score_json = loaded_model_json.evaluate(X_test, Y_test, verbose=0)
 
     print("json Validation loss:", score_json[0])
@@ -529,7 +558,9 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
     print("Loaded yaml model from disk")
 
     # evaluate loaded model on test data
-    loaded_model_yaml.compile(optimizer=params['optimizer'], loss=params['loss'], metrics=['mae', r2])
+    loaded_model_yaml.compile(
+        optimizer=params["optimizer"], loss=params["loss"], metrics=["mae", r2]
+    )
     score_yaml = loaded_model_yaml.evaluate(X_test, Y_test, verbose=0)
 
     print("yaml Validation loss:", score_yaml[0])
@@ -578,7 +609,7 @@ def post_process(params, X_train, X_test, Y_test, score, history, model):
 
 def main():
     params = initialize_parameters()
-    if params['infer'] is True:
+    if params["infer"] is True:
         run_inference(params)
     else:
         run(params)

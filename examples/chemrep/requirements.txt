@@ -1,0 +1,6 @@
+h5py==2.10.0
+Keras==2.0.7
+numpy
+pandas==0.19.2
+PyYAML
+tensorflow_gpu==1.1.0

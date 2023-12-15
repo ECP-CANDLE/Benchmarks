@@ -1,21 +1,15 @@
 from __future__ import print_function
 
-import os
-import sys
-import logging
-
-import pandas as pd
-import numpy as np
 import csv
+import logging
+import os
 
+import numpy as np
+import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 file_path = os.path.dirname(os.path.realpath(__file__))
-# lib_path = os.path.abspath(os.path.join(file_path, '..'))
-# sys.path.append(lib_path)
-lib_path2 = os.path.abspath(os.path.join(file_path, "..", "..", "common"))
-sys.path.append(lib_path2)
 
 import candle
 
@@ -24,6 +18,13 @@ candle.set_parallelism_threads()
 
 additional_definitions = [
     {"name": "latent_dim", "action": "store", "type": int, "help": "latent dimensions"},
+    {
+        "name": "benchmark_data",
+        "action": "store",
+        "type": candle.str2bool,
+        "default": False,
+        "help": "Use prepared benchmark data",
+    },
     {
         "name": "residual",
         "type": candle.str2bool,
@@ -76,12 +77,12 @@ additional_definitions = [
         "name": "use_sample_weight",
         "type": candle.str2bool,
         "default": False,
-        "help": "Use sample weights based on docking score"
+        "help": "Use sample weights based on docking score",
     },
     {
         "name": "sample_weight_type",
         "type": str,
-        "default": 'linear',
+        "default": "linear",
         "help": "type of sample weighting: choices ['linear', 'quadratic', 'inverse_samples', 'inverse_samples_sqrt']",
     },
     # {'name':'shuffle',
@@ -224,90 +225,156 @@ def load_headers(desc_headers, train_headers, header_url):
 
 
 def get_model(params):
-    url = params['model_url']
-    file_model = ('DIR.ml.' + params['base_name']
-                  + '.Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet/'
-                  + 'reg_go.autosave.model.h5')
-    model_file = candle.get_file(
-        file_model, url + file_model, cache_subdir="Pilot1"
+    url = params["model_url"]
+    file_model = (
+        "DIR.ml."
+        + params["base_name"]
+        + ".Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet/"
+        + "reg_go.autosave.model.h5"
     )
+    model_file = candle.get_file(file_model, url + file_model, cache_subdir="Pilot1")
     return model_file
 
 
 def load_data(params, seed):
-    header_url = params["header_url"]
-    dh_dict, th_list = load_headers('descriptor_headers.csv', 'training_headers.csv', header_url)
-    offset = 6  # descriptor starts at index 6
-    desc_col_idx = [dh_dict[key] + offset for key in th_list]
+    if "benchmark_data" in params and params["benchmark_data"] != "":
+        if params["train_data"].endswith(".parquet"):
+            header_url = params["header_url"]
+            dh_dict, th_list = load_headers(
+                "descriptor_headers.csv", "training_headers.csv", header_url
+            )
+            offset = 6  # descriptor starts at index 6
+            desc_col_idx = [dh_dict[key] + offset for key in th_list]
 
-    url = params["data_url"]
-    file_train = 'ml.' + params['base_name'] + '.Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet'
-    # file_train = params["train_data"]
-    train_file = candle.get_file(
-        file_train, url + file_train, cache_subdir="Pilot1"
-    )
-    # df = (pd.read_csv(data_path,skiprows=1).values).astype('float32')
-    print('Loading data...')
-    df = pd.read_parquet(train_file)
-    print('done')
+            url = params["data_url"]
 
-    # df_y = df[:,0].astype('float32')
-    df_y = df['reg'].astype('float32')
-    # df_x = df[:, 1:PL].astype(np.float32)
-    df_x = df.iloc[:, desc_col_idx].astype(np.float32)
+            # file_train = params["train_data"]
+            train_file = candle.get_file(
+                params["train_data"], url + params["train_data"], cache_subdir="Pilot1"
+            )
+            test_file = candle.get_file(
+                params["test_data"], url + params["test_data"], cache_subdir="Pilot1"
+            )
+            val_file = candle.get_file(
+                params["val_data"], url + params["val_data"], cache_subdir="Pilot1"
+            )
 
-    bins = np.arange(0, 20)
-    histogram, bin_edges = np.histogram(df_y, bins=bins, density=False)
-    print("Histogram of samples (bins, counts)")
-    print(bin_edges)
-    print(histogram)
+            # df = (pd.read_csv(data_path,skiprows=1).values).astype('float32')
+            print("Loading data...")
+            train_df = pd.read_parquet(train_file)
+            val_df = pd.read_parquet(val_file)
+            test_df = pd.read_parquet(test_file)
+            print("done")
 
-#    scaler = MaxAbsScaler()
+            train_df_y = train_df["reg"].astype("float32")
+            train_df_x = train_df.iloc[:, desc_col_idx].astype(np.float32)
+            test_df_y = test_df["reg"].astype("float32")
+            test_df_x = test_df.iloc[:, desc_col_idx].astype(np.float32)
+            val_df_y = val_df["reg"].astype("float32")
+            val_df_x = val_df.iloc[:, desc_col_idx].astype(np.float32)
 
-    scaler = StandardScaler()
-    df_x = scaler.fit_transform(df_x)
+            bins = np.arange(0, 20)
+            histogram, bin_edges = np.histogram(train_df_y, bins=bins, density=False)
+            print("Histogram of samples (bins, counts)")
+            print(bin_edges)
+            print(histogram)
 
-    X_train, X_test, Y_train, Y_test = train_test_split(df_x, df_y, test_size=0.20, random_state=42)
+            scaler = StandardScaler()
+            scaler.fit(train_df_x)
+            train_df_x = scaler.fit_transform(train_df_x)
+            test_df_x = scaler.fit_transform(test_df_x)
+            val_df_x = scaler.fit_transform(val_df_x)
 
-    print('x_train shape:', X_train.shape)
-    print('x_test shape:', X_test.shape)
+            return (
+                train_df_x,
+                train_df_y,
+                val_df_x,
+                val_df_y,
+                train_df_x.shape[1],
+                histogram,
+            )
+            # return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
 
-    return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
-
-
-'''
-def load_data(params, seed):
-
-    # start change #
-    if params["train_data"].endswith("csv") or params["train_data"].endswith("csv"):
-        print("processing csv in file {}".format(params["train_data"]))
+    else:
+        header_url = params["header_url"]
+        dh_dict, th_list = load_headers(
+            "descriptor_headers.csv", "training_headers.csv", header_url
+        )
+        offset = 6  # descriptor starts at index 6
+        desc_col_idx = [dh_dict[key] + offset for key in th_list]
 
         url = params["data_url"]
-        file_train = params["train_data"]
+        file_train = (
+            "ml."
+            + params["base_name"]
+            + ".Orderable_zinc_db_enaHLL.sorted.4col.dd.parquet"
+        )
+        # file_train = params["train_data"]
         train_file = candle.get_file(
             file_train, url + file_train, cache_subdir="Pilot1"
         )
-        df = (pd.read_csv(train_file, skiprows=1).values).astype("float32")
+        # df = (pd.read_csv(data_path,skiprows=1).values).astype('float32')
+        print("Loading data...")
+        df = pd.read_parquet(train_file)
+        print("done")
 
-        PL = df.shape[1]
-        print("PL=", PL)
+        # df_y = df[:,0].astype('float32')
+        df_y = df["reg"].astype("float32")
+        # df_x = df[:, 1:PL].astype(np.float32)
+        df_x = df.iloc[:, desc_col_idx].astype(np.float32)
 
-        PS = PL - 1
+        bins = np.arange(0, 20)
+        histogram, bin_edges = np.histogram(df_y, bins=bins, density=False)
+        print("Histogram of samples (bins, counts)")
+        print(bin_edges)
+        print(histogram)
 
-        df_y = df[:, 0].astype("float32")
-        df_x = df[:, 1:PL].astype(np.float32)
+        #    scaler = MaxAbsScaler()
 
-        df_y.shape
-        df_x.shape
         scaler = StandardScaler()
         df_x = scaler.fit_transform(df_x)
 
         X_train, X_test, Y_train, Y_test = train_test_split(
             df_x, df_y, test_size=0.20, random_state=42
         )
-    else:
-        print("expecting in file file suffix csv")
-        sys.exit()
 
-    return X_train, Y_train, X_test, Y_test, PS
-'''
+    print("x_train shape:", X_train.shape)
+    print("x_test shape:", X_test.shape)
+
+    return X_train, Y_train, X_test, Y_test, X_train.shape[1], histogram
+
+
+# def load_data(params, seed):
+
+#     # start change #
+#     if params["train_data"].endswith("csv") or params["train_data"].endswith("csv"):
+#         print("processing csv in file {}".format(params["train_data"]))
+
+#         url = params["data_url"]
+#         file_train = params["train_data"]
+#         train_file = candle.get_file(
+#             file_train, url + file_train, cache_subdir="Pilot1"
+#         )
+#         df = (pd.read_csv(train_file, skiprows=1).values).astype("float32")
+
+#         PL = df.shape[1]
+#         print("PL=", PL)
+
+#         PS = PL - 1
+
+#         df_y = df[:, 0].astype("float32")
+#         df_x = df[:, 1:PL].astype(np.float32)
+
+#         df_y.shape
+#         df_x.shape
+#         scaler = StandardScaler()
+#         df_x = scaler.fit_transform(df_x)
+
+#         X_train, X_test, Y_train, Y_test = train_test_split(
+#             df_x, df_y, test_size=0.20, random_state=42
+#         )
+#     else:
+#         print("expecting in file file suffix csv")
+#         sys.exit()
+
+#     return X_train, Y_train, X_test, Y_test, PS

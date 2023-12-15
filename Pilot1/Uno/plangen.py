@@ -1,30 +1,28 @@
-
-from collections import deque
-from collections import namedtuple
-from enum import Enum
 import glob
 import itertools as it
 import json
-import numpy as np
 import os
-import sys
 import sqlite3
+import sys
+from abc import ABC, abstractmethod  # abstract class support
+from collections import OrderedDict, deque, namedtuple
+from datetime import datetime
+from enum import Enum
+from pprint import pprint as pp
 from sqlite3 import Error as db_Error
 
-from abc import ABC, abstractmethod     # abstract class support
-from collections import OrderedDict
+import numpy as np
+import planargs
 from scipy.special import comb
-from pprint import pprint as pp
-from datetime import datetime
 
-ISO_TIMESTAMP = "seconds"                       # timestamp to ISO string
-ISO_TIMESTAMP_ENCODE = "%Y-%m-%dT%H:%M:%S"      # ISO string to timestamp
+ISO_TIMESTAMP = "seconds"  # timestamp to ISO string
+ISO_TIMESTAMP_ENCODE = "%Y-%m-%dT%H:%M:%S"  # ISO string to timestamp
 DEBUG_SQL = False
 
 
 def isempty(path):
     """Determine whether the given directory is empty."""
-    flist = glob.glob(os.path.join(path, '*'))
+    flist = glob.glob(os.path.join(path, "*"))
     return flist == []
 
 
@@ -78,7 +76,9 @@ def validate_args(args):
     reqd_lengths = [nbr_feature_sets] * 3
 
     if test_lengths != reqd_lengths:
-        sys.exit("Error: The lengths of all feature set definition args (fs_<>) must be identical")
+        sys.exit(
+            "Error: The lengths of all feature set definition args (fs_<>) must be identical"
+        )
 
     if nbr_feature_sets <= 1:
         sys.exit("Error: Partitioning requires multiple feature sets")
@@ -89,13 +89,22 @@ def validate_args(args):
 
     # validate input and output directories
     if args.in_dir and not os.path.isdir(args.in_dir):
-        sys.exit("Error: --in_dir must designate a directory, '%s' is not valid" % args.in_dir)
+        sys.exit(
+            "Error: --in_dir must designate a directory, '%s' is not valid"
+            % args.in_dir
+        )
 
     if not os.path.isdir(args.out_dir):
-        sys.exit("Error: --out_dir must designate a directory, '%s' is not valid" % args.out_dir)
+        sys.exit(
+            "Error: --out_dir must designate a directory, '%s' is not valid"
+            % args.out_dir
+        )
 
     if not args.overwrite and not isempty(args.out_dir):
-        sys.exit("Error: --out_dir '%s' is not empty, --overwrite not specified" % args.out_dir)
+        sys.exit(
+            "Error: --out_dir '%s' is not empty, --overwrite not specified"
+            % args.out_dir
+        )
 
     if verbose:
         print("Writing plan information to %s" % os.path.abspath(args.out_dir))
@@ -105,7 +114,7 @@ def validate_args(args):
     args.fs_lines = []
     file_error = False
     if args.in_dir is None:
-        args.in_dir = ''    # prepare for use in os.path.join()
+        args.in_dir = ""  # prepare for use in os.path.join()
 
     for i, path in enumerate(args.fs_paths):
         fullpath = os.path.join(args.in_dir, path)
@@ -113,24 +122,26 @@ def validate_args(args):
             file_error = True
             print("Error: %s file not found" % fullpath)
         else:
-            with open(fullpath, 'r') as f:          # read text and sanitize
+            with open(fullpath, "r") as f:  # read text and sanitize
                 raw_lines = f.readlines()
 
             text = [line.strip() for line in raw_lines]
-            text = [line for line in text if line != '']
+            text = [line for line in text if line != ""]
             fs_content.append(text)
             args.fs_lines.append(len(text))
 
             if verbose:
-                print("Loading '%s' feature set definition from %s - %d lines"
-                      % (args.fs_names[i], fullpath, len(text)))
+                print(
+                    "Loading '%s' feature set definition from %s - %d lines"
+                    % (args.fs_names[i], fullpath, len(text))
+                )
 
     if file_error:
         sys.exit("Terminating due to error")
 
     # construct a partitioning object exporting a partion() function
-    if args.partition_strategy == 'leaveout':
-        generator = LeaveoutSubsetGenerator()
+    # if args.partition_strategy == "leaveout":
+    generator = LeaveoutSubsetGenerator()
 
     # return feature-set contents lists
     return generator, fs_content
@@ -148,18 +159,12 @@ class SubsetGenerator(ABC):
     partitioning schemes. Subclasses should implement their specializations.
     """
 
-    def __init__(self, name=''):
+    def __init__(self, name=""):
         self.name = name
         self.term_msg = "Terminating due to error"
 
     @abstractmethod
-    def partition(
-        self,
-        base,
-        size=None,
-        count=None,
-        name='-unspecified-'
-    ):
+    def partition(self, base, size=None, count=None, name="-unspecified-"):
         """Partition a feature-set array.
 
         Partition the 'base', a list of elements, using the abstract arguments
@@ -171,14 +176,16 @@ class SubsetGenerator(ABC):
 
     def get_plan_label(self, plan_dict, root_name):
         root = plan_dict[root_name]
-        return root['label']
+        return root["label"]
 
-    def _validation_error(self, base_len, size, count, name='-unspecified-'):
-        """Provide a common error reporting function. """
-        print("Base list length: %d requested %d sublists of length %d" %
-              (base_len, count, size))
+    def _validation_error(self, base_len, size, count, name="-unspecified-"):
+        """Provide a common error reporting function."""
+        print(
+            "Base list length: %d requested %d sublists of length %d"
+            % (base_len, count, size)
+        )
 
-    def validate(self, base, size=None, count=None, name='-unspecified-'):
+    def validate(self, base, size=None, count=None, name="-unspecified-"):
         """Provide basic request validation, specific generators may impose
         additional requirements.
         """
@@ -188,7 +195,7 @@ class SubsetGenerator(ABC):
         if size is None or size <= 0 or size > base_len:
             berror = True
         else:
-            unique_combos = comb(base_len, size)        # implements N take K
+            unique_combos = comb(base_len, size)  # implements N take K
             if count > unique_combos:
                 berror = True
         if berror:
@@ -196,16 +203,17 @@ class SubsetGenerator(ABC):
 
         return not berror
 
+
 #
 # UNDER EVALUATION ?????????????????????????????????????????????????????
 #
 
 
 class IterativeSubsetGenerator(SubsetGenerator):
-    """ Tom Brettin method... subset generation via iteration over base"""
+    """Tom Brettin method... subset generation via iteration over base"""
 
     def __init__(self):
-        SubsetGenerator.__init__(self, 'IterativeSubsetGenerator')
+        SubsetGenerator.__init__(self, "IterativeSubsetGenerator")
 
     def partition(self, base, size=None, count=0, name=None):
         """ """
@@ -241,12 +249,14 @@ class IterativeSubsetGenerator(SubsetGenerator):
             if org >= base_len:
                 org = org % base_len
             if org == 0 and i > 0:
-                print("Warning: %d sublists of %s completed short of the requested %d"
-                      % (i, name, count))
+                print(
+                    "Warning: %d sublists of %s completed short of the requested %d"
+                    % (i, name, count)
+                )
                 break
 
             end = org + size
-            sublist = np_base.take(range(org, end), mode='wrap')
+            sublist = np_base.take(range(org, end), mode="wrap")
             print(sublist)
             selected_sublists.append(sublist)
 
@@ -261,37 +271,39 @@ class LeaveoutSubsetGenerator(SubsetGenerator):
     """
 
     def __init__(self):
-        SubsetGenerator.__init__(self, 'LeaveoutSubsetGenerator')
+        SubsetGenerator.__init__(self, "LeaveoutSubsetGenerator")
         self.strategy = "leaveout"
 
-    def plan_init(self, fs_names, fs_paths, fs_lines, fs_parts, maxdepth, root_name='1'):
-        """Initialize - collect plan metadata """
+    def plan_init(
+        self, fs_names, fs_paths, fs_lines, fs_parts, maxdepth, root_name="1"
+    ):
+        """Initialize - collect plan metadata"""
         currtime = datetime.now()
-        details = {'fs_names': fs_names, 'fs_filepaths': fs_paths, 'fs_parts': fs_parts}
-        details['create_date'] = currtime.isoformat(timespec=ISO_TIMESTAMP)
-        details['strategy'] = self.strategy
+        details = {"fs_names": fs_names, "fs_filepaths": fs_paths, "fs_parts": fs_parts}
+        details["create_date"] = currtime.isoformat(timespec=ISO_TIMESTAMP)
+        details["strategy"] = self.strategy
 
-        label = ''
+        label = ""
         for i in range(len(fs_names)):
             if i != 0:
-                label += '_'
-            s = '{}{}-p{}'.format(fs_names[i], fs_lines[i], fs_parts[i])
+                label += "_"
+            s = "{}{}-p{}".format(fs_names[i], fs_lines[i], fs_parts[i])
             label += s
 
         if maxdepth > 0:
-            label += '-maxdepth{}'.format(maxdepth)
+            label += "-maxdepth{}".format(maxdepth)
 
-        details['label'] = label
+        details["label"] = label
         plan_dict = OrderedDict()
         plan_dict[root_name] = details
         return root_name, plan_dict
 
     def plan_term(self, plan_dict, root_name, nbr_subplans):
-        """Completion - post plan summary  metadata """
+        """Completion - post plan summary  metadata"""
         meta = plan_dict[root_name]
-        meta['nbr_subplans'] = nbr_subplans
+        meta["nbr_subplans"] = nbr_subplans
 
-    def partition(self, base, size='n/a', count=None, name=None):
+    def partition(self, base, size="n/a", count=None, name=None):
         """Partition a feature-set list into lists of equal sized elements.
 
         This partitioner accepts a list of feature-set names and returns
@@ -323,7 +335,7 @@ class LeaveoutSubsetGenerator(SubsetGenerator):
         """
 
         base_len = len(base)
-        if base_len < count:            # can partition any further?
+        if base_len < count:  # can partition any further?
             return [[feature] for feature in base]
 
         size = base_len // count
@@ -340,6 +352,7 @@ class LeaveoutSubsetGenerator(SubsetGenerator):
 
         return sublists
 
+
 # ------------------------------------------------------------------------------
 # Database support, table and column definitions, DDL and DML
 # Refer to the plan_prep() function for a discussion of the "planstat" and
@@ -352,9 +365,10 @@ class RunType(Enum):
     RESTART = 1
 
 
-class RunStat(Enum):        # subplan execution status
-    SCHEDULED = 'scheduled'
-    COMPLETE = 'complete'
+class RunStat(Enum):  # subplan execution status
+    SCHEDULED = "scheduled"
+    COMPLETE = "complete"
+
 
 # planstat table, rows are returned via the PlanstatRow namedtuple
 
@@ -368,16 +382,10 @@ _planstat_ddl = """
         nbr_subplans    INTEGER
     ); """
 
-PlanstatRow = namedtuple('PlanstatRow',
-                         [
-                             'rowid',
-                             'plan_name',
-                             'create_date',
-                             'feature_sets',
-                             'partitions',
-                             'nbr_subplans'
-                         ]
-                         )
+PlanstatRow = namedtuple(
+    "PlanstatRow",
+    ["rowid", "plan_name", "create_date", "feature_sets", "partitions", "nbr_subplans"],
+)
 
 _select_row_from_planstat = """
     SELECT rowid,
@@ -414,21 +422,22 @@ _runhist_ddl = """
         PRIMARY KEY (plan_id, subplan_id)
     ); """
 
-RunhistRow = namedtuple('RunhistRow',
-                        [
-                            'plan_id',
-                            'subplan_id',
-                            'status',
-                            'start_time',
-                            'stop_time',
-                            'run_mins',
-                            'mae',
-                            'mse',
-                            'r_square',
-                            'other_info',
-                            'weights_fn'
-                        ]
-                        )
+RunhistRow = namedtuple(
+    "RunhistRow",
+    [
+        "plan_id",
+        "subplan_id",
+        "status",
+        "start_time",
+        "stop_time",
+        "run_mins",
+        "mae",
+        "mse",
+        "r_square",
+        "other_info",
+        "weights_fn",
+    ],
+)
 
 _select_row_from_runhist = """
     SELECT plan_id, subplan_id, status,
@@ -513,8 +522,8 @@ def execute_sql_stmt(conn, stmt, cursor=None, trap_exception=False):
 
     except db_Error as e:
         db_exception = True
-        print('execute_sql_stmt:', stmt)
-        print('execute_sql_stmt:', e)
+        print("execute_sql_stmt:", stmt)
+        print("execute_sql_stmt:", e)
         if not trap_exception:
             raise
     finally:
@@ -543,7 +552,7 @@ def db_connect(db_path):
         A connection handle is returned upon success, else None
     """
 
-    if db_path == ':memory:' or not os.path.exists(db_path):
+    if db_path == ":memory:" or not os.path.exists(db_path):
         prev_allocated = False
     else:
         prev_allocated = True
@@ -551,7 +560,7 @@ def db_connect(db_path):
     try:
         conn = sqlite3.connect(db_path)
     except db_Error as error:
-        print('db_connect', error)
+        print("db_connect", error)
         raise
 
     # create plan management tables on initial database allocation
@@ -594,8 +603,8 @@ def plan_remove(db_path, plan_path):
         print("Error: CLEANUP request failed - %s has not been run" % plan_key)
         status = -1
     else:
-        plan_rec = PlanstatRow._make(row)           # column-name addressable
-        rowid = plan_rec.rowid                      # the unique rowid is the plan uniquifier
+        plan_rec = PlanstatRow._make(row)  # column-name addressable
+        rowid = plan_rec.rowid  # the unique rowid is the plan uniquifier
         _delete_runhistory(conn, rowid)
         stmt = _delete_planstat_plan.format(rowid)
         status = execute_sql_stmt(conn, stmt)
@@ -663,35 +672,43 @@ def plan_prep(db_path, plan_path, run_type=RunType.RUN_ALL):
     if not row:
         rowid = -1
     else:
-        plan_rec = PlanstatRow._make(row)           # column-name addressable
-        rowid = plan_rec.rowid                      # the unique rowid will be the uniquifier returned
+        plan_rec = PlanstatRow._make(row)  # column-name addressable
+        rowid = plan_rec.rowid  # the unique rowid will be the uniquifier returned
 
     # compare run_type to initial expectations
     error = False
 
     if run_type == RunType.RUN_ALL and rowid > 0:
-        print("Error: RUN_ALL specified but plan: %s has already been defined" % plan_key)
+        print(
+            "Error: RUN_ALL specified but plan: %s has already been defined" % plan_key
+        )
         error = True
 
     elif run_type == RunType.RESTART and rowid < 0:
-        print("Warning: RESTART specified but plan: %s has not been previously run" % plan_key)
+        print(
+            "Warning: RESTART specified but plan: %s has not been previously run"
+            % plan_key
+        )
 
-    elif rowid > 0 and create_date != create_date:  # DEBUG ???????????????????????????????????? plan_rec.create_date:
-        print("Error: RESTART specified but the signature of the previously defined plan: %s does not match" % plan_key)
+    elif (
+        rowid > 0 and create_date != create_date
+    ):  # DEBUG ???????????????????????????????????? plan_rec.create_date:
+        print(
+            "Error: RESTART specified but the signature of the previously defined plan: %s does not match"
+            % plan_key
+        )
         error = True
 
     # register new plans acquiring the uniquifying plan_id used to compose runhistory table keys
     if not error and rowid < 0:
         feature_sets = str(feature_sets)
-        feature_sets = feature_sets.replace("'", "")  # create string literal from list of str
-        partitions = str(partitions)               # create string literal from list of int
+        feature_sets = feature_sets.replace(
+            "'", ""
+        )  # create string literal from list of str
+        partitions = str(partitions)  # create string literal from list of int
 
         stmt = _insert_planstat_plan.format(
-            plan_key,
-            create_date,
-            feature_sets,
-            partitions,
-            nbr_subplans
+            plan_key, create_date, feature_sets, partitions, nbr_subplans
         )
 
         # status = execute_sql_stmt(conn, stmt, cursor=csr)
@@ -749,10 +766,7 @@ def start_subplan(db_path, plan_path, plan_id=None, subplan_id=None, run_type=No
         start_time = currtime.isoformat(timespec=ISO_TIMESTAMP)
 
         stmt = _insupd_scheduled_runhist.format(
-            plan_id,
-            subplan_id,
-            RunStat.SCHEDULED.name,
-            start_time
+            plan_id, subplan_id, RunStat.SCHEDULED.name, start_time
         )
 
         execute_sql_stmt(conn, stmt, cursor=csr)
@@ -790,11 +804,11 @@ def stop_subplan(db_path, plan_id=None, subplan_id=None, comp_info_dict={}):
     curr_time = datetime.now()
     stop_time = curr_time.isoformat(timespec=ISO_TIMESTAMP)
 
-    comp_dict = dict(mae=0.0, mse=0.0, r_square=0.0, weights_fn='N/A', unprocessed='')
+    comp_dict = dict(mae=0.0, mse=0.0, r_square=0.0, weights_fn="N/A", unprocessed="")
     remainder = _acquire_actuals(comp_dict, comp_info_dict)
 
     if len(remainder) == 0:
-        other_info = ''
+        other_info = ""
     else:
         other_info = json.dumps(remainder)
 
@@ -803,7 +817,7 @@ def stop_subplan(db_path, plan_id=None, subplan_id=None, comp_info_dict={}):
     execute_sql_stmt(conn, stmt, csr)
     row = csr.fetchone()
 
-    if row:                 # expected, caller error if already marked COMPLETED
+    if row:  # expected, caller error if already marked COMPLETED
         runhist_rec = RunhistRow._make(row)
         if runhist_rec.status != RunStat.COMPLETE.name:
             start_time = datetime.strptime(runhist_rec.start_time, ISO_TIMESTAMP_ENCODE)
@@ -816,14 +830,14 @@ def stop_subplan(db_path, plan_id=None, subplan_id=None, comp_info_dict={}):
                 RunStat.COMPLETE.name,
                 stop_time,
                 run_mins,
-                comp_dict['mae'],
-                comp_dict['mse'],
-                comp_dict['r_square'],
+                comp_dict["mae"],
+                comp_dict["mse"],
+                comp_dict["r_square"],
                 other_info,
-                comp_dict['weights_fn'],
+                comp_dict["weights_fn"],
                 # key spec
                 plan_id,
-                subplan_id
+                subplan_id,
             )
 
             execute_sql_stmt(conn, stmt)
@@ -868,13 +882,13 @@ def _acquire_actuals(dft_dict, actuals_dict):
             dft_dict[key] = actuals[key]
             actuals.pop(key)
 
-    return actuals          # possibly empty
+    return actuals  # possibly empty
 
 
 def _get_planstat_key(plan_path):
     """Extract the name portion of a plan from a filepath."""
     basename = os.path.basename(plan_path)
-    basepfx = basename.split(sep='.')
+    basepfx = basename.split(sep=".")
     return basepfx[0]
 
 
@@ -893,6 +907,7 @@ def _delete_runhistory(conn, plan_id):
 # Plan navigation, content retrieval
 # ------------------------------------------------------------------------------
 
+
 def load_plan(filepath):
     """Load a JSON transfer learning plan.
 
@@ -907,29 +922,29 @@ def load_plan(filepath):
         An entry-ordered plan in OrderedDict format is returned.
     """
 
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         ordered_plan_dict = json.load(f, object_pairs_hook=OrderedDict)
     return ordered_plan_dict
 
 
 def get_plan_create_date(plan_dict):
     _, value = _get_first_entry(plan_dict)
-    return value['create_date']
+    return value["create_date"]
 
 
 def get_plan_fs_names(plan_dict):
     _, value = _get_first_entry(plan_dict)
-    return value['fs_names']
+    return value["fs_names"]
 
 
 def get_plan_fs_parts(plan_dict):
     _, value = _get_first_entry(plan_dict)
-    return value['fs_parts']
+    return value["fs_parts"]
 
 
 def get_plan_nbr_subplans(plan_dict):
     _, value = _get_first_entry(plan_dict)
-    return value['nbr_subplans']
+    return value["nbr_subplans"]
 
 
 def _get_first_entry(ordered_dict):
@@ -972,12 +987,12 @@ def get_predecessor(plan_dict, subplan_id):
         is specified None is returned.
     """
 
-    segments = subplan_id.split(sep='.')
+    segments = subplan_id.split(sep=".")
     if len(segments) <= 1:
         subplan_id = None
     else:
         segments.pop()
-        subplan_id = '.'.join(segments)
+        subplan_id = ".".join(segments)
     return subplan_id
 
 
@@ -997,7 +1012,7 @@ def get_successors(plan_dict, subplan_id):
     """
     successor_names = []
     for i in it.count(start=1):
-        new_name = subplan_id + '.' + str(i)
+        new_name = subplan_id + "." + str(i)
         value = plan_dict.get(new_name)
         if not value:
             break
@@ -1006,12 +1021,14 @@ def get_successors(plan_dict, subplan_id):
     return successor_names
 
 
-def _get_named_set(plan_dict, subplan_id, section_tag, fs_name, collector, parent_features=None):
+def _get_named_set(
+    plan_dict, subplan_id, section_tag, fs_name, collector, parent_features=None
+):
     """ """
 
     while True:
         content, _ = get_subplan(plan_dict, subplan_id)
-        assert(content)
+        assert content
 
         section = content[section_tag]
         for i, section_features in enumerate(section):
@@ -1070,33 +1087,29 @@ def get_subplan_features(plan_dict, subplan_id, parent_features=False):
         return None, None
 
     # peek inside the training set to capture active feature-set names
-    train_set = content['train'][0]
+    train_set = content["train"][0]
     fs_names = [name for name in train_set.keys()]
 
     # categorize the results
     result = {}
     result[0] = fs_names
-    result['train'] = {}
-    result['val'] = {}
+    result["train"] = {}
+    result["val"] = {}
 
-    for set_name, pf in [('train', True), ('val', False)]:
+    for set_name, pf in [("train", True), ("val", False)]:
         if pf is True:
             pf = parent_features
 
         for fs_name in fs_names:
             collector = []
             _get_named_set(
-                plan_dict,
-                subplan_id,
-                set_name,
-                fs_name,
-                collector,
-                parent_features=pf
+                plan_dict, subplan_id, set_name, fs_name, collector, parent_features=pf
             )
 
             result[set_name][fs_name] = collector
 
-    return result, result[0], result['train'], result['val']
+    return result, result[0], result["train"], result["val"]
+
 
 # ------------------------------------------------------------------------------
 # Plan construction
@@ -1111,7 +1124,9 @@ def build_dictionary_from_lists(seq_list, names):
     return dict
 
 
-def build_plan_tree(args, feature_set_content, parent_plan_id='', depth=0, data_pfx='', plan_pfx=''):
+def build_plan_tree(
+    args, feature_set_content, parent_plan_id="", depth=0, data_pfx="", plan_pfx=""
+):
     """Generate a plan supporting training, transfer-learning, resume-training.
 
     ADD GENERAL DOC
@@ -1180,19 +1195,26 @@ def build_plan_tree(args, feature_set_content, parent_plan_id='', depth=0, data_
                     train.append(section)
 
             # generate next depth/level (successor) plans
-            curr_plan_id = '{}.{}'.format(parent_plan_id, step + 1)
-            args.plan_dict[curr_plan_id] = {'val': val, 'train': train}
-            data_name = '{}.{}'.format(data_pfx, step + 1)
-            plan_name = '{}.{}'.format(plan_pfx, step + 1)
+            curr_plan_id = "{}.{}".format(parent_plan_id, step + 1)
+            args.plan_dict[curr_plan_id] = {"val": val, "train": train}
+            data_name = "{}.{}".format(data_pfx, step + 1)
+            plan_name = "{}.{}".format(plan_pfx, step + 1)
 
             # depth-first, shorthand representation of tree showing first feature names
             if args.debug:
-                indent = ' ' * (depth * 4)
+                indent = " " * (depth * 4)
                 print(indent, curr_plan_id)
-                indent += ' ' * 4
+                indent += " " * 4
                 fs = parts_xprod[step]
                 for i in range(len(fs)):
-                    print(indent, args.fs_names[i], 'count:', len(fs[i]), 'first:', fs[i][0])
+                    print(
+                        indent,
+                        args.fs_names[i],
+                        "count:",
+                        len(fs[i]),
+                        "first:",
+                        fs[i][0],
+                    )
 
             substeps += build_plan_tree(
                 args,
@@ -1200,7 +1222,7 @@ def build_plan_tree(args, feature_set_content, parent_plan_id='', depth=0, data_
                 parent_plan_id=curr_plan_id,
                 depth=curr_depth,
                 data_pfx=data_name,
-                plan_pfx=plan_name
+                plan_pfx=plan_name,
             )
 
         steps += substeps
@@ -1272,25 +1294,24 @@ def build_plan_tree(args, feature_set_content, parent_plan_id='', depth=0, data_
 
 def write_file(fname, title, string_list):
     """Write text expressed as an array of lines to file."""
-    with open(fname, 'w') as f:
+    with open(fname, "w") as f:
         for line in string_list:
             f.write(line)
 
 
 def write_dict_to_json(dictionary, fname):
     """Write dictionary to a json file."""
-    with open(fname, 'w') as f:
+    with open(fname, "w") as f:
         json.dump(dictionary, f)
+
 
 # ----------------------------------------------------------------------------------
 # various hard-coded lists, test cases - the synthetic feature-sets remain useful
 # ----------------------------------------------------------------------------------
 
 
-"""
-synthetic_cell_names = ['cell_' + '%04d' % (x) for x in range(1000)]
-synthetic_drug_names = ['drug_' + '%04d' % (x) for x in range(1000)]
-"""
+# synthetic_cell_names = ['cell_' + '%04d' % (x) for x in range(1000)]
+# synthetic_drug_names = ['drug_' + '%04d' % (x) for x in range(1000)]
 
 # ----------------------------------------------------------------------------------
 # mainline
@@ -1300,17 +1321,17 @@ synthetic_drug_names = ['drug_' + '%04d' % (x) for x in range(1000)]
 def main():
     # Acquire and validate arguments
     args = planargs.parse_arguments()
-    args.json = True                    # the only available option thus far
+    args.json = True  # the only available option thus far
 
     generator, feature_set_content = validate_args(args)
     args.generator = generator
 
     root_name, args.plan_dict = generator.plan_init(
-        fs_names=args.fs_names,       # validated cmdline arg
-        fs_paths=args.fs_paths,       # validated cmdline arg
-        fs_lines=args.fs_lines,       # created by validate_args
-        fs_parts=args.fs_parts,       # validated cmdline arg
-        maxdepth=args.maxdepth
+        fs_names=args.fs_names,  # validated cmdline arg
+        fs_paths=args.fs_paths,  # validated cmdline arg
+        fs_lines=args.fs_lines,  # created by validate_args
+        fs_parts=args.fs_parts,  # validated cmdline arg
+        maxdepth=args.maxdepth,
     )
 
     # feature_set_content = [cell_names, drug_names]
@@ -1328,15 +1349,15 @@ def main():
             break
 
     # Plan generation
-    data_fname_pfx = os.path.join(args.out_dir, 'DATA.1')
-    plan_fname_pfx = os.path.join(args.out_dir, 'PLAN.1')
+    data_fname_pfx = os.path.join(args.out_dir, "DATA.1")
+    plan_fname_pfx = os.path.join(args.out_dir, "PLAN.1")
 
     steps = build_plan_tree(
-        args,                           # command line argument namespace
-        feature_set_content,            # for example [[cell1 ... celln] [drug1 ... drugn]]
-        parent_plan_id=root_name,       # name of root plan, subplan names created from this stem
-        data_pfx=data_fname_pfx,        # DATA file prefix, building block for feature name files
-        plan_pfx=plan_fname_pfx         # PLAN file prefix, building block for plan name files
+        args,  # command line argument namespace
+        feature_set_content,  # for example [[cell1 ... celln] [drug1 ... drugn]]
+        parent_plan_id=root_name,  # name of root plan, subplan names created from this stem
+        data_pfx=data_fname_pfx,  # DATA file prefix, building block for feature name files
+        plan_pfx=plan_fname_pfx,  # PLAN file prefix, building block for plan name files
     )
 
     generator.plan_term(args.plan_dict, root_name, steps)
@@ -1344,7 +1365,7 @@ def main():
 
     if args.json:
         label = args.generator.get_plan_label(args.plan_dict, root_name)
-        qualified_name = 'plangen_' + label + '.json'
+        qualified_name = "plangen_" + label + ".json"
         json_file_name = os.path.join(args.out_dir, qualified_name)
         json_abspath = os.path.abspath(json_file_name)
         write_dict_to_json(args.plan_dict, json_abspath)
@@ -1352,11 +1373,12 @@ def main():
 
     if args.print_tree:
         print("Plan dictionary generated")
-        pp(args.plan_dict, width=160)               # DEBUG comment this out for large plans
+        pp(args.plan_dict, width=160)  # DEBUG comment this out for large plans
 
     if args.test:
         test1(json_abspath, "test1_sql.db")
         # test2(json_abspath, "test2_sql.db")
+
 
 # ----------------------------------------------------------------------------------
 # test plan navigation and subplan entry retrieval
@@ -1395,21 +1417,22 @@ def test2(plan_path, db_path):
             plan_path,
             plan_id=plan_id,
             subplan_id=curr_subplan,
-            run_type=run_type
+            run_type=run_type,
         )
 
         if status < 0:
             continue
 
-        completion_status = dict(mse=1.1, mae=2.2, r_square=.555)
+        completion_status = dict(mse=1.1, mae=2.2, r_square=0.555)
 
         stop_subplan(
             db_path,
             plan_id=plan_id,
             subplan_id=curr_subplan,
-            comp_info_dict=completion_status
+            comp_info_dict=completion_status,
         )
         print("Completing subplan %6d" % iloop)
+
 
 # ----------------------------------------------------------------------------------
 #
@@ -1422,7 +1445,7 @@ def test1(plan_path, db_path):
     plan_name = os.path.basename(plan_path)
     plan_id = plan_prep(db_path, plan_name, run_type)
 
-    if (plan_id < 0):
+    if plan_id < 0:
         sys.exit("Terminating due to database detected error")
 
     print("\nBegin plan navigation and subplan retrieval test")
@@ -1433,7 +1456,10 @@ def test1(plan_path, db_path):
 
     # the root has no parent / predecessor
     parent_name = get_predecessor(plan_dict, root_name)
-    print("Demonstrate that root \'%s\' predecessor is not defined: %s" % (root_name, parent_name))
+    print(
+        "Demonstrate that root '%s' predecessor is not defined: %s"
+        % (root_name, parent_name)
+    )
 
     # the root contains metadata, it is not a run specification
     successor_names = get_successors(plan_dict, root_name)
@@ -1453,11 +1479,7 @@ def test1(plan_path, db_path):
 
         for name in successor_names:
             status = start_subplan(
-                db_path,
-                plan_path,
-                plan_id=plan_id,
-                subplan_id=name,
-                run_type=run_type
+                db_path, plan_path, plan_id=plan_id, subplan_id=name, run_type=run_type
             )
 
             if status < 0:
@@ -1465,14 +1487,19 @@ def test1(plan_path, db_path):
 
         select_one = successor_names[listlen - 1]
         parent_name = get_predecessor(plan_dict, select_one)
-        print("%-16s is a successor of %-16s - all successors: %s" % (select_one, parent_name, successor_names))
+        print(
+            "%-16s is a successor of %-16s - all successors: %s"
+            % (select_one, parent_name, successor_names)
+        )
 
-# ???????????????????????????????????????????????????????????
+        # ???????????????????????????????????????????????????????????
         value, _ = get_subplan(plan_dict, select_one)
 
         if i < 3:
             for pf in [False, True]:
-                _, fs_name_list, train_list, val_list = get_subplan_features(plan_dict, select_one, parent_features=pf)
+                _, fs_name_list, train_list, val_list = get_subplan_features(
+                    plan_dict, select_one, parent_features=pf
+                )
                 print("\nsubplan original:", select_one, "parent features:", pf)
                 pp(plan_dict[select_one])
                 print("\nflattened TRAIN")
@@ -1480,25 +1507,29 @@ def test1(plan_path, db_path):
                 print("\nflattened VAL")
                 pp(val_list)
 
-# ???????????????????????????????????????????????????????????
+        # ???????????????????????????????????????????????????????????
 
         # test retrieval api
         # row = get_subplan_runhist(db_path, plan_id=plan_id, subplan_id=select_one)
         # print(row)
 
         # post subplan termination
-        completion_status = dict(mse=1.1, mae=2.2, r_square=.555, misc='no such column', data=123)
+        completion_status = dict(
+            mse=1.1, mae=2.2, r_square=0.555, misc="no such column", data=123
+        )
 
         stop_subplan(
             db_path,
             plan_id=plan_id,
             subplan_id=select_one,
-            comp_info_dict=completion_status
+            comp_info_dict=completion_status,
         )
 
         successor_names = get_successors(plan_dict, select_one)
 
     print("\nEnd of branch reached")
+
+
 #   plan_remove(db_path, "plangen_cell8-p2_drug8-p2.json")
 
 # ----------------------------------------------------------------------------------

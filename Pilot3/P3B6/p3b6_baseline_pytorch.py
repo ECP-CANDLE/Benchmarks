@@ -1,24 +1,19 @@
-import torch
 import argparse
-import p3b6 as bmk
+
 import candle
-
 import numpy as np
-
+import p3b6 as bmk
+import torch
 import torch.nn as nn
+from random_data import MimicDatasetSynthetic
+from sklearn.metrics import f1_score
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-
-from transformers import (
-    BertForSequenceClassification, BertConfig
-)
-
-from sklearn.metrics import f1_score
-from random_data import MimicDatasetSynthetic
+from transformers import BertConfig, BertForSequenceClassification
 
 
 def initialize_parameters():
-    """ Initialize the parameters for the P3B5 benchmark """
+    """Initialize the parameters for the P3B5 benchmark"""
 
     p3b6_bench = bmk.BenchmarkP3B6(
         bmk.file_path,
@@ -33,7 +28,7 @@ def initialize_parameters():
 
 
 def load_data(args):
-    """ Initialize random data
+    """Initialize random data
 
     Args:
         gParameters: parameters from candle
@@ -54,7 +49,7 @@ def load_data(args):
 
 
 def create_data_loaders(args):
-    """ Initialize data loaders
+    """Initialize data loaders
 
     Args:
         gParameters: parameters from candle
@@ -81,10 +76,7 @@ def train(dataloader, model, optimizer, criterion, args, epoch):
         input_mask = batch["masks"].to(args.device)
         labels = batch["label"].to(args.device)
 
-        output = model(
-            input_ids,
-            labels=labels
-        )
+        output = model(input_ids, labels=labels)
 
         output.loss.backward()
         optimizer.step()
@@ -103,10 +95,7 @@ def validate(dataloader, model, args, epoch):
             input_mask = batch["masks"].to(args.device)
             labels = batch["label"].to(args.device)
 
-            output = model(
-                input_ids,
-                labels=labels
-            )
+            output = model(input_ids, labels=labels)
 
             print(f"epoch: {epoch}, batch: {idx}, valid loss: {output.loss}")
 
@@ -122,7 +111,7 @@ def run(args):
         num_attention_heads=2,
         hidden_size=128,
         num_hidden_layers=1,
-        num_labels=args.num_classes
+        num_labels=args.num_classes,
     )
 
     model = BertForSequenceClassification(config)
@@ -134,7 +123,7 @@ def run(args):
 
     criterion = nn.BCEWithLogitsLoss()
 
-    for epoch in range(args.num_epochs):
+    for epoch in range(args.epochs):
         train(train_loader, model, optimizer, criterion, args, epoch)
         validate(valid_loader, model, args, epoch)
 

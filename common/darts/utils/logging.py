@@ -1,13 +1,12 @@
 import logging
 
-
-logger = logging.getLogger('DARTS')
-fh = logging.FileHandler('darts_accuracy.log')
+logger = logging.getLogger("DARTS")
+fh = logging.FileHandler("darts_accuracy.log")
 logger.addHandler(fh)
 
 
-def log_accuracy(accuracy, split: str = 'train'):
-    """ Log the average accuracy
+def log_accuracy(accuracy, split: str = "train"):
+    """Log the average accuracy
 
     Parameters
     ----------
@@ -27,8 +26,8 @@ def log_accuracy(accuracy, split: str = 'train'):
     logger.info(acc_info)
 
 
-def log_single_accuracy(accuracy, split: str = 'train'):
-    """ Log the average accuracy for a single task
+def log_single_accuracy(accuracy, split: str = "train"):
+    """Log the average accuracy for a single task
 
     Parameters
     ----------
@@ -38,8 +37,6 @@ def log_single_accuracy(accuracy, split: str = 'train'):
     split: str
         Either training of testing
     """
-    acc_info = (
-        f">>> {split.upper()} Accuracy - Response: {accuracy.get_avg_accuracy('response'):.4f}, "
-    )
+    acc_info = f">>> {split.upper()} Accuracy - Response: {accuracy.get_avg_accuracy('response'):.4f}, "
 
     logger.info(acc_info)

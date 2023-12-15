@@ -3,13 +3,7 @@ from torch.utils.data import Dataset
 
 
 class MimicDatasetSynthetic(Dataset):
-
-    def __init__(self,
-                 doc_length=512,
-                 num_vocab=1_000,
-                 num_docs=100,
-                 num_classes=10
-                 ):
+    def __init__(self, doc_length=512, num_vocab=1_000, num_docs=100, num_classes=10):
 
         self.doc_length = doc_length
         self.num_vocab = num_vocab
@@ -23,10 +17,10 @@ class MimicDatasetSynthetic(Dataset):
 
     def __repr__(self):
         return (
-            f'MimicRandom(doc_length={self.doc_length}, '
-            f'num_vocab={self.num_vocab}, '
-            f'num_docs={self.num_docs}, '
-            f'num_classes={self.num_classes}) '
+            f"MimicRandom(doc_length={self.doc_length}, "
+            f"num_vocab={self.num_vocab}, "
+            f"num_docs={self.num_docs}, "
+            f"num_classes={self.num_classes}) "
         )
 
     def __len__(self):

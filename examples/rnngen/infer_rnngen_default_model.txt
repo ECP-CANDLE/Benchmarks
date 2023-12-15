@@ -1,4 +1,5 @@
 [Global_Params]
+model_name = 'rnngen'
 data_url = 'ftp://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Examples/rnngen/'
 input = 'mosesrun/'
 logdir = 'mosesrun/'
@@ -10,5 +11,3 @@ model = 'autosave.model.pt'
 learning_rate = 1e-3
 use_gpus = True
 vr = True
-
-

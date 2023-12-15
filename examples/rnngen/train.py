@@ -1,11 +1,10 @@
-
-
 def getconfig(args):
     return args
 
 
 def count_valid_samples(smiles):
     from rdkit import Chem
+
     count = 0
     for smi in smiles:
         try:

@@ -2,13 +2,12 @@ import os
 import pickle
 from collections import namedtuple
 
+import lmdb
 import torch
 from torch.utils.data import Dataset
 from torchvision import datasets
-import lmdb
 
-
-CodeRow = namedtuple('CodeRow', ['top', 'bottom', 'filename'])
+CodeRow = namedtuple("CodeRow", ["top", "bottom", "filename"])
 
 
 class ImageFileDataset(datasets.ImageFolder):
@@ -34,17 +33,17 @@ class LMDBDataset(Dataset):
         )
 
         if not self.env:
-            raise IOError('Cannot open lmdb dataset', path)
+            raise IOError("Cannot open lmdb dataset", path)
 
         with self.env.begin(write=False) as txn:
-            self.length = int(txn.get('length'.encode('utf-8')).decode('utf-8'))
+            self.length = int(txn.get("length".encode("utf-8")).decode("utf-8"))
 
     def __len__(self):
         return self.length
 
     def __getitem__(self, index):
         with self.env.begin(write=False) as txn:
-            key = str(index).encode('utf-8')
+            key = str(index).encode("utf-8")
 
             row = pickle.loads(txn.get(key))
 

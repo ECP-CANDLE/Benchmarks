@@ -1,30 +1,32 @@
 from __future__ import print_function
 
+import candle
+import keras_mt_shared_cnn
 import numpy as np
+import p3b3 as bmk
 from tensorflow.keras import backend as K
 
-'''
-from tensorflow.keras.layers import Input, Dense, Dropout, Activation
-from tensorflow.keras.optimizers import SGD, Adam, RMSprop
-from tensorflow.keras.models import Model
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
+# from tensorflow.keras.layers import Input, Dense, Dropout, Activation
+# from tensorflow.keras.optimizers import SGD, Adam, RMSprop
+# from tensorflow.keras.models import Model
+# from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, ReduceLROnPlateau
 
-from sklearn.metrics import f1_score
-'''
+# from sklearn.metrics import f1_score
+
 
 # import keras
 
-import p3b3 as bmk
-import keras_mt_shared_cnn
-import candle
 
-
-def initialize_parameters(default_model='p3b3_default_model.txt'):
+def initialize_parameters(default_model="p3b3_default_model.txt"):
 
     # Build benchmark object
-    p3b3Bmk = bmk.BenchmarkP3B3(bmk.file_path, default_model, 'keras',
-                                prog='p3b3_baseline',
-                                desc='Multi-task CNN for data extraction from clinical reports - Pilot 3 Benchmark 3')
+    p3b3Bmk = bmk.BenchmarkP3B3(
+        bmk.file_path,
+        default_model,
+        "keras",
+        prog="p3b3_baseline",
+        desc="Multi-task CNN for data extraction from clinical reports - Pilot 3 Benchmark 3",
+    )
 
     # Initialize parameters
     gParameters = candle.finalize_parameters(p3b3Bmk)
@@ -34,44 +36,49 @@ def initialize_parameters(default_model='p3b3_default_model.txt'):
 
 
 def fetch_data(gParameters):
-    """ Downloads and decompresses the data if not locally available.
-        Since the training data depends on the model definition it is not loaded,
-        instead the local path where the raw data resides is returned
+    """Downloads and decompresses the data if not locally available.
+    Since the training data depends on the model definition it is not loaded,
+    instead the local path where the raw data resides is returned
     """
 
-    path = gParameters['data_url']
-    fpath = candle.fetch_file(path + gParameters['train_data'], 'Pilot3', unpack=True)
+    path = gParameters["data_url"]
+    fpath = candle.fetch_file(path + gParameters["train_data"], "Pilot3", unpack=True)
 
     return fpath
 
 
-def run_cnn(GP, train_x, train_y, test_x, test_y,
-            learning_rate=0.01,
-            batch_size=10,
-            epochs=10,
-            dropout=0.5,
-            optimizer='adam',
-            wv_len=300,
-            filter_sizes=[3, 4, 5],
-            num_filters=[300, 300, 300],
-            emb_l2=0.001,
-            w_l2=0.01
-            ):
+def run_cnn(
+    GP,
+    train_x,
+    train_y,
+    test_x,
+    test_y,
+    learning_rate=0.01,
+    batch_size=10,
+    epochs=10,
+    dropout=0.5,
+    optimizer="adam",
+    wv_len=300,
+    filter_sizes=[3, 4, 5],
+    num_filters=[300, 300, 300],
+    emb_l2=0.001,
+    w_l2=0.01,
+):
 
     max_vocab = np.max(train_x)
     max_vocab2 = np.max(test_x)
     if max_vocab2 > max_vocab:
         max_vocab = max_vocab2
 
-    wv_mat = np.random.randn(max_vocab + 1, wv_len).astype('float32') * 0.1
+    wv_mat = np.random.randn(max_vocab + 1, wv_len).astype("float32") * 0.1
 
-    task_list = GP['task_list']
-    task_names = GP['task_names']
+    task_list = GP["task_list"]
+    task_names = GP["task_names"]
     num_classes = []
     for i in range(train_y.shape[1]):
         num_classes.append(np.max(train_y[:, i]) + 1)
 
-    print('Num_classes = ', num_classes)
+    print("Num_classes = ", num_classes)
 
     kerasDefaults = candle.keras_default_config()
     optimizer_run = candle.build_optimizer(optimizer, learning_rate, kerasDefaults)
@@ -88,7 +95,7 @@ def run_cnn(GP, train_x, train_y, test_x, test_y,
         concat_dropout_prob=dropout,
         emb_l2=emb_l2,
         w_l2=w_l2,
-        optimizer=optimizer_run
+        optimizer=optimizer_run,
     )
 
     print(cnn.summary())
@@ -101,10 +108,10 @@ def run_cnn(GP, train_x, train_y, test_x, test_y,
             val_labels[task_string] = test_y[:, i]
             train_labels.append(np.array(train_y[:, i]))
 
-    validation_data = ({'Input': test_x}, val_labels)
+    validation_data = ({"Input": test_x}, val_labels)
 
     candleRemoteMonitor = candle.CandleRemoteMonitor(params=GP)
-    timeoutMonitor = candle.TerminateOnTimeOut(GP['timeout'])
+    timeoutMonitor = candle.TerminateOnTimeOut(GP["timeout"])
 
     history = cnn.fit(
         x=np.array(train_x),
@@ -113,7 +120,7 @@ def run_cnn(GP, train_x, train_y, test_x, test_y,
         epochs=epochs,
         verbose=2,
         validation_data=validation_data,
-        callbacks=[candleRemoteMonitor, timeoutMonitor]
+        callbacks=[candleRemoteMonitor, timeoutMonitor],
     )
 
     return history
@@ -125,24 +132,24 @@ def run(gParameters):
     # Get default parameters for initialization and optimizer functions
     kerasDefaults = candle.keras_default_config()
 
-    learning_rate = gParameters['learning_rate']
-    batch_size = gParameters['batch_size']
-    epochs = gParameters['epochs']
-    dropout = gParameters['dropout']
-    optimizer = gParameters['optimizer']
-    wv_len = gParameters['wv_len']
-    filter_sizes = gParameters['filter_sizes']
-    filter_sets = gParameters['filter_sets']
-    num_filters = gParameters['num_filters']
-    emb_l2 = gParameters['emb_l2']
-    w_l2 = gParameters['w_l2']
+    learning_rate = gParameters["learning_rate"]
+    batch_size = gParameters["batch_size"]
+    epochs = gParameters["epochs"]
+    dropout = gParameters["dropout"]
+    optimizer = gParameters["optimizer"]
+    wv_len = gParameters["wv_len"]
+    filter_sizes = gParameters["filter_sizes"]
+    filter_sets = gParameters["filter_sets"]
+    num_filters = gParameters["num_filters"]
+    emb_l2 = gParameters["emb_l2"]
+    w_l2 = gParameters["w_l2"]
 
     print("Downloaded........")
 
-    train_x = np.load(fpath + '/train_X.npy')
-    train_y = np.load(fpath + '/train_Y.npy')
-    test_x = np.load(fpath + '/test_X.npy')
-    test_y = np.load(fpath + '/test_Y.npy')
+    train_x = np.load(fpath + "/train_X.npy")
+    train_y = np.load(fpath + "/train_Y.npy")
+    test_x = np.load(fpath + "/test_X.npy")
+    test_y = np.load(fpath + "/test_Y.npy")
 
     for task in range(len(train_y[0, :])):
         cat = np.unique(train_y[:, task])
@@ -158,7 +165,10 @@ def run(gParameters):
 
     ret = run_cnn(
         gParameters,
-        train_x, train_y, test_x, test_y,
+        train_x,
+        train_y,
+        test_x,
+        test_y,
         learning_rate=learning_rate,
         batch_size=batch_size,
         epochs=epochs,
@@ -168,7 +178,7 @@ def run(gParameters):
         filter_sizes=run_filter_sizes,
         num_filters=run_num_filters,
         emb_l2=emb_l2,
-        w_l2=w_l2
+        w_l2=w_l2,
     )
 
     return ret
@@ -181,9 +191,9 @@ def main():
     print("Return: ", avg_loss)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
     try:
         K.clear_session()
-    except AttributeError:      # theano does not have this function
+    except AttributeError:  # theano does not have this function
         pass

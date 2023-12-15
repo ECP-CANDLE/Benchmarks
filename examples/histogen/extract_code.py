@@ -1,13 +1,12 @@
 import argparse
 import pickle
 
+import lmdb
 import torch
+from dataset import CodeRow, ImageFileDataset
 from torch.utils.data import DataLoader
 from torchvision import transforms
-import lmdb
 from tqdm import tqdm
-
-from dataset import ImageFileDataset, CodeRow
 from vqvae import VQVAE
 
 
@@ -26,23 +25,23 @@ def extract(lmdb_env, loader, model, device):
 
             for file, top, bottom in zip(filename, id_t, id_b):
                 row = CodeRow(top=top, bottom=bottom, filename=file)
-                txn.put(str(index).encode('utf-8'), pickle.dumps(row))
+                txn.put(str(index).encode("utf-8"), pickle.dumps(row))
                 index += 1
-                pbar.set_description(f'inserted: {index}')
+                pbar.set_description(f"inserted: {index}")
 
-        txn.put('length'.encode('utf-8'), str(index).encode('utf-8'))
+        txn.put("length".encode("utf-8"), str(index).encode("utf-8"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--size', type=int, default=256)
-    parser.add_argument('--ckpt', type=str)
-    parser.add_argument('--name', type=str)
-    parser.add_argument('path', type=str)
+    parser.add_argument("--size", type=int, default=256)
+    parser.add_argument("--ckpt", type=str)
+    parser.add_argument("--name", type=str)
+    parser.add_argument("path", type=str)
 
     args = parser.parse_args()
 
-    device = 'cuda'
+    device = "cuda"
 
     transform = transforms.Compose(
         [
