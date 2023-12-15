@@ -1,30 +1,13 @@
 from __future__ import print_function
 
-import warnings
-
 import h5py
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.utils.data as data
-from scipy.stats.stats import pearsonr
-from sklearn.manifold import TSNE
-from torch.autograd import Variable
 
-# import torch.nn.functional as F
-
-
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from sklearn.metrics import r2_score
-    from sklearn.metrics import accuracy_score
-
-import matplotlib as mpl
-
-mpl.use("Agg")
 # import candle_pytorch as candle
 import candle
-import matplotlib.pyplot as plt
 import p1b1
 
 np.set_printoptions(precision=4)
